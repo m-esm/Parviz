@@ -13,12 +13,12 @@ Fill in as parts get designed. For now this records the intended BOM and stack o
 - Tilt servo — TBD
 - Slew bearing / bushing for pan — TBD
 
-### Printed parts (none final yet)
-- `base_plinth` — fixed desk base, pan servo + bearing seat
-- `neck_pan_column` — rotates with pan
-- `head_face_shell` — wraps the 7" screen
-- `head_camera_boss` / camera bracket — holds Camera Module 3 above the screen
-- tilt yoke / linkage — TBD once servo class is chosen
+### Printed parts (first pass, watertight; not print-split yet)
+- `base` — fixed base, pan motor + bearing seat, bottom = future-wheels M4 bolt flange
+- `pan_platform` — disc that yaws on the base
+- `neck_clevis` — column + two cheeks that rise into the head and drive the tilt axle
+- `head_shell` — Echo-Show wedge holding the 7" screen (front aperture) + camera nub
+- tilt axle — off-the-shelf rod / M6 (not printed)
 
 ## Assembly order (intended)
 1. Pan servo + bearing into `base_plinth`.

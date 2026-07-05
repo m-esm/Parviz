@@ -2,9 +2,12 @@
 
 A 3D-printed desktop humanoid robot head: a Raspberry Pi 5 driving the official 7"
 touchscreen as a face and a Camera Module 3 as an eye, on a neck that pans (left/right)
-and tilts (up/down). Neck + head only for now.
+and tilts (up/down). The head is an Echo-Show-style wedge. Neck + head now; a wheeled
+base bolts on later.
 
-Status: scaffold. Placeholder massing only — no final geometry yet.
+Status: first functional assembly. Real screen model + pan/tilt kinematics + motor
+placeholders. Geometry is a first pass (masses and joints right; print splits and motor
+mounts still to do).
 
 ```bash
 make install     # trimesh toolchain + headless Chromium (first time)
