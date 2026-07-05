@@ -72,8 +72,9 @@ Screen `PARAMS["screen_*"]` are **measured from the reference STL bbox**: 193.0 
 on the leaned face by `screen_pose()`. Overall assembly bbox ≈ 221 × 155 × 263 mm.
 
 Still first-guess (validate on a print): tilt axis height 178, cantilever 39, face lean 11°,
-base Ø150 / bolt circle Ø120, tilt range ±30, pan range ±90. `motor_*` boxes are MG996R-class
-placeholders only.
+base Ø168 / bolt circle Ø138, tilt range ±30, pan range ±90. `motor_*` are 28BYJ-48-shaped
+placeholders. Note the head (213 wide) is wider than the base (Ø168); static tip is fine because
+the head CoM sits on the pan axis, but keep this in mind for the wheeled version.
 
 ## Power (decided)
 
@@ -82,19 +83,29 @@ USB current on a true 5A PD supply; a 15W/3A brick software-limits USB to ~600mA
 once screen + camera + servos draw together. Two servos (pan + tilt) may want their **own 5–6V
 supply** rather than pulling off the Pi's rail — decide when the servo BOM is picked.
 
-## Motors / electronics — OPEN, the geometry depends on these
+## Motors — 28BYJ-48 (picked from inventory), mounts still TODO
 
-`motor_pan` / `motor_tilt` are **MG996R-class servo boxes only** (40.7×19.7×42.9). Not decided:
-- **Motor class per axis.** Tilt holds a small cantilever moment (~1–3 kgf·cm for the head) — an
-  MG996R-class metal-gear servo covers it. Pan needs holding + some speed rotating the whole upper
-  mass; a geared servo or a NEMA-class stepper are both candidates. The neck (Ø50 column) and base
-  (Ø150) have room for either, but the mounts are NOT modeled yet — do that once the motor is picked
-  (its body + shaft + bolt pattern set the mount).
-- **Tilt drive:** direct-drive on the axle (current assumption) vs a worm/geared reducer if a servo
-  can't hold the moment quietly. Worm gives self-locking hold (no idle current).
-- **Pan bearing:** slew ring vs plain thrust bushing vs a lazy-Susan bearing in the base seat.
-- **Pan cable routing:** the DSI ribbon + camera + power cross the pan joint. Needs a service loop
-  or a slip mechanism; this caps pan range. Decide before finalizing the base.
+Motor choice made against the parts on hand (see the moshes-inventory MCP): the only owned motor
+with enough torque AND position control for this head is the **28BYJ-48 5V geared stepper** (×6 in
+Bags 5 & 14) with **ULN2003 driver boards** (×9). The 9g servos (SG90 ×9, MG90S ×1) are too weak to
+swing a 193mm screen head. So `motor_pan` / `motor_tilt` placeholders are now **28BYJ-48-shaped**
+(Ø28 can + gearbox + 8mm-offset output shaft) — see `motor_28byj()`.
+
+- **Pan:** 28BYJ-48 upright in the base, shaft up on the pan axis into `pan_platform`. Offset shaft
+  means the can sits 8mm off-axis (modeled).
+- **Tilt:** 28BYJ-48 on the +X clevis cheek, shaft to the tilt axle. Holds ~15 N·cm gravity moment;
+  the 28BYJ-48 has ~34 N·cm holding torque energized → ~2× margin. **Caveat:** it only holds while
+  coils are powered (idle current, mild heat). If that's a problem, add a worm/geared reducer (self-
+  locking) or a small counterbalance behind the tilt axis. Decide on a print test.
+- **STILL TODO (this is the deferred "design motor mounts" task):** the actual Ø28 motor pockets,
+  the offset-shaft coupling to axle/platform, and the ULN2003 board mounts. The offset output shaft
+  is the annoying part — the real mount aligns the *shaft* to the axis, not the can.
+- **Pan bearing:** a lazy-Susan / thrust bushing in the base seat (undecided).
+- **Pan cable routing:** DSI ribbon + camera + power cross the pan joint → needs a service loop;
+  this caps pan range. Settle before finalizing the base.
+
+For the future wheels: TT 1:120 gear motor + 130-size DC motors (×10) + MX1588 / ULN2003 drivers are
+already in inventory.
 
 ## Wheels later (base is ready for it)
 

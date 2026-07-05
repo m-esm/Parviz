@@ -66,8 +66,8 @@ P = {
     "cheek_t": 8.0,         # clevis cheek thickness (X)
 
     # --- Neck column (carries the clevis, rides the pan platform) ---
-    "neck_w": 50.0,         # column width (X)
-    "neck_d": 34.0,         # column depth (Y)
+    "neck_w": 56.0,         # column width (X) -- sturdier than v1
+    "neck_d": 40.0,         # column depth (Y)
     "neck_top_z": 150.0,    # where the column stops and the clevis cheeks rise
     "neck_y": -38.0,        # column sits behind the head
 
@@ -77,14 +77,18 @@ P = {
     "pan_bore_r": 4.2,      # pan axle / motor shaft bore
 
     # --- Base (fixed). Bottom face is the future-wheels mounting flange. ---
-    "base_d": 150.0,        # wide for tip stability with the head extended
+    "base_d": 168.0,        # wide for tip stability when the head pans out (and later, wheels)
     "base_h": 46.0,         # houses pan motor + slew bearing + Pi power
-    "base_bolt_circle": 120.0,  # M4 bolt circle to later bolt onto a wheeled chassis
+    "base_bolt_circle": 138.0,  # M4 bolt circle to later bolt onto a wheeled chassis
     "base_bolt_r": 2.2,     # M4 clearance
     "base_bolt_n": 4,
 
-    # --- Motor placeholders (MG996R-class servo). UNDECIDED -- swap when chosen. ---
-    "motor_l": 40.7, "motor_w": 19.7, "motor_h": 42.9,
+    # --- Motor placeholder: 28BYJ-48 5V geared stepper (owned x6, + ULN2003 x9). ---
+    "motor_d": 28.0,        # motor can diameter
+    "motor_body_h": 19.0,   # can height
+    "motor_gear_h": 9.0,    # gearbox stack in front of the can
+    "motor_shaft_off": 8.0, # output shaft offset from the can axis (28BYJ-48 quirk)
+    "motor_shaft_d": 5.0,
 
     # --- Reference electronics (visual, for fit) ---
     "cam_w": 25.0, "cam_h": 24.0, "cam_d": 12.0,   # Camera Module 3 board
@@ -307,8 +311,19 @@ def build_base():
     return body
 
 
-def motor_box(name):
-    m = box(P["motor_l"], P["motor_w"], P["motor_h"])
+def motor_28byj(name):
+    """28BYJ-48 stepper placeholder: can + gearbox + offset output shaft, shaft along +Z."""
+    r = P["motor_d"] / 2
+    can = cyl(r, P["motor_body_h"])
+    can.apply_translation((0, 0, P["motor_body_h"] / 2))
+    gear = cyl(r, P["motor_gear_h"])
+    gear.apply_translation((0, 0, P["motor_body_h"] + P["motor_gear_h"] / 2))
+    top = P["motor_body_h"] + P["motor_gear_h"]
+    shaft = cyl(P["motor_shaft_d"] / 2, 10.0)
+    shaft.apply_translation((P["motor_shaft_off"], 0, top + 5))
+    tab = box(42, 7, 2.0)          # mounting ears (holes omitted for the placeholder)
+    tab.apply_translation((0, 0, top - 1))
+    m = uni([can, gear, shaft, tab])
     _color(m, "motor")
     m.metadata["name"] = name
     return m
@@ -347,10 +362,10 @@ def build():
     if EXPORT:
         neck.export(stlp("neck_clevis.stl"))
 
-    # tilt motor: on the +X clevis cheek, shaft toward -X into the axle
-    mt = motor_box("motor_tilt")
-    mt.apply_transform(R(TAU / 4, (0, 0, 1)))        # long axis -> X
-    mt.apply_translation((P["clevis_half"] + P["motor_l"] / 2 + 4, 0, zt))
+    # tilt motor: 28BYJ-48 on the +X clevis cheek, shaft (+Z) rotated to point -X at the axle
+    mt = motor_28byj("motor_tilt")
+    mt.apply_transform(R(-TAU / 4, (0, 1, 0)))       # shaft +Z -> -X
+    mt.apply_translation((P["clevis_half"] + 34, 0, zt))
     add(mt, M_pan)
 
     # Pi 5 in the BASE (kept low: kills tilt torque + keeps the head shell light)
@@ -358,9 +373,10 @@ def build():
     pi.apply_translation((0, 0, P["base_h"] - P["pi_t"] / 2 - 3))
     add(pi, np.eye(4))
 
-    # pan motor: standing in the base, shaft up into the platform
-    mp = motor_box("motor_pan")
-    mp.apply_translation((0, P["base_d"] / 4, P["base_h"] - P["motor_h"] / 2 - 2))
+    # pan motor: 28BYJ-48 upright in the base, offset so its shaft lands on the pan axis
+    mp = motor_28byj("motor_pan")
+    mp.apply_translation((-P["motor_shaft_off"], 0,
+                          P["base_h"] - 2 - (P["motor_body_h"] + P["motor_gear_h"])))
     add(mp, np.eye(4))
 
     # --- HEAD (tilt + pan) ---
