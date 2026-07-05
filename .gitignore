@@ -1,0 +1,8 @@
+.claude/renders/
+_t_*
+_test_*
+exports/*.3mf
+*.mp4
+*.mov
+__pycache__/
+.DS_Store

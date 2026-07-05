@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>GLB viewer</title>
+<style>
+  html,body{margin:0;height:100%;overflow:hidden;font:13px/1.5 system-ui,sans-serif;color:#e6e8ea}
+  #hud{position:fixed;top:12px;left:14px;z-index:10;background:rgba(20,22,26,.82);
+       padding:12px 14px;border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,.4);max-height:92vh;overflow:auto;width:230px}
+  #hud b{color:#fff;font-size:14px}
+  #hud label{display:block;margin-top:5px;cursor:pointer;user-select:none}
+  #hud hr{border:0;border-top:1px solid #ffffff22;margin:10px 0 6px}
+  .sw{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:middle}
+  .hint{margin-top:10px;opacity:.6;font-size:12px}
+  #parts{margin-top:8px;max-height:34vh;overflow:auto}
+  input[type=range]{width:150px;vertical-align:middle}
+  select{background:#2a2f38;color:#e6e8ea;border:1px solid #ffffff22;border-radius:4px}
+  /* CAD-style dimension labels (always face camera, follow their part) */
+  .dlabel{font:700 11px ui-monospace,Menlo,monospace;white-space:nowrap;padding:1px 6px;border-radius:5px;
+          background:#12141999;border:1px solid #ffffff22}
+  #legend{margin-top:6px;font-size:11px;opacity:.85;display:none}
+</style>
+</head>
+<body>
+<div id="hud">
+  <b id="title">assembly</b>
+  <div id="bbox" style="opacity:.7;margin-top:3px"></div>
+  <div id="parts"></div>
+  <hr>
+  <label><input type="checkbox" id="t_solid"> &nbsp;solid (vs ghost-outline)</label>
+  <label><input type="checkbox" id="t_dims"> &nbsp;dimensions (per part, L/W/H)</label>
+  <div id="legend">
+    <span style="color:#ff8f8f">L = length (X)</span> ·
+    <span style="color:#86e29a">W = width (Y)</span> ·
+    <span style="color:#8fc8fb">H = height (Z)</span>
+  </div>
+  <label style="margin-top:8px">explode <input type="range" id="explode" min="0" max="1" step="0.01" value="0"></label>
+  <hr>
+  <label><input type="checkbox" id="t_section"> &nbsp;section cut
+    <select id="sec_axis"><option>X</option><option>Y</option><option>Z</option></select></label>
+  <label>cut <input type="range" id="cut" min="0" max="1" step="0.01" value="0.5"></label>
+  <hr>
+  <label><input type="checkbox" id="t_spin"> &nbsp;▶ spin (Z)
+    <input type="range" id="spinspd" min="5" max="120" step="5" value="35" style="width:70px"></label>
+  <div class="hint">drag = orbit · scroll = zoom · right-drag = pan · auto-reloads on rebuild</div>
+</div>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+window.THREE = THREE;                                  // headless (shoot.py) needs THREE in scope
+
+const q = new URLSearchParams(location.search);
+const MODEL = q.get('m') || 'assembly.glb';
+document.getElementById('title').textContent = MODEL;
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x20242b);
+const camera = new THREE.PerspectiveCamera(42, innerWidth/innerHeight, 0.1, 50000);
+camera.up.set(0,0,1);                                  // Z up (print-bed convention)
+
+const renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(innerWidth, innerHeight); renderer.setPixelRatio(devicePixelRatio);
+renderer.localClippingEnabled = true;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;    // raw light intensities clip to white without this
+document.body.appendChild(renderer.domElement);
+
+// CSS2D overlay for crisp camera-facing dimension labels
+const labelRnd = new CSS2DRenderer(); labelRnd.setSize(innerWidth, innerHeight);
+labelRnd.domElement.style.cssText = 'position:absolute;top:0;left:0;pointer-events:none';
+document.body.appendChild(labelRnd.domElement);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+window._cam = camera; window._controls = controls; window._scene = scene;   // headless render hooks
+
+scene.add(new THREE.HemisphereLight(0xffffff, 0x32383f, 1.05));
+const key = new THREE.DirectionalLight(0xffffff, 1.5); key.position.set(90,-110,150); scene.add(key);
+const fill= new THREE.DirectionalLight(0xbcd2ff, 0.5); fill.position.set(-120,60,-30); scene.add(fill);
+const rim = new THREE.DirectionalLight(0xffffff, 0.7); rim.position.set(-40,140,40); scene.add(rim);
+// print-bed grid on the XY plane (Z-up the right way: rotate the helper, don't rotate geometry)
+const grid = new THREE.GridHelper(1000,50,0x2a2f38,0x23272e); grid.rotation.x=Math.PI/2; scene.add(grid);
+
+// section plane positioned at runtime from the bbox
+const sectionPlane = new THREE.Plane(new THREE.Vector3(-1,0,0), 0);
+
+// deterministic per-name color (stable across reloads)
+function colorFor(name){
+  let h=0; for(const c of name) h=(h*31 + c.charCodeAt(0))>>>0;
+  const hue=(h%360)/360; const col=new THREE.Color(); col.setHSL(hue,0.55,0.55); return col.getHex();
+}
+function isHousing(name){ return /hous|box|case|lid|enclos|shell|cover|conduit|panel|body/i.test(name); }
+
+// dimension-line helpers (shared with parts_viewer.py)
+const COLX=0xff6b6b, COLY=0x51cf66, COLZ=0x4dabf7, TXT={x:'#ff8f8f',y:'#86e29a',z:'#8fc8fb'};
+function line(p1,p2,color){return new THREE.Line(new THREE.BufferGeometry().setFromPoints([p1,p2]),new THREE.LineBasicMaterial({color}));}
+function tick(p,ax,len,color){const a=p.clone(),b=p.clone();a[ax]-=len/2;b[ax]+=len/2;return line(a,b,color);}
+function dlabel(t,css){const d=document.createElement('div');d.className='dlabel';d.textContent=t;d.style.color=css;d.style.borderColor=css+'66';return new CSS2DObject(d);}
+
+const groups = {};      // name -> {meshes:[], ghost, home:Vector3[], dim:Group, dimHome:Vector3, explodeDir:Vector3}
+const dimsRoot = new THREE.Group(); scene.add(dimsRoot);
+let bbox = new THREE.Box3(), center = new THREE.Vector3(), diag = 1;
+
+new GLTFLoader().load(MODEL, (gltf)=>{
+  gltf.scene.traverse(o=>{
+    if(!o.isMesh) return;
+    const name = o.name || (o.parent && o.parent.name) || 'part';
+    o.geometry.computeVertexNormals();                 // GLB normals often come through inverted/unlit
+    const ghost = isHousing(name);
+    const col = colorFor(name);
+    if(ghost){
+      o.material = new THREE.MeshStandardMaterial({color:0x9aa3ad,metalness:0,roughness:.85,
+        transparent:true,opacity:.12,depthWrite:false,side:THREE.DoubleSide});
+      const e = new THREE.LineSegments(new THREE.EdgesGeometry(o.geometry,35),
+        new THREE.LineBasicMaterial({color:0xcdd6df,transparent:true,opacity:.6}));
+      o.add(e); o.userData.edge = e;
+    } else {
+      o.material = new THREE.MeshStandardMaterial({color:col,metalness:.2,roughness:.5,
+        side:THREE.DoubleSide,emissive:col,emissiveIntensity:.05});
+    }
+    (groups[name] = groups[name] || {meshes:[],ghost}).meshes.push(o);
+  });
+  scene.add(gltf.scene);
+
+  bbox.setFromObject(gltf.scene);
+  bbox.getCenter(center);
+  const sz = bbox.getSize(new THREE.Vector3());
+  diag = sz.length();
+  const r = diag/2;
+  controls.target.copy(center);
+  camera.position.set(center.x + r*1.4, center.y - r*1.8, center.z + r*1.1);
+  controls.update();
+  sectionPlane.constant = center.x;                    // start cut at center
+  document.getElementById('bbox').textContent =
+    `X ${sz.x.toFixed(1)}  Y ${sz.y.toFixed(1)}  Z ${sz.z.toFixed(1)} mm`;
+
+  // per-group: record home positions, explode direction, and build dimension annotations
+  const host = document.getElementById('parts');
+  for(const [name,g] of Object.entries(groups)){
+    g.home = g.meshes.map(o=>o.position.clone());
+
+    // group world bbox -> centroid for explode direction
+    const gb = new THREE.Box3(); g.meshes.forEach(o=>gb.expandByObject(o));
+    const gc = gb.getCenter(new THREE.Vector3());
+    g.explodeDir = gc.clone().sub(center);
+    if(g.explodeDir.lengthSq() < 1e-6) g.explodeDir.set(0,0,1); else g.explodeDir.normalize();
+
+    // dimension lines on the group bbox (world coords); a sub-group so explode can offset it
+    const mn=gb.min, mx=gb.max, c=gc, s=gb.getSize(new THREE.Vector3());
+    const o = Math.max(6, diag*0.02), D = new THREE.Group();
+    D.add(line(new THREE.Vector3(mn.x,mn.y-o,mn.z), new THREE.Vector3(mx.x,mn.y-o,mn.z), COLX));
+    D.add(tick(new THREE.Vector3(mn.x,mn.y-o,mn.z),'y',o,COLX)); D.add(tick(new THREE.Vector3(mx.x,mn.y-o,mn.z),'y',o,COLX));
+    let L=dlabel('L '+s.x.toFixed(0),TXT.x); L.position.set(c.x,mn.y-o,mn.z); D.add(L);
+    D.add(line(new THREE.Vector3(mx.x+o,mn.y,mn.z), new THREE.Vector3(mx.x+o,mx.y,mn.z), COLY));
+    D.add(tick(new THREE.Vector3(mx.x+o,mn.y,mn.z),'x',o,COLY)); D.add(tick(new THREE.Vector3(mx.x+o,mx.y,mn.z),'x',o,COLY));
+    let W=dlabel('W '+s.y.toFixed(0),TXT.y); W.position.set(mx.x+o,c.y,mn.z); D.add(W);
+    D.add(line(new THREE.Vector3(mx.x+o,mn.y-o,mn.z), new THREE.Vector3(mx.x+o,mn.y-o,mx.z), COLZ));
+    D.add(tick(new THREE.Vector3(mx.x+o,mn.y-o,mn.z),'x',o,COLZ)); D.add(tick(new THREE.Vector3(mx.x+o,mn.y-o,mx.z),'x',o,COLZ));
+    let H=dlabel('H '+s.z.toFixed(0),TXT.z); H.position.set(mx.x+o,mn.y-o,c.z); D.add(H);
+    D.visible = false; g.dim = D; g.dimHome = D.position.clone(); g.labels=[L,W,H];
+    dimsRoot.add(D);
+
+    // per-part toggle row
+    const lab = document.createElement('label');
+    lab.innerHTML = `<span class="sw" style="background:#${colorFor(name).toString(16).padStart(6,'0')}"></span>`+
+                    `<input type="checkbox" checked> ${name}`;
+    lab.querySelector('input').addEventListener('change',e=>{
+      g.meshes.forEach(o=>o.visible=e.target.checked);
+      applyDims();
+    });
+    host.appendChild(lab);
+  }
+  applyDims();
+  window.__ready = true;
+}, undefined, err=>{ document.getElementById('bbox').textContent='LOAD ERROR: '+err; });
+
+const $=id=>document.getElementById(id);
+
+$('t_solid').addEventListener('change',e=>{
+  const s=e.target.checked;
+  Object.values(groups).filter(g=>g.ghost).forEach(g=>g.meshes.forEach(o=>{
+    o.material.opacity=s?.95:.12; o.material.depthWrite=s;
+    if(o.userData.edge) o.userData.edge.material.opacity=s?.2:.6;
+  }));
+});
+
+// dimensions toggle
+function applyDims(){
+  const on = $('t_dims').checked;
+  $('legend').style.display = on ? '' : 'none';
+  Object.values(groups).forEach(g=>{
+    if(!g.dim) return;
+    const vis = on && g.meshes.some(o=>o.visible);
+    g.dim.visible = vis;
+    g.labels.forEach(l=>{ l.visible=vis; l.element.style.display = vis ? '' : 'none'; });
+  });
+}
+$('t_dims').addEventListener('change',applyDims);
+
+// explode: push each group along its radial direction from the assembly center
+$('explode').addEventListener('input',e=>{
+  const t = parseFloat(e.target.value), spread = diag*0.6;
+  Object.values(groups).forEach(g=>{
+    const off = g.explodeDir.clone().multiplyScalar(t*spread);
+    g.meshes.forEach((o,i)=>o.position.copy(g.home[i]).add(off));
+    if(g.dim) g.dim.position.copy(g.dimHome).add(off);
+  });
+});
+
+// section cut on a chosen axis
+function applySection(){
+  const on=$('t_section').checked;
+  const axis=$('sec_axis').value, t=parseFloat($('cut').value);
+  const n = {X:[-1,0,0], Y:[0,-1,0], Z:[0,0,-1]}[axis];
+  sectionPlane.normal.set(n[0],n[1],n[2]);
+  const mn=bbox.min, sz=bbox.getSize(new THREE.Vector3());
+  const v = {X:mn.x+sz.x*t, Y:mn.y+sz.y*t, Z:mn.z+sz.z*t}[axis];
+  sectionPlane.constant = v;                            // normal is -axis, so constant = coordinate
+  const planes=on?[sectionPlane]:[];
+  Object.values(groups).forEach(g=>g.meshes.forEach(o=>{
+    o.material.clippingPlanes=planes;
+    if(o.userData.edge) o.userData.edge.material.clippingPlanes=planes;
+  }));
+}
+$('t_section').addEventListener('change',applySection);
+$('sec_axis').addEventListener('change',applySection);
+$('cut').addEventListener('input',applySection);
+
+addEventListener('resize',()=>{
+  camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth,innerHeight); labelRnd.setSize(innerWidth,innerHeight);
+});
+
+let last=performance.now();
+(function loop(t){
+  requestAnimationFrame(loop);
+  const dt=(t-last)/1000; last=t;
+  if($('t_spin').checked){ scene.rotation.z += dt * parseFloat($('spinspd').value)*Math.PI/180; }
+  controls.update();
+  renderer.render(scene,camera);
+  labelRnd.render(scene,camera);
+})(last);
+
+// auto-reload when the build script rewrites the model
+let stamp=null;
+setInterval(async()=>{
+  try{ const r=await fetch(MODEL,{method:'HEAD',cache:'no-store'});
+    const s=r.headers.get('Last-Modified');
+    if(stamp && s && s!==stamp) location.reload();
+    stamp = s||stamp;
+  }catch(e){}
+}, 2000);
+</script>
+</body>
+</html>

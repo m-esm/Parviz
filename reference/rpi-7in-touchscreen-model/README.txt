@@ -1,0 +1,4 @@
+Official Raspberry Pi 7" Touch Screen Reference Model by clough42 on Thingiverse: https://www.thingiverse.com/thing:1646255
+
+Summary:
+This thing is a reference model of the Official Raspberry Pi 7" Touch Screen Display.The parts modeled in this thing are available here:Official Raspberry Pi 7" Touchscreen Display:  http://amzn.to/28UEiWPRaspberry Pi 3 (Canakit with power supply):  http://amzn.to/28WNYmF32GB SanDisk Ultra Micro SD card:  http://amzn.to/28WO7GRThree versions of the model are provided:Bare LCD screenWith Raspberry Pi, mounted pins-outWith Raspberry Pi, mounted pins-inAll three are provided in STL, IGES and STEP format.I don't recommend printing this.  It's intended as a reference model for designing your own parts to fit.When you click on these links and make a purchase, it can result in commissions from Amazon that help support my work.

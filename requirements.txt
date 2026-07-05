@@ -1,0 +1,13 @@
+# 3D-print modeling toolchain (trimesh/mesh path). Pin trimesh + manifold3d as a PAIR:
+# a major manifold3d bump has broken trimesh.boolean before. Upgrade them in lockstep.
+trimesh>=4.12
+manifold3d>=2.5
+numpy>=1.26
+scipy>=1.13
+shapely>=2.0
+networkx>=3.2
+rtree>=1.3
+matplotlib>=3.8
+playwright>=1.40
+# After install: python3 -m playwright install chromium
+# BREP path (build123d/CadQuery) needs Python >=3.10 and its own venv; add `build123d` there.
