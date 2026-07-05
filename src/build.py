@@ -48,13 +48,13 @@ P = {
     # Rounded box body with the front face leaning back; the 7" screen mounts on that face.
     "head_wall": 4.0,
     "head_w": 205.0,        # shell outer width (screen 193 + walls + margin)
-    "face_angle": 11.0,     # front face lean from vertical (deg); Echo-Show resting angle
+    "face_angle": 8.0,      # front face lean from vertical (deg); Echo-Show resting angle
     "body_back_y": -35.0,   # back face plane (behind the tilt axis)
     "body_front_bot_y": 52.0,   # front face, bottom edge (furthest forward)
-    "body_front_top_y": 26.0,   # front face, top edge (leaned back)
+    "body_front_top_y": 34.0,   # front face, top edge (leaned back ~8deg to match face_angle)
     "body_z_bot": 113.0,    # shell bottom height above desk
     "body_z_top": 243.0,    # shell top (front) height
-    "body_back_top_z": 210.0,   # back is shorter than the front (the wedge)
+    "body_back_top_z": 224.0,   # crown flattened (less back-slope than v1)
     "corner_r": 16.0,       # side-profile corner rounding (the friendly Echo-Show look)
 
     # --- Tilt joint: REAR CLEVIS entering the shell underside; axle near the CoM ---
@@ -66,8 +66,9 @@ P = {
     "cheek_t": 8.0,         # clevis cheek thickness (X)
 
     # --- Neck column (carries the clevis, rides the pan platform) ---
-    "neck_w": 56.0,         # column width (X) -- sturdier than v1
-    "neck_d": 40.0,         # column depth (Y)
+    "neck_w": 48.0,         # column width (X) -- squarer + rounded reads as a neck, not a plank
+    "neck_d": 46.0,         # column depth (Y)
+    "neck_round": 10.0,     # corner rounding radius
     "neck_top_z": 150.0,    # where the column stops and the clevis cheeks rise
     "neck_y": -38.0,        # column sits behind the head
 
@@ -77,9 +78,10 @@ P = {
     "pan_bore_r": 4.2,      # pan axle / motor shaft bore
 
     # --- Base (fixed). Bottom face is the future-wheels mounting flange. ---
-    "base_d": 168.0,        # wide for tip stability when the head pans out (and later, wheels)
-    "base_h": 46.0,         # houses pan motor + slew bearing + Pi power
-    "base_bolt_circle": 138.0,  # M4 bolt circle to later bolt onto a wheeled chassis
+    "base_d": 208.0,        # bottom Ø: >= head width so the head doesn't overhang (tip margin)
+    "base_top_d": 156.0,    # top Ø: truncated cone, grounds the wedge head
+    "base_h": 52.0,         # houses pan motor + slew bearing + wiring
+    "base_bolt_circle": 170.0,  # M4 bolt circle in the bottom flange (future wheeled chassis)
     "base_bolt_r": 2.2,     # M4 clearance
     "base_bolt_n": 4,
 
@@ -131,6 +133,12 @@ def cyl(r, h, axis="z", sections=64):
     elif axis == "y":
         m.apply_transform(R(TAU / 2, (1, 0, 0)))
     return m
+
+
+def rounded_box(w, d, h, r):
+    """Box with rounded vertical edges (rounded-rect footprint extruded along +Z)."""
+    poly = sg.box(-w / 2, -d / 2, w / 2, d / 2).buffer(-r, join_style=1).buffer(r, join_style=1)
+    return extrude_polygon(poly, h)          # in XY, extruded z=0..h
 
 
 def sub(a, b):
@@ -228,10 +236,13 @@ def build_head_shell():
     axle_bore.apply_translation((0, 0, zt))
     shell = sub(shell, axle_bore)
 
-    # camera bump at the top of the front bezel
-    cam_boss = box(P["cam_w"] + 12, 16.0, P["cam_h"] + 12)
-    cam_boss.apply_transform(screen_pose() @ _T(0, 6, P["screen_h"] / 2 + 12))
+    # camera bump: small nub on the top bezel with a lens through-hole (board pocket behind)
+    cam_boss = box(30, 14, 20)
+    cam_boss.apply_transform(screen_pose() @ _T(0, 5, P["screen_h"] / 2 + 3))
     shell = uni([shell, cam_boss])
+    lens = cyl(4.5, 40, axis="y")          # bored along the face normal after screen_pose
+    lens.apply_transform(screen_pose() @ _T(0, 0, P["screen_h"] / 2 + 3))
+    shell = sub(shell, lens)
 
     _color(shell, "cradle")
     shell.metadata["name"] = "head_shell"
@@ -241,13 +252,13 @@ def build_head_shell():
 def build_neck_clevis():
     """Neck column rising to a two-cheek clevis that grips the tilt axle under the head."""
     zt = P["tilt_axis_z"]
-    z0 = P["pan_plate_t"]
+    z0 = P["base_h"]                       # sits on the pan platform / base top (world Z)
     ny = P["neck_y"]
     parts = []
 
     col_h = P["neck_top_z"] - z0
-    col = box(P["neck_w"], P["neck_d"], col_h)
-    col.apply_translation((0, ny, z0 + col_h / 2))
+    col = rounded_box(P["neck_w"], P["neck_d"], col_h, P["neck_round"])
+    col.apply_translation((0, ny, z0))       # extrude_polygon is z=0..h, so lift to z0
     parts.append(col)
 
     # two cheeks rising from the column top forward-and-up to the axle at (0,0,zt)
@@ -279,19 +290,35 @@ def _T(x, y, z):
 
 
 def build_pan_platform():
+    # seated on top of the base (world Z), flush with the base top
+    zc = P["base_h"] - P["pan_plate_t"] / 2
     plate = cyl(P["pan_plate_d"] / 2, P["pan_plate_t"], sections=96)
-    plate.apply_translation((0, 0, P["pan_plate_t"] / 2))
+    plate.apply_translation((0, 0, zc))
     bore = cyl(P["pan_bore_r"], 40.0)
+    bore.apply_translation((0, 0, zc))
     plate = sub(plate, bore)
     _color(plate, "pan")
     plate.metadata["name"] = "pan_platform"
     return plate
 
 
+def frustum(r_bottom, r_top, h, sections=96):
+    """Truncated cone from z=0 (r_bottom) to z=h (r_top)."""
+    if abs(r_bottom - r_top) < 1e-6:
+        c = cyl(r_bottom, h, sections=sections)
+        c.apply_translation((0, 0, h / 2))
+        return c
+    h_full = h * r_bottom / (r_bottom - r_top)      # height to the apex
+    c = trimesh.creation.cone(radius=r_bottom, height=h_full, sections=sections)
+    cut = box(2 * r_bottom + 20, 2 * r_bottom + 20, h_full)
+    cut.apply_translation((0, 0, h + h_full / 2))   # remove everything above z=h
+    return sub(c, cut)
+
+
 def build_base():
-    """Fixed base. Slew seat on top, motor cavity, bottom = future-wheels bolt flange."""
-    body = cyl(P["base_d"] / 2, P["base_h"], sections=96)
-    body.apply_translation((0, 0, P["base_h"] / 2))
+    """Fixed base: truncated cone. Slew seat on top, bottom = future-wheels bolt flange."""
+    body = frustum(P["base_d"] / 2, P["base_top_d"] / 2, P["base_h"])
+    # crisp top chamfer shoulder (small inverted frustum lip)
     # recess for the pan platform to sit into (visual seat)
     seat = cyl(P["pan_plate_d"] / 2 + 1.0, 6.0, sections=96)
     seat.apply_translation((0, 0, P["base_h"] - 3.0))
@@ -336,9 +363,15 @@ def build():
     scene = trimesh.Scene()
     zt = P["tilt_axis_z"]
 
+    # pose + output overrides (for generating review render sets)
+    pan_deg = float(os.environ.get("PAN", P["preview_pan_deg"]))
+    tilt_deg = float(os.environ.get("TILT", P["preview_tilt_deg"]))
+    head_name = "head_wedge" if os.environ.get("SOLIDHEAD") == "1" else "head_shell"
+    out_name = os.environ.get("OUT", "assembly.glb")
+
     # transforms
-    pan = R(P["preview_pan_deg"] * DEG, (0, 0, 1), (0, 0, 0))
-    tilt = R(P["preview_tilt_deg"] * DEG, (1, 0, 0), (0, 0, zt))
+    pan = R(pan_deg * DEG, (0, 0, 1), (0, 0, 0))
+    tilt = R(tilt_deg * DEG, (1, 0, 0), (0, 0, zt))
     M_head = pan @ tilt          # head parts: tilt then pan
     M_pan = pan                  # pan-group parts
 
@@ -355,8 +388,7 @@ def build():
     # --- PAN GROUP ---
     add(build_pan_platform(), M_pan, "pan_platform.stl")
 
-    neck = build_neck_clevis()
-    neck.apply_translation((0, 0, P["base_h"]))     # lift onto the base
+    neck = build_neck_clevis()                       # already built in world Z (sits on base top)
     scene_neck = neck.copy(); scene_neck.apply_transform(M_pan)
     scene.add_geometry(scene_neck, node_name="neck_clevis")
     if EXPORT:
@@ -368,10 +400,11 @@ def build():
     mt.apply_translation((P["clevis_half"] + 34, 0, zt))
     add(mt, M_pan)
 
-    # Pi 5 in the BASE (kept low: kills tilt torque + keeps the head shell light)
-    pi = box(P["pi_w"], P["pi_h"], P["pi_t"]); _color(pi, "pi"); pi.metadata["name"] = "pi5"
-    pi.apply_translation((0, 0, P["base_h"] - P["pi_t"] / 2 - 3))
-    add(pi, np.eye(4))
+    # Pi 5 in the HEAD, behind the tilt axis: the DSI + CSI ribbons then stay entirely in the head
+    # (zero joint crossings), and the board doubles as the tilt counterweight. Board plane = XZ.
+    pi = box(P["pi_w"], P["pi_t"], P["pi_h"]); _color(pi, "pi"); pi.metadata["name"] = "pi5"
+    pi.apply_translation((0, P["body_back_y"] + P["pi_t"] / 2 + 6, zt))
+    add(pi, M_head)
 
     # pan motor: 28BYJ-48 upright in the base, offset so its shaft lands on the pan axis
     mp = motor_28byj("motor_pan")
@@ -380,7 +413,8 @@ def build():
     add(mp, np.eye(4))
 
     # --- HEAD (tilt + pan) ---
-    add(build_head_shell(), M_head, "head_shell.stl")
+    shell = build_head_shell(); shell.metadata["name"] = head_name
+    add(shell, M_head, "head_shell.stl")
 
     screen = load_screen()
     screen.apply_transform(screen_pose())            # sit on the leaned front face
@@ -390,7 +424,7 @@ def build():
     # camera in the top bezel bump, lens along the face normal
     cam = box(P["cam_w"], P["cam_d"], P["cam_h"]); _color(cam, "camera")
     cam.metadata["name"] = "camera_ref"
-    cam.apply_transform(screen_pose() @ _T(0, P["screen_d"] / 2 + 3, P["screen_h"] / 2 + 12))
+    cam.apply_transform(screen_pose() @ _T(0, P["screen_d"] / 2 + 1, P["screen_h"] / 2 + 3))
     add(cam, M_head)
 
     # thin axle through the tilt joint (visual)
@@ -399,7 +433,7 @@ def build():
     axle.apply_translation((0, 0, zt))
     add(axle, M_pan)
 
-    out = webpath("assembly.glb")
+    out = webpath(out_name)
     scene.export(out)
     print(f"wrote {out}  ({len(scene.geometry)} parts)")
     if EXPORT:
