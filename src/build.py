@@ -44,25 +44,22 @@ P = {
                       "Raspberry_Pi_Touch_Screen_Assembly_v12.stl",
     "screen_flip": True,    # glass faced -Y (into the head); 180 about X faces it +Y (front)
 
-    # --- Head shell: ALEXA / Echo-Show "doorstop" wedge (see reference/alexa-style-*) ---
-    # Rounded box body with the front face leaning back; the 7" screen mounts on that face.
+    # --- Head shell: SIMPLE rounded box (a clean tablet-head; screen upright on the front) ---
     "head_wall": 4.0,
     "head_w": 205.0,        # shell outer width (screen 193 + walls + margin)
-    "face_angle": 8.0,      # front face lean from vertical (deg); Echo-Show resting angle
-    "body_back_y": -35.0,   # back face plane (behind the tilt axis)
-    "body_front_bot_y": 52.0,   # front face, bottom edge (furthest forward)
-    "body_front_top_y": 34.0,   # front face, top edge (leaned back ~8deg to match face_angle)
+    "face_angle": 0.0,      # upright front face (the neck's tilt gives the look-up/down)
+    "body_front_y": 31.0,   # front face plane (glass sits flush here)
+    "body_back_y": -31.0,   # back face plane (behind the tilt axis; Pi bay)
     "body_z_bot": 113.0,    # shell bottom height above desk
-    "body_z_top": 243.0,    # shell top (front) height
-    "body_back_top_z": 224.0,   # crown flattened (less back-slope than v1)
-    "corner_r": 16.0,       # side-profile corner rounding (the friendly Echo-Show look)
+    "body_z_top": 243.0,    # shell top height
+    "corner_r": 16.0,       # rounded vertical edges (friendly, clean)
     "bezel_overlap": 3.5,   # front lip over the screen edge (retains the module)
     "screen_clear": 0.5,    # clearance around the module in its pocket
     "bezel_back": 4.0,      # split plane sits this far behind the screen back
 
     # --- Tilt joint: REAR CLEVIS entering the shell underside; axle near the CoM ---
     "tilt_axis_z": 178.0,   # tilt axis height above the desk (inside the box, near CoM)
-    "tilt_cantilever": 31.0,# screen face-center sits this far FORWARD (+Y) of the tilt axis
+    "tilt_cantilever": 18.5,# screen center FORWARD (+Y) of the tilt axis (glass flush w/ front)
     "pivot_boss_r": 10.0,   # head-side pivot boss radius (internal side walls)
     "pivot_bore_r": 3.1,    # M6 axle / servo horn bore
     "clevis_half": 22.0,    # neck cheek half-span (cheeks at +-22 in X)
@@ -201,28 +198,19 @@ def load_screen():
 # ---------------------------------------------------------------------------
 # Printed parts (built at neutral pose, in world coords)
 # ---------------------------------------------------------------------------
-def _wedge_solid(inset=0.0):
-    """The Echo-Show side profile (Y-Z), rounded, extruded across the width (X).
+def _head_solid(inset=0.0):
+    """Simple rounded box head: rounded vertical edges, flat top/bottom. World coords.
 
-    inset>0 shrinks the profile inward (for hollowing). Built in world coords.
+    inset>0 shrinks it inward (for hollowing to a uniform wall).
     """
     d = inset
-    pts = [
-        (P["body_back_y"] + d,      P["body_z_bot"] + d),   # back-bottom
-        (P["body_front_bot_y"] - d, P["body_z_bot"] + d),   # front-bottom
-        (P["body_front_top_y"] - d, P["body_z_top"] - d),   # front-top (leaned back)
-        (P["body_back_y"] + d,      P["body_back_top_z"] - d),  # back-top (shorter)
-    ]
-    r = max(P["corner_r"] - d, 1.0)
-    poly = sg.Polygon(pts).buffer(-r, join_style=1).buffer(r, join_style=1)
     w = P["head_w"] - 2 * d
-    solid = extrude_polygon(poly, w)          # poly in XY, extruded along +Z by w
-    # remap: local (X=our Y, Y=our Z, Z=our width) -> world (X=width, Y, Z)
-    M = np.array([[0, 0, 1, -w / 2],
-                  [1, 0, 0, 0],
-                  [0, 1, 0, 0],
-                  [0, 0, 0, 1]], dtype=float)
-    solid.apply_transform(M)
+    fy, by = P["body_front_y"] - d, P["body_back_y"] + d
+    r = max(P["corner_r"] - d, 1.0)
+    poly = sg.box(-w / 2, by, w / 2, fy).buffer(-r, join_style=1).buffer(r, join_style=1)
+    h = (P["body_z_top"] - P["body_z_bot"]) - 2 * d
+    solid = extrude_polygon(poly, h)          # XY footprint (width x depth), extruded +Z
+    solid.apply_translation((0, 0, P["body_z_bot"] + d))
     return solid
 
 
@@ -238,10 +226,10 @@ def screen_pose():
 def build_head_shell():
     """Alexa/Echo-Show wedge shell: rounded body, leaned front holding the 7" screen."""
     zt = P["tilt_axis_z"]
-    shell = _wedge_solid()
+    shell = _head_solid()
 
     # hollow it (leave uniform walls), opening kept via the back cavity below
-    inner = _wedge_solid(inset=P["head_wall"])
+    inner = _head_solid(inset=P["head_wall"])
     shell = sub(shell, inner)
 
     # stepped screen aperture: full-size POCKET behind (module drops in) + a smaller front
