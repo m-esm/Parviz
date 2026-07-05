@@ -29,7 +29,7 @@ from trimesh.transformations import rotation_matrix as R
 
 from stlpaths import webpath, stlp
 
-TAU = np.pi
+TAU = 2 * np.pi           # full turn (was wrongly set to pi; fixed in the screen-orientation pass)
 DEG = np.pi / 180.0
 
 # ---------------------------------------------------------------------------
@@ -62,7 +62,7 @@ P = {
 
     # --- Tilt joint: REAR CLEVIS entering the shell underside; axle near the CoM ---
     "tilt_axis_z": 178.0,   # tilt axis height above the desk (inside the box, near CoM)
-    "tilt_cantilever": 39.0,# screen face-center sits this far FORWARD (+Y) of the tilt axis
+    "tilt_cantilever": 31.0,# screen face-center sits this far FORWARD (+Y) of the tilt axis
     "pivot_boss_r": 10.0,   # head-side pivot boss radius (internal side walls)
     "pivot_bore_r": 3.1,    # M6 axle / servo horn bore
     "clevis_half": 22.0,    # neck cheek half-span (cheeks at +-22 in X)
@@ -143,9 +143,9 @@ def box(w, d, h):
 def cyl(r, h, axis="z", sections=64):
     m = trimesh.creation.cylinder(radius=r, height=h, sections=sections)
     if axis == "x":
-        m.apply_transform(R(TAU / 2, (0, 1, 0)))
+        m.apply_transform(R(TAU / 4, (0, 1, 0)))     # 90deg: Z-cyl -> X
     elif axis == "y":
-        m.apply_transform(R(TAU / 2, (1, 0, 0)))
+        m.apply_transform(R(TAU / 4, (1, 0, 0)))     # 90deg: Z-cyl -> Y
     return m
 
 
@@ -190,10 +190,10 @@ def uni(parts):
 def load_screen():
     m = trimesh.load(P["screen_ref_stl"], force="mesh")
     m.apply_translation(-m.bounding_box.centroid)   # center at origin
-    # STL axes already match ours (X=width, Y=depth, Z=height); 180 about X turns the
-    # glass to face +Y (out the front) without mirroring the width.
+    # STL axes already match ours (X=width, Y=depth, Z=height). A 180deg YAW (about Z) turns
+    # the glass to face +Y without laying the panel down or flipping top/bottom.
     if P["screen_flip"]:
-        m.apply_transform(R(TAU / 2, (1, 0, 0)))
+        m.apply_transform(R(TAU / 2, (0, 0, 1)))
     _color(m, "screen")
     return m
 
@@ -483,7 +483,7 @@ def build_base():
     body = sub(body, cable)
     # future-wheels bolt circle through the bottom flange
     for i in range(P["base_bolt_n"]):
-        a = i * (2 * TAU / P["base_bolt_n"]) + TAU / 8
+        a = i * (TAU / P["base_bolt_n"]) + TAU / 8
         x = np.cos(a) * P["base_bolt_circle"] / 2
         y = np.sin(a) * P["base_bolt_circle"] / 2
         hole = cyl(P["base_bolt_r"], P["base_h"] + 10)
