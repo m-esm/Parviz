@@ -137,12 +137,22 @@ tip when accelerating or with the head panned out.
 
 - All 6 printed parts (`base`, `neck_clevis`, `pan_platform`, `head_bezel`, `head_back`) are
   watertight solids. (`head_shell` is the pre-split intermediate, not printed directly.)
-- **Done:** head split into bezel + back with a screen-retention lip; hollow base + cavity.
-- **NOT yet done (tracked as remaining todos):** screw bosses / heat-set inserts (bezel↔back, base
-  lid, Pi, both motors, screen standoffs); self-supporting chamfers on the rear/slot openings +
-  teardrop/bushing axle bores; real 28BYJ-48 motor pockets + offset-shaft couplings; ULN2003 driver
-  mounts; Pi ports + ventilation; pan-joint slip ring.
-- Per-part orientation: bezel face-down, back open-side-down, neck on its back, base flange-down.
+- **Fastening = M3 screws into CAPTIVE HEX NUTS** (user choice). `nut_trap`/`screw_post` helpers.
+  - bezel↔back: 6 perimeter posts, nut captive in the back boss, screw from the front.
+  - neck↔pan_platform: 3× M3 (pilots in the neck base, clearance in the platform).
+  - Pi 5: 4× M2.5 standoffs on the back cover (58×49 pattern).
+  - 28BYJ-48: tilt motor on a cheek mount plate (shaft hole + 2 ear holes); pan motor on a floor
+    pad in the base (2 ears, shaft up the pan bore).
+- **Hubs:** Ø8 bushing counterbores at each head side wall (press-fit bushings; PLA isn't the
+  running surface, and it dodges the horizontal-bore droop problem).
+- **Electronics fittings:** base has a pan-motor pad + ULN2003 standoffs + a USB-C wall slot +
+  8 vent slots; head back cover has a Pi I/O slot + ventilation louvres + the cable port.
+- **Per-part print orientation:** bezel face-down (aperture opens up, best cosmetic face), back
+  open-side-down, neck on its back, base flange-down.
+- **Still a refinement:** explicit 45° self-supporting chamfers on the largest back openings
+  (I/O slot ~64mm), the offset-shaft coupler part, a second ULN mount for the tilt driver, and the
+  pan-joint slip ring (a purchased capsule — model its seat once you buy one). Screen standoffs wait
+  on measuring the display's real mount holes from the reference STEP.
 
 ## Layout
 

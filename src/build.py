@@ -42,7 +42,7 @@ P = {
     "screen_h": 110.8,      # height (Z)
     "screen_ref_stl": "reference/rpi-7in-touchscreen-model/files/"
                       "Raspberry_Pi_Touch_Screen_Assembly_v12.stl",
-    "screen_flip": False,   # flip 180 about Z if glass ends up facing -Y (verify by render)
+    "screen_flip": True,    # glass faced -Y (into the head); 180 about X faces it +Y (front)
 
     # --- Head shell: ALEXA / Echo-Show "doorstop" wedge (see reference/alexa-style-*) ---
     # Rounded box body with the front face leaning back; the 7" screen mounts on that face.
@@ -98,6 +98,16 @@ P = {
     # --- Reference electronics (visual, for fit) ---
     "cam_w": 25.0, "cam_h": 24.0, "cam_d": 12.0,   # Camera Module 3 board
     "pi_w": 85.0, "pi_h": 56.0, "pi_t": 18.0,      # Raspberry Pi 5 board footprint
+    "pi_hole_dx": 58.0, "pi_hole_dy": 49.0,        # Pi 5 mount-hole pattern (M2.5)
+    "pi_y_in_head": -16.0,  # Pi board-center Y in the head (behind the tilt axis, standoff room)
+
+    # --- Fastening: M3 screws into CAPTIVE HEX NUTS (user choice) ---
+    "m3_clear_r": 1.75,     # M3 screw clearance
+    "m3_nut_af": 5.7,       # M3 hex nut across-flats (+ clearance)
+    "m3_nut_h": 2.8,        # nut pocket depth
+    "boss_r": 4.3,          # screw boss outer radius
+    "m25_clear_r": 1.45,    # M2.5 clearance (Pi standoffs)
+    "uln_w": 35.0, "uln_h": 32.0,   # ULN2003 driver board footprint
 
     # --- Preview pose (view only; does NOT change printed geometry) ---
     "preview_pan_deg": 22.0,
@@ -145,6 +155,27 @@ def rounded_box(w, d, h, r):
     return extrude_polygon(poly, h)          # in XY, extruded z=0..h
 
 
+def hex_prism(af, h):
+    """Hexagonal prism (for a captive-nut pocket), axis +Z, across-flats = af."""
+    return trimesh.creation.cylinder(radius=af / np.sqrt(3), height=h, sections=6)
+
+
+def _orient(m, normal):
+    """Rotate a +Z-aligned mesh so +Z points along `normal`."""
+    n = np.asarray(normal, float); n /= np.linalg.norm(n)
+    z = np.array([0, 0, 1.0]); v = np.cross(z, n); s = np.linalg.norm(v)
+    if s > 1e-6:
+        m.apply_transform(R(np.arctan2(s, np.dot(z, n)), v / s))
+    return m
+
+
+def screw_post(pos, normal, depth):
+    """A cylindrical boss starting at `pos`, extending `depth` along `normal`."""
+    m = cyl(P["boss_r"], depth); m.apply_translation((0, 0, depth / 2))
+    _orient(m, normal); m.apply_translation(pos)
+    return m
+
+
 def sub(a, b):
     return trimesh.boolean.difference([a, b], engine="manifold")
 
@@ -159,9 +190,10 @@ def uni(parts):
 def load_screen():
     m = trimesh.load(P["screen_ref_stl"], force="mesh")
     m.apply_translation(-m.bounding_box.centroid)   # center at origin
-    # STL axes already match ours (X=width, Y=depth, Z=height); optional 180 flip in Z.
+    # STL axes already match ours (X=width, Y=depth, Z=height); 180 about X turns the
+    # glass to face +Y (out the front) without mirroring the width.
     if P["screen_flip"]:
-        m.apply_transform(R(TAU / 2, (0, 0, 1)))
+        m.apply_transform(R(TAU / 2, (1, 0, 0)))
     _color(m, "screen")
     return m
 
@@ -227,6 +259,16 @@ def build_head_shell():
     cable_port.apply_translation((0, P["body_back_y"], P["body_z_bot"] + 42))
     shell = sub(shell, cable_port)
 
+    # Pi I/O access slot in the back wall (USB-C / HDMI / USB along the Pi's bottom edge)
+    io = box(64, 30.0, 16.0)
+    io.apply_translation((0, P["body_back_y"], zt - P["pi_h"] / 2 + 6))
+    shell = sub(shell, io)
+    # ventilation louvres high on the back wall (Pi 5 runs hot)
+    for i in range(-2, 3):
+        louvre = box(50, 30.0, 4.0)
+        louvre.apply_translation((0, P["body_back_y"], zt + 18 + i * 8))
+        shell = sub(shell, louvre)
+
     # bottom-rear slot so the neck clevis can rise into the body and reach the axle
     slot = box(2 * (P["clevis_half"] + P["cheek_t"]) + 12, 60.0, 90.0)
     slot.apply_translation((0, P["body_back_y"] + 22, P["body_z_bot"] + 22))
@@ -244,6 +286,11 @@ def build_head_shell():
     axle_bore = cyl(P["pivot_bore_r"], P["head_w"] + 10, axis="x")
     axle_bore.apply_translation((0, 0, zt))
     shell = sub(shell, axle_bore)
+    # bushing counterbore at each hub (press-fit Ø8 bushing so PLA isn't the running surface)
+    for sx in (-1, 1):
+        cb = cyl(4.0, 6.0, axis="x")
+        cb.apply_translation((sx * (P["head_w"] / 2 - 3), 0, zt))
+        shell = sub(shell, cb)
 
     # camera bump: small nub on the top bezel with a lens through-hole (board pocket behind)
     cam_boss = box(30, 14, 20)
@@ -269,14 +316,52 @@ def _split_origin():
     return c - (P["screen_d"] / 2 + P["bezel_back"]) * _face_normal()
 
 
+def _bezel_boss_points():
+    """Perimeter fixing points, in the screen-local frame, on the split plane."""
+    hw, hh = P["screen_w"] / 2 + 6, P["screen_h"] / 2 + 5
+    ys = -(P["screen_d"] / 2 + P["bezel_back"])   # split plane in screen-local Y
+    return [(0, ys, hh), (0, ys, -hh),
+            (-hw, ys, hh * 0.45), (hw, ys, hh * 0.45),
+            (-hw, ys, -hh * 0.55), (hw, ys, -hh * 0.55)]
+
+
 def build_head_parts():
     """Split the wedge into a FRONT bezel (holds + retains the screen, camera nub) and a
-    BACK cover (pivot hubs, neck slot, Pi bay, cable port). They bolt together."""
+    BACK cover (pivot hubs, neck slot, Pi bay, cable port). M3 screws from the front thread
+    into captive hex nuts in the back-cover bosses."""
     from trimesh.intersections import slice_mesh_plane
     full = build_head_shell()
     n, o = _face_normal(), _split_origin()
     bezel = slice_mesh_plane(full, plane_normal=n, plane_origin=o, cap=True)
     back = slice_mesh_plane(full, plane_normal=-n, plane_origin=o, cap=True)
+
+    # bezel<->back fixing: a boss each side of the split; screw along the face normal; the nut
+    # is captive in the back boss, the bezel boss is just clearance.
+    sp = screen_pose()
+    for lp in _bezel_boss_points():
+        w = (sp @ np.append(lp, 1.0))[:3]
+        back = uni([back, screw_post(w, -n, 15)])
+        bezel = uni([bezel, screw_post(w, n, 11)])
+        clr = _orient(cyl(P["m3_clear_r"], 70), n); clr.apply_translation(w)
+        bezel = sub(bezel, clr.copy()); back = sub(back, clr.copy())
+        nut = hex_prism(P["m3_nut_af"] + 0.3, P["m3_nut_h"])
+        nut.apply_translation((0, 0, -6))                # sunk a little inside the back boss
+        _orient(nut, n); nut.apply_translation(w)
+        back = sub(back, nut)
+
+    # Pi 5 standoffs on the back cover (M2.5), at the 58x49 hole pattern, behind the tilt axis
+    zt = P["tilt_axis_z"]
+    wall_y = P["body_back_y"] + P["head_wall"]
+    board_y = P["pi_y_in_head"] - P["pi_t"] / 2         # board back face
+    for sx in (-1, 1):
+        for sz in (-1, 1):
+            px, pz = sx * P["pi_hole_dx"] / 2, zt + sz * P["pi_hole_dy"] / 2
+            so = cyl(3.2, board_y - wall_y, axis="y")
+            so.apply_translation((px, (wall_y + board_y) / 2, pz))
+            back = uni([back, so])
+            pilot = cyl(P["m25_clear_r"], 20, axis="y"); pilot.apply_translation((px, board_y, pz))
+            back = sub(back, pilot)
+
     _color(bezel, "cradle"); bezel.metadata["name"] = "head_bezel"
     _color(back, "back"); back.metadata["name"] = "head_back"
     return bezel, back
@@ -309,14 +394,32 @@ def build_neck_clevis():
         cheek.apply_translation(mid)
         parts.append(cheek)
 
+    # tilt-motor mount plate on the +X cheek (28BYJ-48: shaft-through + 2 ears at 35mm)
+    plate = box(4.0, 44.0, 44.0)
+    plate.apply_translation((P["clevis_half"] + P["cheek_t"] / 2 + 2, 0, zt))
+    parts.append(plate)
+
     neck = uni(parts)
     bore = cyl(P["pivot_bore_r"] + 0.4, 2 * P["clevis_half"] + 4 * P["cheek_t"], axis="x")
     bore.apply_translation((0, 0, zt))
     neck = sub(neck, bore)
+    # tilt-motor shaft clearance + 2 M3 ear holes through the mount plate
+    px = P["clevis_half"] + P["cheek_t"] / 2 + 2
+    shaft_hole = cyl(4.0, 30, axis="x"); shaft_hole.apply_translation((px, 0, zt))
+    neck = sub(neck, shaft_hole)
+    for dz in (-17.5, 17.5):
+        ear = cyl(P["m3_clear_r"], 30, axis="x"); ear.apply_translation((px, 0, zt + dz))
+        neck = sub(neck, ear)
     # vertical cable channel down the column (cables drop from the hollow axle into the base)
     chan = cyl(6.0, P["neck_top_z"] - z0 + 30)
     chan.apply_translation((0, ny, (z0 + P["neck_top_z"]) / 2))
     neck = sub(neck, chan)
+    # 3 M3 pilots in the column base to bolt the neck down to the pan platform
+    for a in (90, 210, 330):
+        rad = 16.0
+        hx = rad * np.cos(np.radians(a)); hy = ny + rad * np.sin(np.radians(a))
+        pilot = cyl(P["m3_clear_r"], 24); pilot.apply_translation((hx, hy, z0 + 10))
+        neck = sub(neck, pilot)
     _color(neck, "neck")
     neck.metadata["name"] = "neck_clevis"
     return neck
@@ -337,6 +440,12 @@ def build_pan_platform():
     cable = cyl(6.0, 40.0)                    # off-axis cable pass (aligns with neck channel)
     cable.apply_translation((0, P["neck_y"], zc))
     plate = sub(plate, cable)
+    # 3 M3 clearance holes to bolt the neck down (match neck-base pilots)
+    for a in (90, 210, 330):
+        rad = 16.0
+        hx = rad * np.cos(np.radians(a)); hy = P["neck_y"] + rad * np.sin(np.radians(a))
+        h = cyl(P["m3_clear_r"], 40.0); h.apply_translation((hx, hy, zc))
+        plate = sub(plate, h)
     _color(plate, "pan")
     plate.metadata["name"] = "pan_platform"
     return plate
@@ -380,6 +489,29 @@ def build_base():
         hole = cyl(P["base_bolt_r"], P["base_h"] + 10)
         hole.apply_translation((x, y, 0))
         body = sub(body, hole)
+
+    # ---- interior fittings + ports (union bosses, then cut holes/slots) ----
+    adds = []
+    mx = -P["motor_shaft_off"]                       # motor pad centred so its shaft = pan axis
+    pad = box(46, 12, 6); pad.apply_translation((mx, 0, floor + 3)); adds.append(pad)
+    for sx in (-1, 1):                               # ULN2003 pan-driver standoffs
+        for sy in (-1, 1):
+            b = cyl(3.0, 8); b.apply_translation((40 + sx * P["uln_w"] / 2, sy * P["uln_h"] / 2, floor))
+            adds.append(b)
+    body = uni([body] + adds)
+
+    for dy in (-17.5, 17.5):                          # 28BYJ-48 ear pilots in the motor pad
+        e = cyl(P["m3_clear_r"], 20); e.apply_translation((mx, dy, floor + 3))
+        body = sub(body, e)
+    usb = box(14, 30, 8)                              # USB-C power entry in the wall
+    usb.apply_translation((0, -P["base_top_d"] / 2 - 4, floor + 14))
+    body = sub(body, usb)
+    for i in range(8):                               # ventilation slots around the lower wall
+        a = i * TAU / 8
+        v = box(4, 18, 16); v.apply_transform(R(a, (0, 0, 1)))
+        rr = P["base_d"] / 2 - 8
+        v.apply_translation((np.cos(a) * rr, np.sin(a) * rr, floor + 12))
+        body = sub(body, v)
     _color(body, "base")
     body.metadata["name"] = "base"
     return body
@@ -450,7 +582,7 @@ def build():
     # Pi 5 in the HEAD, behind the tilt axis: the DSI + CSI ribbons then stay entirely in the head
     # (zero joint crossings), and the board doubles as the tilt counterweight. Board plane = XZ.
     pi = box(P["pi_w"], P["pi_t"], P["pi_h"]); _color(pi, "pi"); pi.metadata["name"] = "pi5"
-    pi.apply_translation((0, P["body_back_y"] + P["pi_t"] / 2 + 6, zt))
+    pi.apply_translation((0, P["pi_y_in_head"], zt))
     add(pi, M_head)
 
     # pan motor: 28BYJ-48 upright in the base, offset so its shaft lands on the pan axis

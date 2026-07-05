@@ -27,8 +27,10 @@
   <div id="bbox" style="opacity:.7;margin-top:3px"></div>
   <div id="parts"></div>
   <hr>
-  <label><input type="checkbox" id="t_solid"> &nbsp;solid (vs ghost-outline)</label>
-  <label><input type="checkbox" id="t_dims"> &nbsp;dimensions (per part, L/W/H)</label>
+  <label>transparency <input type="range" id="opacity" min="0" max="0.92" step="0.02" value="0"></label>
+  <hr>
+  <label><input type="checkbox" id="t_bbox"> &nbsp;overall size (L/W/H)</label>
+  <label><input type="checkbox" id="t_dims"> &nbsp;per-part size (L/W/H)</label>
   <div id="legend">
     <span style="color:#ff8f8f">L = length (X)</span> ·
     <span style="color:#86e29a">W = width (Y)</span> ·
@@ -105,6 +107,7 @@ function tick(p,ax,len,color){const a=p.clone(),b=p.clone();a[ax]-=len/2;b[ax]+=
 function dlabel(t,css){const d=document.createElement('div');d.className='dlabel';d.textContent=t;d.style.color=css;d.style.borderColor=css+'66';return new CSS2DObject(d);}
 
 const groups = {};      // name -> {meshes:[], ghost, home:Vector3[], dim:Group, dimHome:Vector3, explodeDir:Vector3}
+let overallDim = null;  // whole-assembly L/W/H indicator (built after load)
 const dimsRoot = new THREE.Group(); scene.add(dimsRoot);
 let bbox = new THREE.Box3(), center = new THREE.Vector3(), diag = 1;
 
@@ -177,32 +180,68 @@ new GLTFLoader().load(MODEL, (gltf)=>{
     });
     host.appendChild(lab);
   }
+
+  // overall-assembly dimension indicator (whole-model L/W/H + a wireframe size box)
+  {
+    const mn=bbox.min, mx=bbox.max, s=bbox.getSize(new THREE.Vector3()), c=center;
+    const o=Math.max(12,diag*0.03), D=new THREE.Group();
+    D.add(line(new THREE.Vector3(mn.x,mn.y-o,mn.z), new THREE.Vector3(mx.x,mn.y-o,mn.z), COLX));
+    D.add(tick(new THREE.Vector3(mn.x,mn.y-o,mn.z),'y',o,COLX)); D.add(tick(new THREE.Vector3(mx.x,mn.y-o,mn.z),'y',o,COLX));
+    let L=dlabel('L '+s.x.toFixed(0),TXT.x); L.position.set(c.x,mn.y-o,mn.z); D.add(L);
+    D.add(line(new THREE.Vector3(mx.x+o,mn.y,mn.z), new THREE.Vector3(mx.x+o,mx.y,mn.z), COLY));
+    D.add(tick(new THREE.Vector3(mx.x+o,mn.y,mn.z),'x',o,COLY)); D.add(tick(new THREE.Vector3(mx.x+o,mx.y,mn.z),'x',o,COLY));
+    let W=dlabel('W '+s.y.toFixed(0),TXT.y); W.position.set(mx.x+o,c.y,mn.z); D.add(W);
+    D.add(line(new THREE.Vector3(mx.x+o,mn.y-o,mn.z), new THREE.Vector3(mx.x+o,mn.y-o,mx.z), COLZ));
+    D.add(tick(new THREE.Vector3(mx.x+o,mn.y-o,mn.z),'x',o,COLZ)); D.add(tick(new THREE.Vector3(mx.x+o,mn.y-o,mx.z),'x',o,COLZ));
+    let H=dlabel('H '+s.z.toFixed(0),TXT.z); H.position.set(mx.x+o,mn.y-o,c.z); D.add(H);
+    const bh=new THREE.Box3Helper(bbox.clone(),0xffffff); bh.material.transparent=true; bh.material.opacity=0.22; D.add(bh);
+    D.visible=false; D.labels=[L,W,H]; overallDim=D; scene.add(D);
+  }
+
   applyDims();
   window.__ready = true;
 }, undefined, err=>{ document.getElementById('bbox').textContent='LOAD ERROR: '+err; });
 
 const $=id=>document.getElementById(id);
 
-$('t_solid').addEventListener('change',e=>{
-  const s=e.target.checked;
-  Object.values(groups).filter(g=>g.ghost).forEach(g=>g.meshes.forEach(o=>{
-    o.material.opacity=s?.95:.12; o.material.depthWrite=s;
-    if(o.userData.edge) o.userData.edge.material.opacity=s?.2:.6;
+// global transparency: 0 = fully solid, up to 0.92 = see-through ghost.
+// Acts on EVERY part (the old solid/ghost toggle only touched name-matched "housing"
+// parts, of which this model has none, so it did nothing).
+$('opacity').addEventListener('input',e=>{
+  const t=parseFloat(e.target.value);
+  const solid = t<=0.001;
+  Object.values(groups).forEach(g=>g.meshes.forEach(o=>{
+    o.material.transparent = !solid;
+    o.material.opacity = 1 - t;
+    o.material.depthWrite = solid;               // depthWrite off while translucent -> clean overlap
+    if(o.userData.edge){ o.userData.edge.material.transparent = true;
+      o.userData.edge.material.opacity = solid ? 0.6 : Math.max(0.3, 1 - t); }
   }));
 });
 
-// dimensions toggle
+function updateLegend(){
+  $('legend').style.display = ($('t_dims').checked || $('t_bbox').checked) ? '' : 'none';
+}
+// per-part dimensions toggle
 function applyDims(){
   const on = $('t_dims').checked;
-  $('legend').style.display = on ? '' : 'none';
   Object.values(groups).forEach(g=>{
     if(!g.dim) return;
     const vis = on && g.meshes.some(o=>o.visible);
     g.dim.visible = vis;
     g.labels.forEach(l=>{ l.visible=vis; l.element.style.display = vis ? '' : 'none'; });
   });
+  updateLegend();
 }
 $('t_dims').addEventListener('change',applyDims);
+// overall-assembly size box toggle
+$('t_bbox').addEventListener('change',e=>{
+  if(!overallDim) return;
+  const on = e.target.checked;
+  overallDim.visible = on;
+  overallDim.labels.forEach(l=>{ l.visible=on; l.element.style.display = on ? '' : 'none'; });
+  updateLegend();
+});
 
 // explode: push each group along its radial direction from the assembly center
 $('explode').addEventListener('input',e=>{
