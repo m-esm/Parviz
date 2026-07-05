@@ -1,17 +1,18 @@
-# desk-pi — desktop humanoid robot (Raspberry Pi head)
+# desk-pi — tracked desk robot (Raspberry Pi head)
 
-A small desk robot: a **Raspberry Pi 5** driving the **official 7" touchscreen** as an
-animated face, with a **Camera Module 3** as an eye, mounted on a **neck that turns the
-head on two axes** (pan = look left/right, tilt = nod up/down). Sits on a fixed base.
+A small **tank-tracked mobile robot**: a **Raspberry Pi 5** driving the **official 7" touchscreen**
+as an animated face, with a **Camera Module 3** as an eye, on a **neck that pans + tilts** the head,
+sitting on a **two-track tank chassis** so it can drive around the desk.
 
-Scope right now: **neck + head only**, two-axis motion. **A wheeled base comes later** — the
-base bottom is already a bolt flange for that (see below). No arms, no torso.
+The head is a **clean rounded box** (a tablet-head; earlier it was an Echo-Show wedge, since
+simplified). Screen upright on the front, neck tilt gives the look up/down.
 
-Status: **REVISED ASSEMBLY (post multi-agent review).** `src/build.py` builds the pan/tilt assembly
-around the measured 7" screen STL; 6 watertight per-part STLs. A 4-lens agent review (mechanics /
-aesthetics / printability / electronics) drove a round of fixes: the tilt-axle Z bug, a cone base,
-a rounded neck, an 8° face, the Pi moved into the head, the head split into bezel+back with screen
-retention, and a cable path. Remaining detailing (bosses, motor pockets, vents, slip ring) is
+Status: **REVISED ASSEMBLY (post multi-agent review + reshape).** `src/build.py` builds the whole
+robot around the measured 7" screen STL; 7 watertight per-part STLs (chassis, track_L, track_R,
+neck_clevis, pan_platform, head_bezel, head_back). A 4-lens agent review drove fixes (tilt-axle Z
+bug, proportions, Pi-in-head, printable head split, fastening, cable path); then the head was
+simplified to a box, the LCD orientation bug fixed (see TAU gotcha), and the base swapped for tank
+treads. Remaining detailing (IO chamfer, motor coupler, slip ring) is
 tracked in the todo list. Motors are 28BYJ-48 placeholders.
 
 ## The build loop (do this on every geometry change)
@@ -30,17 +31,19 @@ the **bare** name `assembly.glb`, not `web/assembly.glb`.
 
 ## Mechanical intent
 
-World frame: **Z up, robot looks toward +Y** (glass + camera face +Y, away from the neck).
-Origin = center of the desk contact plane (later: top of the wheeled chassis).
+World frame: **Z up, robot drives + looks toward +Y** (glass + camera + track travel all +Y).
+Origin = center of the ground contact plane. `base_h = 52` is the chassis-top / pan-mount plane.
 
 Kinematic chain, bottom to top (built at neutral pose pan=0, tilt=0):
 
 ```
-base (hollow cone)  fixed; houses pan motor + wiring. Bottom = future-wheels bolt flange.
-  └─ PAN joint      yaw about vertical Z  (±90° target), driven by motor_pan
+tank chassis        DRIVE base: central body (build_base) + track_L/track_R (build_tracks).
+  │                 Body houses the pan motor + driver + wiring; pan-mount on top (z=52).
+  │                 Tracks = stadium belt loops (drive+idler wheels), belt to ground, run along Y.
+  └─ PAN joint      yaw about vertical Z  (±90° target), driven by motor_pan   ── the "turret"
       └─ pan_platform + neck_clevis   rotate as one
           └─ TILT joint   pitch about horizontal X  (±30° target), driven by motor_tilt
-              └─ head = head_bezel + head_back (Echo-Show wedge) + screen + camera + Pi 5
+              └─ head = head_bezel + head_back (rounded box) + screen + camera + Pi 5
 ```
 
 - **Pan** carries the whole neck + head. **Tilt** carries only the head. Tilt is a child of pan,
@@ -73,16 +76,14 @@ base (hollow cone)  fixed; houses pan motor + wiring. Bottom = future-wheels bol
 - `head_back` (rear): pivot hubs, neck slot, Pi bay, cable port. Print open-side-down.
 Screen drops into the pocket from behind; bezel bolts to back. Fastening bosses NOT yet modeled.
 
-## Head style: Alexa / Echo-Show wedge (per user)
+## Head style: simple rounded box (simplified from the Echo-Show wedge, per user)
 
-The head shell copies the **Echo-Show "doorstop" wedge** from
-`reference/alexa-style-smart-display/` (a Touch Display 2 design — NOT hole-compatible with our
-original 7" screen, we only borrow the *style*). Rounded body, front face leaned back ~11°, screen
-recessed in the front aperture, slim bezels, camera nub at the top. That reference body is
-191×110×122mm — almost identical to our 7" module (193×110.8), so the style and scale transfer
-directly. Built parametrically in `build_head_shell()` (extruded rounded side-profile), then split
-by `build_head_parts()`. Lean angle (now **8°**, softened from 11°), rounding, and proportions are
-`PARAMS` knobs. The base is a **truncated cone** matching the friendly language.
+The head is now a **clean rounded box** (`_head_solid`: rounded-rect footprint 205w × 62d, flat
+top/bottom, rounded vertical edges, upright front `face_angle=0`). The screen sits upright and flush
+on the front; the neck's tilt provides the look up/down. It started as an Echo-Show "doorstop" wedge
+(reference in `reference/alexa-style-smart-display/`, a Touch Display 2 design we borrowed the style
+from) but the user asked to simplify the head shape. Still split by `build_head_parts()` into
+`head_bezel` (front, screen-retaining lip, camera nub) + `head_back` (Pi bay, hubs, vents).
 
 ## Key numbers (measured, not guessed)
 
@@ -126,17 +127,23 @@ swing a 193mm screen head. So `motor_pan` / `motor_tilt` placeholders are now **
 For the future wheels: TT 1:120 gear motor + 130-size DC motors (×10) + MX1588 / ULN2003 drivers are
 already in inventory.
 
-## Wheels later (base is ready for it)
+## Tank chassis (the mobile base)
 
-The base bottom is a **flat flange with an M4 bolt circle (Ø170, 4 holes)** so the whole robot can
-later bolt onto a wheeled chassis. The neck↔base plane at z=0 is the swap plane. Since the Pi now
-rides the head, **ballast the base** (heavy plate / battery low) for the mobile version so it doesn't
-tip when accelerating or with the head panned out.
+Two-track tank base so it can drive. `build_base()` is the central **body** (rounded box, houses the
+pan motor + ULN driver + wiring, pan platform on top at z=52). `build_tracks()` makes two **track
+pods** — stadium belt loops (a shapely capsule = drive + idler wheel wrapped by the belt), belt
+touching ground, running along Y (forward). Hub caps on the outer face read as the wheels.
+
+Params: `chassis_w/l`, `track_r`, `track_wheelbase`, `track_width`, `track_gap`, `chassis_clear`.
+NOT yet designed: the drive-motor mounts for the tracks (each track needs its own motor — the pan/
+tilt 28BYJ steppers are separate), the belt as a real printed/TPU loop vs a rigid ring, road wheels
+inside the loop, and how the body bolts to the pods. Since the Pi rides the head (higher CoM), keep
+the chassis heavy/low and the wheelbase long enough not to tip when it accelerates or pans the head.
 
 ## Print notes (first pass — not finalized)
 
-- All 6 printed parts (`base`, `neck_clevis`, `pan_platform`, `head_bezel`, `head_back`) are
-  watertight solids. (`head_shell` is the pre-split intermediate, not printed directly.)
+- 7 printed parts (`chassis`, `track_L`, `track_R`, `neck_clevis`, `pan_platform`, `head_bezel`,
+  `head_back`) are watertight solids. (`head_shell`/`_head_solid` are pre-split intermediates.)
 - **Fastening = M3 screws into CAPTIVE HEX NUTS** (user choice). `nut_trap`/`screw_post` helpers.
   - bezel↔back: 6 perimeter posts, nut captive in the back boss, screw from the front.
   - neck↔pan_platform: 3× M3 (pilots in the neck base, clearance in the platform).
@@ -157,8 +164,8 @@ tip when accelerating or with the head panned out.
 ## Layout
 
 ```
-src/build.py     source of truth. PARAMS block at top; builds base/pan/neck/head + refs into a GLB.
-src/stlpaths.py  routes stlp("head_shell.stl") -> stl/head/... ; subsystems: base / neck / head
+src/build.py     source of truth. PARAMS block at top; builds chassis/tracks/pan/neck/head into a GLB.
+src/stlpaths.py  routes stlp("track_L.stl") -> stl/base/... ; subsystems: base / neck / head
 src/serve.py     localhost viewer server (serves web/ at root)
 src/shoot.py     headless multi-angle renders -> .claude/renders/
 web/             viewer_glb.html + assembly.glb (committed so a fresh clone shows the assembly)
@@ -170,8 +177,15 @@ docs/ASSEMBLY.md BOM + assembly order
 
 ## Gotchas
 
+- **`TAU` in build.py is `2*np.pi` (a full turn).** It was once wrongly set to `np.pi`, which made
+  `R(TAU/2)` a 90° rotation — that silently laid the LCD on its back (the "screen position wrong"
+  bug) and half-rotated the tilt motor and vents. If you touch `TAU`, keep it `2π` and remember
+  `cyl(axis="x"/"y")` relies on `R(TAU/4)` = 90°.
+- The screen STL loads as X=width, Y=depth, Z=height (correct, upright). `screen_flip=True` applies a
+  180° YAW (about Z) to face the glass +Y. `screen_pose()` = optional face lean + translate to the
+  front face; `tilt_cantilever` sets how far forward (keep glass ~flush with `body_front_y`).
 - `python3` here is **3.9**; `build123d` needs ≥3.10. This uses the **trimesh + shapely + manifold**
-  path (works on 3.9). Move to build123d in a venv when we want native fillets/chamfers on the shell.
+  path (works on 3.9). Move to build123d in a venv when we want native fillets/chamfers.
 - serve.py serves `web/` at root: the model URL is `/assembly.glb`. Passing `web/assembly.glb` to
   shoot.py 404s.
 - The viewer **ghosts** housing-like parts by name (anything with shell/body/housing/case/lid) —

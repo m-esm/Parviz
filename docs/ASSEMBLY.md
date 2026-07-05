@@ -13,8 +13,9 @@ Fill in as parts get designed. For now this records the intended BOM and stack o
 - Tilt servo — TBD
 - Slew bearing / bushing for pan — TBD
 
-### Printed parts (watertight; head is split for the screen)
-- `base` — hollow truncated cone (Ø208→Ø156), pan motor cavity, bottom = future-wheels M4 flange
+### Printed parts (watertight; tank base + split head)
+- `chassis` — tank body between the tracks; pan motor cavity + pan-mount on top
+- `track_L` / `track_R` — tank track pods (stadium belt loops + hub caps)
 - `pan_platform` — disc that yaws on the base (central shaft bore + off-axis cable pass)
 - `neck_clevis` — rounded column + two cheeks that rise into the head and drive the tilt axle;
   vertical cable channel
