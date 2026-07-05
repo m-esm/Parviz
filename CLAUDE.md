@@ -7,10 +7,12 @@ head on two axes** (pan = look left/right, tilt = nod up/down). Sits on a fixed 
 Scope right now: **neck + head only**, two-axis motion. **A wheeled base comes later** — the
 base bottom is already a bolt flange for that (see below). No arms, no torso.
 
-Status: **FIRST FUNCTIONAL ASSEMBLY.** `src/build.py` builds the real pan/tilt assembly around
-the measured 7" screen STL and exports watertight per-part STLs. Geometry is a first pass:
-masses, joints, and fit are right; screw bosses, cable routing, and print splits are not detailed
-yet. Motors are placeholders (see below).
+Status: **REVISED ASSEMBLY (post multi-agent review).** `src/build.py` builds the pan/tilt assembly
+around the measured 7" screen STL; 6 watertight per-part STLs. A 4-lens agent review (mechanics /
+aesthetics / printability / electronics) drove a round of fixes: the tilt-axle Z bug, a cone base,
+a rounded neck, an 8° face, the Pi moved into the head, the head split into bezel+back with screen
+retention, and a cable path. Remaining detailing (bosses, motor pockets, vents, slip ring) is
+tracked in the todo list. Motors are 28BYJ-48 placeholders.
 
 ## The build loop (do this on every geometry change)
 
@@ -34,25 +36,42 @@ Origin = center of the desk contact plane (later: top of the wheeled chassis).
 Kinematic chain, bottom to top (built at neutral pose pan=0, tilt=0):
 
 ```
-base                fixed; houses pan motor + slew bearing + the Pi 5. Bottom = wheels flange.
+base (hollow cone)  fixed; houses pan motor + wiring. Bottom = future-wheels bolt flange.
   └─ PAN joint      yaw about vertical Z  (±90° target), driven by motor_pan
       └─ pan_platform + neck_clevis   rotate as one
           └─ TILT joint   pitch about horizontal X  (±30° target), driven by motor_tilt
-              └─ head_shell (Echo-Show wedge) + screen + camera   (the head)
+              └─ head = head_bezel + head_back (Echo-Show wedge) + screen + camera + Pi 5
 ```
 
 - **Pan** carries the whole neck + head. **Tilt** carries only the head. Tilt is a child of pan,
   so a pan move swings the tilt axis with it (correct for a neck).
 - **Tilt is a REAR CLEVIS, not a side gimbal.** The head is a deep box, so the tilt axle passes
-  *inside* it (z=178, near the CoM). The head grips the axle at hubs on its two side walls (wide,
-  stable bearings); the narrow neck clevis (cheeks at x=±22) rises up through a slot in the head's
-  bottom-rear and drives the axle in the middle. Result: narrow neck, small cantilever (~39mm),
-  small gravity torque. This is why the neck can stay slim and later sit on a wheeled base.
-- **Camera rides the head** in the top bezel bump, lens on the face normal, so it looks where the
+  *inside* it (z=178, near the CoM). The head grips the axle at hubs on its two side walls; the
+  narrow neck clevis (cheeks at x=±22) rises through a slot in the head's bottom-rear and drives the
+  axle in the middle. Narrow neck, small cantilever (~39mm). The Z of the clevis MUST match the axle
+  (z=178) — an earlier bug lifted the clevis 46mm and it punched through the head; don't reintroduce
+  a second lift (build everything in world Z).
+- **Camera rides the head** in the top bezel nub, lens on the face normal, so it looks where the
   face looks (inherits pan + tilt for free).
-- **Pi 5 lives in the base, not the head** — keeps the head shell light (less tilt-motor torque)
-  and the CoM low (less tip risk, matters once it's on wheels). Cost: a DSI ribbon + camera cable
-  must run up the neck through the pan joint. Route with a service loop; pan range is capped by it.
+- **Pi 5 lives IN THE HEAD, behind the tilt axis** (changed from base after the multi-agent review).
+  The official 7" display's DSI ribbon + the camera CSI ribbon are short and stiff and cannot cross
+  two moving joints; keeping the Pi in the head keeps both ribbons entirely in the head (zero joint
+  crossings). The board also doubles as the tilt counterweight. Only round wires (Pi power + the pan
+  stepper's leads) cross the joints. Tradeoff: heavier head + higher CoM → ballast the base for the
+  wheeled version.
+- **Cable path:** hollow tilt axle (on-axis, no length change when tilting) → vertical channel down
+  the neck column → off-axis pass through pan_platform + base. The pan joint still winds the bundle:
+  use a slip ring on the pan axis (preferred, needs a purchased capsule) or a service loop that caps
+  pan range. NOT yet resolved in geometry.
+
+## Head is a 2-piece print (bezel + back)
+
+`build_head_parts()` slices the wedge on a plane parallel to the front face, ~4mm behind the screen:
+- `head_bezel` (front): the leaned face + camera nub. The screen aperture is **stepped** — a full-
+  size pocket behind + a smaller front window, so the front lip traps the glass edge (screen can't
+  fall out the front). Print face-down.
+- `head_back` (rear): pivot hubs, neck slot, Pi bay, cable port. Print open-side-down.
+Screen drops into the pocket from behind; bezel bolts to back. Fastening bosses NOT yet modeled.
 
 ## Head style: Alexa / Echo-Show wedge (per user)
 
@@ -61,20 +80,20 @@ The head shell copies the **Echo-Show "doorstop" wedge** from
 original 7" screen, we only borrow the *style*). Rounded body, front face leaned back ~11°, screen
 recessed in the front aperture, slim bezels, camera nub at the top. That reference body is
 191×110×122mm — almost identical to our 7" module (193×110.8), so the style and scale transfer
-directly. Built parametrically in `build_head_shell()` (extruded rounded side-profile), so the
-lean angle, rounding, and proportions are `PARAMS` knobs.
+directly. Built parametrically in `build_head_shell()` (extruded rounded side-profile), then split
+by `build_head_parts()`. Lean angle (now **8°**, softened from 11°), rounding, and proportions are
+`PARAMS` knobs. The base is a **truncated cone** matching the friendly language.
 
 ## Key numbers (measured, not guessed)
 
 Screen `PARAMS["screen_*"]` are **measured from the reference STL bbox**: 193.0 (W) × 25.0 (D) ×
 110.8 (H) mm, driver board included. Loaded live from
 `reference/rpi-7in-touchscreen-model/files/Raspberry_Pi_Touch_Screen_Assembly_v12.stl` and mounted
-on the leaned face by `screen_pose()`. Overall assembly bbox ≈ 221 × 155 × 263 mm.
+on the leaned face by `screen_pose()`. Overall assembly bbox ≈ 221 × 208 × 248 mm.
 
-Still first-guess (validate on a print): tilt axis height 178, cantilever 39, face lean 11°,
-base Ø168 / bolt circle Ø138, tilt range ±30, pan range ±90. `motor_*` are 28BYJ-48-shaped
-placeholders. Note the head (213 wide) is wider than the base (Ø168); static tip is fine because
-the head CoM sits on the pan axis, but keep this in mind for the wheeled version.
+Still first-guess (validate on a print): tilt axis height 178, cantilever 39, face lean 8°,
+base Ø208 bottom / Ø156 top / bolt circle Ø170, tilt range ±30, pan range ±90. `motor_*` are
+28BYJ-48-shaped placeholders. Base bottom Ø208 ≥ head width 213, so the head no longer overhangs.
 
 ## Power (decided)
 
@@ -109,19 +128,21 @@ already in inventory.
 
 ## Wheels later (base is ready for it)
 
-The base bottom is a **flat flange with an M4 bolt circle (Ø120, 4 holes)** so the whole robot can
-later bolt onto a wheeled chassis. Keep the neck↔base joint at z=0 the swap plane: a wheeled base
-replaces the static disc without touching the neck/head. Keep the CoM low and centered (Pi in base,
-head shell light) so the mobile version doesn't tip when it accelerates or when the head is panned
-out.
+The base bottom is a **flat flange with an M4 bolt circle (Ø170, 4 holes)** so the whole robot can
+later bolt onto a wheeled chassis. The neck↔base plane at z=0 is the swap plane. Since the Pi now
+rides the head, **ballast the base** (heavy plate / battery low) for the mobile version so it doesn't
+tip when accelerating or with the head panned out.
 
 ## Print notes (first pass — not finalized)
 
-- All 4 printed parts (`base`, `neck_clevis`, `pan_platform`, `head_shell`) are watertight solids.
-- **Not yet done:** print orientation per part, supports, the head-shell split for inserting the
-  screen + closing the back, screw bosses, and the screen-retention detail. The head shell prints
-  face-down or back-down; it will need to be a 2-piece (front bezel + back) to trap the screen.
-- Head shell wall is 4mm; the front aperture is sized to the full module (193×110) with slim bezels.
+- All 6 printed parts (`base`, `neck_clevis`, `pan_platform`, `head_bezel`, `head_back`) are
+  watertight solids. (`head_shell` is the pre-split intermediate, not printed directly.)
+- **Done:** head split into bezel + back with a screen-retention lip; hollow base + cavity.
+- **NOT yet done (tracked as remaining todos):** screw bosses / heat-set inserts (bezel↔back, base
+  lid, Pi, both motors, screen standoffs); self-supporting chamfers on the rear/slot openings +
+  teardrop/bushing axle bores; real 28BYJ-48 motor pockets + offset-shaft couplings; ULN2003 driver
+  mounts; Pi ports + ventilation; pan-joint slip ring.
+- Per-part orientation: bezel face-down, back open-side-down, neck on its back, base flange-down.
 
 ## Layout
 
@@ -131,7 +152,7 @@ src/stlpaths.py  routes stlp("head_shell.stl") -> stl/head/... ; subsystems: bas
 src/serve.py     localhost viewer server (serves web/ at root)
 src/shoot.py     headless multi-angle renders -> .claude/renders/
 web/             viewer_glb.html + assembly.glb (committed so a fresh clone shows the assembly)
-stl/{base,neck,head}/   per-part STLs, written by `EXPORT=1 python3 src/build.py`
+stl/{base,neck,head}/   per-part STLs (head_bezel + head_back), written by `EXPORT=1 python3 src/build.py`
 exports/         Bambu .3mf plates (regenerable, gitignored)
 reference/       rpi-7in-touchscreen-model (STEP/STL, the real screen) + -case + alexa-style-*
 docs/ASSEMBLY.md BOM + assembly order

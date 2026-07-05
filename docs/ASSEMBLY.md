@@ -13,12 +13,14 @@ Fill in as parts get designed. For now this records the intended BOM and stack o
 - Tilt servo — TBD
 - Slew bearing / bushing for pan — TBD
 
-### Printed parts (first pass, watertight; not print-split yet)
-- `base` — fixed base, pan motor + bearing seat, bottom = future-wheels M4 bolt flange
-- `pan_platform` — disc that yaws on the base
-- `neck_clevis` — column + two cheeks that rise into the head and drive the tilt axle
-- `head_shell` — Echo-Show wedge holding the 7" screen (front aperture) + camera nub
-- tilt axle — off-the-shelf rod / M6 (not printed)
+### Printed parts (watertight; head is split for the screen)
+- `base` — hollow truncated cone (Ø208→Ø156), pan motor cavity, bottom = future-wheels M4 flange
+- `pan_platform` — disc that yaws on the base (central shaft bore + off-axis cable pass)
+- `neck_clevis` — rounded column + two cheeks that rise into the head and drive the tilt axle;
+  vertical cable channel
+- `head_bezel` — front of the Echo-Show wedge: leaned face, screen-retaining lip, camera nub
+- `head_back` — rear cover: pivot hubs, neck slot, Pi bay, cable port
+- tilt axle — off-the-shelf hollow tube / M6 (not printed; cables pass through it)
 
 ## Assembly order (intended)
 1. Pan servo + bearing into `base_plinth`.
