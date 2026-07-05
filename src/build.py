@@ -56,6 +56,9 @@ P = {
     "body_z_top": 243.0,    # shell top (front) height
     "body_back_top_z": 224.0,   # crown flattened (less back-slope than v1)
     "corner_r": 16.0,       # side-profile corner rounding (the friendly Echo-Show look)
+    "bezel_overlap": 3.5,   # front lip over the screen edge (retains the module)
+    "screen_clear": 0.5,    # clearance around the module in its pocket
+    "bezel_back": 4.0,      # split plane sits this far behind the screen back
 
     # --- Tilt joint: REAR CLEVIS entering the shell underside; axle near the CoM ---
     "tilt_axis_z": 178.0,   # tilt axis height above the desk (inside the box, near CoM)
@@ -106,6 +109,7 @@ EXPORT = os.environ.get("EXPORT") == "1"
 COLORS = {
     "screen":  [26, 30, 38, 255],
     "cradle":  [188, 196, 210, 255],
+    "back":    [150, 158, 172, 255],
     "neck":    [120, 140, 172, 255],
     "fork":    [120, 140, 172, 255],
     "pan":     [150, 156, 168, 255],
@@ -208,15 +212,20 @@ def build_head_shell():
     inner = _wedge_solid(inset=P["head_wall"])
     shell = sub(shell, inner)
 
-    # screen aperture through the front face: a box at the screen pose, punched outward
-    ap = box(P["screen_w"] + 3, 60.0, P["screen_h"] + 3)
-    ap.apply_transform(screen_pose() @ _T(0, 20, 0))   # extend toward +Y to pierce the face
-    shell = sub(shell, ap)
+    # stepped screen aperture: full-size POCKET behind (module drops in) + a smaller front
+    # WINDOW that pierces the face, leaving a lip that retains the glass edge.
+    ov, cl = P["bezel_overlap"], P["screen_clear"]
+    pocket = box(P["screen_w"] + 2 * cl, 40.0, P["screen_h"] + 2 * cl)
+    pocket.apply_transform(screen_pose() @ _T(0, -8, 0))     # around/behind the screen
+    shell = sub(shell, pocket)
+    window = box(P["screen_w"] - 2 * ov, 60.0, P["screen_h"] - 2 * ov)
+    window.apply_transform(screen_pose() @ _T(0, 20, 0))     # pierce the front face -> lip
+    shell = sub(shell, window)
 
-    # rear service opening (access to electronics / cable exit)
-    back_open = box(P["head_w"] - 60, 30.0, 80.0)
-    back_open.apply_translation((0, P["body_back_y"], zt))
-    shell = sub(shell, back_open)
+    # small rear cable port (main electronics access is by removing the front bezel)
+    cable_port = box(48, 30.0, 34.0)
+    cable_port.apply_translation((0, P["body_back_y"], P["body_z_bot"] + 42))
+    shell = sub(shell, cable_port)
 
     # bottom-rear slot so the neck clevis can rise into the body and reach the axle
     slot = box(2 * (P["clevis_half"] + P["cheek_t"]) + 12, 60.0, 90.0)
@@ -247,6 +256,30 @@ def build_head_shell():
     _color(shell, "cradle")
     shell.metadata["name"] = "head_shell"
     return shell
+
+
+def _face_normal():
+    n = screen_pose()[:3, :3] @ np.array([0, 1.0, 0])
+    return n / np.linalg.norm(n)
+
+
+def _split_origin():
+    """A point on the split plane: behind the screen back, parallel to the front face."""
+    c = screen_pose()[:3, 3]
+    return c - (P["screen_d"] / 2 + P["bezel_back"]) * _face_normal()
+
+
+def build_head_parts():
+    """Split the wedge into a FRONT bezel (holds + retains the screen, camera nub) and a
+    BACK cover (pivot hubs, neck slot, Pi bay, cable port). They bolt together."""
+    from trimesh.intersections import slice_mesh_plane
+    full = build_head_shell()
+    n, o = _face_normal(), _split_origin()
+    bezel = slice_mesh_plane(full, plane_normal=n, plane_origin=o, cap=True)
+    back = slice_mesh_plane(full, plane_normal=-n, plane_origin=o, cap=True)
+    _color(bezel, "cradle"); bezel.metadata["name"] = "head_bezel"
+    _color(back, "back"); back.metadata["name"] = "head_back"
+    return bezel, back
 
 
 def build_neck_clevis():
@@ -280,6 +313,10 @@ def build_neck_clevis():
     bore = cyl(P["pivot_bore_r"] + 0.4, 2 * P["clevis_half"] + 4 * P["cheek_t"], axis="x")
     bore.apply_translation((0, 0, zt))
     neck = sub(neck, bore)
+    # vertical cable channel down the column (cables drop from the hollow axle into the base)
+    chan = cyl(6.0, P["neck_top_z"] - z0 + 30)
+    chan.apply_translation((0, ny, (z0 + P["neck_top_z"]) / 2))
+    neck = sub(neck, chan)
     _color(neck, "neck")
     neck.metadata["name"] = "neck_clevis"
     return neck
@@ -297,6 +334,9 @@ def build_pan_platform():
     bore = cyl(P["pan_bore_r"], 40.0)
     bore.apply_translation((0, 0, zc))
     plate = sub(plate, bore)
+    cable = cyl(6.0, 40.0)                    # off-axis cable pass (aligns with neck channel)
+    cable.apply_translation((0, P["neck_y"], zc))
+    plate = sub(plate, cable)
     _color(plate, "pan")
     plate.metadata["name"] = "pan_platform"
     return plate
@@ -316,15 +356,22 @@ def frustum(r_bottom, r_top, h, sections=96):
 
 
 def build_base():
-    """Fixed base: truncated cone. Slew seat on top, bottom = future-wheels bolt flange."""
+    """Fixed base: hollow truncated cone housing the pan motor + wiring. Bottom = wheels flange."""
+    wall, floor = 5.0, 5.0
     body = frustum(P["base_d"] / 2, P["base_top_d"] / 2, P["base_h"])
-    # crisp top chamfer shoulder (small inverted frustum lip)
-    # recess for the pan platform to sit into (visual seat)
+    # hollow the interior (open top, floor stays) for the pan motor + driver + wiring
+    cav = frustum(P["base_d"] / 2 - wall, P["base_top_d"] / 2 - wall, P["base_h"] - floor)
+    cav.apply_translation((0, 0, floor))
+    body = sub(body, cav)
+    # recess for the pan platform to sit into (visual seat, on the wall rim)
     seat = cyl(P["pan_plate_d"] / 2 + 1.0, 6.0, sections=96)
     seat.apply_translation((0, 0, P["base_h"] - 3.0))
     body = sub(body, seat)
-    # central pan bore
+    # central pan bore (motor shaft) + off-axis cable pass-through (see neck channel)
     body = sub(body, cyl(P["pan_bore_r"] + 0.6, P["base_h"] + 10))
+    cable = cyl(6.0, P["base_h"] + 10)
+    cable.apply_translation((0, P["neck_y"], 0))
+    body = sub(body, cable)
     # future-wheels bolt circle through the bottom flange
     for i in range(P["base_bolt_n"]):
         a = i * (2 * TAU / P["base_bolt_n"]) + TAU / 8
@@ -412,9 +459,10 @@ def build():
                           P["base_h"] - 2 - (P["motor_body_h"] + P["motor_gear_h"])))
     add(mp, np.eye(4))
 
-    # --- HEAD (tilt + pan) ---
-    shell = build_head_shell(); shell.metadata["name"] = head_name
-    add(shell, M_head, "head_shell.stl")
+    # --- HEAD (tilt + pan): split into front bezel + back cover ---
+    bezel, back = build_head_parts()
+    add(bezel, M_head, "head_bezel.stl")
+    add(back, M_head, "head_back.stl")
 
     screen = load_screen()
     screen.apply_transform(screen_pose())            # sit on the leaned front face
@@ -427,8 +475,8 @@ def build():
     cam.apply_transform(screen_pose() @ _T(0, P["screen_d"] / 2 + 1, P["screen_h"] / 2 + 3))
     add(cam, M_head)
 
-    # thin axle through the tilt joint (visual)
-    axle = cyl(P["pivot_bore_r"] - 0.3, P["head_w"] + 4, axis="x")
+    # HOLLOW tilt axle (tube): cables pass through it on-axis (no length change when tilting)
+    axle = sub(cyl(3.0, P["head_w"] + 4, axis="x"), cyl(2.0, P["head_w"] + 8, axis="x"))
     _color(axle, "axle"); axle.metadata["name"] = "tilt_axle"
     axle.apply_translation((0, 0, zt))
     add(axle, M_pan)

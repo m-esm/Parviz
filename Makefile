@@ -2,7 +2,7 @@
 # and web/assembly.glb. Run `make help`. See the 3d-print-modeling skill for the loop.
 PORT ?= 8765
 
-.PHONY: help install build viewer shot
+.PHONY: help install build viewer shot watch
 
 help:                ## List targets
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
@@ -17,6 +17,9 @@ build:               ## Rebuild web/assembly.glb (source of truth: src/build.py)
 
 viewer:              ## Serve the live viewer at :$(PORT) (auto-reloads on rebuild)
 	python3 src/serve.py $(PORT)
+
+watch:               ## Rebuild web/assembly.glb on every src/reference change (viewer then reloads)
+	python3 src/watch.py
 
 shot:                ## Headless multi-angle render to .claude/renders/ (needs `make viewer` running)
 	python3 src/shoot.py assembly.glb chk $(PORT)
