@@ -77,13 +77,16 @@ P = {
     "pan_plate_t": 8.0,
     "pan_bore_r": 4.2,      # pan axle / motor shaft bore
 
-    # --- Base (fixed). Bottom face is the future-wheels mounting flange. ---
-    "base_d": 208.0,        # bottom Ø: >= head width so the head doesn't overhang (tip margin)
-    "base_top_d": 156.0,    # top Ø: truncated cone, grounds the wedge head
-    "base_h": 52.0,         # houses pan motor + slew bearing + wiring
-    "base_bolt_circle": 170.0,  # M4 bolt circle in the bottom flange (future wheeled chassis)
-    "base_bolt_r": 2.2,     # M4 clearance
-    "base_bolt_n": 4,
+    # --- Tank-tread chassis: central body + two side track pods (mobile base) ---
+    "base_h": 52.0,         # body top = pan-mount plane (keeps the neck/head at the same height)
+    "chassis_w": 130.0,     # body width between the tracks (X)
+    "chassis_l": 156.0,     # body length front-back (Y)
+    "chassis_clear": 7.0,   # ground clearance under the body
+    "track_r": 30.0,        # drive/idler wheel radius
+    "track_belt": 5.0,      # belt thickness wrapping the wheels
+    "track_width": 30.0,    # track thickness (X)
+    "track_wheelbase": 132.0,   # front idler <-> rear drive wheel spacing (Y)
+    "track_gap": 4.0,       # body side <-> track inner face
 
     # --- Motor placeholder: 28BYJ-48 5V geared stepper (owned x6, + ULN2003 x9). ---
     "motor_d": 28.0,        # motor can diameter
@@ -121,6 +124,7 @@ COLORS = {
     "fork":    [120, 140, 172, 255],
     "pan":     [150, 156, 168, 255],
     "base":    [92, 98, 116, 255],
+    "track":   [48, 50, 58, 255],
     "motor":   [232, 126, 74, 255],
     "camera":  [214, 92, 92, 255],
     "pi":      [56, 150, 96, 255],
@@ -453,56 +457,66 @@ def frustum(r_bottom, r_top, h, sections=96):
 
 
 def build_base():
-    """Fixed base: hollow truncated cone housing the pan motor + wiring. Bottom = wheels flange."""
+    """Tank chassis BODY: hollow rounded box between the tracks. Top = pan-mount plane; houses
+    the pan motor + driver + wiring. (Track pods are build_tracks.)"""
     wall, floor = 5.0, 5.0
-    body = frustum(P["base_d"] / 2, P["base_top_d"] / 2, P["base_h"])
-    # hollow the interior (open top, floor stays) for the pan motor + driver + wiring
-    cav = frustum(P["base_d"] / 2 - wall, P["base_top_d"] / 2 - wall, P["base_h"] - floor)
-    cav.apply_translation((0, 0, floor))
+    z0, z1 = P["chassis_clear"], P["base_h"]          # body spans clearance..pan-mount
+    h = z1 - z0
+    body = rounded_box(P["chassis_w"], P["chassis_l"], h, 14.0)
+    body.apply_translation((0, 0, z0))
+    cav = rounded_box(P["chassis_w"] - 2 * wall, P["chassis_l"] - 2 * wall, h - floor, 12.0)
+    cav.apply_translation((0, 0, z0 + floor))
     body = sub(body, cav)
-    # recess for the pan platform to sit into (visual seat, on the wall rim)
+    # pan platform seat + shaft bore + off-axis cable pass
     seat = cyl(P["pan_plate_d"] / 2 + 1.0, 6.0, sections=96)
-    seat.apply_translation((0, 0, P["base_h"] - 3.0))
-    body = sub(body, seat)
-    # central pan bore (motor shaft) + off-axis cable pass-through (see neck channel)
-    body = sub(body, cyl(P["pan_bore_r"] + 0.6, P["base_h"] + 10))
-    cable = cyl(6.0, P["base_h"] + 10)
-    cable.apply_translation((0, P["neck_y"], 0))
-    body = sub(body, cable)
-    # future-wheels bolt circle through the bottom flange
-    for i in range(P["base_bolt_n"]):
-        a = i * (TAU / P["base_bolt_n"]) + TAU / 8
-        x = np.cos(a) * P["base_bolt_circle"] / 2
-        y = np.sin(a) * P["base_bolt_circle"] / 2
-        hole = cyl(P["base_bolt_r"], P["base_h"] + 10)
-        hole.apply_translation((x, y, 0))
-        body = sub(body, hole)
+    seat.apply_translation((0, 0, z1 - 3.0)); body = sub(body, seat)
+    pbore = cyl(P["pan_bore_r"] + 0.6, 200); pbore.apply_translation((0, 0, z1)); body = sub(body, pbore)
+    cbl = cyl(6.0, 200); cbl.apply_translation((0, P["neck_y"], z0)); body = sub(body, cbl)
 
-    # ---- interior fittings + ports (union bosses, then cut holes/slots) ----
-    adds = []
-    mx = -P["motor_shaft_off"]                       # motor pad centred so its shaft = pan axis
-    pad = box(46, 12, 6); pad.apply_translation((mx, 0, floor + 3)); adds.append(pad)
-    for sx in (-1, 1):                               # ULN2003 pan-driver standoffs
+    # interior fittings: pan-motor pad + ULN2003 standoffs
+    mx = -P["motor_shaft_off"]
+    adds = [box(46, 12, 6)]; adds[0].apply_translation((mx, 0, z0 + floor + 3))
+    for sx in (-1, 1):
         for sy in (-1, 1):
-            b = cyl(3.0, 8); b.apply_translation((40 + sx * P["uln_w"] / 2, sy * P["uln_h"] / 2, floor))
+            b = cyl(3.0, 8); b.apply_translation((38 + sx * P["uln_w"] / 2, sy * P["uln_h"] / 2, z0 + floor))
             adds.append(b)
     body = uni([body] + adds)
-
-    for dy in (-17.5, 17.5):                          # 28BYJ-48 ear pilots in the motor pad
-        e = cyl(P["m3_clear_r"], 20); e.apply_translation((mx, dy, floor + 3))
+    for dy in (-17.5, 17.5):                          # 28BYJ-48 ear pilots
+        e = cyl(P["m3_clear_r"], 20); e.apply_translation((mx, dy, z0 + floor + 3))
         body = sub(body, e)
-    usb = box(14, 30, 8)                              # USB-C power entry in the wall
-    usb.apply_translation((0, -P["base_top_d"] / 2 - 4, floor + 14))
-    body = sub(body, usb)
-    for i in range(8):                               # ventilation slots around the lower wall
-        a = i * TAU / 8
-        v = box(4, 18, 16); v.apply_transform(R(a, (0, 0, 1)))
-        rr = P["base_d"] / 2 - 8
-        v.apply_translation((np.cos(a) * rr, np.sin(a) * rr, floor + 12))
-        body = sub(body, v)
+    usb = box(14, 12, 8)                              # USB-C power entry in the rear wall
+    usb.apply_translation((0, -P["chassis_l"] / 2, z0 + 12)); body = sub(body, usb)
+    for i in range(-3, 4):                            # side ventilation slots
+        v = box(12, 5, 16); v.apply_translation((0, i * 16, z0 + h / 2))
+        v2 = v.copy(); v.apply_translation((P["chassis_w"] / 2, 0, 0)); v2.apply_translation((-P["chassis_w"] / 2, 0, 0))
+        body = sub(sub(body, v), v2)
     _color(body, "base")
-    body.metadata["name"] = "base"
+    body.metadata["name"] = "chassis"
     return body
+
+
+def build_tracks():
+    """Two tank track pods (stadium belt loops + hub caps), flanking the chassis body."""
+    r, bt, tw = P["track_r"], P["track_belt"], P["track_width"]
+    wb = P["track_wheelbase"]
+    zc = r + bt                                       # wheel-center height (belt outer touches z=0)
+    parts = []
+    for sx in (-1, 1):
+        cx = sx * (P["chassis_w"] / 2 + P["track_gap"] + tw / 2)
+        line = sg.LineString([(-wb / 2, zc), (wb / 2, zc)])   # in (Y, Z)
+        band = line.buffer(r + bt).difference(line.buffer(r - 8))
+        solid = extrude_polygon(band, tw)             # poly(Y,Z) extruded +Z(=X) by tw
+        M = np.array([[0, 0, 1, cx - tw / 2], [1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 0, 1]], float)
+        solid.apply_transform(M)
+        # hub caps on the outer face at each wheel centre
+        for wy in (-wb / 2, wb / 2):
+            hub = cyl(r - 9, 4, axis="x")
+            hub.apply_translation((cx + sx * (tw / 2 + 1), wy, zc))
+            solid = uni([solid, hub])
+        _color(solid, "track")
+        solid.metadata["name"] = "track_L" if sx < 0 else "track_R"
+        parts.append(solid)
+    return parts
 
 
 def motor_28byj(name):
@@ -549,8 +563,10 @@ def build():
         if EXPORT and export_name:
             mesh.export(stlp(export_name))
 
-    # --- FIXED ---
-    add(build_base(), np.eye(4), "base.stl")
+    # --- FIXED: tank chassis body + two track pods ---
+    add(build_base(), np.eye(4), "chassis.stl")
+    for trk in build_tracks():
+        add(trk, np.eye(4), trk.metadata["name"] + ".stl")
 
     # --- PAN GROUP ---
     add(build_pan_platform(), M_pan, "pan_platform.stl")

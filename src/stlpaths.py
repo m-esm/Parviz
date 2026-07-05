@@ -16,7 +16,9 @@ EXPORT_DIR = os.path.join(ROOT, "exports")
 
 # filename-prefix -> subsystem folder; first match wins. Edit per project.
 SUBSYSTEMS = [
-    ("base", "base"),          # desk plinth, pan bearing seat, servo mount
+    ("base", "base"),          # tank chassis body + track pods
+    ("chassis", "base"),
+    ("track", "base"),
     ("plinth", "base"),
     ("neck", "neck"),          # pan column, tilt yoke, linkages
     ("yoke", "neck"),
