@@ -147,12 +147,13 @@ NOTE: this mesh is NOT watertight — manifold booleans on it raise; probe scree
 surface-sample containment, never with `ivol()`-style try/except (that returned vacuous 0.000 for
 three stages, see docs/FIXES.md Stage 4). Overall assembly bbox ≈ 209 × 170.5 × 251 mm.
 
-Still first-guess (validate on a print): tilt axis at y=−18 / z=178 (moved back 18 mm in stage 2R to
-clear the Pi-on-display stack), screen center y 18.5 / z 178, tilt ±30, pan ±90,
+Still first-guess (validate on a print): tilt axis at y=−18 / z=153 (moved back 18 mm in stage 2R
+to clear the Pi-on-display stack; z was 178 until the 2026-07-06 head drop shifted the whole
+head+tilt stack −25), screen center y 18.5 / z 153, tilt ±30, pan ±90,
 worm module 1.25 / 12T wheel, track pitch 10 / 36 links / 12T sprocket, pan BB circle Ø80. Neck
 column at `neck_y=−17` (stage 5: footprint max r 43.1 fits the spinning platform's solid r45; the
-cable channel is decoupled at `neck_chan_y=−26`). Head width 205 vs track gauge ~184 → head
-overhangs ~10 mm/side (widen the gauge or accept it).
+cable channel is decoupled at `neck_chan_y=−26`). Head width 205 vs track outer width 204
+(chassis_w 140, base_h 66: the design-ref stance pass; no more head overhang).
 
 ## Power (decided)
 
