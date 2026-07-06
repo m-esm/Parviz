@@ -1406,8 +1406,9 @@ def build_tracks():
             lk.apply_transform(R_x(ang))               # tangent to the loop, outer face outward
             lk.apply_translation((cx, y, z))
             pieces.append(lk)
+        wheel_pieces = []
         spr = _sprocket(sx)
-        spr.apply_translation((cx, -wb / 2, zc)); pieces.append(spr)
+        spr.apply_translation((cx, -wb / 2, zc)); wheel_pieces.append(spr)
         # idler (front): rides the knuckle crowns (r 15.82) with 0.12 running clearance; F688ZZ
         # press seat Ø15.95 through + Ø18.5 x 1.0 flange recess on the inboard face; the Ø8 stub
         # axle (hardware) cantilevers from the chassis tension-slot plate.
@@ -1415,17 +1416,26 @@ def build_tracks():
         idl = sub(cyl(ir, iw, axis="x"), cyl(P["idler_bore_d"] / 2, iw + 2, axis="x"))
         fr = cyl(18.5 / 2, 1.05, axis="x"); fr.apply_translation((-sx * (iw / 2 - 0.5), 0, 0))
         idl = sub(idl, fr)
-        idl.apply_translation((cx, wb / 2, zc)); pieces.append(idl)
+        idl.apply_translation((cx, wb / 2, zc)); wheel_pieces.append(idl)
         # road wheels: ride the bottom-run knuckle crowns (0.1 running clearance)
         for i in range(P["roadwheel_count"]):
             ry = -wb / 4 + i * (wb / 2) / max(P["roadwheel_count"] - 1, 1)
             rw = cyl(P["roadwheel_d"] / 2, 18.0, axis="x")
             rw.apply_translation((cx, ry, (zc - R) + kr + P["roadwheel_d"] / 2 + 0.1))
-            pieces.append(rw)
-        pod = trimesh.util.concatenate(pieces)
+            wheel_pieces.append(rw)
+        side = "L" if sx < 0 else "R"
+        pod = trimesh.util.concatenate(pieces)                 # links only (rubber-black)
         _color(pod, "track")
-        pod.metadata["name"] = "track_L" if sx < 0 else "track_R"
+        pod.metadata["name"] = f"track_{side}"
+        pod.metadata["export"] = f"track_{side}.stl"
         out.append(pod)
+        # running gear as its OWN node so it renders as exposed silver metal through the
+        # links (design ref: big visible wheel-gears). Same geometry as before, just split.
+        wheels = trimesh.util.concatenate(wheel_pieces)
+        _color(wheels, "motor")
+        wheels.metadata["name"] = f"drivewheels_{side}"
+        wheels.metadata["export"] = f"track_wheels_{side}.stl"
+        out.append(wheels)
     return out
 
 
@@ -1540,7 +1550,7 @@ def build():
     for fp in build_fascia():                        # front fascia set (design ref)
         add(fp, np.eye(4))
     for trk in build_tracks():
-        add(trk, np.eye(4), trk.metadata["name"] + ".stl")
+        add(trk, np.eye(4), trk.metadata["export"])
 
     # track drive: 2x TT gearmotor (own 1, BUY 1 more) INSIDE the chassis, gearbox face 0.1 off
     # the side-wall inner face; the shaft crosses the wall (Ø8 pass, wall thinned to a 3 mm web)
