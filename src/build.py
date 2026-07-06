@@ -744,14 +744,21 @@ def build_head_rails():
 
 
 def build_led_strip():
-    """WS2812-stick placeholder in the forehead recess, flush with the bezel face
-    (design-ref front.jpg: light strip left of the camera). Wiring drops behind the
-    wall into the head interior at the print pass."""
-    w, h, d = P["led_slot_w"] - 1.0, P["led_slot_h"] - 1.0, P["led_slot_d"]
-    bar = box(w, d, h)
-    bar.apply_translation((P["led_cx"], P["body_front_y"] - d / 2, P["led_cz"]))
-    _color(bar, "led"); bar.metadata["name"] = "led_strip"
-    return bar
+    """WS2812-stick placeholder in the forehead recess (design-ref front.jpg: a row of
+    discrete LEDs left of the camera). Thin base board in the recess + 8 round emitters
+    poking 0.3 proud of the face. Wiring drops behind the wall at the print pass."""
+    fy = P["body_front_y"]
+    base = box(P["led_slot_w"] - 1.0, 0.8, P["led_slot_h"] - 1.0)
+    base.apply_translation((P["led_cx"], fy - P["led_slot_d"] + 0.4, P["led_cz"]))
+    dots = [base]
+    for i in range(8):
+        d = cyl(1.2, P["led_slot_d"] + 0.3, axis="y", sections=24)
+        d.apply_translation((P["led_cx"] - 16.1 + i * 4.6,
+                             fy - (P["led_slot_d"] - 0.3) / 2, P["led_cz"]))
+        dots.append(d)
+    strip = uni(dots)
+    _color(strip, "led"); strip.metadata["name"] = "led_strip"
+    return strip
 
 
 def build_antenna():
@@ -1196,10 +1203,13 @@ def build_fascia():
         l.apply_translation((sx * P["lamp_x"], fw, P["lamp_cz"]))
         _color(l, "lamp"); l.metadata["name"] = nm
         parts.append(l)
-    # white LED dot strip at the bottom lip
-    led = rounded_box(36.0, 2.5, 1.0, 1.0)
-    led.apply_transform(R(-TAU / 4, (1, 0, 0)))
-    led.apply_translation((0, fw, P["fled_cz"]))
+    # white LED dot strip at the bottom lip: slim base + 7 round emitters
+    fl = [box(36.0, 1.0, 3.0).apply_translation((0, fw + 0.5, P["fled_cz"]))]
+    for i in range(7):
+        d = cyl(1.3, 1.6, axis="y", sections=24)
+        d.apply_translation((-15.0 + i * 5.0, fw + 1.4, P["fled_cz"]))
+        fl.append(d)
+    led = uni(fl)
     _color(led, "led"); led.metadata["name"] = "led_front"
     parts.append(led)
     # REAR: orange frame panel (wall shows through as the hatch) + silver cylinder pod
