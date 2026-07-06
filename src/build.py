@@ -326,7 +326,9 @@ P = {
     # Raised camera POD on the forehead (design ref: the camera reads as an eye). Pure
     # cosmetic shell over the recessed CM3: the bore flares 45 deg/side from the existing
     # countersink, wider than the 75 deg-diagonal FoV cone (half ~37.5 deg), so no vignette.
-    "cam_pod_w": 24.0, "cam_pod_h": 18.0,   # pod footprint on the face (X x Z)
+    "cam_pod_w": 24.0, "cam_pod_h": 20.0,   # pod footprint on the face (X x Z); h 20 (was 18):
+                                            # the flare mouth needs a real lip top/bottom -- 18
+                                            # left a 0.05 knife edge at the face (PRINTABILITY 1)
     "cam_pod_t": 5.0,                       # proud of the face
     # Gripper arms (design ref, PLACEHOLDER pose + shapes): shoulder pivots on the side
     # rails, tucked pose (claws down-forward beside the chassis front). Actuation, joint
@@ -472,16 +474,19 @@ def gear_disc(pitch_r, teeth, width, tooth_h, axis="x"):
     root_r = pitch_r - 0.5 * tooth_h
     parts = [cyl(root_r, width, axis=axis)]
     tw = max(2 * np.pi * pitch_r / teeth * 0.55, 0.8)   # tooth tangential width
+    # tooth prism is tooth_h+1 tall, centered at pitch_r-0.5: sinks 1.0 into the root disc
+    # (the old exact root..root+tooth_h span only LINE-touched the root cylinder, so every
+    # tooth split off as its own body -- PRINTABILITY 3). Tip circle unchanged (root+tooth_h).
     for i in range(teeth):
         a = TAU * i / teeth
         if axis == "x":
-            t = box(width, tw, tooth_h); t.apply_translation((0, 0, pitch_r))
+            t = box(width, tw, tooth_h + 1.0); t.apply_translation((0, 0, pitch_r - 0.5))
             t.apply_transform(R(a, (1, 0, 0)))
         elif axis == "y":
-            t = box(tw, width, tooth_h); t.apply_translation((0, 0, pitch_r))
+            t = box(tw, width, tooth_h + 1.0); t.apply_translation((0, 0, pitch_r - 0.5))
             t.apply_transform(R(a, (0, 1, 0)))
         else:  # z
-            t = box(tw, tooth_h, width); t.apply_translation((0, pitch_r, 0))
+            t = box(tw, tooth_h + 1.0, width); t.apply_translation((0, pitch_r - 0.5, 0))
             t.apply_transform(R(a, (0, 0, 1)))
         parts.append(t)
     return uni(parts)
@@ -798,8 +803,10 @@ def build_led_strip():
     discrete LEDs left of the camera). Thin base board in the recess + 8 round emitters
     poking 0.3 proud of the face. Wiring drops behind the wall at the print pass."""
     fy = P["body_front_y"]
-    base = box(P["led_slot_w"] - 1.0, 0.8, P["led_slot_h"] - 1.0)
-    base.apply_translation((P["led_cx"], fy - P["led_slot_d"] + 0.4, P["led_cz"]))
+    base = box(P["led_slot_w"] - 1.0, 1.2, P["led_slot_h"] - 1.0)
+    # base 1.2 (was 0.8 = four fragile layers, PRINTABILITY 6): back stays on the recess
+    # floor (fy - 1.5), so the dots (unmoved) still poke exactly 0.3 proud of the face.
+    base.apply_translation((P["led_cx"], fy - P["led_slot_d"] + 0.6, P["led_cz"]))
     dots = [base]
     for i in range(8):
         d = cyl(1.2, P["led_slot_d"] + 0.3, axis="y", sections=24)
@@ -839,8 +846,12 @@ def build_cam_pod():
     pod = rounded_box(P["cam_pod_w"], P["cam_pod_h"], P["cam_pod_t"], 7.0)
     pod.apply_transform(R(-TAU / 4, (1, 0, 0)))      # extrude +Y, footprint XZ
     pod.apply_translation((0, fy, lz))
-    bore = frustum(P["cam_csk_d"] / 2 + P["cam_pod_t"] + 0.5, P["cam_csk_d"] / 2,
-                   P["cam_pod_t"] + 0.5)             # 45 deg/side flare, small end at the face
+    flare = np.tan(40 * DEG)                         # 40 deg/side (was 45: its Ø19 mouth on the
+                                                     # 18-tall pod cusped to 0.05 at the lip);
+                                                     # 40 > the CM3's 37.5 FoV half-angle, so
+                                                     # still no vignette (PRINTABILITY 1)
+    bore = frustum(P["cam_csk_d"] / 2 + flare * (P["cam_pod_t"] + 0.5), P["cam_csk_d"] / 2,
+                   P["cam_pod_t"] + 0.5)             # flared bore, small end at the face
     bore.apply_transform(R(TAU / 4, (1, 0, 0)))      # shrink toward -Y (into the wall)
     bore.apply_translation((0, fy + P["cam_pod_t"] + 0.25, lz))
     pod = sub(pod, bore)
@@ -1056,12 +1067,24 @@ def build_neck_clevis():
     chan = extrude_polygon(sg.LineString([(-4, 0), (4, 0)]).buffer(4.0), P["neck_top_z"] - z0 + 30)
     chan.apply_translation((0, P["neck_chan_y"], z0 - 15))
     neck = sub(neck, chan)
+    # SIDE EXIT window at the column's top-left corner (CABLE-CHECK defect B): the chimney
+    # above the channel is boxed in by riser / cheek-root / cradle arm / worm to a 1.0 mm
+    # escape gap, so the wire could never leave. This 12x8x10 cut (x -18..-6, y -30..-22,
+    # z 117..127) is pure column / riser-bottom-corner material and opens the channel into
+    # the open LEFT bay (x -24..-9, free 20 mm up + left, 1.8 clear of the -30 deg head
+    # sweep). The +x mirror is NOT available: the gusset fills the right bay.
+    exitw = box(12.0, 8.0, 10.0)
+    exitw.apply_translation((-12.0, -26.0, 122.0))
+    neck = sub(neck, exitw)
     # 3 M3 PILOTS (Ø2.5 x 12 -- the old Ø3.5 was clearance, nothing bit) to bolt the neck down
-    # to the pan platform. Stage 5: circle rad 16, clocked (270,30,150) -- with the column at
+    # to the pan platform. Stage 5: circle clocked (270,30,150) -- with the column at
     # ny=-17 the old (90,210,330)/rad-12 put a hole 2 mm from the PAN AXIS, inside the
-    # platform's D-bore hub. Keep in sync with build_pan_platform().
+    # platform's D-bore hub. rad 16.5 (was 16.0): the 270-deg bolt's Ø6.5 head counterbore
+    # in the platform grazed the platform cable slot by 0.25 (CABLE-CHECK minor); at 16.5
+    # the cbore edge (y -30.25) clears the slot edge (y -30) by 0.25 and the screw head
+    # keeps its full seat. Keep in sync with build_pan_platform().
     for a in (270, 30, 150):
-        rad = 16.0
+        rad = 16.5
         hx = rad * np.cos(np.radians(a)); hy = ny + rad * np.sin(np.radians(a))
         pilot = cyl(1.25, 14); pilot.apply_translation((hx, hy, z0 + 5))   # bites z0..z0+12
         neck = sub(neck, pilot)
@@ -1158,13 +1181,15 @@ def build_pan_platform():
     slot.apply_translation((0, 0, z1 - 20))
     plate = sub(plate, slot)
 
-    # 3 M3 clearance holes to bolt the neck down (MATCH the neck-base pilots: rad 16, clocked
-    # 270/30/150 about (0, neck_y) -- see build_neck_clevis) with Ø6.5 head counterbores from
-    # the UNDERSIDE, 4 deep. All 3 land on the solid top (r<=33+3.25), clear of the center
-    # D-bore hub (nearest hole edge r 14.7 vs hub r 7), the rim rebate (r45+), the ball
-    # groove (r 36.8..43.2) and the cable slot.
+    # 3 M3 clearance holes to bolt the neck down (MATCH the neck-base pilots: rad 16.5,
+    # clocked 270/30/150 about (0, neck_y) -- see build_neck_clevis, incl. why 16.5) with
+    # Ø6.5 head counterbores from the UNDERSIDE, 4 deep. All 3 land on the solid top
+    # (r<=33.5+3.25), clear of the center D-bore hub (nearest hole edge r 15.0 vs hub r 7),
+    # the rim rebate (r45+), the ball groove (footprint r 36.8..43.2 lives BELOW plate_bot;
+    # widest in-plate cross-section at plate_bot starts r 37.1 > cbore reach 36.75) and the
+    # cable slot (270-deg cbore edge y -30.25 vs slot edge -30: the old rad 16 grazed 0.25).
     for a in (270, 30, 150):
-        rad = 16.0
+        rad = 16.5
         hx = rad * np.cos(np.radians(a)); hy = P["neck_y"] + rad * np.sin(np.radians(a))
         h = cyl(P["m3_clear_r"], 40.0); h.apply_translation((hx, hy, z1 - 4))
         plate = sub(plate, h)
@@ -1243,6 +1268,13 @@ def build_fascia():
     ring.apply_translation((0, fw, P["grille_cz"]))
     fins = [ring]
     for sx in (-1, 1):
+        # backing web per side, tying the fin bases to the ring: the fins (x 33.5..48.5)
+        # never touched the +-30 ring band -> trim_fascia split into 7 loose bodies
+        # (PRINTABILITY 2). 1.2 thick against the wall, hidden behind the 2-proud fins;
+        # spans x 28..49.5 so it overlaps the ring band.
+        web = box(21.5, 1.2, 16.0)
+        web.apply_translation((sx * 38.75, fw + 0.6, P["grille_cz"]))
+        fins.append(web)
         for fx in (35.0, 41.0, 47.0):
             f = box(3.0, 2.0, 16.0)
             f.apply_translation((sx * fx, fw + 1.0, P["grille_cz"]))
@@ -1266,11 +1298,13 @@ def build_fascia():
         l.apply_translation((sx * P["lamp_x"], fw, P["lamp_cz"]))
         _color(l, "lamp"); l.metadata["name"] = nm
         parts.append(l)
-    # white LED dot strip at the bottom lip: slim base + 7 round emitters
-    fl = [box(36.0, 1.0, 3.0).apply_translation((0, fw + 0.5, P["fled_cz"]))]
+    # white LED dot strip at the bottom lip: slim base + 7 round emitters. Base 1.2 (was
+    # 1.0, handling-fragile -- PRINTABILITY 6/7); the dots ride +0.2 with the base front
+    # so their 1.2 proud height over it is unchanged.
+    fl = [box(36.0, 1.2, 3.0).apply_translation((0, fw + 0.6, P["fled_cz"]))]
     for i in range(7):
         d = cyl(1.3, 1.6, axis="y", sections=24)
-        d.apply_translation((-15.0 + i * 5.0, fw + 1.4, P["fled_cz"]))
+        d.apply_translation((-15.0 + i * 5.0, fw + 1.6, P["fled_cz"]))
         fl.append(d)
     led = uni(fl)
     _color(led, "led"); led.metadata["name"] = "led_front"
@@ -1335,9 +1369,16 @@ def build_base():
     # platform slot's exit at pan=0; the service loop below takes the pan winding.
     ex, ey = P["cable_exit"]
     u = np.array([ex - 0.0, ey - P["neck_chan_y"]]); u = u / np.linalg.norm(u)
+    # 24 tall from z 29 (extrude_polygon is z=0..h, so seat_floor-22 puts the FLOOR at 29;
+    # the old 22-at-seat_floor-11 spanned 40..62, wasting 51..62 in the seat void while
+    # stopping 11 short of a full pedestal-corner bore): 29 is safely below the service-
+    # loop band (z 37..45.5) and the top at 53 overlaps 2 into the seat void (no coplanar
+    # boolean face at the seat floor).
     cbl = extrude_polygon(sg.LineString([(ex - 4 * u[0], ey - 4 * u[1]),
-                                         (ex + 4 * u[0], ey + 4 * u[1])]).buffer(4.0), 22.0)
-    cbl.apply_translation((0, 0, seat_floor - 11)); body = sub(body, cbl)
+                                         (ex + 4 * u[0], ey + 4 * u[1])]).buffer(4.0), 24.0)
+    cbl.apply_translation((0, 0, seat_floor - 22))
+    # (cbl is SUBTRACTED after the pedestal union below: subtracting here let the pedestal
+    # refill the pass below z 44.25 to a 4.0 mm window -- CABLE-CHECK defect A.)
 
     # pan-motor PEDESTAL: top face AT the ear-bar underside so the M3s clamp the ears down.
     # (The old 6-thick pad sank the can 5.5 into the floor while the ears floated 12.4 above.)
@@ -1346,6 +1387,11 @@ def build_base():
     ped = rounded_box(48, 48, ear_z - (z0 + floor), 6.0)
     ped.apply_translation((mx, 0, z0 + floor))
     body = uni([body, ped])
+    # deck cable pass, now boring through deck AND pedestal corner in one shot (z 29..51,
+    # only the corner sliver x 4..16, y -24..-19 comes out of the pedestal); the shaft's
+    # -y side is open to the cavity the whole way (pedestal stops at y -24), so the wire
+    # swings straight back into the service-loop band.
+    body = sub(body, cbl)
     # ULN2003 standoffs (x2 boards eventually; second mount is a deferred detailing task).
     # Board centre shifted +20 in Y: at y=0 the board envelope hit the drive_R TT can
     # (y -23.4..-9.9, x up to 52.5).
@@ -1447,6 +1493,11 @@ def build_base():
                 continue
             hx = hex_prism(3.0, 4.0)
             hx.apply_transform(R(TAU / 4, (1, 0, 0)))          # axis Z -> Y
+            # 30 deg about the hex's own axis (now Y): FLAT-top hexes. Vertex-facing-X
+            # hexes narrowed the web at the 4.2 pitch to 0.74 slivers between vertex
+            # tips; flats +-X give a uniform 4.2-3.0 = 1.2 web AND a 60 deg self-
+            # supporting pocket roof instead of a 3.0 flat bridge (PRINTABILITY 5).
+            hx.apply_transform(R(TAU / 12, (0, 1, 0)))
             hx.apply_translation((hx_x, fw - 0.5, zr))         # cuts 2.5 into the 5 wall
             hexes.append(hx)
     body = sub(body, uni(hexes))
@@ -1491,8 +1542,14 @@ def build_base():
         # idler tension arm: wall -> slotted plate inside the front loop arc (radial < 15.7 so
         # the wrapping links clear it); Ø8 stub axle (hardware) slides +-idler_slot/2 in the
         # obround, M3 set-screw lock. Plate stops 0.1 inboard of the idler face.
-        cxp = xw + P["track_gap"] + P["track_width"] / 2          # pod centre (78)
-        arm = box(7.9, 16, 14.6); arm.apply_translation((s * (xw - 1.0 + 3.95), -ys, zs - 0.36))
+        cxp = xw + P["track_gap"] + P["track_width"] / 2          # pod centre (96.4)
+        # arm runs wall (x 69, 1.0 buried) -> 1.1 INTO the plate front face at 85.3: the
+        # chassis_w 140 widening left the old 7.9-long arm ending at x 76.9, 8.4 short of
+        # its plate, so the two plates floated as loose bodies (PRINTABILITY 8 / fix 5).
+        # Y-Z section unchanged: radial max 10.8 from the idler axis < 15.7, wrapping
+        # links still clear; the tension slot below cuts the arm's outer end too (fine --
+        # the Ø8 stub axle needs the passage).
+        arm = box(17.4, 16, 14.6); arm.apply_translation((s * (69.0 + 17.4 / 2), -ys, zs - 0.36))
         plate = cyl(14.0, 2.0, axis="x"); plate.apply_translation((s * (cxp - 9.0 - 0.1 - 1.0), -ys, zs))
         body = uni([body, arm, plate])
         slot = uni([cyl(4.1, 6, axis="x"), box(6, P["idler_slot"], 8.2)])
@@ -1696,6 +1753,10 @@ def build_tracks():
         for i in range(P["roadwheel_count"]):
             ry = -wb / 4 + i * (wb / 2) / max(P["roadwheel_count"] - 1, 1)
             rw = cyl(P["roadwheel_d"] / 2, 30.0, axis="x")
+            # Ø4.2 centered through-bore: a solid wheel was unbuildable running gear
+            # (PRINTABILITY 4). No axle exists in the chassis yet -- the bore takes a
+            # future Ø4 stub-axle pin (slip fit), pin scheme lands with the pod-join pass.
+            rw = sub(rw, cyl(2.1, 34.0, axis="x"))
             rw.apply_translation((cx, ry, (zc - R) + kr + P["roadwheel_d"] / 2 + 0.1))
             wheel_pieces.append(rw)
         side = "L" if sx < 0 else "R"
