@@ -268,6 +268,12 @@ P = {
     "us_d": 16.0,
     "lamp_x": 44.0, "lamp_cz": 20.0,    # amber corner lamps 12x7, proud 2
     "fled_cz": 9.5,         # white dot strip 36x2.5 at the bottom lip, proud 1
+    # Chassis REAR styling (design-ref back.jpg): orange frame panel (the wall shows
+    # through the opening as the 'hatch') above the USB-C slot (x +-7, z 15..23), and a
+    # silver cylinder pod low-right (speaker/buzzer placeholder).
+    "rear_panel_cz": 35.0,  # panel 72x22 -> z 24..46; opening 44x14 -> z 28..42
+    "rear_cyl_x": 38.0,     # image-RIGHT in the reference back view (verified in-render)
+    "rear_cyl_cz": 16.0, "rear_cyl_d": 14.0,
     # Raised camera POD on the forehead (design ref: the camera reads as an eye). Pure
     # cosmetic shell over the recessed CM3: the bore flares 45 deg/side from the existing
     # countersink, wider than the 75 deg-diagonal FoV cone (half ~37.5 deg), so no vignette.
@@ -1196,6 +1202,17 @@ def build_fascia():
     led.apply_translation((0, fw, P["fled_cz"]))
     _color(led, "led"); led.metadata["name"] = "led_front"
     parts.append(led)
+    # REAR: orange frame panel (wall shows through as the hatch) + silver cylinder pod
+    rp = sub(rounded_box(72.0, 22.0, 2.5, 6.0),
+             box(44.0, 14.0, 8.0))
+    rp.apply_transform(R(TAU / 4, (1, 0, 0)))        # extrude -Y (proud of the REAR face)
+    rp.apply_translation((0, -fw, P["rear_panel_cz"]))
+    _color(rp, "accent"); rp.metadata["name"] = "trim_rear"
+    parts.append(rp)
+    rc = cyl(P["rear_cyl_d"] / 2, 9.0, axis="y", sections=48)
+    rc.apply_translation((P["rear_cyl_x"], -fw - 4.5, P["rear_cyl_cz"]))   # lands ON the wall
+    _color(rc, "sensor"); rc.metadata["name"] = "sensor_rear"
+    parts.append(rc)
     return parts
 
 
