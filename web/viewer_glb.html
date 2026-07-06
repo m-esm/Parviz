@@ -102,7 +102,7 @@
 
   <div class="sec">Appearance</div>
   <label class="ctl">Transparency <span class="val" id="opacity_v">0%</span>
-    <input type="range" id="opacity" min="0" max="0.92" step="0.02" value="0"></label>
+    <input type="range" id="opacity" min="0" max="0.92" step="0.02" value="0.5"></label>
   <label class="ctl">Explode <span class="val" id="explode_v">0%</span>
     <input type="range" id="explode" min="0" max="1" step="0.01" value="0"></label>
 
@@ -298,6 +298,8 @@ new GLTFLoader().load(MODEL, (gltf)=>{
   overallDim.visible=false; scene.add(overallDim);
 
   applyDims();
+  // apply the slider's default transparency (50%) to the freshly loaded materials
+  $('opacity').dispatchEvent(new Event('input'));
   window.__ready = true;
 }, undefined, err=>{ document.getElementById('bbox').textContent='LOAD ERROR: '+err; });
 
