@@ -21,6 +21,19 @@ links + 12T sprocket + F688ZZ idler + road wheels**. The 28BYJ placeholder is no
 offset shaft, 3 mm D-flats). Remaining: worm teeth are readable placeholders (regen involute/helix
 in BOSL2 in a venv), body-to-pod join, widen track gauge (head overhangs ~10 mm/side), buy list.
 
+**Design-ref styling pass (2026-07-06, branch design-styling):** the 5 concept renders in
+`reference/design/` (black+orange rugged two-tone) are now integrated as a 34-part GLB:
+COLORS/PAL colorway (keep `src/build.py` COLORS and the viewer PAL in sync — the VIEWER
+re-colors by node name and wins on render), orange head side rails (`trim_rail_L/R`, the
+arm shoulders land on them), forehead LED strip + slot, knurled `antenna_stub` (robot -X =
+image-right in the reference front view), rear orange `trim_hatch_frame` (bottom band
+notched clear of the neck-slot tilt sweep), chassis front fascia (hex grille field +
+orange surround/fins, HC-SR04 `sensor_us` in a floor recess, amber lamps, white LED bar),
+running gear split into `drivewheels_L/R` (silver; geometry untouched), and PLACEHOLDER
+gripper arms (`arm_L/R`, static tucked pose; actuation + mount decision deferred). All
+styling parts probed against all parts: 0.000 mm³ overlaps. `TRANS=0 make shot` renders
+solid (styling review); default stays 50% ghost.
+
 Latest render review (2026-07-06): `make build` wrote a 20-part `web/assembly.glb`; fresh
 transparent and solid shots were inspected from iso/front/side/top plus two section cuts. The
 assembly reads correctly as a tablet-head tracked robot, but the print-final fixes are:
