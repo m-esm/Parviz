@@ -19,7 +19,8 @@ on `head_back` at the factory M3 bosses; **camera recessed behind the forehead**
 dims) with a lens bump + `cam_cover`; **tracks = measured-TT-motor positive drive: articulated
 links + 12T sprocket + F688ZZ idler + road wheels**. The 28BYJ placeholder is now dimensionally correct (Ø28.25, 7.875 mm
 offset shaft, 3 mm D-flats). Remaining: worm teeth are readable placeholders (regen involute/helix
-in BOSL2 in a venv), body-to-pod join, widen track gauge (head overhangs ~10 mm/side), buy list.
+in BOSL2 in a venv), body-to-pod join, buy list. (Track gauge widened 2026-07-06: chassis_w
+120->140, track outer faces +-102 ~= head half-width; base_h 52->66 for the design-ref stance.)
 
 **Design-ref styling pass (2026-07-06, branch design-styling):** the 5 concept renders in
 `reference/design/` (black+orange rugged two-tone) are now integrated as a 34-part GLB:
@@ -203,7 +204,7 @@ engagement beats a friction belt that slips when the head pans.
 - Params: `chassis_w/l`, `track_wheel_r`, `track_wheelbase`, `track_width`, `track_pitch`,
   `track_links`, `sprocket_teeth`, `idler_bore_d`, `roadwheel_*`, `track_gap`, `chassis_clear`.
 - **Still TODO:** body-to-pod join (2× M3 nut-trap + 2× Ø4 dowel per side), links as real TPU/PLA
-  print vs the rigid model, widen the gauge (head overhangs ~10 mm/side). Pi rides the head (high CoM)
+  print vs the rigid model. (Gauge widened: chassis_w 140.) Pi rides the head (high CoM)
   → keep the chassis heavy/low and the wheelbase long so it doesn't tip on accel or a fast head pan.
 
 ## Print notes (first pass — not finalized)

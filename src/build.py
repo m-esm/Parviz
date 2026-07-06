@@ -142,12 +142,16 @@ P = {
     "cable_exit": (12.0, -24.0),
 
     # --- Tank-tread chassis: central body + two side track pods (mobile base) ---
-    "base_h": 52.0,         # body top = pan-mount plane (keeps the neck/head at the same height)
+    "base_h": 66.0,         # body top = pan-mount plane (52->66: design-ref stance; head:base
+                            # height split. Head z_bot 88 leaves a 22 gap; swept head corner
+                            # min z~72 -> 6 mm over the platform, probe-verified)
     # solid top DECK (the old cavity reached base_h -> the pan seat cut was a no-op and the
     # race/balls/platform floated). 20 leaves a 5 mm floor under the race seat (z 32..37);
     # everything in the cavity tops out below 32 (motor ears 31.25, wiring box 29.2).
     "deck_t": 20.0,
-    "chassis_w": 120.0,     # body width between the tracks (X)
+    "chassis_w": 140.0,     # body width between the tracks (120->140: track outer faces land
+                            # at +-102 ~= head half-width 102.5, killing the head overhang;
+                            # NOT 148 -- the tucked claws at x 106..119 need 4 mm to the pods)
     "chassis_l": 156.0,     # body length front-back (Y)
     "chassis_clear": 7.0,   # ground clearance under the body
     "track_gap": 4.0,       # body side <-> track inner face
@@ -263,12 +267,12 @@ P = {
     "hatch_frame_cz": 151.0,    # outer z 98.5..203.5; inner 111.5..190.5 (port 113..147,
                                 # louvres 180..214 both land inside the opening)
     # Chassis FRONT fascia (design-ref front.jpg). Front wall: y=78 face, x +-60, z 7..52.
-    "grille_cz": 38.0,      # orange surround outer 60x20 -> z 28..48; inner 52x12
+    "grille_cz": 46.0,      # orange surround outer 60x20 -> z 36..56; inner 52x12
     "grille_w": 60.0, "grille_h": 20.0, "grille_band": 4.0, "grille_t": 2.5,
     "us_dx": 13.0,          # ultrasonic barrel centers at x=+-13 (HC-SR04 transducer pitch ~26)
-    "us_cz": 19.5,          # barrel Ø16 -> z 11.5..27.5 (0.5 under the surround, 1 over the LEDs)
+    "us_cz": 26.0,          # barrel Ø16 -> z 18..34 (2 under the surround; board clears the floor)
     "us_d": 16.0,
-    "lamp_x": 44.0, "lamp_cz": 20.0,    # amber corner lamps 12x7, proud 2
+    "lamp_x": 54.0, "lamp_cz": 26.0,    # amber corner lamps 12x7, proud 2 (hug the 140-wide corners)
     "fled_cz": 9.5,         # white dot strip 36x2.5 at the bottom lip, proud 1
     # Chassis REAR styling (design-ref back.jpg): orange frame panel (the wall shows
     # through the opening as the 'hatch') above the USB-C slot (x +-7, z 15..23), and a
@@ -1333,7 +1337,7 @@ def build_base():
     # through-vent at the print pass) + Ø16.6 ultrasonic barrel passes through the wall
     fw = P["chassis_l"] / 2
     hexes = []
-    for r_i, zr in enumerate((34.0, 38.0, 42.0)):
+    for r_i, zr in enumerate((42.0, 46.0, 50.0)):
         off = 2.1 if r_i % 2 else 0.0
         for k in range(-6, 7):
             hx_x = k * 4.2 + off
@@ -1348,12 +1352,6 @@ def build_base():
         us = cyl(P["us_d"] / 2 + 0.3, 12, axis="y")
         us.apply_translation((sx * P["us_dx"], fw - 2.5, P["us_cz"]))
         body = sub(body, us)
-    # floor slot for the HC-SR04 body: the 20.9-tall board (us_cz 19.5) reaches z 9.05,
-    # below the cavity floor top (12) -- drop the module into a recess instead of raising
-    # the fascia (the barrels would hit the grille surround)
-    usr = box(46.5, 2.6, 3.8)
-    usr.apply_translation((0, fw - 5.0 - 0.8, 10.8))
-    body = sub(body, usr)
     for i in range(-2, 4):                            # side ventilation slots (i=-3 dropped: the
         v = box(12, 5, 16); v.apply_translation((0, i * 16, z0 + h / 2))    # TT nub pocket +
         v2 = v.copy(); v.apply_translation((P["chassis_w"] / 2, 0, 0))      # shaft recess live
@@ -1378,11 +1376,11 @@ def build_base():
         # deck pocket over the motor: gearbox/can top at z 36.52 but the cavity ceiling is 32;
         # cut to 36.8 (pan-seat floor is 37 and the race ring footprint r34..46 stays clear:
         # nearest pocket corner is at r 50.2)
-        dkp = box(19.4, 64.7, 4.9); dkp.apply_translation((s * 45.5, -39.65, 34.35))
+        dkp = box(19.4, 64.7, 4.9); dkp.apply_translation((s * (xw - 14.5), -39.65, 34.35))
         body = sub(body, dkp)
         # cavity-corner relief: the cavity's r12 rounded corner leaves body material where the
         # rectangular gearbox rear corner sits (probed 318.5 mm3) -- square it off locally
-        crn = box(7.0, 14.2, 24.9); crn.apply_translation((s * 51.6, -65.1, 24.35))
+        crn = box(7.0, 14.2, 24.9); crn.apply_translation((s * (xw - 8.4), -65.1, 24.35))
         body = sub(body, crn)
         tabp = box(4.2, 5.7, 6.4); tabp.apply_translation((s * axm, ys - 14.15, zs))
         body = sub(body, tabp)                        # front-tab pocket in the rear wall (1 skin)
