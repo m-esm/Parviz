@@ -129,7 +129,9 @@ The screen+Pi module drops in from behind and bolts to the 4 head_back standoffs
 
 ## Head style: simple rounded box (simplified from the Echo-Show wedge, per user)
 
-The head is now a **clean rounded box** (`_head_solid`: rounded-rect footprint 205w × 62d, flat
+The head is now a **clean rounded box** (`_head_solid`: rounded-rect footprint 205w × 101d --
+deepened 2026-07-07 so the envelope CONTAINS the tilt stepper (motor bay slot x ±33, y -78..21,
+z 78..168 replaces the old rear cable port; the bay IS the cable route now), flat
 top/bottom, rounded vertical edges, upright front `face_angle=0`). The screen sits upright and flush
 on the front; the neck's tilt provides the look up/down. It started as an Echo-Show "doorstop" wedge
 (reference in `reference/alexa-style-smart-display/`, a Touch Display 2 design we borrowed the style

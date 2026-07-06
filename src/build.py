@@ -51,7 +51,10 @@ P = {
     "head_w": 205.0,        # shell outer width (screen 193 + walls + margin)
     "face_angle": 0.0,      # upright front face (the neck's tilt gives the look-up/down)
     "body_front_y": 31.0,   # front face plane (glass sits flush here)
-    "body_back_y": -31.0,   # back face plane (behind the tilt axis; Pi bay)
+    "body_back_y": -70.0,   # back face plane (task #27 deep head: was -31, which left the whole
+                            # tilt stepper hanging exposed behind the head. The 28BYJ can rear
+                            # sits at y=-64.3 (face_y -34.5 - 2 - 27.8); -70 puts it inside the
+                            # envelope with wall 4 + 1.7 static clearance to the inner face -66)
     "body_z_bot": 88.0,     # shell bottom height above desk (113-25: design-ref head drop --
                             # the whole head+tilt stack sits 25 lower over the chassis)
     "body_z_top": 226.0,    # shell top height (was 251; -25 head drop. 243+8 history: the CM3 bay needs ~14 mm between
@@ -304,14 +307,14 @@ P = {
     "ant_d": 13.0, "ant_h": 26.0,   # fat, short stub like the reference
     "ant_collar_d": 16.0, "ant_collar_h": 3.0,
     # Orange picture-frame around the head-back service area (design-ref back.jpg). The
-    # louvres + cable port play the reference's inner hatch. Bottom band notched over the
-    # neck slot (wall open to z=191 in x +-31 for the tilt sweep; the frame must not
-    # hover in that envelope).
+    # louvres + motor-bay opening play the reference's inner hatch. Bottom band notched
+    # over the deep-head motor bay (back wall open x +-33 up to z=168 for the tilt sweep;
+    # the frame must not hover in that envelope).
     "hatch_frame_w": 160.0, "hatch_frame_h": 105.0,  # outer X x Z
     "hatch_frame_band": 13.0,   # ring width
     "hatch_frame_t": 3.0,       # proud of the back face
-    "hatch_frame_cz": 151.0,    # outer z 98.5..203.5; inner 111.5..190.5 (port 113..147,
-                                # louvres 180..214 both land inside the opening)
+    "hatch_frame_cz": 151.0,    # outer z 98.5..203.5; inner 111.5..190.5 (louvres
+                                # 171..189 land inside the opening)
     # Chassis FRONT fascia (design-ref front.jpg). Front wall: y=78 face, x +-60, z 7..52.
     "grille_cz": 46.0,      # orange surround outer 60x20 -> z 36..56; inner 52x12
     "grille_w": 60.0, "grille_h": 20.0, "grille_band": 4.0, "grille_t": 2.5,
@@ -683,10 +686,8 @@ def build_head_shell():
     window.apply_transform(screen_pose() @ _T(0, 20, 0))     # pierce the front face -> lip
     shell = sub(shell, window)
 
-    # small rear cable port (main electronics access is by removing the front bezel)
-    cable_port = box(48, 30.0, 34.0)
-    cable_port.apply_translation((0, P["body_back_y"], P["body_z_bot"] + 42))
-    shell = sub(shell, cable_port)
+    # (the old rear cable port is gone: the deep-head motor BAY below now opens the same
+    # back-wall zone x +-24, z 113..147 and is the cable route out of the head)
 
     # Pi I/O access, re-aimed for the REAL Pi (combined Pins-Out screen mesh): the Pi rides
     # the display's own back standoffs, landscape, board plane XZ, stack world x -37.7..48.1,
@@ -699,18 +700,29 @@ def build_head_shell():
     io_side = box(14.0, 15.0, 17.0)
     io_side.apply_translation((P["head_w"] / 2 - 2, -1.0, P["screen_cz"] + 22.0))
     shell = sub(shell, io_side)
-    # ventilation louvres high on the back wall (Pi 5 runs hot)
-    for i in range(-2, 3):
-        louvre = box(50, 30.0, 4.0)
-        louvre.apply_translation((0, P["body_back_y"], P["screen_cz"] + 18 + i * 8))
+    # ventilation louvres high on the back wall (Pi 5 runs hot). 3x 70-wide (was 5x 50 at
+    # z 153..189): the deep-head motor BAY below opens the wall to z=168, so the louvres
+    # moved up into the z 171..189 band -- above the bay web (3 mm) and still inside the
+    # hatch-frame opening (z < 190.5). Wider (x +-35) keeps ~the vent area.
+    for i in range(3):
+        louvre = box(70, 30.0, 4.0)
+        louvre.apply_translation((0, P["body_back_y"], P["screen_cz"] + 20 + i * 7))
         shell = sub(shell, louvre)
 
-    # bottom-rear slot so the neck clevis can rise into the body and reach the axle.
-    # Narrow in X (62: cheeks end at |x|=26) but TALL (top z=191): at +-30 tilt the back wall
-    # sweeps over the raised 12T-worm motor + plate; the old 180 top pinned the sweep at +19 deg.
-    # This slot is also the exit route for the Pi's bottom-edge USB-C / HDMI cables.
-    slot = box(62.0, 60.0, 101.0)
-    slot.apply_translation((0, P["body_back_y"] + 22, P["tilt_axis_z"] - 37.5))
+    # bottom-rear MOTOR BAY (task #27 deep head): one slot voids the bottom wall (x +-33,
+    # y -78..21) and the lower back wall (z 78..168) so the PAN-FRAME tilt drivetrain --
+    # 28BYJ can+ears (|x| 21.5, y -64.3..-26.8, z 114..147.4), worm, bracket, neck cheeks
+    # (|x| 26) and the column-back ULN standoffs -- clears the head across the FULL +-30
+    # tilt sweep. Probe-derived envelope (sweep_req): the swept group crosses the inner
+    # back-wall face (y -66) over x +-26, z up to 165.05 (deepest head-frame y -80.6, past
+    # the outer face, so the wall MUST stay open here; at neutral the motor is fully
+    # inside, 1.7 clear of the inner face) and crosses the bottom wall right to the rear
+    # face. x +-33 gives 7.0 side clearance; top 168 gives 2.95 over the swept need.
+    # This bay is also the exit route for the Pi's bottom-edge USB-C / HDMI cables and
+    # keeps the neck's left-bay cable window (x -18..-6, y -30..-22, z 117..127) reachable
+    # at every tilt (the nearest head material is the x=-33 bay wall).
+    slot = box(66.0, 99.0, 90.0)
+    slot.apply_translation((0, -28.5, 123.0))     # x +-33, y -78..21, z 78..168 (world)
     shell = sub(shell, slot)
 
     # pivot hubs at the side walls, on the tilt axis (fuse through the wall, behind the bezel)
@@ -900,17 +912,31 @@ def build_head_parts():
     # The factory holes are threaded bosses in the metal back-pan and OPEN BACKWARD (-Y); a
     # bezel boss running forward from the tab plane passes THROUGH the glass (front 30.99,
     # measured 69/50k screen samples inside the old bosses). So the screen mounts on REAR
-    # STANDOFFS on head_back: Ø9 pillars from the inner back wall (y=-27) forward to the
+    # STANDOFFS on head_back: Ø9 pillars from the inner back wall (y=-66) forward to the
     # display boss REAR plane (hole plane - scr_boss_lip = 22.53; the raised boss around each
     # factory hole spans the last 2.5 mm -- landing on the hole plane buried the standoff in
     # the boss, stage-4 D1), with a Ø6.5 driver channel + short M3 seat so a stock M3x12
     # reaches the display from behind. At x=+-63 they clear the Pi stack (|x|<=48.1), the
     # clamp tubes (z 171..185 vs rows 146.2/211.8), the louvres, the neck and io_side slots.
-    wall_in = P["body_back_y"] + P["head_wall"]          # inner back wall (-27)
+    wall_in = P["body_back_y"] + P["head_wall"]          # inner back wall (-66, deep head)
+    # GUSSET WEBS (task #27): the deep head stretches the 4 rear standoffs to 88.5-long
+    # Ø9 cantilevers off the back wall. Per side, a 4-thick vertical web ties the upper
+    # and lower standoff together (z 121.15..186.8, spanning the boss centers so it fuses
+    # both), rooted 1 mm into the back wall. y -67..-27: the rear end fuses to the wall,
+    # the front end stops 2.0 behind the axle clamp tubes (y -25..-11) and WELL behind
+    # the display+Pi stack (y >= -7; the webs also sit outboard at |x| 59.6..66.6 vs the
+    # stack's |x| <= 48.1). The Ø6.5 driver channels are cut AFTER this union, so they
+    # stay open where they graze the web ends.
+    wpts = [(sp @ np.append(lp, 1.0))[:3] for lp in P["scr_mount_pts"]]
+    for wx_side in sorted({round(w[0], 2) for w in wpts}):
+        zs = sorted(w[2] for w in wpts if round(w[0], 2) == wx_side)
+        web = box(4.0, 40.0, zs[1] - zs[0])
+        web.apply_translation((wx_side, -47.0, (zs[0] + zs[1]) / 2))
+        back = uni([back, web])
     for lp in P["scr_mount_pts"]:
         w = (sp @ np.append(lp, 1.0))[:3]
         w[1] -= P["scr_boss_lip"] + P["scr_seat_clear"]  # bearing face = boss rear plane
-        sl = w[1] - wall_in                              # standoff length (49.45)
+        sl = w[1] - wall_in                              # standoff length (88.48, deep head)
         b = cyl(P["scr_boss_r"], sl, axis="y"); b.apply_translation((w[0], wall_in + sl / 2, w[2]))
         back = uni([back, b])
         # deep Ø6.5 screw-head/driver channel from the back wall, stopping 6 short of the tab
@@ -1040,10 +1066,10 @@ def build_hatch_frame():
     ring = sub(outer, inner)
     ring.apply_transform(R(TAU / 4, (1, 0, 0)))      # footprint XZ, extrusion -Y
     ring.apply_translation((0, P["body_back_y"], P["hatch_frame_cz"]))
-    # notch the bottom band over the neck slot (x +-31, wall open to z=191): the frame
-    # may not reach into the neck's tilt-sweep clearance
-    notch = box(66.0, 2 * t + 2, 70.0)
-    notch.apply_translation((0, P["body_back_y"] - t, P["tilt_axis_z"] - 22.0))
+    # notch the bottom band over the deep-head motor BAY (back wall open x +-33 to z=168):
+    # the frame may not reach into the tilt-sweep clearance envelope
+    notch = box(70.0, 2 * t + 2, 74.0)
+    notch.apply_translation((0, P["body_back_y"] - t, P["tilt_axis_z"] - 20.0))
     ring = sub(ring, notch)
     # FIXING: glue + 4x Ø3 pins at the band corners into blind back-wall sockets
     # (PARAMS hatch_pin_pts; they register the frame around the louvres/port)
