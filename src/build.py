@@ -103,7 +103,10 @@ P = {
     "worm_wheel_teeth": 12, # ratio 12:1 (still self-locks; 24T tilted 60 deg in 16 s -- too slow)
     "worm_wheel_w": 7.0,    # face width
     "worm_wheel_x": 0.0,    # wheel centered on the head midplane (spacer tubes reach both bearings)
-    "worm_od": 10.0,        # worm outer Ø (pitch r ~4)
+    "worm_od": 10.0,        # placeholder-worm visual OD (real generated worm OD is 10.55)
+    "worm_pitch_r": 4.4,    # REAL worm pitch radius (docs/WORM.md): module 1.25 + the Ø7
+                            # solid core force pitch r 4.4 -> CD 11.9 (the old worm_od*0.4
+                            # guess gave 11.5, which left the wheel ~no addendum room)
     # 14 (was 16): threads (body + 1 mm rib overhang each end) span 16 mm = 4.07 axial
     # pitches (>= 4 teeth-equivalent on the 12T wheel) and END at y=-16, so a bare Ø5 tail
     # stub emerges BEFORE the cradle groove band (y -15.5..-13). The old 16 ran full-radius
@@ -336,6 +339,71 @@ P = {
     "arm_x": 127.0,         # arm plane center: outboard of the pods (outer face 118.8); a
                             # standoff tube bridges the rail face (107.5) to the shoulder
 
+    # --- Cosmetic-part FIXINGS (task #15): every styling part gets a real joint ---
+    # Pure cosmetics: blind Ø3 locating pins into Ø3.2 x 2.5 wall sockets + glue (2.5 deep
+    # in a 4-wall leaves 1.5 skin; nothing pierces a visible face or the screen / display /
+    # camera voids). Pin protrudes 2.3 into the 2.5 socket (0.2 bottoming + glue room).
+    "fix_pin_r": 1.5, "fix_socket_r": 1.6, "fix_socket_deep": 2.5, "fix_pin_len": 2.3,
+    "fix_pin2_r": 1.0, "fix_socket2_r": 1.1,   # Ø2 pins (camera_pod, sensor_rear cap)
+    # trim_rail sockets, (y, z) per side wall (mirrored in x). Keep-outs: the shoulder
+    # hardware below (z 125..136), the bezel<->back SIDE POSTS at (x +-97.5, z 119.8 and
+    # 198.3, r 4.3 + their y-axis M3 bores) -- unioned in build_head_parts AFTER the
+    # shell sockets are cut, so a socket in their z bands gets silently REFILLED (a pin
+    # at z 202 shipped 1.17 mm^3 into the upper post before this was caught) -- the
+    # pivot boss / clamp tubes (y -18, z 153; the z-146 sockets shave a <1 mm sliver off
+    # the boss rim at x>100, harmless), and the right wall's Pi I/O slot (y -8.5..6.5,
+    # z 166.5..183.5; the z-188 socket sits 1.9 above it).
+    "rail_pin_pts": ((-8.0, 146.0), (8.0, 146.0), (0.0, 188.0)),
+    # ARM SHOULDER INTERFACE (docs/ARM-MECH.md; arms are ARMS=1-gated but the head prints
+    # the interface NOW so option B/C arms bolt on without a head_back reprint): per side
+    # wall, 2x M3 captive-nut pockets + a Ø6.2 servo-lead pass, all under the rail.
+    # HORIZONTAL pair (y +-8) at z 132, not ARM-MECH's vertical pair: any vertical pair
+    # straddling z 130 runs into the bezel<->back side post at (x 97.5, z 119.8) whose
+    # r4.3 boss + y-axis M3 bore own the wall's z 115.5..124.1 band. The pockets are cut 2.8
+    # deep from the wall's INTERIOR face (x 98.5; probe-verified -- the screen-pocket box
+    # only spans +-97, narrower than the +-98.5 hollow, so the side wall stays 4.0 thick),
+    # leaving a 1.2 outer skin that hides under the screwed-and-glued rail (compression
+    # only). The nut sits flush INSIDE the wall: no inboard boss (ARM-MECH's pad idea is
+    # forbidden -- the display's widest edge |x| 96.48 needs its 2.0 side clearance to
+    # slide in). Nuts drop in from the open pocket mouths BEFORE the screen module
+    # installs; one lands in the bezel wall (y +8), one in head_back (y -8) -- the split
+    # plane is y 2.0. Screws: M3x10 from outside through rail + wall (tip stops at x
+    # 97.5, 1.0 clear of the display edge; an M3x12 tip at 95.5 would hit it). Arms off:
+    # same screws through a printed blank flange.
+    "shoulder_screw_yz": ((-8.0, 132.0), (8.0, 132.0)),
+    "shoulder_wire_yz": (0.0, 130.0), "shoulder_wire_r": 3.1,   # Ø6.2 lead pass (plugged;
+                            # the rail stays uncut -- an option-C retrofit reprints it)
+    "shoulder_nut_deep": 2.8,
+    # trim_hatch_frame pins, (x, z) on the back wall: on the 13-wide ring band's corners,
+    # clear of the louvres (x +-25, z 153..189), cable port (x +-24, z 113..147), neck
+    # slot (x +-31 below z 166) and the bezel<->back top/bottom posts (x +-40, z 221/92.6).
+    # The task-suggested (+-60, 190/112) failed verification: x 60 < inner band edge 67,
+    # both points land in the frame OPENING, not on the band.
+    "hatch_pin_pts": ((-72.0, 196.0), (72.0, 196.0), (-72.0, 106.0), (72.0, 106.0)),
+    # trim_fascia pins, (x, z) on the chassis front wall under the fin backing webs
+    # (x 28..49.5, z 38..54): >6 clear of the hex field (|x| <= 24.8, z 40.3..51.7) and
+    # the Ø16.6 barrel passes (+-13, z 26). The task-suggested (+-38, 15) / (+-20, 52)
+    # failed verification: nothing of trim_fascia touches the wall at z 15 (ring z 36..56,
+    # webs/fins z 38..54), and (+-20, 52) sockets pass within ~0.7 of the hex pockets.
+    "fascia_pin_pts": ((-44.0, 50.0), (44.0, 50.0), (-33.0, 42.0), (33.0, 42.0)),
+    # trim_rear pins, (x, z) on the rear wall band (side bands x 22..36, bottom z 24..28):
+    # clear of the USB slot (x +-7, z 15..23, 1.4 gap) and TT tab pockets (x 43.5..47.7).
+    "rear_pin_pts": ((-29.0, 35.0), (29.0, 35.0), (0.0, 26.0)),
+    # camera_pod Ø2 pins, (x, z) on the bezel face, ABOVE the glass line: the face is
+    # open (pocket) below z 208.9, so the pod's lower band only kisses glass and the pins
+    # carry it on the z>209 wall strip. Clear of the Ø8 aperture flare (r 8.94 > 4).
+    "campod_pin_pts": ((-8.0, 216.0), (8.0, 216.0)),
+    # antenna: Ø6 spigot under the collar -> Ø6.2 x 3 blind socket in the head top wall
+    # (4 thick: 3 deep leaves 1.0 ceiling skin; camera pier |x|<16 and the top bezel
+    # posts x +-40 both clear x -62). Glue or friction fit.
+    "ant_spigot_r": 3.0, "ant_spigot_socket_r": 3.1, "ant_spigot_deep": 3.0,
+    "wire_pass_r": 1.25,    # Ø2.5 wire passes (led_strip, led_front, lamps)
+    # sensor_rear (bought Ø12-14 buzzer/speaker behind a printed grille cap): Ø10 sound/
+    # wire through-hole in the rear wall + 2x Ø2 cap pins. The cap gains a Ø17 x 1.5 base
+    # flange so the pins (x 38 +- 7) land 0.9 outside the Ø10 bore.
+    "rearpod_hole_r": 5.0, "rearpod_flange_r": 8.5, "rearpod_flange_t": 1.5,
+    "rearpod_pin_dx": 7.0,
+
     # --- Fastening: M3 screws into CAPTIVE HEX NUTS (user choice) ---
     "m3_clear_r": 1.75,     # M3 screw clearance
     "m3_nut_af": 5.7,       # M3 hex nut across-flats (+ clearance)
@@ -421,6 +489,31 @@ def screw_post(pos, normal, depth):
     return m
 
 
+def fix_pin(r, length, direction, face_pt, bury=1.0):
+    """Locating pin (POSITIVE): radius r, protruding `length` along `direction` from a
+    part face at `face_pt`, buried `bury` into the part so uni() fuses (a face-tangent
+    cylinder does not fuse -- see the stage-4 D4 ULN standoff defect). `direction` must
+    not be exactly -Z (_orient's antiparallel gap); no fixing here needs it."""
+    L = length + bury
+    m = cyl(r, L)
+    m.apply_translation((0, 0, L / 2 - bury))
+    _orient(m, direction)
+    m.apply_translation(face_pt)
+    return m
+
+
+def blind_socket(r, deep, out_dir, face_pt, overshoot=1.0):
+    """Blind pin-socket NEGATIVE: radius r, cut `deep` into a wall whose outer face
+    passes through `face_pt`; `out_dir` points OUT of the wall. The `overshoot` past the
+    face avoids a coincident boolean face at the opening."""
+    L = deep + overshoot
+    m = cyl(r, L)
+    m.apply_translation((0, 0, L / 2 - deep))
+    _orient(m, out_dir)
+    m.apply_translation(face_pt)
+    return m
+
+
 def sub(a, b):
     return trimesh.boolean.difference([a, b], engine="manifold")
 
@@ -462,9 +555,11 @@ def dbore_hub(outer_r, length, axis="z"):
 
 
 def worm_cd():
-    """Tilt worm center distance (wheel pitch r + ~worm pitch r). Single source of truth for
-    the neck bracket AND the assembly (it used to be duplicated in both)."""
-    return P["worm_module"] * P["worm_wheel_teeth"] / 2 + P["worm_od"] * 0.4
+    """Tilt worm center distance = wheel pitch r + worm pitch r = 7.5 + 4.4 = 11.900
+    (docs/WORM.md: the generated involute pair needs CD 11.9; was 11.5 off worm_od*0.4).
+    Single source of truth for the neck bracket AND the assembly: the worm, tilt motor,
+    bracket plate, cradle, riser and can pocket all key off this and drop 0.4 together."""
+    return P["worm_module"] * P["worm_wheel_teeth"] / 2 + P["worm_pitch_r"]
 
 
 def gear_disc(pitch_r, teeth, width, tooth_h, axis="x"):
@@ -693,6 +788,54 @@ def build_head_shell():
     slot_led.apply_translation((P["led_cx"], fy - P["led_slot_d"] / 2 + 0.5, P["led_cz"]))
     shell = sub(shell, slot_led)
 
+    # --- COSMETIC FIXINGS in the shell walls (task #15; cut LAST so no union refills) ---
+    hw2 = P["head_w"] / 2
+    # trim_rail_L/R: 3x Ø3.2 x 2.5 blind pin sockets per side wall, drilled from outside
+    # (the 4-wall keeps a 1.5 skin toward the interior)
+    for sx in (-1, 1):
+        for py, pz in P["rail_pin_pts"]:
+            shell = sub(shell, blind_socket(P["fix_socket_r"], P["fix_socket_deep"],
+                                            (sx, 0, 0), (sx * hw2, py, pz)))
+    # ARM SHOULDER INTERFACE (see the PARAMS block for the full derivation): per side,
+    # 2x M3 captive-nut pockets cut 2.8 into the wall from its interior face (x +-98.5;
+    # 1.2 outer skin under the rail; nut in before the screen module) + Ø3.5 screw
+    # clearance through wall + a Ø6.2 servo-lead pass on the shoulder axis.
+    pocket_face = hw2 - P["head_wall"]       # wall interior face (98.5, probe-verified)
+    for sx in (-1, 1):
+        for sy, sz in P["shoulder_screw_yz"]:
+            # hex void spans local z -deep..+1: after _orient(+z -> inboard) it cuts
+            # `deep` OUTWARD from the interior face with a 1.0 inboard overshoot (open
+            # into the head interior; no coincident face at the opening)
+            nut = hex_prism(P["m3_nut_af"] + 0.3, P["shoulder_nut_deep"] + 1.0)
+            nut.apply_translation((0, 0, (P["shoulder_nut_deep"] + 1.0) / 2
+                                   - P["shoulder_nut_deep"]))
+            _orient(nut, (-sx, 0, 0))
+            nut.apply_translation((sx * pocket_face, sy, sz))
+            shell = sub(shell, nut)
+            mc = cyl(P["m3_clear_r"], 9.0, axis="x")
+            mc.apply_translation((sx * (hw2 - 3.0), sy, sz))   # spans x 95..104
+            shell = sub(shell, mc)
+        wy, wzs = P["shoulder_wire_yz"]
+        wp = cyl(P["shoulder_wire_r"], 8.0, axis="x")
+        wp.apply_translation((sx * (hw2 - 2.75), wy, wzs))     # spans x 95.75..103.75
+        shell = sub(shell, wp)
+    # trim_hatch_frame: 4x Ø3.2 x 2.5 blind sockets in the back wall (1.5 skin)
+    for px, pz in P["hatch_pin_pts"]:
+        shell = sub(shell, blind_socket(P["fix_socket_r"], P["fix_socket_deep"],
+                                        (0, -1, 0), (px, P["body_back_y"], pz)))
+    # camera_pod: 2x Ø2.2 x 2.5 blind sockets in the face wall strip above the pocket
+    for px, pz in P["campod_pin_pts"]:
+        shell = sub(shell, blind_socket(P["fix_socket2_r"], P["fix_socket_deep"],
+                                        (0, 1, 0), (px, fy, pz)))
+    # antenna_stub: Ø6.2 x 3 blind spigot socket in the top wall (1.0 ceiling skin)
+    shell = sub(shell, blind_socket(P["ant_spigot_socket_r"], P["ant_spigot_deep"],
+                                    (0, 0, 1), (P["ant_x"], P["ant_y"], P["body_z_top"])))
+    # led_strip wire pass: Ø2.5 from the recess floor (y 29.5) through the remaining
+    # face wall into the interior, behind the strip's dummy PCB
+    wled = cyl(P["wire_pass_r"], 6.0, axis="y")
+    wled.apply_translation((P["led_cx"], fy - P["led_slot_d"] - 1.5, P["led_cz"]))
+    shell = sub(shell, wled)
+
     _color(shell, "cradle")
     shell.metadata["name"] = "head_shell"
     return shell
@@ -785,14 +928,27 @@ def build_head_parts():
 
 def build_head_rails():
     """Orange side accent rails (design-ref front.jpg): vertical rounded pads standing proud
-    of the head side walls' FLAT band. Cosmetic two-tone parts, printed separately in orange;
-    fixing (glue vs 2x M3 from inside) decided at the print pass."""
+    of the head side walls' FLAT band. FIXING: glue + 3x Ø3 locating pins on the inner face
+    into blind wall sockets (PARAMS rail_pin_pts), plus 2x Ø3.5 clearance holes for the arm
+    shoulder M3x10s (they clamp the rail as a bonus; arms off = same screws + a blank).
+    The Ø6.2 shoulder wire pass stops at the wall face BEHIND the rail: v1's visible face
+    stays clean, an option-C arm retrofit reprints the rail with the hole."""
     rails = []
     for sx, nm in ((-1, "trim_rail_L"), (1, "trim_rail_R")):
         r = rounded_box(P["rail_h"], P["rail_d"], P["rail_t"], 8.0)   # X=h, Y=d, extrude Z=t
         r.apply_transform(R(TAU / 4, (0, 1, 0)))     # footprint height -> Z, thickness -> +X
         x = P["head_w"] / 2 if sx > 0 else -(P["head_w"] / 2 + P["rail_t"])
         r.apply_translation((x, 0, P["rail_cz"]))    # thickness spans wall..wall+rail_t
+        face_x = sx * P["head_w"] / 2                # rail inner face = wall outer face
+        pins = [r]
+        for py, pz in P["rail_pin_pts"]:
+            pins.append(fix_pin(P["fix_pin_r"], P["fix_pin_len"], (-sx, 0, 0),
+                                (face_x, py, pz)))
+        r = uni(pins)
+        for sy, sz in P["shoulder_screw_yz"]:        # M3 clearance for the shoulder screws
+            mc = cyl(P["m3_clear_r"], P["rail_t"] + 2.0, axis="x")
+            mc.apply_translation((sx * (P["head_w"] / 2 + P["rail_t"] / 2), sy, sz))
+            r = sub(r, mc)
         _color(r, "accent"); r.metadata["name"] = nm
         rails.append(r)
     return rails
@@ -821,7 +977,8 @@ def build_led_strip():
 def build_antenna():
     """Knurled antenna stub on the head top face, right side (design-ref; cosmetic --
     the Pi's WiFi is internal). Separate print: collar + shaft + dome, knurl read via
-    shallow ring grooves. Fixing (spigot + glue vs M3 from inside) at the print pass."""
+    shallow ring grooves. FIXING: Ø6 spigot under the collar into a Ø6.2 x 3 blind socket
+    in the top wall (glue or friction; see PARAMS ant_spigot_*)."""
     zt = P["body_z_top"]
     collar = cyl(P["ant_collar_d"] / 2, P["ant_collar_h"])
     collar.apply_translation((0, 0, P["ant_collar_h"] / 2))
@@ -829,7 +986,12 @@ def build_antenna():
     shaft.apply_translation((0, 0, P["ant_h"] / 2))
     dome = trimesh.creation.icosphere(subdivisions=2, radius=P["ant_d"] / 2)
     dome.apply_translation((0, 0, P["ant_h"]))
-    ant = uni([collar, shaft, dome])
+    # spigot: protrudes deep-0.2 (bottoming allowance) below the collar underside; built
+    # by hand, not fix_pin (its direction is exactly -Z, _orient's antiparallel gap)
+    spig_l = P["ant_spigot_deep"] - 0.2 + 1.0        # 1.0 buried up into the collar
+    spig = cyl(P["ant_spigot_r"], spig_l)
+    spig.apply_translation((0, 0, spig_l / 2 - (P["ant_spigot_deep"] - 0.2)))
+    ant = uni([collar, shaft, dome, spig])
     for gz in (10.0, 16.0, 22.0):                     # knurl-read ring grooves
         groove = trimesh.creation.torus(major_radius=P["ant_d"] / 2, minor_radius=0.7)
         groove.apply_translation((0, 0, gz))
@@ -855,6 +1017,13 @@ def build_cam_pod():
     bore.apply_transform(R(TAU / 4, (1, 0, 0)))      # shrink toward -Y (into the wall)
     bore.apply_translation((0, fy + P["cam_pod_t"] + 0.25, lz))
     pod = sub(pod, bore)
+    # FIXING: glue + 2x Ø2 locating pins ABOVE the glass line only (the pod's lower band
+    # overlaps the screen-pocket face opening below z 208.9, where M2 bosses / pins are
+    # impossible); sockets sit in the z>209 wall strip (PARAMS campod_pin_pts).
+    pp = [pod]
+    for px, pz in P["campod_pin_pts"]:
+        pp.append(fix_pin(P["fix_pin2_r"], P["fix_pin_len"], (0, -1, 0), (px, fy, pz)))
+    pod = uni(pp)
     _color(pod, "camera"); pod.metadata["name"] = "camera_pod"   # /camera/ in the viewer PAL
     return pod
 
@@ -876,6 +1045,13 @@ def build_hatch_frame():
     notch = box(66.0, 2 * t + 2, 70.0)
     notch.apply_translation((0, P["body_back_y"] - t, P["tilt_axis_z"] - 22.0))
     ring = sub(ring, notch)
+    # FIXING: glue + 4x Ø3 pins at the band corners into blind back-wall sockets
+    # (PARAMS hatch_pin_pts; they register the frame around the louvres/port)
+    pins = [ring]
+    for px, pz in P["hatch_pin_pts"]:
+        pins.append(fix_pin(P["fix_pin_r"], P["fix_pin_len"], (0, 1, 0),
+                            (px, P["body_back_y"], pz)))
+    ring = uni(pins)
     _color(ring, "accent"); ring.metadata["name"] = "trim_hatch_frame"
     return ring
 
@@ -1280,6 +1456,12 @@ def build_fascia():
             f.apply_translation((sx * fx, fw + 1.0, P["grille_cz"]))
             fins.append(f)
     fascia = uni(fins)
+    # FIXING: glue + 4x Ø3 pins on the fin-web backs into blind front-wall sockets
+    # (PARAMS fascia_pin_pts; sockets cut in build_base)
+    pf = [fascia]
+    for px, pz in P["fascia_pin_pts"]:
+        pf.append(fix_pin(P["fix_pin_r"], P["fix_pin_len"], (0, -1, 0), (px, fw, pz)))
+    fascia = uni(pf)
     _color(fascia, "accent"); fascia.metadata["name"] = "trim_fascia"
     parts.append(fascia)
     # ultrasonic: board placeholder against the inner wall + 2 mesh barrels through it
@@ -1314,10 +1496,27 @@ def build_fascia():
              box(44.0, 14.0, 8.0))
     rp.apply_transform(R(TAU / 4, (1, 0, 0)))        # extrude -Y (proud of the REAR face)
     rp.apply_translation((0, -fw, P["rear_panel_cz"]))
+    # FIXING: glue + 3x Ø3 pins into blind rear-wall sockets (PARAMS rear_pin_pts)
+    pr = [rp]
+    for px, pz in P["rear_pin_pts"]:
+        pr.append(fix_pin(P["fix_pin_r"], P["fix_pin_len"], (0, 1, 0), (px, -fw, pz)))
+    rp = uni(pr)
     _color(rp, "accent"); rp.metadata["name"] = "trim_rear"
     parts.append(rp)
-    rc = cyl(P["rear_cyl_d"] / 2, 9.0, axis="y", sections=48)
-    rc.apply_translation((P["rear_cyl_x"], -fw - 4.5, P["rear_cyl_cz"]))   # lands ON the wall
+    # sensor_rear: the real part is a bought Ø12-14 buzzer/speaker INSIDE the wall; this
+    # is its printed grille cap. FIXING: Ø17 x 1.5 base flange + 2x Ø2 pins into blind
+    # wall sockets straddling the Ø10 sound/wire through-hole (cut in build_base).
+    rcx, rcz = P["rear_cyl_x"], P["rear_cyl_cz"]
+    flange = cyl(P["rearpod_flange_r"], P["rearpod_flange_t"], axis="y", sections=48)
+    flange.apply_translation((rcx, -fw - P["rearpod_flange_t"] / 2, rcz))
+    pod_l = 9.0 - P["rearpod_flange_t"]              # overall proud height stays 9.0
+    pod = cyl(P["rear_cyl_d"] / 2, pod_l, axis="y", sections=48)
+    pod.apply_translation((rcx, -fw - P["rearpod_flange_t"] - pod_l / 2, rcz))
+    rcp = [flange, pod]
+    for sxp in (-1, 1):
+        rcp.append(fix_pin(P["fix_pin2_r"], P["fix_pin_len"], (0, 1, 0),
+                           (rcx + sxp * P["rearpod_pin_dx"], -fw, rcz)))
+    rc = uni(rcp)
     _color(rc, "sensor"); rc.metadata["name"] = "sensor_rear"
     parts.append(rc)
     return parts
@@ -1567,6 +1766,38 @@ def build_base():
             dh = cyl((P["pod_join_dowel_d"] + 0.1) / 2, 12, axis="x")
             dh.apply_translation((s * (xw - 2.5), jy, P["pod_join_dowel_z"]))
             body = sub(body, dh)
+    # --- COSMETIC-FIXING sockets + wire passes in the chassis walls (task #15) ---
+    # trim_fascia: 4x Ø3.2 x 2.5 blind sockets in the front wall (at z 50 the solid deck
+    # is behind; at z 42 the 2.5 skin faces the cavity)
+    for px, pz in P["fascia_pin_pts"]:
+        body = sub(body, blind_socket(P["fix_socket_r"], P["fix_socket_deep"],
+                                      (0, 1, 0), (px, fw, pz)))
+    # trim_rear: 3x Ø3.2 x 2.5 blind sockets in the rear wall
+    for px, pz in P["rear_pin_pts"]:
+        body = sub(body, blind_socket(P["fix_socket_r"], P["fix_socket_deep"],
+                                      (0, -1, 0), (px, -fw, pz)))
+    # lamp_L/R: Ø2.5 wire pass through the front wall behind each lamp window
+    for s in (-1, 1):
+        wl = cyl(P["wire_pass_r"], 7.0, axis="y")
+        wl.apply_translation((s * P["lamp_x"], fw - 2.5, P["lamp_cz"]))
+        body = sub(body, wl)
+    # led_front: the strip (z 8..11) sits against the FLOOR band (z 7..12), so a straight
+    # wire pass would dead-end in the floor slab -- angle it up-inward from behind the
+    # strip base into the cavity (axis (10, 79, 9) -> (10, 70, 14.5); exit z 12.7+ at the
+    # inner face y 73, staying 0.65+ under the HC-SR04 board bottom at z 15.55)
+    wf = cyl(P["wire_pass_r"], 11.5)
+    _orient(wf, (0, -9.0, 5.5))
+    wf.apply_translation((10.0, fw - 3.5, 11.75))
+    body = sub(body, wf)
+    # sensor_rear: Ø10 sound/wire through-hole + 2x Ø2.2 x 2.5 blind cap-pin sockets
+    # (0.9 web between the bore and each socket; see PARAMS rearpod_*)
+    sh_ = cyl(P["rearpod_hole_r"], 7.0, axis="y")
+    sh_.apply_translation((P["rear_cyl_x"], -fw + 2.5, P["rear_cyl_cz"]))
+    body = sub(body, sh_)
+    for sxp in (-1, 1):
+        body = sub(body, blind_socket(P["fix_socket2_r"], P["fix_socket_deep"], (0, -1, 0),
+                                      (P["rear_cyl_x"] + sxp * P["rearpod_pin_dx"], -fw,
+                                       P["rear_cyl_cz"])))
     _color(body, "base")
     body.metadata["name"] = "chassis"
     return body
