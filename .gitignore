@@ -6,3 +6,4 @@ exports/*.3mf
 *.mov
 __pycache__/
 .DS_Store
+tools/gears/.venv/

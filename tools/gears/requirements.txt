@@ -1,0 +1,10 @@
+# tools/gears venv (needs Python >= 3.10; created with:  uv venv .venv --python 3.10)
+# trimesh + manifold3d are a matched pair -- upgrade in lockstep.
+numpy==2.2.6
+trimesh==4.12.2
+manifold3d==3.5.2
+scipy==1.15.3
+networkx==3.4.2
+rtree==1.4.1
+shapely==2.1.2
+matplotlib==3.10.9
