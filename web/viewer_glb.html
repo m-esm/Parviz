@@ -2,49 +2,128 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>GLB viewer</title>
+<title>desk-pi viewer</title>
 <style>
-  html,body{margin:0;height:100%;overflow:hidden;font:13px/1.5 system-ui,sans-serif;color:#e6e8ea}
-  #hud{position:fixed;top:12px;left:14px;z-index:10;background:rgba(20,22,26,.82);
-       padding:12px 14px;border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,.4);max-height:92vh;overflow:auto;width:230px}
-  #hud b{color:#fff;font-size:14px}
-  #hud label{display:block;margin-top:5px;cursor:pointer;user-select:none}
-  #hud hr{border:0;border-top:1px solid #ffffff22;margin:10px 0 6px}
-  .sw{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:middle}
-  .hint{margin-top:10px;opacity:.6;font-size:12px}
-  #parts{margin-top:8px;max-height:34vh;overflow:auto}
-  input[type=range]{width:150px;vertical-align:middle}
-  select{background:#2a2f38;color:#e6e8ea;border:1px solid #ffffff22;border-radius:4px}
-  /* CAD-style dimension labels (always face camera, follow their part) */
-  .dlabel{font:700 11px ui-monospace,Menlo,monospace;white-space:nowrap;padding:1px 6px;border-radius:5px;
-          background:#12141999;border:1px solid #ffffff22}
-  #legend{margin-top:6px;font-size:11px;opacity:.85;display:none}
+  :root{
+    --ink:#e9edf1; --ink-dim:#9aa4b0; --ink-faint:#69727e;
+    --panel:rgba(20,23,28,.66); --hair:rgba(255,255,255,.09);
+    --accent:#5cc7d4; --accent-soft:rgba(92,199,212,.16);
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --track:rgba(255,255,255,.12);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;overflow:hidden;color:var(--ink);
+    font:13px/1.5 system-ui,-apple-system,Segoe UI,sans-serif;
+    /* studio backdrop: cool graphite dome, darker at the floor */
+    background:radial-gradient(125% 100% at 50% -10%, #2b313b 0%, #191d23 46%, #0d0f13 100%);}
+  canvas{display:block}
+
+  /* ---- instrument panel ---- */
+  #hud{position:fixed;top:16px;left:16px;z-index:10;width:256px;
+    background:var(--panel);border:1px solid var(--hair);border-radius:14px;
+    backdrop-filter:blur(20px) saturate(1.25);-webkit-backdrop-filter:blur(20px) saturate(1.25);
+    box-shadow:0 16px 44px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.06);
+    padding:15px 16px 13px;max-height:calc(100vh - 32px);overflow:auto;overscroll-behavior:contain}
+  #hud::-webkit-scrollbar{width:8px}
+  #hud::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:8px}
+
+  .eyebrow{font:600 9.5px/1 var(--mono);letter-spacing:.22em;color:var(--accent);text-transform:uppercase}
+  .title{font:600 16px/1.2 system-ui;margin:5px 0 2px;letter-spacing:-.01em}
+  .dims{font:11px/1.4 var(--mono);color:var(--ink-dim);display:flex;gap:9px;margin-top:2px}
+  .dims b{font-weight:600}
+  .dims .ax{color:var(--ink-faint)}
+
+  .sec{display:flex;align-items:center;gap:9px;margin:16px 0 9px;
+    font:600 9.5px/1 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--ink-faint)}
+  .sec::after{content:"";flex:1;height:1px;background:var(--hair)}
+
+  /* part rows */
+  #parts{display:flex;flex-direction:column;gap:1px;max-height:32vh;overflow:auto}
+  #parts::-webkit-scrollbar{width:6px}
+  #parts::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:6px}
+  .part{display:flex;align-items:center;gap:9px;padding:4px 6px;border-radius:8px;cursor:pointer;
+    user-select:none;transition:background .12s}
+  .part:hover{background:rgba(255,255,255,.055)}
+  .part .sw{width:11px;height:11px;border-radius:3px;flex:0 0 auto;
+    box-shadow:inset 0 0 0 1px rgba(0,0,0,.35),0 0 0 1px rgba(255,255,255,.06)}
+  .part .nm{font:12px/1 var(--mono);color:var(--ink);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .part input{margin:0}
+  .part.off{opacity:.4}
+  .part.off .nm{text-decoration:line-through}
+
+  /* control rows */
+  .ctl{display:grid;grid-template-columns:1fr auto;align-items:center;gap:6px 8px;
+    margin:9px 0;font-size:12px;color:var(--ink-dim);cursor:default}
+  .ctl .val{font:11px/1 var(--mono);color:var(--accent);text-align:right;min-width:34px}
+  .ctl input[type=range]{grid-column:1/-1}
+
+  .chk{display:flex;align-items:center;gap:9px;margin:8px 0;font-size:12.5px;color:var(--ink);cursor:pointer;user-select:none}
+  .chk select{margin-left:auto}
+  .chk input[type=range]{width:64px;margin-left:auto}
+
+  /* themed form controls */
+  input[type=checkbox]{appearance:none;-webkit-appearance:none;width:15px;height:15px;flex:0 0 auto;
+    border:1.5px solid var(--ink-faint);border-radius:4px;background:transparent;cursor:pointer;
+    display:grid;place-content:center;transition:border-color .12s,background .12s}
+  input[type=checkbox]:hover{border-color:var(--ink-dim)}
+  input[type=checkbox]:checked{background:var(--accent);border-color:var(--accent)}
+  input[type=checkbox]:checked::after{content:"";width:4px;height:8px;margin-top:-1px;
+    border:solid #0d1013;border-width:0 2px 2px 0;transform:rotate(42deg)}
+  input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+  input[type=range]{appearance:none;-webkit-appearance:none;width:100%;height:20px;background:transparent;cursor:pointer}
+  input[type=range]::-webkit-slider-runnable-track{height:4px;border-radius:4px;background:var(--track)}
+  input[type=range]::-moz-range-track{height:4px;border-radius:4px;background:var(--track)}
+  input[type=range]::-webkit-slider-thumb{appearance:none;-webkit-appearance:none;width:14px;height:14px;margin-top:-5px;
+    border-radius:50%;background:var(--accent);box-shadow:0 1px 4px rgba(0,0,0,.5)}
+  input[type=range]::-moz-range-thumb{width:14px;height:14px;border:0;border-radius:50%;background:var(--accent);box-shadow:0 1px 4px rgba(0,0,0,.5)}
+
+  select{background:#232830;color:var(--ink);border:1px solid var(--hair);border-radius:6px;
+    padding:2px 6px;font:11px var(--mono)}
+
+  #legend{margin:6px 2px 0;font:10.5px/1.5 var(--mono);color:var(--ink-dim);display:none}
+  #legend span{white-space:nowrap}
+  .foot{margin-top:15px;padding-top:11px;border-top:1px solid var(--hair);
+    font:10.5px/1.5 var(--mono);color:var(--ink-faint)}
+
+  /* CAD dimension chips (camera-facing, follow their part) */
+  .dlabel{font:600 10.5px/1 var(--mono);white-space:nowrap;padding:2px 6px;border-radius:6px;
+    background:rgba(13,16,20,.78);border:1px solid rgba(255,255,255,.14);backdrop-filter:blur(4px)}
 </style>
 </head>
 <body>
 <div id="hud">
-  <b id="title">assembly</b>
-  <div id="bbox" style="opacity:.7;margin-top:3px"></div>
+  <div class="eyebrow">desk-pi · pan/tilt head</div>
+  <div class="title" id="title">assembly.glb</div>
+  <div class="dims" id="bbox"><span class="ax">—</span></div>
+
+  <div class="sec">Parts</div>
   <div id="parts"></div>
-  <hr>
-  <label>transparency <input type="range" id="opacity" min="0" max="0.92" step="0.02" value="0"></label>
-  <hr>
-  <label><input type="checkbox" id="t_bbox"> &nbsp;overall size (L/W/H)</label>
-  <label><input type="checkbox" id="t_dims"> &nbsp;per-part size (L/W/H)</label>
+
+  <div class="sec">Appearance</div>
+  <label class="ctl">Transparency <span class="val" id="opacity_v">0%</span>
+    <input type="range" id="opacity" min="0" max="0.92" step="0.02" value="0"></label>
+  <label class="ctl">Explode <span class="val" id="explode_v">0%</span>
+    <input type="range" id="explode" min="0" max="1" step="0.01" value="0"></label>
+
+  <div class="sec">Measure</div>
+  <label class="chk"><input type="checkbox" id="t_bbox"> Overall size</label>
+  <label class="chk"><input type="checkbox" id="t_dims"> Per-part size</label>
   <div id="legend">
-    <span style="color:#ff8f8f">L = length (X)</span> ·
-    <span style="color:#86e29a">W = width (Y)</span> ·
-    <span style="color:#8fc8fb">H = height (Z)</span>
+    <span style="color:#ff8f8f">■ L length&nbsp;(X)</span>&nbsp;
+    <span style="color:#86e29a">■ W width&nbsp;(Y)</span>&nbsp;
+    <span style="color:#8fc8fb">■ H height&nbsp;(Z)</span>
   </div>
-  <label style="margin-top:8px">explode <input type="range" id="explode" min="0" max="1" step="0.01" value="0"></label>
-  <hr>
-  <label><input type="checkbox" id="t_section"> &nbsp;section cut
+
+  <div class="sec">View</div>
+  <label class="chk"><input type="checkbox" id="t_section"> Section cut
     <select id="sec_axis"><option>X</option><option>Y</option><option>Z</option></select></label>
-  <label>cut <input type="range" id="cut" min="0" max="1" step="0.01" value="0.5"></label>
-  <hr>
-  <label><input type="checkbox" id="t_spin"> &nbsp;▶ spin (Z)
-    <input type="range" id="spinspd" min="5" max="120" step="5" value="35" style="width:70px"></label>
-  <div class="hint">drag = orbit · scroll = zoom · right-drag = pan · auto-reloads on rebuild</div>
+  <label class="ctl">Cut plane <span class="val" id="cut_v">50%</span>
+    <input type="range" id="cut" min="0" max="1" step="0.01" value="0.5"></label>
+  <label class="chk"><input type="checkbox" id="t_spin"> Auto-spin
+    <input type="range" id="spinspd" min="5" max="120" step="5" value="35"></label>
+
+  <div class="foot">drag orbit · scroll zoom · right-drag pan<br>live-reloads on rebuild</div>
 </div>
 <script type="importmap">
 { "imports": {
@@ -57,22 +136,28 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 window.THREE = THREE;                                  // headless (shoot.py) needs THREE in scope
 
 const q = new URLSearchParams(location.search);
 const MODEL = q.get('m') || 'assembly.glb';
 document.getElementById('title').textContent = MODEL;
 
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x20242b);
+const scene = new THREE.Scene();                       // transparent -> CSS studio gradient shows through
 const camera = new THREE.PerspectiveCamera(42, innerWidth/innerHeight, 0.1, 50000);
 camera.up.set(0,0,1);                                  // Z up (print-bed convention)
 
-const renderer = new THREE.WebGLRenderer({antialias:true});
-renderer.setSize(innerWidth, innerHeight); renderer.setPixelRatio(devicePixelRatio);
+const renderer = new THREE.WebGLRenderer({antialias:true, alpha:true});
+renderer.setSize(innerWidth, innerHeight); renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setClearColor(0x000000, 0);
 renderer.localClippingEnabled = true;
-renderer.toneMapping = THREE.ACESFilmicToneMapping;    // raw light intensities clip to white without this
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
 document.body.appendChild(renderer.domElement);
+
+// image-based lighting: soft PBR reflections so metals read as metal (no external asset)
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
 
 // CSS2D overlay for crisp camera-facing dimension labels
 const labelRnd = new CSS2DRenderer(); labelRnd.setSize(innerWidth, innerHeight);
@@ -80,34 +165,73 @@ labelRnd.domElement.style.cssText = 'position:absolute;top:0;left:0;pointer-even
 document.body.appendChild(labelRnd.domElement);
 
 const controls = new OrbitControls(camera, renderer.domElement);
-controls.enableDamping = true;
+controls.enableDamping = true; controls.dampingFactor = 0.08;
 window._cam = camera; window._controls = controls; window._scene = scene;   // headless render hooks
 
-scene.add(new THREE.HemisphereLight(0xffffff, 0x32383f, 1.05));
-const key = new THREE.DirectionalLight(0xffffff, 1.5); key.position.set(90,-110,150); scene.add(key);
-const fill= new THREE.DirectionalLight(0xbcd2ff, 0.5); fill.position.set(-120,60,-30); scene.add(fill);
-const rim = new THREE.DirectionalLight(0xffffff, 0.7); rim.position.set(-40,140,40); scene.add(rim);
-// print-bed grid on the XY plane (Z-up the right way: rotate the helper, don't rotate geometry)
-const grid = new THREE.GridHelper(1000,50,0x2a2f38,0x23272e); grid.rotation.x=Math.PI/2; scene.add(grid);
+// lighting: environment does the ambient work; these add shape + a warm key
+scene.add(new THREE.HemisphereLight(0xdfe8f2, 0x1a1d22, 0.55));
+const key = new THREE.DirectionalLight(0xfff2e0, 1.5); key.position.set(120,-140,180); scene.add(key);
+const fill= new THREE.DirectionalLight(0xbcd2ff, 0.35); fill.position.set(-150,80,-20); scene.add(fill);
+const rim = new THREE.DirectionalLight(0xffffff, 0.55); rim.position.set(-60,150,60); scene.add(rim);
+
+// floor: dim two-tone grid + a soft radial contact shadow, both on the Z=0 plane
+const grid = new THREE.GridHelper(700,35,0x39414d,0x252b33); grid.rotation.x=Math.PI/2; scene.add(grid);
+let contact = null;
+function makeContactShadow(cx, cy, size){
+  const cv=document.createElement('canvas'); cv.width=cv.height=256; const g=cv.getContext('2d');
+  const grd=g.createRadialGradient(128,128,10,128,128,128);
+  grd.addColorStop(0,'rgba(0,0,0,.55)'); grd.addColorStop(.6,'rgba(0,0,0,.22)'); grd.addColorStop(1,'rgba(0,0,0,0)');
+  g.fillStyle=grd; g.fillRect(0,0,256,256);
+  const tex=new THREE.CanvasTexture(cv);
+  const m=new THREE.Mesh(new THREE.PlaneGeometry(size,size),
+    new THREE.MeshBasicMaterial({map:tex,transparent:true,depthWrite:false,opacity:.9}));
+  m.position.set(cx,cy,0.12); m.renderOrder=-1; scene.add(m); return m;
+}
 
 // section plane positioned at runtime from the bbox
 const sectionPlane = new THREE.Plane(new THREE.Vector3(-1,0,0), 0);
 
-// deterministic per-name color (stable across reloads)
-function colorFor(name){
-  let h=0; for(const c of name) h=(h*31 + c.charCodeAt(0))>>>0;
-  const hue=(h%360)/360; const col=new THREE.Color(); col.setHSL(hue,0.55,0.55); return col.getHex();
+// ---- Engineering palette: color by SUBSYSTEM FUNCTION, not by name hash. ----
+// cool metals = structure · amber = actuation (moves) · green = board · coral = the eye
+const PAL = [
+  [/head_bezel/i,   {c:0xE8E3D6, m:0.06, r:0.52}],          // Echo-Show ceramic, front (brightest)
+  [/head_back|shell|cradle/i, {c:0xCEC8BA, m:0.06, r:0.58}],// ceramic, back
+  [/screen/i,       {c:0x0E1319, m:0.10, r:0.16, e:0x0b1a24, ei:0.32}], // dark glass, faint glow
+  [/camera/i,       {c:0xE5533B, m:0.25, r:0.38}],          // the eye — signal coral
+  [/motor|byj/i,    {c:0xD8952E, m:0.55, r:0.34}],          // actuation — brass/amber
+  [/axle/i,         {c:0x3f444d, m:0.80, r:0.28}],          // dark steel
+  [/pi5|^pi_|pi$/i, {c:0x2FA36B, m:0.10, r:0.5 }],          // PCB green
+  [/neck|clevis|fork/i, {c:0x7B8798, m:0.6, r:0.4}],       // steel neck
+  [/pan|platform/i, {c:0x99A2B1, m:0.66, r:0.36}],          // aluminum pan
+  [/base/i,         {c:0x848D9C, m:0.6,  r:0.42}],          // aluminum base
+];
+function matSpec(name){
+  for(const [re,s] of PAL){ try{ if(re.test(name)) return s; }catch(_){} }
+  return {c:0x8892A0, m:0.5, r:0.45};                        // coherent neutral fallback
 }
-function isHousing(name){ return /hous|box|case|lid|enclos|shell|cover|conduit|panel|body/i.test(name); }
+const hex = n => '#'+matSpec(n).c.toString(16).padStart(6,'0');
 
-// dimension-line helpers (shared with parts_viewer.py)
-const COLX=0xff6b6b, COLY=0x51cf66, COLZ=0x4dabf7, TXT={x:'#ff8f8f',y:'#86e29a',z:'#8fc8fb'};
-function line(p1,p2,color){return new THREE.Line(new THREE.BufferGeometry().setFromPoints([p1,p2]),new THREE.LineBasicMaterial({color}));}
+// dimension-line helpers
+const COLX=0xff6b6b, COLY=0x51cf66, COLZ=0x4dabf7, TXT={x:'#ff9a9a',y:'#8fe6a3',z:'#9ccbfb'};
+function line(p1,p2,color){return new THREE.Line(new THREE.BufferGeometry().setFromPoints([p1,p2]),new THREE.LineBasicMaterial({color,transparent:true,opacity:.85}));}
 function tick(p,ax,len,color){const a=p.clone(),b=p.clone();a[ax]-=len/2;b[ax]+=len/2;return line(a,b,color);}
-function dlabel(t,css){const d=document.createElement('div');d.className='dlabel';d.textContent=t;d.style.color=css;d.style.borderColor=css+'66';return new CSS2DObject(d);}
+function dlabel(t,css){const d=document.createElement('div');d.className='dlabel';d.textContent=t;d.style.color=css;d.style.borderColor=css+'55';return new CSS2DObject(d);}
+function dimBox(gb, off){
+  const mn=gb.min, mx=gb.max, c=gb.getCenter(new THREE.Vector3()), s=gb.getSize(new THREE.Vector3()), D=new THREE.Group();
+  D.add(line(new THREE.Vector3(mn.x,mn.y-off,mn.z), new THREE.Vector3(mx.x,mn.y-off,mn.z), COLX));
+  D.add(tick(new THREE.Vector3(mn.x,mn.y-off,mn.z),'y',off,COLX)); D.add(tick(new THREE.Vector3(mx.x,mn.y-off,mn.z),'y',off,COLX));
+  const L=dlabel('L '+s.x.toFixed(0),TXT.x); L.position.set(c.x,mn.y-off,mn.z); D.add(L);
+  D.add(line(new THREE.Vector3(mx.x+off,mn.y,mn.z), new THREE.Vector3(mx.x+off,mx.y,mn.z), COLY));
+  D.add(tick(new THREE.Vector3(mx.x+off,mn.y,mn.z),'x',off,COLY)); D.add(tick(new THREE.Vector3(mx.x+off,mx.y,mn.z),'x',off,COLY));
+  const W=dlabel('W '+s.y.toFixed(0),TXT.y); W.position.set(mx.x+off,c.y,mn.z); D.add(W);
+  D.add(line(new THREE.Vector3(mx.x+off,mn.y-off,mn.z), new THREE.Vector3(mx.x+off,mn.y-off,mx.z), COLZ));
+  D.add(tick(new THREE.Vector3(mx.x+off,mn.y-off,mn.z),'x',off,COLZ)); D.add(tick(new THREE.Vector3(mx.x+off,mn.y-off,mx.z),'x',off,COLZ));
+  const H=dlabel('H '+s.z.toFixed(0),TXT.z); H.position.set(mx.x+off,mn.y-off,c.z); D.add(H);
+  D.labels=[L,W,H]; return D;
+}
 
-const groups = {};      // name -> {meshes:[], ghost, home:Vector3[], dim:Group, dimHome:Vector3, explodeDir:Vector3}
-let overallDim = null;  // whole-assembly L/W/H indicator (built after load)
+const groups = {};      // name -> {meshes:[], home:Vector3[], dim:Group, dimHome:Vector3, explodeDir:Vector3}
+let overallDim = null;
 const dimsRoot = new THREE.Group(); scene.add(dimsRoot);
 let bbox = new THREE.Box3(), center = new THREE.Vector3(), diag = 1;
 
@@ -115,20 +239,13 @@ new GLTFLoader().load(MODEL, (gltf)=>{
   gltf.scene.traverse(o=>{
     if(!o.isMesh) return;
     const name = o.name || (o.parent && o.parent.name) || 'part';
-    o.geometry.computeVertexNormals();                 // GLB normals often come through inverted/unlit
-    const ghost = isHousing(name);
-    const col = colorFor(name);
-    if(ghost){
-      o.material = new THREE.MeshStandardMaterial({color:0x9aa3ad,metalness:0,roughness:.85,
-        transparent:true,opacity:.12,depthWrite:false,side:THREE.DoubleSide});
-      const e = new THREE.LineSegments(new THREE.EdgesGeometry(o.geometry,35),
-        new THREE.LineBasicMaterial({color:0xcdd6df,transparent:true,opacity:.6}));
-      o.add(e); o.userData.edge = e;
-    } else {
-      o.material = new THREE.MeshStandardMaterial({color:col,metalness:.2,roughness:.5,
-        side:THREE.DoubleSide,emissive:col,emissiveIntensity:.05});
-    }
-    (groups[name] = groups[name] || {meshes:[],ghost}).meshes.push(o);
+    o.geometry.computeVertexNormals();                 // GLB normals often come through inverted
+    const s = matSpec(name);
+    o.material = new THREE.MeshStandardMaterial({
+      color:s.c, metalness:s.m, roughness:s.r,
+      emissive:s.e||0x000000, emissiveIntensity:s.ei||0,
+      envMapIntensity:0.85, side:THREE.DoubleSide});
+    (groups[name] = groups[name] || {meshes:[]}).meshes.push(o);
   });
   scene.add(gltf.scene);
 
@@ -136,118 +253,94 @@ new GLTFLoader().load(MODEL, (gltf)=>{
   bbox.getCenter(center);
   const sz = bbox.getSize(new THREE.Vector3());
   diag = sz.length();
+  window._modelBox = bbox.clone();                     // tight box for headless framing (excludes grid)
   const r = diag/2;
   controls.target.copy(center);
-  camera.position.set(center.x + r*1.4, center.y - r*1.8, center.z + r*1.1);
+  const vh=THREE.MathUtils.degToRad(camera.fov)/2, hh=Math.atan(Math.tan(vh)*camera.aspect);
+  const fit=r/Math.sin(Math.min(vh,hh))*1.18;          // true FOV fit + margin
+  // front-left 3/4 from the +Y side so the hero view shows the FACE (screen), not the back
+  camera.position.copy(center).addScaledVector(new THREE.Vector3(-0.55,0.82,0.46).normalize(), fit);
   controls.update();
-  sectionPlane.constant = center.x;                    // start cut at center
-  document.getElementById('bbox').textContent =
-    `X ${sz.x.toFixed(1)}  Y ${sz.y.toFixed(1)}  Z ${sz.z.toFixed(1)} mm`;
+  sectionPlane.constant = center.x;
+  contact = makeContactShadow(center.x, center.y, Math.max(sz.x,sz.y)*1.7);
+  document.getElementById('bbox').innerHTML =
+    `<span class="ax" style="color:${TXT.x}">L</span><b>${sz.x.toFixed(0)}</b>`+
+    `<span class="ax" style="color:${TXT.y}">W</span><b>${sz.y.toFixed(0)}</b>`+
+    `<span class="ax" style="color:${TXT.z}">H</span><b>${sz.z.toFixed(0)}</b>`+
+    `<span class="ax">mm</span>`;
 
-  // per-group: record home positions, explode direction, and build dimension annotations
   const host = document.getElementById('parts');
   for(const [name,g] of Object.entries(groups)){
     g.home = g.meshes.map(o=>o.position.clone());
 
-    // group world bbox -> centroid for explode direction
     const gb = new THREE.Box3(); g.meshes.forEach(o=>gb.expandByObject(o));
     const gc = gb.getCenter(new THREE.Vector3());
     g.explodeDir = gc.clone().sub(center);
     if(g.explodeDir.lengthSq() < 1e-6) g.explodeDir.set(0,0,1); else g.explodeDir.normalize();
 
-    // dimension lines on the group bbox (world coords); a sub-group so explode can offset it
-    const mn=gb.min, mx=gb.max, c=gc, s=gb.getSize(new THREE.Vector3());
-    const o = Math.max(6, diag*0.02), D = new THREE.Group();
-    D.add(line(new THREE.Vector3(mn.x,mn.y-o,mn.z), new THREE.Vector3(mx.x,mn.y-o,mn.z), COLX));
-    D.add(tick(new THREE.Vector3(mn.x,mn.y-o,mn.z),'y',o,COLX)); D.add(tick(new THREE.Vector3(mx.x,mn.y-o,mn.z),'y',o,COLX));
-    let L=dlabel('L '+s.x.toFixed(0),TXT.x); L.position.set(c.x,mn.y-o,mn.z); D.add(L);
-    D.add(line(new THREE.Vector3(mx.x+o,mn.y,mn.z), new THREE.Vector3(mx.x+o,mx.y,mn.z), COLY));
-    D.add(tick(new THREE.Vector3(mx.x+o,mn.y,mn.z),'x',o,COLY)); D.add(tick(new THREE.Vector3(mx.x+o,mx.y,mn.z),'x',o,COLY));
-    let W=dlabel('W '+s.y.toFixed(0),TXT.y); W.position.set(mx.x+o,c.y,mn.z); D.add(W);
-    D.add(line(new THREE.Vector3(mx.x+o,mn.y-o,mn.z), new THREE.Vector3(mx.x+o,mn.y-o,mx.z), COLZ));
-    D.add(tick(new THREE.Vector3(mx.x+o,mn.y-o,mn.z),'x',o,COLZ)); D.add(tick(new THREE.Vector3(mx.x+o,mn.y-o,mx.z),'x',o,COLZ));
-    let H=dlabel('H '+s.z.toFixed(0),TXT.z); H.position.set(mx.x+o,mn.y-o,c.z); D.add(H);
-    D.visible = false; g.dim = D; g.dimHome = D.position.clone(); g.labels=[L,W,H];
-    dimsRoot.add(D);
+    const D = dimBox(gb, Math.max(6, diag*0.02));
+    D.visible=false; g.dim=D; g.dimHome=D.position.clone(); g.labels=D.labels; dimsRoot.add(D);
 
-    // per-part toggle row
-    const lab = document.createElement('label');
-    lab.innerHTML = `<span class="sw" style="background:#${colorFor(name).toString(16).padStart(6,'0')}"></span>`+
-                    `<input type="checkbox" checked> ${name}`;
-    lab.querySelector('input').addEventListener('change',e=>{
+    const row = document.createElement('label'); row.className='part';
+    row.innerHTML = `<span class="sw" style="background:${hex(name)}"></span>`+
+                    `<span class="nm">${name}</span><input type="checkbox" checked>`;
+    row.querySelector('input').addEventListener('change',e=>{
       g.meshes.forEach(o=>o.visible=e.target.checked);
+      row.classList.toggle('off', !e.target.checked);
       applyDims();
     });
-    host.appendChild(lab);
+    host.appendChild(row);
   }
 
-  // overall-assembly dimension indicator (whole-model L/W/H + a wireframe size box)
-  {
-    const mn=bbox.min, mx=bbox.max, s=bbox.getSize(new THREE.Vector3()), c=center;
-    const o=Math.max(12,diag*0.03), D=new THREE.Group();
-    D.add(line(new THREE.Vector3(mn.x,mn.y-o,mn.z), new THREE.Vector3(mx.x,mn.y-o,mn.z), COLX));
-    D.add(tick(new THREE.Vector3(mn.x,mn.y-o,mn.z),'y',o,COLX)); D.add(tick(new THREE.Vector3(mx.x,mn.y-o,mn.z),'y',o,COLX));
-    let L=dlabel('L '+s.x.toFixed(0),TXT.x); L.position.set(c.x,mn.y-o,mn.z); D.add(L);
-    D.add(line(new THREE.Vector3(mx.x+o,mn.y,mn.z), new THREE.Vector3(mx.x+o,mx.y,mn.z), COLY));
-    D.add(tick(new THREE.Vector3(mx.x+o,mn.y,mn.z),'x',o,COLY)); D.add(tick(new THREE.Vector3(mx.x+o,mx.y,mn.z),'x',o,COLY));
-    let W=dlabel('W '+s.y.toFixed(0),TXT.y); W.position.set(mx.x+o,c.y,mn.z); D.add(W);
-    D.add(line(new THREE.Vector3(mx.x+o,mn.y-o,mn.z), new THREE.Vector3(mx.x+o,mn.y-o,mx.z), COLZ));
-    D.add(tick(new THREE.Vector3(mx.x+o,mn.y-o,mn.z),'x',o,COLZ)); D.add(tick(new THREE.Vector3(mx.x+o,mn.y-o,mx.z),'x',o,COLZ));
-    let H=dlabel('H '+s.z.toFixed(0),TXT.z); H.position.set(mx.x+o,mn.y-o,c.z); D.add(H);
-    const bh=new THREE.Box3Helper(bbox.clone(),0xffffff); bh.material.transparent=true; bh.material.opacity=0.22; D.add(bh);
-    D.visible=false; D.labels=[L,W,H]; overallDim=D; scene.add(D);
-  }
+  overallDim = dimBox(bbox, Math.max(12, diag*0.03));
+  const bh = new THREE.Box3Helper(bbox.clone(), 0xffffff);
+  bh.material.transparent=true; bh.material.opacity=0.18; overallDim.add(bh);
+  overallDim.visible=false; scene.add(overallDim);
 
   applyDims();
   window.__ready = true;
 }, undefined, err=>{ document.getElementById('bbox').textContent='LOAD ERROR: '+err; });
 
 const $=id=>document.getElementById(id);
+const pct = v => Math.round(v*100)+'%';
 
-// global transparency: 0 = fully solid, up to 0.92 = see-through ghost.
-// Acts on EVERY part (the old solid/ghost toggle only touched name-matched "housing"
-// parts, of which this model has none, so it did nothing).
+// global transparency: 0 = solid .. 0.92 = ghost. Acts on EVERY part.
 $('opacity').addEventListener('input',e=>{
-  const t=parseFloat(e.target.value);
-  const solid = t<=0.001;
+  const t=parseFloat(e.target.value), solid=t<=0.001;
+  $('opacity_v').textContent = pct(t);
   Object.values(groups).forEach(g=>g.meshes.forEach(o=>{
     o.material.transparent = !solid;
     o.material.opacity = 1 - t;
-    o.material.depthWrite = solid;               // depthWrite off while translucent -> clean overlap
-    if(o.userData.edge){ o.userData.edge.material.transparent = true;
-      o.userData.edge.material.opacity = solid ? 0.6 : Math.max(0.3, 1 - t); }
+    o.material.depthWrite = solid;
   }));
 });
 
-function updateLegend(){
-  $('legend').style.display = ($('t_dims').checked || $('t_bbox').checked) ? '' : 'none';
-}
-// per-part dimensions toggle
+function updateLegend(){ $('legend').style.display = ($('t_dims').checked||$('t_bbox').checked)?'':'none'; }
 function applyDims(){
-  const on = $('t_dims').checked;
+  const on=$('t_dims').checked;
   Object.values(groups).forEach(g=>{
     if(!g.dim) return;
     const vis = on && g.meshes.some(o=>o.visible);
-    g.dim.visible = vis;
-    g.labels.forEach(l=>{ l.visible=vis; l.element.style.display = vis ? '' : 'none'; });
+    g.dim.visible=vis;
+    g.labels.forEach(l=>{ l.visible=vis; l.element.style.display = vis?'':'none'; });
   });
   updateLegend();
 }
 $('t_dims').addEventListener('change',applyDims);
-// overall-assembly size box toggle
 $('t_bbox').addEventListener('change',e=>{
   if(!overallDim) return;
-  const on = e.target.checked;
-  overallDim.visible = on;
-  overallDim.labels.forEach(l=>{ l.visible=on; l.element.style.display = on ? '' : 'none'; });
+  const on=e.target.checked;
+  overallDim.visible=on;
+  overallDim.labels.forEach(l=>{ l.visible=on; l.element.style.display=on?'':'none'; });
   updateLegend();
 });
 
-// explode: push each group along its radial direction from the assembly center
+// explode along each group's radial direction from the assembly center
 $('explode').addEventListener('input',e=>{
-  const t = parseFloat(e.target.value), spread = diag*0.6;
+  const t=parseFloat(e.target.value), spread=diag*0.6;
+  $('explode_v').textContent = pct(t);
   Object.values(groups).forEach(g=>{
-    const off = g.explodeDir.clone().multiplyScalar(t*spread);
+    const off=g.explodeDir.clone().multiplyScalar(t*spread);
     g.meshes.forEach((o,i)=>o.position.copy(g.home[i]).add(off));
     if(g.dim) g.dim.position.copy(g.dimHome).add(off);
   });
@@ -255,18 +348,14 @@ $('explode').addEventListener('input',e=>{
 
 // section cut on a chosen axis
 function applySection(){
-  const on=$('t_section').checked;
-  const axis=$('sec_axis').value, t=parseFloat($('cut').value);
-  const n = {X:[-1,0,0], Y:[0,-1,0], Z:[0,0,-1]}[axis];
+  const on=$('t_section').checked, axis=$('sec_axis').value, t=parseFloat($('cut').value);
+  $('cut_v').textContent = pct(t);
+  const n={X:[-1,0,0],Y:[0,-1,0],Z:[0,0,-1]}[axis];
   sectionPlane.normal.set(n[0],n[1],n[2]);
   const mn=bbox.min, sz=bbox.getSize(new THREE.Vector3());
-  const v = {X:mn.x+sz.x*t, Y:mn.y+sz.y*t, Z:mn.z+sz.z*t}[axis];
-  sectionPlane.constant = v;                            // normal is -axis, so constant = coordinate
+  sectionPlane.constant = {X:mn.x+sz.x*t, Y:mn.y+sz.y*t, Z:mn.z+sz.z*t}[axis];
   const planes=on?[sectionPlane]:[];
-  Object.values(groups).forEach(g=>g.meshes.forEach(o=>{
-    o.material.clippingPlanes=planes;
-    if(o.userData.edge) o.userData.edge.material.clippingPlanes=planes;
-  }));
+  Object.values(groups).forEach(g=>g.meshes.forEach(o=>o.material.clippingPlanes=planes));
 }
 $('t_section').addEventListener('change',applySection);
 $('sec_axis').addEventListener('change',applySection);

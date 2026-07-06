@@ -56,12 +56,15 @@ with sync_playwright() as p:
     for name, az, el, dist, sec, cut in VIEWS:
         pg.evaluate("""([az,el,dist,sec,cut]) => {
           const c=window._controls, cam=window._cam, s=window._scene, T=window.THREE;
-          const box=new T.Box3().setFromObject(s);
+          const box=window._modelBox ? window._modelBox.clone() : new T.Box3().setFromObject(s);
           const ctr=box.getCenter(new T.Vector3());
           const r=box.getSize(new T.Vector3()).length()/2;
-          const a=az*Math.PI/180, e=el*Math.PI/180, R=r*dist;
+          // true fit distance from the FOV (fit whichever of V/H is tighter), then `dist` = margin
+          const vh=T.MathUtils.degToRad(cam.fov)/2, hh=Math.atan(Math.tan(vh)*cam.aspect);
+          const fit=r/Math.sin(Math.min(vh,hh));
+          const a=az*Math.PI/180, e=el*Math.PI/180, R=fit*dist;
           cam.position.set(ctr.x + R*Math.cos(e)*Math.sin(a),
-                           ctr.y - R*Math.cos(e)*Math.cos(a),
+                           ctr.y + R*Math.cos(e)*Math.cos(a),   // +Y: "front" faces the screen, not the back
                            ctr.z + R*Math.sin(e));
           c.target.copy(ctr); c.update();
           const sb=document.getElementById('t_section');   // present only in viewer_glb

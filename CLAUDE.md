@@ -7,13 +7,19 @@ sitting on a **two-track tank chassis** so it can drive around the desk.
 The head is a **clean rounded box** (a tablet-head; earlier it was an Echo-Show wedge, since
 simplified). Screen upright on the front, neck tilt gives the look up/down.
 
-Status: **REVISED ASSEMBLY (post multi-agent review + reshape).** `src/build.py` builds the whole
-robot around the measured 7" screen STL; 7 watertight per-part STLs (chassis, track_L, track_R,
-neck_clevis, pan_platform, head_bezel, head_back). A 4-lens agent review drove fixes (tilt-axle Z
-bug, proportions, Pi-in-head, printable head split, fastening, cable path); then the head was
-simplified to a box, the LCD orientation bug fixed (see TAU gotcha), and the base swapped for tank
-treads. Remaining detailing (IO chamfer, motor coupler, slip ring) is
-tracked in the todo list. Motors are 28BYJ-48 placeholders.
+Status: **FIX CAMPAIGN COMPLETE (stages 1-5 + independent verification, see docs/FIXES.md).**
+`src/build.py` builds the whole robot around the combined screen+Pi reference mesh; 10 watertight
+per-part STLs (chassis, track_L, track_R, neck_clevis, pan_platform, pan_race, pan_clips,
+head_bezel, head_back, cam_cover) plus placeholder sub-parts (worm_wheel, tilt_worm, pan_balls,
+motor_*, drive_L/R). A 6-agent research pass drove the mechanism decisions now in geometry:
+**pan = 28BYJ direct D-hub on a captured-BB lazy-Susan race**; **tilt = self-locking single-start
+WORM drive** (Ø5 hollow axle on 695-2RS bearings, owned); **screen+Pi ride as one module** (the
+official Pins-Out assembly: Pi on the display's own 58×49 standoffs), retained by 4 rear standoffs
+on `head_back` at the factory M3 bosses; **camera recessed behind the forehead** (official CM3
+dims) with a lens bump + `cam_cover`; **tracks = measured-TT-motor positive drive: articulated
+links + 12T sprocket + F688ZZ idler + road wheels**. The 28BYJ placeholder is now dimensionally correct (Ø28.25, 7.875 mm
+offset shaft, 3 mm D-flats). Remaining: worm teeth are readable placeholders (regen involute/helix
+in BOSL2 in a venv), body-to-pod join, widen track gauge (head overhangs ~10 mm/side), buy list.
 
 ## The build loop (do this on every geometry change)
 
@@ -37,44 +43,68 @@ Origin = center of the ground contact plane. `base_h = 52` is the chassis-top / 
 Kinematic chain, bottom to top (built at neutral pose pan=0, tilt=0):
 
 ```
-tank chassis        DRIVE base: central body (build_base) + track_L/track_R (build_tracks).
+tank chassis        DRIVE base: central body (build_base) + track_L/track_R (build_tracks) +
+  │                 drive_L/drive_R (2x TT gearmotor, shaft X into each pod's rear sprocket).
   │                 Body houses the pan motor + driver + wiring; pan-mount on top (z=52).
-  │                 Tracks = stadium belt loops (drive+idler wheels), belt to ground, run along Y.
-  └─ PAN joint      yaw about vertical Z  (±90° target), driven by motor_pan   ── the "turret"
+  │                 Tracks = 36 modular link pads on a stadium loop, 12T sprocket + idler + road
+  │                 wheels, belt to ground, run along Y (build_tracks / _track_link_poses).
+  └─ PAN joint      yaw about vertical Z  (±90° target). motor_pan direct D-hub; rides a captured-BB
+      │             lazy-Susan race (build_pan_race: pan_race + pan_balls)   ── the "turret"
       └─ pan_platform + neck_clevis   rotate as one
-          └─ TILT joint   pitch about horizontal X  (±30° target), driven by motor_tilt
-              └─ head = head_bezel + head_back (rounded box) + screen + camera + Pi 5
+          └─ TILT joint   pitch about horizontal X (±30°). SELF-LOCKING WORM: motor_tilt (shaft +Y)
+              │           carries tilt_worm meshing worm_wheel keyed to the axle. Holds tilt de-
+              │           energized. Ø5 hollow axle rotates in 695-2RS bearings in the cheeks.
+              └─ head = head_bezel + head_back (rounded box) + screen + camera + cam_cover + Pi 5
 ```
 
 - **Pan** carries the whole neck + head. **Tilt** carries only the head. Tilt is a child of pan,
   so a pan move swings the tilt axis with it (correct for a neck).
-- **Tilt is a REAR CLEVIS, not a side gimbal.** The head is a deep box, so the tilt axle passes
-  *inside* it (z=178, near the CoM). The head grips the axle at hubs on its two side walls; the
-  narrow neck clevis (cheeks at x=±22) rises through a slot in the head's bottom-rear and drives the
-  axle in the middle. Narrow neck, small cantilever (~39mm). The Z of the clevis MUST match the axle
-  (z=178) — an earlier bug lifted the clevis 46mm and it punched through the head; don't reintroduce
-  a second lift (build everything in world Z).
-- **Camera rides the head** in the top bezel nub, lens on the face normal, so it looks where the
-  face looks (inherits pan + tilt for free).
-- **Pi 5 lives IN THE HEAD, behind the tilt axis** (changed from base after the multi-agent review).
-  The official 7" display's DSI ribbon + the camera CSI ribbon are short and stiff and cannot cross
-  two moving joints; keeping the Pi in the head keeps both ribbons entirely in the head (zero joint
-  crossings). The board also doubles as the tilt counterweight. Only round wires (Pi power + the pan
-  stepper's leads) cross the joints. Tradeoff: heavier head + higher CoM → ballast the base for the
-  wheeled version.
-- **Cable path:** hollow tilt axle (on-axis, no length change when tilting) → vertical channel down
-  the neck column → off-axis pass through pan_platform + base. The pan joint still winds the bundle:
-  use a slip ring on the pan axis (preferred, needs a purchased capsule) or a service loop that caps
-  pan range. NOT yet resolved in geometry.
+- **Pan drive + bearing:** motor_pan (28BYJ) sits CAN-offset in the base so its double-D shaft lands
+  ON the pan axis, keying into a D-bore hub under `pan_platform` (flats carry torque; grub screw
+  kills backlash). The platform rides a **captured-BB lazy-Susan race** (`pan_race` lower ring +
+  `pan_balls` on an Ø80 circle; the platform underside is the grooved upper race). Wide ball circle
+  carries the top-heavy head without wobble. No worm on pan (a balanced vertical axis has no gravity
+  torque to hold).
+- **Tilt is a SELF-LOCKING WORM drive on a REAR CLEVIS** (not a side gimbal, not direct-drive). The
+  head clamps a **Ø5 hollow axle** at its side-wall hubs (axle turns WITH the head); the axle rotates
+  in **695-2RS bearings** pressed into the neck cheeks (x=±22); the `worm_wheel` (12T, was 24T; halved
+  in stage 2 for tilt speed) is keyed to the
+  axle and driven by the `tilt_worm` (single-start) on motor_tilt, whose shaft runs +Y (right-angle to
+  the axle). Single-start worm self-locks, so the head holds ±30° with the motor de-energized (no idle
+  current/heat). Pre-balance the head on the axle (Pi as counterweight) so the worm barely works. Axle
+  position (y=−18, z=178, `tilt_axis_y`/`tilt_axis_z`) MUST match the cheek bearings — an earlier bug
+  lifted the clevis 46 mm; build in world coords. **Stage 2R moved the axle BACK 18 mm (y 0 → −18):**
+  the Pi rides the display back, and at y=0 the axle/worm/cheeks ran through the board plane. The
+  whole drivetrain (cheeks+hoops, wheel, worm, brackets) keys off the `tilt_axis_*` pair; the screen
+  is anchored separately (`screen_cz`=178) and did NOT move.
+- **Camera is RECESSED behind the forehead** (the 24 mm board can't fit the ~10 mm forehead gap): lens
+  bump on the front at `cam_lens_z`, board on 4x M2 bosses at the 21×12.5 pattern, `cam_cover` traps
+  it, CSI ribbon drops to the Pi bay. Lens optical axis is X=0, Z=+2.47 above board center (not centred).
+- **Screen is held by its 4 FACTORY M3 holes** (outer 126.2×65.65 case-mount pattern) via 4 REAR
+  STANDOFFS on `head_back` (stage 3a/5: the old bezel bosses ran through the glass, then punched
+  the display's raised mount bosses). The standoff faces land on the boss REAR plane (y 22.48);
+  screws drive through back-wall channels, axis +Y into the display's metal chassis. The front
+  glass lip is only a locator. See `PARAMS["scr_mount_pts"]`.
+- **Pi 5 rides the DISPLAY's own 58×49 standoffs** (official mounting, the Pins-Out combined mesh),
+  in the head behind the tilt axis. DSI + CSI ribbons stay entirely in the head (zero joint
+  crossings); the board doubles as the tilt counterweight. Only round wires (Pi power) cross the
+  joints. Tradeoff: heavier head + higher CoM → ballast the base low.
+- **Cable path:** the Pi power pair (5A, ~Ø3.6 envelope) does NOT fit the Ø2.5 axle bore — that
+  hollow is weight relief only. The real route: base USB-C wall port → base cavity (pan **service
+  loop**) → 16×8 obround pass in the platform → neck channel → out the column top → into the head
+  through the bottom-rear slot with a tilt drape (±30° is easy). Pan is ±90°, so a service loop
+  beats a slip ring — it carries the full 5A rail silently and free; software-limit pan so it never
+  over-winds. A 2A/circuit capsule slip ring can't pass 5A without paralleling contacts; only add
+  one for 360° pan.
 
 ## Head is a 2-piece print (bezel + back)
 
 `build_head_parts()` slices the wedge on a plane parallel to the front face, ~4mm behind the screen:
-- `head_bezel` (front): the leaned face + camera nub. The screen aperture is **stepped** — a full-
-  size pocket behind + a smaller front window, so the front lip traps the glass edge (screen can't
-  fall out the front). Print face-down.
-- `head_back` (rear): pivot hubs, neck slot, Pi bay, cable port. Print open-side-down.
-Screen drops into the pocket from behind; bezel bolts to back. Fastening bosses NOT yet modeled.
+- `head_bezel` (front): the face + camera lens bump (CM3 aperture: Ø6.3 bore + Ø8 csk) + the 8
+  bezel↔back nut-trap bosses. The stepped aperture lip is just a locator. Print face-down.
+- `head_back` (rear): pivot hubs, neck slot, the 4 screen-module rear standoffs + driver channels,
+  Pi I/O slot (right wall), cable port, vents. Print open-side-down.
+The screen+Pi module drops in from behind and bolts to the 4 head_back standoffs; bezel bolts to back.
 
 ## Head style: simple rounded box (simplified from the Echo-Show wedge, per user)
 
@@ -83,18 +113,25 @@ top/bottom, rounded vertical edges, upright front `face_angle=0`). The screen si
 on the front; the neck's tilt provides the look up/down. It started as an Echo-Show "doorstop" wedge
 (reference in `reference/alexa-style-smart-display/`, a Touch Display 2 design we borrowed the style
 from) but the user asked to simplify the head shape. Still split by `build_head_parts()` into
-`head_bezel` (front, screen-retaining lip, camera nub) + `head_back` (Pi bay, hubs, vents).
+`head_bezel` (front, locator lip, camera nub) + `head_back` (screen standoffs, hubs, vents).
 
 ## Key numbers (measured, not guessed)
 
-Screen `PARAMS["screen_*"]` are **measured from the reference STL bbox**: 193.0 (W) × 25.0 (D) ×
-110.8 (H) mm, driver board included. Loaded live from
-`reference/rpi-7in-touchscreen-model/files/Raspberry_Pi_Touch_Screen_Assembly_v12.stl` and mounted
-on the leaned face by `screen_pose()`. Overall assembly bbox ≈ 221 × 208 × 248 mm.
+The build loads the COMBINED display+Pi reference mesh (Pins Out variant: the Pi rides the
+display's own 58×49 standoffs, GPIO pins out): 192.96 (W) × 38.01 (D) × 110.76 (H) mm, from
+`reference/rpi-7in-touchscreen-model/files/Raspberry_Pi_Touch_Screen_Assembly_-_Pins_Out_v8.stl`,
+posed by the GLASS PLANE (not bbox center; the pins-out mesh is 13 mm deeper on the back) via
+`screen_pose()`. `PARAMS["screen_d"]=25.0` describes the display module alone, not this mesh.
+NOTE: this mesh is NOT watertight — manifold booleans on it raise; probe screen clearances with
+surface-sample containment, never with `ivol()`-style try/except (that returned vacuous 0.000 for
+three stages, see docs/FIXES.md Stage 4). Overall assembly bbox ≈ 209 × 170.5 × 251 mm.
 
-Still first-guess (validate on a print): tilt axis height 178, cantilever 39, face lean 8°,
-base Ø208 bottom / Ø156 top / bolt circle Ø170, tilt range ±30, pan range ±90. `motor_*` are
-28BYJ-48-shaped placeholders. Base bottom Ø208 ≥ head width 213, so the head no longer overhangs.
+Still first-guess (validate on a print): tilt axis at y=−18 / z=178 (moved back 18 mm in stage 2R to
+clear the Pi-on-display stack), screen center y 18.5 / z 178, tilt ±30, pan ±90,
+worm module 1.25 / 12T wheel, track pitch 10 / 36 links / 12T sprocket, pan BB circle Ø80. Neck
+column at `neck_y=−17` (stage 5: footprint max r 43.1 fits the spinning platform's solid r45; the
+cable channel is decoupled at `neck_chan_y=−26`). Head width 205 vs track gauge ~184 → head
+overhangs ~10 mm/side (widen the gauge or accept it).
 
 ## Power (decided)
 
@@ -103,55 +140,69 @@ USB current on a true 5A PD supply; a 15W/3A brick software-limits USB to ~600mA
 once screen + camera + servos draw together. Two servos (pan + tilt) may want their **own 5–6V
 supply** rather than pulling off the Pi's rail — decide when the servo BOM is picked.
 
-## Motors — 28BYJ-48 (picked from inventory), mounts still TODO
+## Motors — 28BYJ-48 pan/tilt (dimensionally correct now) + TT track drive
 
-Motor choice made against the parts on hand (see the moshes-inventory MCP): the only owned motor
-with enough torque AND position control for this head is the **28BYJ-48 5V geared stepper** (×6 in
-Bags 5 & 14) with **ULN2003 driver boards** (×9). The 9g servos (SG90 ×9, MG90S ×1) are too weak to
-swing a 193mm screen head. So `motor_pan` / `motor_tilt` placeholders are now **28BYJ-48-shaped**
-(Ø28 can + gearbox + 8mm-offset output shaft) — see `motor_28byj()`.
+Motor choice made against the parts on hand (see the moshes-inventory MCP): the head is driven by
+**28BYJ-48 5V geared steppers** (×6 in Bags 5 & 14) with **ULN2003 boards** (×9); the 9g servos are
+too weak to swing a 193mm screen head. `motor_28byj()` is now dimensionally correct: **Ø28.25 can,
+18.8 tall, 7.875 mm shaft offset, Ø4.93 double-D shaft with 3.0 mm flats over the top 6 mm**, ears at
+35 mm, wiring box. The governing rule for both joints: **locate the CAN so the offset shaft lands on
+the target axis — don't fight the offset with an eccentric coupler.**
 
-- **Pan:** 28BYJ-48 upright in the base, shaft up on the pan axis into `pan_platform`. Offset shaft
-  means the can sits 8mm off-axis (modeled).
-- **Tilt:** 28BYJ-48 on the +X clevis cheek, shaft to the tilt axle. Holds ~15 N·cm gravity moment;
-  the 28BYJ-48 has ~34 N·cm holding torque energized → ~2× margin. **Caveat:** it only holds while
-  coils are powered (idle current, mild heat). If that's a problem, add a worm/geared reducer (self-
-  locking) or a small counterbalance behind the tilt axis. Decide on a print test.
-- **STILL TODO (this is the deferred "design motor mounts" task):** the actual Ø28 motor pockets,
-  the offset-shaft coupling to axle/platform, and the ULN2003 board mounts. The offset output shaft
-  is the annoying part — the real mount aligns the *shaft* to the axis, not the can.
-- **Pan bearing:** a lazy-Susan / thrust bushing in the base seat (undecided).
-- **Pan cable routing:** DSI ribbon + camera + power cross the pan joint → needs a service loop;
-  this caps pan range. Settle before finalizing the base.
+- **Pan (direct D-hub):** 28BYJ upright in the base, can offset `-motor_shaft_off` so the shaft is on
+  the pan axis; it keys into a **double-D bore hub** under `pan_platform` (`dbore_neg`/`dbore_hub`) +
+  an M3 grub on a flat. No reduction. Rides the lazy-Susan BB race (see Mechanical intent).
+- **Tilt (self-locking worm):** the worm sits on the motor's D-shaft (shaft +Y, right-angle to the
+  axle), meshing a 12T `worm_wheel` keyed to the Ø5 axle. Single-start → self-locks, so the head holds
+  ±30° with the driver OFF (no idle heat). Pre-balance the head so the worm loafs. Center distance =
+  wheel_r + worm_r (`PARAMS["worm_*"]`). **NOTE:** `gear_disc`/`worm` teeth are readable placeholders;
+  regenerate the real involute wheel + helical worm in BOSL2 (OpenSCAD) in a venv before printing.
+- **Axle + bearings:** Ø5 hollow axle on **695-2RS bearings (5×13×4, owned ×30)** pressed into the
+  neck cheeks. Head clamps the axle ends (grub screw); axle turns with the head.
+- **ULN2003 mounts / motor pockets:** the base has a pan-motor pad + ULN standoffs; the tilt bracket
+  is a plate + gusset off the neck. The real Ø28 pockets/ear traps are still to be detailed.
 
-For the future wheels: TT 1:120 gear motor + 130-size DC motors (×10) + MX1588 / ULN2003 drivers are
-already in inventory.
+**Buy list (gaps):** a 2nd track drive motor (see below), 2× F688ZZ flanged bearings 8×16×5
+(idlers; measured seat in the wheel), 6 mm airsoft BBs (pan race), Ø5 rod for the tilt axle, M2
+screws (camera). Verify the "608zz ×30" are
+steel, not the flagged plastic rings, before trusting them for anything.
 
 ## Tank chassis (the mobile base)
 
-Two-track tank base so it can drive. `build_base()` is the central **body** (rounded box, houses the
-pan motor + ULN driver + wiring, pan platform on top at z=52). `build_tracks()` makes two **track
-pods** — stadium belt loops (a shapely capsule = drive + idler wheel wrapped by the belt), belt
-touching ground, running along Y (forward). Hub caps on the outer face read as the wheels.
+Two-track tank base. `build_base()` is the central **body** (rounded box; houses the pan motor + ULN
+driver + wiring + ballast; deep pan-race seat + pan-mount on top at z=52). `build_tracks()` builds two
+**positive-drive track pods** (geometry from the local `Tank track - 3062624/` reference = Thingiverse
+thing:3062624, CC-BY): a chain of **36 printed link pads** (`_track_link_poses` walks the stadium loop)
+on filament-rod hinge pins, a **12-tooth drive sprocket** (rear) meshing the pins, an **idler** on a
+Ø16 bearing (front) in a tension slot, and **road wheels** supporting the bottom run. Positive tooth
+engagement beats a friction belt that slips when the head pans.
 
-Params: `chassis_w/l`, `track_r`, `track_wheelbase`, `track_width`, `track_gap`, `chassis_clear`.
-NOT yet designed: the drive-motor mounts for the tracks (each track needs its own motor — the pan/
-tilt 28BYJ steppers are separate), the belt as a real printed/TPU loop vs a rigid ring, road wheels
-inside the loop, and how the body bolts to the pods. Since the Pi rides the head (higher CoM), keep
-the chassis heavy/low and the wheelbase long enough not to tip when it accelerates or pans the head.
+- **Drive:** `drive_L`/`drive_R` = 2× TT gearmotor placeholders (`motor_tt`), one per pod, shaft on X
+  into the sprocket. **You own only 1 TT + bare 130-size cans (no gearbox); BUY 1 more TT 1:120 (or
+  2× N20 metal-gear for a lower CoM).** One MX1588 (own ×5) drives both. Skid/differential steer.
+- Params: `chassis_w/l`, `track_wheel_r`, `track_wheelbase`, `track_width`, `track_pitch`,
+  `track_links`, `sprocket_teeth`, `idler_bore_d`, `roadwheel_*`, `track_gap`, `chassis_clear`.
+- **Still TODO:** body-to-pod join (2× M3 nut-trap + 2× Ø4 dowel per side), links as real TPU/PLA
+  print vs the rigid model, widen the gauge (head overhangs ~10 mm/side). Pi rides the head (high CoM)
+  → keep the chassis heavy/low and the wheelbase long so it doesn't tip on accel or a fast head pan.
 
 ## Print notes (first pass — not finalized)
 
-- 7 printed parts (`chassis`, `track_L`, `track_R`, `neck_clevis`, `pan_platform`, `head_bezel`,
-  `head_back`) are watertight solids. (`head_shell`/`_head_solid` are pre-split intermediates.)
-- **Fastening = M3 screws into CAPTIVE HEX NUTS** (user choice). `nut_trap`/`screw_post` helpers.
-  - bezel↔back: 6 perimeter posts, nut captive in the back boss, screw from the front.
-  - neck↔pan_platform: 3× M3 (pilots in the neck base, clearance in the platform).
-  - Pi 5: 4× M2.5 standoffs on the back cover (58×49 pattern).
-  - 28BYJ-48: tilt motor on a cheek mount plate (shaft hole + 2 ear holes); pan motor on a floor
-    pad in the base (2 ears, shaft up the pan bore).
-- **Hubs:** Ø8 bushing counterbores at each head side wall (press-fit bushings; PLA isn't the
-  running surface, and it dodges the horizontal-bore droop problem).
+- 10 printed parts (`chassis`, `track_L`, `track_R`, `neck_clevis`, `pan_platform`, `pan_race`,
+  `pan_clips`, `head_bezel`, `head_back`, `cam_cover`) export via `EXPORT=1`. `worm_wheel`/
+  `tilt_worm`/`pan_balls`/`motor_*`/`drive_*` are placeholders (bought parts or regen-in-BOSL2).
+  track_L/R (links + wheels) and pan_clips (3 clips) are multi-body by design, not single solids.
+- **Fastening = M3 into CAPTIVE HEX NUTS** (M2 for the camera). `screw_post`/`hex_prism`.
+  - bezel↔back: 8 perimeter posts (stage 3a: bottom + top centers each became a ±40 pair), nut
+    captive in the back boss, screw from the front. M3×35 ×8.
+  - screen+Pi module: 4 rear standoffs on `head_back` landing on the display's factory M3 boss
+    rear plane (126.2×65.65 pattern), screws driven through back-wall channels. No bezel bosses;
+    no separate Pi mount (the Pi rides the display's own 58×49 standoffs).
+  - camera: 4× M2 bosses at 21×12.5; `cam_cover` traps the board (2× M2 + ribbon pinch).
+  - neck↔pan_platform: 3× M3 on r16 at (270°, 30°, 150°) about `(0, neck_y)` (stage 5 re-clock;
+    the old r12/90° layout put a hole inside the D-bore hub).
+  - pan motor: floor pad in the base, D-hub coupling; tilt motor: bracket + gusset off the neck.
+- **Tilt bearings:** 695-2RS pressed into the neck cheeks (not the head); head clamps the axle ends.
 - **Electronics fittings:** base has a pan-motor pad + ULN2003 standoffs + a USB-C wall slot +
   8 vent slots; head back cover has a Pi I/O slot + ventilation louvres + the cable port.
 - **Per-part print orientation:** bezel face-down (aperture opens up, best cosmetic face), back
@@ -171,7 +222,9 @@ src/shoot.py     headless multi-angle renders -> .claude/renders/
 web/             viewer_glb.html + assembly.glb (committed so a fresh clone shows the assembly)
 stl/{base,neck,head}/   per-part STLs (head_bezel + head_back), written by `EXPORT=1 python3 src/build.py`
 exports/         Bambu .3mf plates (regenerable, gitignored)
-reference/       rpi-7in-touchscreen-model (STEP/STL, the real screen) + -case + alexa-style-*
+reference/       rpi-7in-touchscreen-model (STEP/STL, the real screen) + -case + alexa-style-* +
+                 tank-track-3062624 (link/sprocket geometry, CC-BY) + rpi-camera-v21-1564160
+docs/FIXES.md    the verified-defect ledger from the 3-agent review + fix-stage status
 docs/ASSEMBLY.md BOM + assembly order
 ```
 
