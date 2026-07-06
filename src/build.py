@@ -237,6 +237,20 @@ P = {
     "rail_d": 26.0,         # rail depth (Y); stays on the wall's FLAT band (|y|<15, corner r16)
     "rail_h": 90.0,         # rail height (Z)
     "rail_cz": 185.0,       # rail center height (brackets the screen band, z 140..230)
+    # LED strip in the top bezel, LEFT of the camera (design-ref front.jpg). Recess sized
+    # for a short WS2812 stick segment; sits on FOREHEAD wall material only: the screen
+    # pocket opening tops out at z 233.9, so the slot must stay above it.
+    "led_slot_w": 42.0,     # slot width (X)
+    "led_slot_h": 5.0,      # slot height (Z)
+    "led_slot_d": 1.5,      # recess depth into the 4 mm face wall
+    # image-LEFT of the camera in the reference front view = robot +X (front view looks -Y)
+    "led_cx": 45.0,         # slot center X (clear of the camera pier |x|<16)
+    "led_cz": 239.0,        # slot center Z (lens axis is 237; slot z 236.5..241.5 > 233.9 ok)
+    # Knurled antenna stub on the head top face (cosmetic; Pi WiFi is internal).
+    # Image-RIGHT in the reference front view = robot -X.
+    "ant_x": -62.0, "ant_y": -8.0,  # on head_back's top (split plane is at y~2)
+    "ant_d": 13.0, "ant_h": 26.0,   # fat, short stub like the reference
+    "ant_collar_d": 16.0, "ant_collar_h": 3.0,
 
     # --- Fastening: M3 screws into CAPTIVE HEX NUTS (user choice) ---
     "m3_clear_r": 1.75,     # M3 screw clearance
@@ -272,7 +286,8 @@ COLORS = {
     "accent":  [232, 116, 34, 255],     # safety orange (design-ref two-tone)
     "lamp":    [232, 168, 60, 255],     # amber indicator
     "led":     [242, 244, 246, 255],    # white light strip
-    "sensor":  [184, 188, 194, 255],    # silver sensor barrels / antenna
+    "sensor":  [184, 188, 194, 255],    # silver sensor barrels
+    "antenna": [42, 45, 51, 255],       # black knurled stub
 }
 
 
@@ -584,6 +599,12 @@ def build_head_shell():
                                    py0 - P["cam_boss_len"] + 1.9, bz + dz))
             shell = sub(shell, pil)
 
+    # LED-strip recess in the forehead, left of the camera (design ref): shallow slot cut
+    # into the face wall; the led_strip part (build()) sits in it flush with the face.
+    slot_led = box(P["led_slot_w"], P["led_slot_d"] + 1.0, P["led_slot_h"])
+    slot_led.apply_translation((P["led_cx"], fy - P["led_slot_d"] / 2 + 0.5, P["led_cz"]))
+    shell = sub(shell, slot_led)
+
     _color(shell, "cradle")
     shell.metadata["name"] = "head_shell"
     return shell
@@ -687,6 +708,38 @@ def build_head_rails():
         _color(r, "accent"); r.metadata["name"] = nm
         rails.append(r)
     return rails
+
+
+def build_led_strip():
+    """WS2812-stick placeholder in the forehead recess, flush with the bezel face
+    (design-ref front.jpg: light strip left of the camera). Wiring drops behind the
+    wall into the head interior at the print pass."""
+    w, h, d = P["led_slot_w"] - 1.0, P["led_slot_h"] - 1.0, P["led_slot_d"]
+    bar = box(w, d, h)
+    bar.apply_translation((P["led_cx"], P["body_front_y"] - d / 2, P["led_cz"]))
+    _color(bar, "led"); bar.metadata["name"] = "led_strip"
+    return bar
+
+
+def build_antenna():
+    """Knurled antenna stub on the head top face, right side (design-ref; cosmetic --
+    the Pi's WiFi is internal). Separate print: collar + shaft + dome, knurl read via
+    shallow ring grooves. Fixing (spigot + glue vs M3 from inside) at the print pass."""
+    zt = P["body_z_top"]
+    collar = cyl(P["ant_collar_d"] / 2, P["ant_collar_h"])
+    collar.apply_translation((0, 0, P["ant_collar_h"] / 2))
+    shaft = cyl(P["ant_d"] / 2, P["ant_h"])
+    shaft.apply_translation((0, 0, P["ant_h"] / 2))
+    dome = trimesh.creation.icosphere(subdivisions=2, radius=P["ant_d"] / 2)
+    dome.apply_translation((0, 0, P["ant_h"]))
+    ant = uni([collar, shaft, dome])
+    for gz in (10.0, 16.0, 22.0):                     # knurl-read ring grooves
+        groove = trimesh.creation.torus(major_radius=P["ant_d"] / 2, minor_radius=0.7)
+        groove.apply_translation((0, 0, gz))
+        ant = sub(ant, groove)
+    ant.apply_translation((P["ant_x"], P["ant_y"], zt))
+    _color(ant, "antenna"); ant.metadata["name"] = "antenna_stub"
+    return ant
 
 
 def build_neck_clevis():
@@ -1483,6 +1536,8 @@ def build():
 
     for rail in build_head_rails():                  # orange side accent rails (design ref)
         add(rail, M_head)
+    add(build_led_strip(), M_head)                   # forehead light strip (design ref)
+    add(build_antenna(), M_head)                     # top-right antenna stub (design ref)
 
     screen = load_screen()
     screen.apply_transform(screen_pose())            # sit on the leaned front face
