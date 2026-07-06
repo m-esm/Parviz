@@ -1932,8 +1932,9 @@ def build():
     add(build_antenna(), M_head)                     # top-right antenna stub (design ref)
     add(build_hatch_frame(), M_head)                 # rear orange hatch frame (design ref)
     add(build_cam_pod(), M_head)                     # raised camera eye-pod (design ref)
-    for arm in build_arms():                         # placeholder gripper arms (design ref)
-        add(arm, M_head)
+    if os.environ.get("ARMS") == "1":               # arms REMOVED for now (user 2026-07-07);
+        for arm in build_arms():                     # ARMS=1 re-adds the placeholders. The
+            add(arm, M_head)                         # real mechanism plan: docs/ARM-MECH.md
 
     screen = load_screen()
     screen.apply_transform(screen_pose())            # sit on the leaned front face
