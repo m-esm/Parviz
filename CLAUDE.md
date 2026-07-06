@@ -186,10 +186,12 @@ the target axis — don't fight the offset with an eccentric coupler.**
 - **ULN2003 mounts / motor pockets:** the base has a pan-motor pad + ULN standoffs; the tilt bracket
   is a plate + gusset off the neck. The real Ø28 pockets/ear traps are still to be detailed.
 
-**Buy list (gaps):** a 2nd track drive motor (see below), 2× F688ZZ flanged bearings 8×16×5
-(idlers; measured seat in the wheel), 6 mm airsoft BBs (pan race), Ø5 rod for the tilt axle, M2
-screws (camera). Verify the "608zz ×30" are
-steel, not the flagged plastic rings, before trusting them for anything.
+**Buy list (gaps; full inventory-checked BOM in docs/ASSEMBLY.md, 2026-07-07):** a 2nd track
+drive motor (see below), 2× F688ZZ flanged bearings 8×16×5 (idlers), 6 mm airsoft BBs (pan
+race), Ø5 rod for the tilt axle, the official 27W USB-C PD supply (not in inventory), 1 m of
+NARROW (4–5 mm) addressable strip (SK6805-2427/WS2812-2020 — a standard 8×5050 stick is
+53.3×10.2 and does NOT fit the 42×5 `led_slot`). M2/M3 screws are covered by the owned kits.
+The "608zz ×30" are unused in the design and still unverified (may be plastic rings).
 
 ## Tank chassis (the mobile base)
 
