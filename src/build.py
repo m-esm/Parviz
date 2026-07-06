@@ -260,6 +260,14 @@ P = {
     "hatch_frame_t": 3.0,       # proud of the back face
     "hatch_frame_cz": 176.0,    # outer z 123.5..228.5; inner 136.5..215.5 (port 138..172,
                                 # louvres 180..214 both land inside the opening)
+    # Chassis FRONT fascia (design-ref front.jpg). Front wall: y=78 face, x +-60, z 7..52.
+    "grille_cz": 38.0,      # orange surround outer 60x20 -> z 28..48; inner 52x12
+    "grille_w": 60.0, "grille_h": 20.0, "grille_band": 4.0, "grille_t": 2.5,
+    "us_dx": 13.0,          # ultrasonic barrel centers at x=+-13 (HC-SR04 transducer pitch ~26)
+    "us_cz": 19.5,          # barrel Ø16 -> z 11.5..27.5 (0.5 under the surround, 1 over the LEDs)
+    "us_d": 16.0,
+    "lamp_x": 44.0, "lamp_cz": 20.0,    # amber corner lamps 12x7, proud 2
+    "fled_cz": 9.5,         # white dot strip 36x2.5 at the bottom lip, proud 1
 
     # --- Fastening: M3 screws into CAPTIVE HEX NUTS (user choice) ---
     "m3_clear_r": 1.75,     # M3 screw clearance
@@ -1083,6 +1091,52 @@ def build_pan_clips():
     return clips
 
 
+def build_fascia():
+    """Chassis front-fascia parts (design-ref front.jpg): orange grille surround + side
+    fins (one orange print), HC-SR04 ultrasonic placeholder (silver barrels through the
+    wall), amber corner lamps, white LED dot strip. Returns a list of scene parts."""
+    fw = P["chassis_l"] / 2                          # front face y=78
+    parts = []
+    # orange surround ring + 3 vertical fins per side, as ONE orange part
+    gw, gh, bd, t = P["grille_w"], P["grille_h"], P["grille_band"], P["grille_t"]
+    ring = sub(rounded_box(gw, gh, t, 6.0),
+               rounded_box(gw - 2 * bd, gh - 2 * bd, t + 2, 4.0).apply_translation((0, 0, -1)))
+    ring.apply_transform(R(-TAU / 4, (1, 0, 0)))     # extrude +Y (proud of the front face)
+    ring.apply_translation((0, fw, P["grille_cz"]))
+    fins = [ring]
+    for sx in (-1, 1):
+        for fx in (35.0, 41.0, 47.0):
+            f = box(3.0, 2.0, 16.0)
+            f.apply_translation((sx * fx, fw + 1.0, P["grille_cz"]))
+            fins.append(f)
+    fascia = uni(fins)
+    _color(fascia, "accent"); fascia.metadata["name"] = "trim_fascia"
+    parts.append(fascia)
+    # ultrasonic: board placeholder against the inner wall + 2 mesh barrels through it
+    us = [box(45.7, 1.6, 20.9).apply_translation((0, fw - 5.0 - 0.8, P["us_cz"]))]
+    for sx in (-1, 1):
+        b = cyl(P["us_d"] / 2, 13.0, axis="y", sections=48)
+        b.apply_translation((sx * P["us_dx"], fw - 5.0 + 6.5 - 0.75, P["us_cz"]))
+        us.append(b)
+    uspod = uni(us)
+    _color(uspod, "sensor"); uspod.metadata["name"] = "sensor_us"
+    parts.append(uspod)
+    # amber indicator lamps at the fascia corners
+    for sx, nm in ((-1, "lamp_L"), (1, "lamp_R")):
+        l = rounded_box(12.0, 7.0, 2.0, 2.5)
+        l.apply_transform(R(-TAU / 4, (1, 0, 0)))
+        l.apply_translation((sx * P["lamp_x"], fw, P["lamp_cz"]))
+        _color(l, "lamp"); l.metadata["name"] = nm
+        parts.append(l)
+    # white LED dot strip at the bottom lip
+    led = rounded_box(36.0, 2.5, 1.0, 1.0)
+    led.apply_transform(R(-TAU / 4, (1, 0, 0)))
+    led.apply_translation((0, fw, P["fled_cz"]))
+    _color(led, "led"); led.metadata["name"] = "led_front"
+    parts.append(led)
+    return parts
+
+
 def frustum(r_bottom, r_top, h, sections=96):
     """Truncated cone from z=0 (r_bottom) to z=h (r_top)."""
     if abs(r_bottom - r_top) < 1e-6:
@@ -1177,6 +1231,25 @@ def build_base():
         body = sub(body, pil)
     usb = box(14, 12, 8)                              # USB-C power entry in the rear wall
     usb.apply_translation((0, -P["chassis_l"] / 2, z0 + 12)); body = sub(body, usb)
+    # front-fascia cuts (design ref): hex grille field (blind 2.5, cosmetic-vent; decide
+    # through-vent at the print pass) + Ø16.6 ultrasonic barrel passes through the wall
+    fw = P["chassis_l"] / 2
+    hexes = []
+    for r_i, zr in enumerate((34.0, 38.0, 42.0)):
+        off = 2.1 if r_i % 2 else 0.0
+        for k in range(-6, 7):
+            hx_x = k * 4.2 + off
+            if abs(hx_x) > 24.0:
+                continue
+            hx = hex_prism(3.0, 4.0)
+            hx.apply_transform(R(TAU / 4, (1, 0, 0)))          # axis Z -> Y
+            hx.apply_translation((hx_x, fw - 0.5, zr))         # cuts 2.5 into the 5 wall
+            hexes.append(hx)
+    body = sub(body, uni(hexes))
+    for sx in (-1, 1):
+        us = cyl(P["us_d"] / 2 + 0.3, 12, axis="y")
+        us.apply_translation((sx * P["us_dx"], fw - 2.5, P["us_cz"]))
+        body = sub(body, us)
     for i in range(-2, 4):                            # side ventilation slots (i=-3 dropped: the
         v = box(12, 5, 16); v.apply_translation((0, i * 16, z0 + h / 2))    # TT nub pocket +
         v2 = v.copy(); v.apply_translation((P["chassis_w"] / 2, 0, 0))      # shaft recess live
@@ -1464,6 +1537,8 @@ def build():
 
     # --- FIXED: tank chassis body + two track pods ---
     add(build_base(), np.eye(4), "chassis.stl")
+    for fp in build_fascia():                        # front fascia set (design ref)
+        add(fp, np.eye(4))
     for trk in build_tracks():
         add(trk, np.eye(4), trk.metadata["name"] + ".stl")
 
