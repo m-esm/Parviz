@@ -1,6 +1,6 @@
 # Front door for desk-pi. All Python lives in src/; outputs route into stl/<subsystem>/
 # and web/assembly.glb. Run `make help`. See the 3d-print-modeling skill for the loop.
-PORT ?= 8765
+PORT ?= 8770         # dedicated to desk-pi; 8765 collides with the finnish-doors serve.py
 
 .PHONY: help install build viewer shot watch
 

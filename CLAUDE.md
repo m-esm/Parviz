@@ -7,15 +7,17 @@ sitting on a **two-track tank chassis** so it can drive around the desk.
 The head is a **clean rounded box** (a tablet-head; earlier it was an Echo-Show wedge, since
 simplified). Screen upright on the front, neck tilt gives the look up/down.
 
-Status: **DRIVETRAIN FINALIZED (post multi-agent mechanism research).** `src/build.py` builds the
-whole robot around the measured 7" screen STL; 9 watertight per-part STLs (chassis, track_L,
-track_R, neck_clevis, pan_platform, pan_race, head_bezel, head_back, cam_cover) plus placeholder
-sub-parts (worm_wheel, tilt_worm, pan_balls, motor_*, drive_L/R). A 6-agent research pass drove the
-mechanism decisions now in geometry: **pan = 28BYJ direct D-hub on a captured-BB lazy-Susan race**;
-**tilt = self-locking single-start WORM drive** (Ø5 hollow axle on 695-2RS bearings, owned); **screen
-mounted by its 4 factory M3 holes** (not the glass lip); **camera recessed behind the forehead** with
-a lens bump + `cam_cover`; **tracks = modular positive-drive links + 12T sprocket + idler + road
-wheels + 2 TT drive motors**. The 28BYJ placeholder is now dimensionally correct (Ø28.25, 7.875 mm
+Status: **FIX CAMPAIGN COMPLETE (stages 1-5 + independent verification, see docs/FIXES.md).**
+`src/build.py` builds the whole robot around the combined screen+Pi reference mesh; 10 watertight
+per-part STLs (chassis, track_L, track_R, neck_clevis, pan_platform, pan_race, pan_clips,
+head_bezel, head_back, cam_cover) plus placeholder sub-parts (worm_wheel, tilt_worm, pan_balls,
+motor_*, drive_L/R). A 6-agent research pass drove the mechanism decisions now in geometry:
+**pan = 28BYJ direct D-hub on a captured-BB lazy-Susan race**; **tilt = self-locking single-start
+WORM drive** (Ø5 hollow axle on 695-2RS bearings, owned); **screen+Pi ride as one module** (the
+official Pins-Out assembly: Pi on the display's own 58×49 standoffs), retained by 4 rear standoffs
+on `head_back` at the factory M3 bosses; **camera recessed behind the forehead** (official CM3
+dims) with a lens bump + `cam_cover`; **tracks = measured-TT-motor positive drive: articulated
+links + 12T sprocket + F688ZZ idler + road wheels**. The 28BYJ placeholder is now dimensionally correct (Ø28.25, 7.875 mm
 offset shaft, 3 mm D-flats). Remaining: worm teeth are readable placeholders (regen involute/helix
 in BOSL2 in a venv), body-to-pod join, widen track gauge (head overhangs ~10 mm/side), buy list.
 
@@ -65,33 +67,44 @@ tank chassis        DRIVE base: central body (build_base) + track_L/track_R (bui
   torque to hold).
 - **Tilt is a SELF-LOCKING WORM drive on a REAR CLEVIS** (not a side gimbal, not direct-drive). The
   head clamps a **Ø5 hollow axle** at its side-wall hubs (axle turns WITH the head); the axle rotates
-  in **695-2RS bearings** pressed into the neck cheeks (x=±22); the `worm_wheel` (24T) is keyed to the
+  in **695-2RS bearings** pressed into the neck cheeks (x=±22); the `worm_wheel` (12T, was 24T; halved
+  in stage 2 for tilt speed) is keyed to the
   axle and driven by the `tilt_worm` (single-start) on motor_tilt, whose shaft runs +Y (right-angle to
   the axle). Single-start worm self-locks, so the head holds ±30° with the motor de-energized (no idle
   current/heat). Pre-balance the head on the axle (Pi as counterweight) so the worm barely works. Axle
-  Z (=178) MUST match the cheek bearings — an earlier bug lifted the clevis 46 mm; build in world Z.
+  position (y=−18, z=178, `tilt_axis_y`/`tilt_axis_z`) MUST match the cheek bearings — an earlier bug
+  lifted the clevis 46 mm; build in world coords. **Stage 2R moved the axle BACK 18 mm (y 0 → −18):**
+  the Pi rides the display back, and at y=0 the axle/worm/cheeks ran through the board plane. The
+  whole drivetrain (cheeks+hoops, wheel, worm, brackets) keys off the `tilt_axis_*` pair; the screen
+  is anchored separately (`screen_cz`=178) and did NOT move.
 - **Camera is RECESSED behind the forehead** (the 24 mm board can't fit the ~10 mm forehead gap): lens
   bump on the front at `cam_lens_z`, board on 4x M2 bosses at the 21×12.5 pattern, `cam_cover` traps
   it, CSI ribbon drops to the Pi bay. Lens optical axis is X=0, Z=+2.47 above board center (not centred).
-- **Screen is held by its 4 FACTORY M3 holes** (outer 126.2×65.65 case-mount pattern), bosses on
-  `head_bezel`, screw axis +Y into the display's metal chassis. The front glass lip is now only a
-  locator, not the retention. See `PARAMS["scr_mount_pts"]`.
-- **Pi 5 lives IN THE HEAD, behind the tilt axis.** DSI + CSI ribbons stay entirely in the head (zero
-  joint crossings); the board doubles as the tilt counterweight. Only round wires (Pi power) cross the
+- **Screen is held by its 4 FACTORY M3 holes** (outer 126.2×65.65 case-mount pattern) via 4 REAR
+  STANDOFFS on `head_back` (stage 3a/5: the old bezel bosses ran through the glass, then punched
+  the display's raised mount bosses). The standoff faces land on the boss REAR plane (y 22.48);
+  screws drive through back-wall channels, axis +Y into the display's metal chassis. The front
+  glass lip is only a locator. See `PARAMS["scr_mount_pts"]`.
+- **Pi 5 rides the DISPLAY's own 58×49 standoffs** (official mounting, the Pins-Out combined mesh),
+  in the head behind the tilt axis. DSI + CSI ribbons stay entirely in the head (zero joint
+  crossings); the board doubles as the tilt counterweight. Only round wires (Pi power) cross the
   joints. Tradeoff: heavier head + higher CoM → ballast the base low.
-- **Cable path:** hollow Ø5 tilt axle (on-axis) → neck channel → off-axis pass through pan_platform +
-  base. Pan is ±90°, so a **service loop** (helical slack coil) crosses the pan joint, NOT a slip ring
-  — it carries the Pi's full 5A rail silently and free; software-limit pan so it never over-winds. A
-  2A/circuit capsule slip ring can't pass 5A without paralleling contacts; only add one for 360° pan.
+- **Cable path:** the Pi power pair (5A, ~Ø3.6 envelope) does NOT fit the Ø2.5 axle bore — that
+  hollow is weight relief only. The real route: base USB-C wall port → base cavity (pan **service
+  loop**) → 16×8 obround pass in the platform → neck channel → out the column top → into the head
+  through the bottom-rear slot with a tilt drape (±30° is easy). Pan is ±90°, so a service loop
+  beats a slip ring — it carries the full 5A rail silently and free; software-limit pan so it never
+  over-winds. A 2A/circuit capsule slip ring can't pass 5A without paralleling contacts; only add
+  one for 360° pan.
 
 ## Head is a 2-piece print (bezel + back)
 
 `build_head_parts()` slices the wedge on a plane parallel to the front face, ~4mm behind the screen:
-- `head_bezel` (front): the face + camera lens bump + **4 M3 screen-mount bosses** (the display's own
-  factory holes retain the screen) + the 6 bezel↔back nut-trap bosses. The stepped aperture lip is now
-  just a locator. Print face-down.
-- `head_back` (rear): pivot hubs, neck slot, Pi bay, cable port, Pi standoffs. Print open-side-down.
-Screen drops into the pocket from behind and bolts to the bezel's 4 M3 bosses; bezel bolts to back.
+- `head_bezel` (front): the face + camera lens bump (CM3 aperture: Ø6.3 bore + Ø8 csk) + the 8
+  bezel↔back nut-trap bosses. The stepped aperture lip is just a locator. Print face-down.
+- `head_back` (rear): pivot hubs, neck slot, the 4 screen-module rear standoffs + driver channels,
+  Pi I/O slot (right wall), cable port, vents. Print open-side-down.
+The screen+Pi module drops in from behind and bolts to the 4 head_back standoffs; bezel bolts to back.
 
 ## Head style: simple rounded box (simplified from the Echo-Show wedge, per user)
 
@@ -100,18 +113,25 @@ top/bottom, rounded vertical edges, upright front `face_angle=0`). The screen si
 on the front; the neck's tilt provides the look up/down. It started as an Echo-Show "doorstop" wedge
 (reference in `reference/alexa-style-smart-display/`, a Touch Display 2 design we borrowed the style
 from) but the user asked to simplify the head shape. Still split by `build_head_parts()` into
-`head_bezel` (front, screen-retaining lip, camera nub) + `head_back` (Pi bay, hubs, vents).
+`head_bezel` (front, locator lip, camera nub) + `head_back` (screen standoffs, hubs, vents).
 
 ## Key numbers (measured, not guessed)
 
-Screen `PARAMS["screen_*"]` are **measured from the reference STL bbox**: 193.0 (W) × 25.0 (D) ×
-110.8 (H) mm, driver board included. Loaded live from
-`reference/rpi-7in-touchscreen-model/files/Raspberry_Pi_Touch_Screen_Assembly_v12.stl` and mounted
-on the leaned face by `screen_pose()`. Overall assembly bbox ≈ 221 × 208 × 248 mm.
+The build loads the COMBINED display+Pi reference mesh (Pins Out variant: the Pi rides the
+display's own 58×49 standoffs, GPIO pins out): 192.96 (W) × 38.01 (D) × 110.76 (H) mm, from
+`reference/rpi-7in-touchscreen-model/files/Raspberry_Pi_Touch_Screen_Assembly_-_Pins_Out_v8.stl`,
+posed by the GLASS PLANE (not bbox center; the pins-out mesh is 13 mm deeper on the back) via
+`screen_pose()`. `PARAMS["screen_d"]=25.0` describes the display module alone, not this mesh.
+NOTE: this mesh is NOT watertight — manifold booleans on it raise; probe screen clearances with
+surface-sample containment, never with `ivol()`-style try/except (that returned vacuous 0.000 for
+three stages, see docs/FIXES.md Stage 4). Overall assembly bbox ≈ 209 × 170.5 × 251 mm.
 
-Still first-guess (validate on a print): tilt axis height 178, cantilever 18.5, tilt ±30, pan ±90,
-worm module 1.25 / 24T, track pitch 10 / 36 links / 12T sprocket, pan BB circle Ø80. Head width 205
-vs track gauge ~184 → head overhangs ~10 mm/side (widen the gauge or accept it).
+Still first-guess (validate on a print): tilt axis at y=−18 / z=178 (moved back 18 mm in stage 2R to
+clear the Pi-on-display stack), screen center y 18.5 / z 178, tilt ±30, pan ±90,
+worm module 1.25 / 12T wheel, track pitch 10 / 36 links / 12T sprocket, pan BB circle Ø80. Neck
+column at `neck_y=−17` (stage 5: footprint max r 43.1 fits the spinning platform's solid r45; the
+cable channel is decoupled at `neck_chan_y=−26`). Head width 205 vs track gauge ~184 → head
+overhangs ~10 mm/side (widen the gauge or accept it).
 
 ## Power (decided)
 
@@ -133,7 +153,7 @@ the target axis — don't fight the offset with an eccentric coupler.**
   the pan axis; it keys into a **double-D bore hub** under `pan_platform` (`dbore_neg`/`dbore_hub`) +
   an M3 grub on a flat. No reduction. Rides the lazy-Susan BB race (see Mechanical intent).
 - **Tilt (self-locking worm):** the worm sits on the motor's D-shaft (shaft +Y, right-angle to the
-  axle), meshing a 24T `worm_wheel` keyed to the Ø5 axle. Single-start → self-locks, so the head holds
+  axle), meshing a 12T `worm_wheel` keyed to the Ø5 axle. Single-start → self-locks, so the head holds
   ±30° with the driver OFF (no idle heat). Pre-balance the head so the worm loafs. Center distance =
   wheel_r + worm_r (`PARAMS["worm_*"]`). **NOTE:** `gear_disc`/`worm` teeth are readable placeholders;
   regenerate the real involute wheel + helical worm in BOSL2 (OpenSCAD) in a venv before printing.
@@ -142,8 +162,9 @@ the target axis — don't fight the offset with an eccentric coupler.**
 - **ULN2003 mounts / motor pockets:** the base has a pan-motor pad + ULN standoffs; the tilt bracket
   is a plate + gusset off the neck. The real Ø28 pockets/ear traps are still to be detailed.
 
-**Buy list (gaps):** a 2nd track drive motor (see below), 2× Ø16 flanged bearings (idlers), 6 mm
-airsoft BBs (pan race), Ø5 rod for the tilt axle, M2 screws (camera). Verify the "608zz ×30" are
+**Buy list (gaps):** a 2nd track drive motor (see below), 2× F688ZZ flanged bearings 8×16×5
+(idlers; measured seat in the wheel), 6 mm airsoft BBs (pan race), Ø5 rod for the tilt axle, M2
+screws (camera). Verify the "608zz ×30" are
 steel, not the flagged plastic rings, before trusting them for anything.
 
 ## Tank chassis (the mobile base)
@@ -167,15 +188,19 @@ engagement beats a friction belt that slips when the head pans.
 
 ## Print notes (first pass — not finalized)
 
-- 9 printed parts (`chassis`, `track_L`, `track_R`, `neck_clevis`, `pan_platform`, `pan_race`,
-  `head_bezel`, `head_back`, `cam_cover`) export via `EXPORT=1`. `worm_wheel`/`tilt_worm`/`pan_balls`/
-  `motor_*`/`drive_*` are placeholders (bought parts or regen-in-BOSL2). track_L/R are multi-body
-  concatenations of links + wheels, not single solids.
-- **Fastening = M3 into CAPTIVE HEX NUTS** (M2 for the camera, M2.5 for the Pi). `screw_post`/`hex_prism`.
-  - bezel↔back: 6 perimeter posts, nut captive in the back boss, screw from the front.
-  - screen: 4× M3 bosses on the bezel at the display's factory 126.2×65.65 holes.
-  - camera: 4× M2 bosses at 21×12.5; `cam_cover` traps the board.
-  - neck↔pan_platform: 3× M3. Pi 5: 4× M2.5 standoffs on the back cover (58×49).
+- 10 printed parts (`chassis`, `track_L`, `track_R`, `neck_clevis`, `pan_platform`, `pan_race`,
+  `pan_clips`, `head_bezel`, `head_back`, `cam_cover`) export via `EXPORT=1`. `worm_wheel`/
+  `tilt_worm`/`pan_balls`/`motor_*`/`drive_*` are placeholders (bought parts or regen-in-BOSL2).
+  track_L/R (links + wheels) and pan_clips (3 clips) are multi-body by design, not single solids.
+- **Fastening = M3 into CAPTIVE HEX NUTS** (M2 for the camera). `screw_post`/`hex_prism`.
+  - bezel↔back: 8 perimeter posts (stage 3a: bottom + top centers each became a ±40 pair), nut
+    captive in the back boss, screw from the front. M3×35 ×8.
+  - screen+Pi module: 4 rear standoffs on `head_back` landing on the display's factory M3 boss
+    rear plane (126.2×65.65 pattern), screws driven through back-wall channels. No bezel bosses;
+    no separate Pi mount (the Pi rides the display's own 58×49 standoffs).
+  - camera: 4× M2 bosses at 21×12.5; `cam_cover` traps the board (2× M2 + ribbon pinch).
+  - neck↔pan_platform: 3× M3 on r16 at (270°, 30°, 150°) about `(0, neck_y)` (stage 5 re-clock;
+    the old r12/90° layout put a hole inside the D-bore hub).
   - pan motor: floor pad in the base, D-hub coupling; tilt motor: bracket + gusset off the neck.
 - **Tilt bearings:** 695-2RS pressed into the neck cheeks (not the head); head clamps the axle ends.
 - **Electronics fittings:** base has a pan-motor pad + ULN2003 standoffs + a USB-C wall slot +
@@ -197,7 +222,9 @@ src/shoot.py     headless multi-angle renders -> .claude/renders/
 web/             viewer_glb.html + assembly.glb (committed so a fresh clone shows the assembly)
 stl/{base,neck,head}/   per-part STLs (head_bezel + head_back), written by `EXPORT=1 python3 src/build.py`
 exports/         Bambu .3mf plates (regenerable, gitignored)
-reference/       rpi-7in-touchscreen-model (STEP/STL, the real screen) + -case + alexa-style-*
+reference/       rpi-7in-touchscreen-model (STEP/STL, the real screen) + -case + alexa-style-* +
+                 tank-track-3062624 (link/sprocket geometry, CC-BY) + rpi-camera-v21-1564160
+docs/FIXES.md    the verified-defect ledger from the 3-agent review + fix-stage status
 docs/ASSEMBLY.md BOM + assembly order
 ```
 
