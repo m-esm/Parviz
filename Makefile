@@ -2,7 +2,7 @@
 # and web/assembly.glb. Run `make help`. See the 3d-print-modeling skill for the loop.
 PORT ?= 8770         # dedicated to desk-pi; 8765 collides with the finnish-doors serve.py
 
-.PHONY: help install build viewer shot watch
+.PHONY: help install build viewer shot watch check check-sweep
 
 help:                ## List targets
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
@@ -23,3 +23,9 @@ watch:               ## Rebuild web/assembly.glb on every src/reference change (
 
 shot:                ## Headless multi-angle render to .claude/renders/ (needs `make viewer` running)
 	python3 src/shoot.py assembly.glb chk $(PORT)
+
+check:               ## Interference gate on web/assembly.glb (pairwise booleans, whitelist-aware)
+	python3 src/assembly_check.py web/assembly.glb
+
+check-sweep:         ## Interference gate across the pan x tilt pose grid (rebuilds via _check.glb)
+	python3 src/assembly_check.py --sweep
