@@ -268,6 +268,11 @@ P = {
     "us_d": 16.0,
     "lamp_x": 44.0, "lamp_cz": 20.0,    # amber corner lamps 12x7, proud 2
     "fled_cz": 9.5,         # white dot strip 36x2.5 at the bottom lip, proud 1
+    # Raised camera POD on the forehead (design ref: the camera reads as an eye). Pure
+    # cosmetic shell over the recessed CM3: the bore flares 45 deg/side from the existing
+    # countersink, wider than the 75 deg-diagonal FoV cone (half ~37.5 deg), so no vignette.
+    "cam_pod_w": 24.0, "cam_pod_h": 18.0,   # pod footprint on the face (X x Z)
+    "cam_pod_t": 5.0,                       # proud of the face
     # Gripper arms (design ref, PLACEHOLDER pose + shapes): shoulder pivots on the side
     # rails, tucked pose (claws down-forward beside the chassis front). Actuation, joint
     # hardware, and the head-vs-platform mount decision are a later mechanism pass.
@@ -762,6 +767,22 @@ def build_antenna():
     ant.apply_translation((P["ant_x"], P["ant_y"], zt))
     _color(ant, "antenna"); ant.metadata["name"] = "antenna_stub"
     return ant
+
+
+def build_cam_pod():
+    """Cosmetic raised eye-pod over the recessed camera aperture (design-ref front.jpg).
+    Separate charcoal print on the bezel face; 45 deg flared bore clears the CM3 FoV."""
+    fy, lz = P["body_front_y"], P["cam_lens_z"]
+    pod = rounded_box(P["cam_pod_w"], P["cam_pod_h"], P["cam_pod_t"], 7.0)
+    pod.apply_transform(R(-TAU / 4, (1, 0, 0)))      # extrude +Y, footprint XZ
+    pod.apply_translation((0, fy, lz))
+    bore = frustum(P["cam_csk_d"] / 2 + P["cam_pod_t"] + 0.5, P["cam_csk_d"] / 2,
+                   P["cam_pod_t"] + 0.5)             # 45 deg/side flare, small end at the face
+    bore.apply_transform(R(TAU / 4, (1, 0, 0)))      # shrink toward -Y (into the wall)
+    bore.apply_translation((0, fy + P["cam_pod_t"] + 0.25, lz))
+    pod = sub(pod, bore)
+    _color(pod, "camera"); pod.metadata["name"] = "camera_pod"   # /camera/ in the viewer PAL
+    return pod
 
 
 def build_hatch_frame():
@@ -1701,6 +1722,7 @@ def build():
     add(build_led_strip(), M_head)                   # forehead light strip (design ref)
     add(build_antenna(), M_head)                     # top-right antenna stub (design ref)
     add(build_hatch_frame(), M_head)                 # rear orange hatch frame (design ref)
+    add(build_cam_pod(), M_head)                     # raised camera eye-pod (design ref)
     for arm in build_arms():                         # placeholder gripper arms (design ref)
         add(arm, M_head)
 
