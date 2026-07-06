@@ -268,6 +268,10 @@ P = {
     "us_d": 16.0,
     "lamp_x": 44.0, "lamp_cz": 20.0,    # amber corner lamps 12x7, proud 2
     "fled_cz": 9.5,         # white dot strip 36x2.5 at the bottom lip, proud 1
+    # Gripper arms (design ref, PLACEHOLDER pose + shapes): shoulder pivots on the side
+    # rails, tucked pose (claws down-forward beside the chassis front). Actuation, joint
+    # hardware, and the head-vs-platform mount decision are a later mechanism pass.
+    "arm_x": 112.5,         # arm plane center (outboard of the rails at 107.5)
 
     # --- Fastening: M3 screws into CAPTIVE HEX NUTS (user choice) ---
     "m3_clear_r": 1.75,     # M3 screw clearance
@@ -305,6 +309,7 @@ COLORS = {
     "led":     [242, 244, 246, 255],    # white light strip
     "sensor":  [184, 188, 194, 255],    # silver sensor barrels
     "antenna": [42, 45, 51, 255],       # black knurled stub
+    "arm":     [51, 55, 62, 255],       # charcoal gripper arms
 }
 
 
@@ -780,6 +785,42 @@ def build_hatch_frame():
     return ring
 
 
+def _limb(p0, p1, w=9.0, d=11.0):
+    """Arm segment between two (y,z) points, long axis in the YZ plane, X extent w."""
+    vy, vz = p1[0] - p0[0], p1[1] - p0[1]
+    L = float(np.hypot(vy, vz))
+    seg = box(w, d, L + d * 0.6)
+    seg.apply_transform(R(-np.arctan2(vy, vz), (1, 0, 0)))    # +Z -> segment direction
+    seg.apply_translation((0, (p0[0] + p1[0]) / 2, (p0[1] + p1[1]) / 2))
+    return seg
+
+
+def build_arms():
+    """Two articulated gripper arms (design-ref, PLACEHOLDER): shoulder disc on the side
+    rail, upper arm down, forearm forward, C-claw opening forward. Static tucked pose per
+    front.jpg; joints are cosmetic discs until the arm mechanism pass."""
+    S, E, W = (0.0, 155.0), (8.0, 112.0), (48.0, 90.0)   # shoulder/elbow/wrist (y,z)
+    C = (62.0, 88.0)                                     # claw ring center
+    arms = []
+    for sx, nm in ((-1, "arm_L"), (1, "arm_R")):
+        parts = [_limb(S, E), _limb(E, W)]
+        for (py, pz), r in ((S, 9.0), (E, 7.5), (W, 7.0)):
+            j = cyl(r, 10.0, axis="x"); j.apply_translation((0, py, pz))
+            parts.append(j)                          # h10: disc face LANDS on the rail
+                                                     # face (107.5), no burial
+        claw = sub(cyl(15.0, 10.0, axis="x", sections=48),
+                   cyl(8.5, 12.0, axis="x", sections=48))
+        notch = box(12.0, 18.0, 12.0); notch.apply_translation((0, 12.0, 0))
+        claw = sub(claw, notch)                          # C opening faces +Y (forward)
+        claw.apply_translation((0, C[0], C[1]))
+        parts.append(claw)
+        arm = uni(parts)
+        arm.apply_translation((sx * P["arm_x"], 0, 0))
+        _color(arm, "arm"); arm.metadata["name"] = nm
+        arms.append(arm)
+    return arms
+
+
 def build_neck_clevis():
     """Neck column rising to a two-cheek clevis that grips the tilt axle under the head."""
     zt = P["tilt_axis_z"]
@@ -1250,6 +1291,12 @@ def build_base():
         us = cyl(P["us_d"] / 2 + 0.3, 12, axis="y")
         us.apply_translation((sx * P["us_dx"], fw - 2.5, P["us_cz"]))
         body = sub(body, us)
+    # floor slot for the HC-SR04 body: the 20.9-tall board (us_cz 19.5) reaches z 9.05,
+    # below the cavity floor top (12) -- drop the module into a recess instead of raising
+    # the fascia (the barrels would hit the grille surround)
+    usr = box(46.5, 2.6, 3.8)
+    usr.apply_translation((0, fw - 5.0 - 0.8, 10.8))
+    body = sub(body, usr)
     for i in range(-2, 4):                            # side ventilation slots (i=-3 dropped: the
         v = box(12, 5, 16); v.apply_translation((0, i * 16, z0 + h / 2))    # TT nub pocket +
         v2 = v.copy(); v.apply_translation((P["chassis_w"] / 2, 0, 0))      # shaft recess live
@@ -1654,6 +1701,8 @@ def build():
     add(build_led_strip(), M_head)                   # forehead light strip (design ref)
     add(build_antenna(), M_head)                     # top-right antenna stub (design ref)
     add(build_hatch_frame(), M_head)                 # rear orange hatch frame (design ref)
+    for arm in build_arms():                         # placeholder gripper arms (design ref)
+        add(arm, M_head)
 
     screen = load_screen()
     screen.apply_transform(screen_pose())            # sit on the leaned front face
