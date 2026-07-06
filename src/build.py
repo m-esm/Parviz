@@ -179,6 +179,48 @@ P = {
     "tt_motor_d": 20.0,     # can Ø20.00, 14.99 across flats, 13.5 exposed
     "tt_shaft_d": 5.4,      # double-D output shaft, 3.70 flats, 8.8 proud, flat len 8.0
 
+    # --- Chassis mechanical detailing: body<->pod join, pan-motor seat, ballast bay ---
+    # Join stations (2x per side): each carries one M3 + one Ø4 dowel. y=+-24 = centers of
+    # the 11-wide wall windows between the +-16 / +-32 vent slots, clear of the TT wall
+    # zone (y -40..-75) and the idler tension arm (y 52..68). Screws drive from INSIDE the
+    # chassis cavity through the wall into captive nuts in the pod rail: the 4 mm pod gap
+    # holds a nut but no screwdriver, and loose nuts can't be held in a 4 mm slot -- so the
+    # nut is trapped pod-side and the head sits on the cavity wall (same convention as the
+    # TT gearbox screws, "nut in the gap").
+    "pod_join_y": (-24.0, 24.0),
+    "pod_join_screw_z": 34.0,   # M3 axis: mid of the loop's free band, max spread above dowel
+    "pod_join_dowel_z": 20.0,   # Ø4 dowel axis: 14 below the screw -> shear + pitch location
+    "pod_join_dowel_d": 4.0,    # Ø4x12 pin: +0.1 slip in the wall, -0.15 press in the rail
+    "pod_rail_x1": 78.0,        # rail outer face: 4 fills the pod gap (links never enter
+                                # x 70..74) + 4 into the loop interior's link-free mid band
+    "pod_rail_z": (14.0, 40.0), # rail z band: 4.5 above the bottom-run knuckle tops (9.5),
+                                # 1.14 below the top-run knuckle sweep (41.14)
+    "pod_rail_block_w": 9.0,    # per-station block width (Y): 1.0 clear of each vent slot
+    # Pan-motor seat detailing (re-derived for base_h 66: can bottom 26.45, ear-bar
+    # underside = pedestal top = 44.25, can top 45.25, gear face 54.25): the 7-wide x
+    # 1-thick ear bar clamps on two DEFINED pads instead of the whole 48x48 top, and the
+    # can's top band registers in a collar ring right under the Ø27.25 gear stack.
+    "ped_pad_wxy": (9.0, 10.0),   # ear seat pads (X x Y) centered on the +-17.5 ear holes
+    "ped_relief": 0.8,            # pedestal top dropped 0.8 outside pads + collar footing
+    "ped_collar_od": 32.0,        # collar OD; ID = the Ø29 can bore (can Ø28.25 registers)
+    "ped_collar_h": 1.5,          # collar top 45.75: wraps the can's last 1.0 + gear root
+    # 2nd ULN2003 standoff set (tilt driver's base-side mount option; it can also take the
+    # MX1588 track driver). The task-suggested mirror (-38,+-20) fails: board 35x32 at
+    # (-38,+-20) spans x -55.5..-20.5 and overlaps the 48x48 pedestal (x -31.9..16.1,
+    # y -24..24). (-38, 45) clears everything: board y 29..61 > pedestal 24, < US board
+    # 71.4; x -55.5..-20.5 clear of ULN#1 (x >= 20.5) and both TT cans (|x| >= 44.4 only
+    # at y < -10).
+    "uln2_c": (-38.0, 45.0),
+    # Ballast bay: rear cavity floor (head+Pi CoM is forward-high -> mass low + rearward).
+    # 3 ribs across X make three ~9.5-wide pockets against the rear wall (inner face y=-73)
+    # for steel bar / coins / shot; the front rib at -40 fences the mass. Ribs end at
+    # |x|=40 (TT gearbox inner faces at |x| 46.26 -> 6.3 clear) and skip a 20-wide center
+    # corridor (the USB-C plug body enters the cavity at x +-7, z 15..23, over the floor).
+    "blst_rib_y": (-63.0, -51.5, -40.0),
+    "blst_rib_w": 2.0, "blst_rib_h": 4.0,   # 2 wide x 4 tall: locates the bottom layer
+    "blst_rib_xmax": 40.0,                  # rib outer end (TT clearance, see above)
+    "blst_usb_hw": 10.0,                    # rib-free USB corridor half-width
+
     # --- 28BYJ-48 5V geared stepper (owned x6, + ULN2003 x9). Dims from the beckdac SCARA
     #     SCAD model, cross-checked vs the Mouser datasheet (real, not eyeballed). ---
     "motor_can_d": 28.25,   # can (body) diameter
@@ -1311,6 +1353,18 @@ def build_base():
         for sy in (-1, 1):
             b = cyl(3.0, 8); b.apply_translation((38 + sx * P["uln_w"] / 2, 20 + sy * P["uln_h"] / 2, z0 + floor))
             body = uni([body, b])
+    # 2nd ULN2003 standoff set (tilt / MX1588 driver) at uln2_c -- see the PARAMS note for
+    # why the mirrored (-38,+-20) spot is blocked by the pedestal. Same post style as ULN#1
+    # (Ø6 x 8 half-buried in the floor) + Ø2.5 M3 self-tap pilots (stop 1.0 above the floor
+    # underside so no through-holes appear in the belly).
+    for sx in (-1, 1):
+        for sy in (-1, 1):
+            px = P["uln2_c"][0] + sx * P["uln_w"] / 2
+            py = P["uln2_c"][1] + sy * P["uln_h"] / 2
+            b = cyl(3.0, 8); b.apply_translation((px, py, z0 + floor))
+            body = uni([body, b])
+            pil = cyl(1.25, 8); pil.apply_translation((px, py, z0 + floor))
+            body = sub(body, pil)
     # Ø29 can relief bored from the pedestal top down to the floor (can Ø28.25 drops in,
     # bottom hovers 0.45 above the floor; the ears take the clamp load)
     canb = cyl(29.0 / 2, ear_z + 2 - (z0 + floor))
@@ -1325,6 +1379,35 @@ def build_base():
     for dy in (-P["motor_ear_cc"] / 2, P["motor_ear_cc"] / 2):
         e = cyl(1.25, 16); e.apply_translation((mx, dy, ear_z - 4))
         body = sub(body, e)
+    # ear-bar SEAT PADS: drop the pedestal top ped_relief (0.8) everywhere EXCEPT two pads
+    # under the ear ends and the collar's footing annulus -> the 7x1 bar clamps on defined
+    # pads (a full 48x48 print-top face rocks on seam blobs; two 9x10 pads don't).
+    pw, pd = P["ped_pad_wxy"]
+    relief = rounded_box(50, 50, P["ped_relief"], 6.0)      # oversize slab over the ped top
+    relief.apply_translation((mx, 0, ear_z - P["ped_relief"]))
+    for dy in (-P["motor_ear_cc"] / 2, P["motor_ear_cc"] / 2):
+        pad = box(pw, pd, P["ped_relief"] + 2)
+        pad.apply_translation((mx, dy, ear_z - P["ped_relief"] / 2))
+        relief = sub(relief, pad)
+    keep = cyl(P["ped_collar_od"] / 2 + 0.5, P["ped_relief"] + 2)   # collar keeps footing
+    keep.apply_translation((mx, 0, ear_z - P["ped_relief"] / 2))
+    relief = sub(relief, keep)
+    body = sub(body, relief)
+    # can-locating COLLAR: Ø32/Ø29 x 1.5 ring on the pedestal top. The Ø29 bore already
+    # guides the can below, but its top 1.0 (can top 45.25) + the Ø27.25 gear-stack root
+    # get a dedicated register here (0.375/side to the Ø28.25 can, 0.875 to the stack).
+    # Notched where the ear bar crosses (|x-mx| < 4.1 vs the 7-wide bar) and over the
+    # wiring-relief window on -X so the wbox leads still exit sideways.
+    collar = sub(cyl(P["ped_collar_od"] / 2, P["ped_collar_h"]),
+                 cyl(29.0 / 2, P["ped_collar_h"] + 2))
+    collar.apply_translation((mx, 0, ear_z + P["ped_collar_h"] / 2))
+    ncut = box(8.2, P["ped_collar_od"] + 4, P["ped_collar_h"] + 2)
+    ncut.apply_translation((mx, 0, ear_z + P["ped_collar_h"] / 2))
+    collar = sub(collar, ncut)
+    wcut = box(12, P["motor_wbox_w"] + 3, P["ped_collar_h"] + 2)    # matches wrel footprint
+    wcut.apply_translation((mx - 11, 0, ear_z + P["ped_collar_h"] / 2))
+    collar = sub(collar, wcut)
+    body = uni([body, collar])
 
     # pan-clip pockets: 3 at 120deg around the seat rim, floors 7 below the deck top so the
     # clips finish FLUSH (see build_pan_clips for why nothing may stand proud of the deck).
@@ -1341,6 +1424,17 @@ def build_base():
         body = sub(body, pil)
     usb = box(14, 12, 8)                              # USB-C power entry in the rear wall
     usb.apply_translation((0, -P["chassis_l"] / 2, z0 + 12)); body = sub(body, usb)
+    # BALLAST BAY retaining ribs on the cavity floor (see the PARAMS note): 3 ribs across X
+    # (2 wide x 4 tall, z 12..16) at y -63 / -51.5 / -40 -> three ~9.5-wide pockets against
+    # the rear wall, each split into L/R halves by the USB-C plug corridor (x +-10). Mass
+    # sits low + rearward to counter the forward-high head/Pi CoM.
+    rib_l = P["blst_rib_xmax"] - P["blst_usb_hw"]     # 30 per half-rib
+    for ry in P["blst_rib_y"]:
+        for sx in (-1, 1):
+            rib = box(rib_l, P["blst_rib_w"], P["blst_rib_h"])
+            rib.apply_translation((sx * (P["blst_usb_hw"] + rib_l / 2), ry,
+                                   z0 + floor + P["blst_rib_h"] / 2))
+            body = uni([body, rib])
     # front-fascia cuts (design ref): hex grille field (blind 2.5, cosmetic-vent; decide
     # through-vent at the print pass) + Ø16.6 ultrasonic barrel passes through the wall
     fw = P["chassis_l"] / 2
@@ -1404,9 +1498,73 @@ def build_base():
         slot = uni([cyl(4.1, 6, axis="x"), box(6, P["idler_slot"], 8.2)])
         slot.apply_translation((s * (cxp - 9.0 - 0.1 - 1.0), -ys, zs))
         body = sub(body, slot)
+    # --- BODY<->POD JOIN, wall side (rail side is build_pod_rails): per station one M3
+    # clearance (screw from inside the cavity into the rail's captive nut -- the 4 mm gap
+    # takes no driver) + one Ø4.1 dowel slip hole (Ø4x12 pin pressed on into the rail's
+    # blind socket; dowels carry the shear, screws only clamp).
+    for s in (-1, 1):
+        for jy in P["pod_join_y"]:
+            mh = cyl(P["m3_clear_r"], 12, axis="x")
+            mh.apply_translation((s * (xw - 2.5), jy, P["pod_join_screw_z"]))
+            body = sub(body, mh)
+            dh = cyl((P["pod_join_dowel_d"] + 0.1) / 2, 12, axis="x")
+            dh.apply_translation((s * (xw - 2.5), jy, P["pod_join_dowel_z"]))
+            body = sub(body, dh)
     _color(body, "base")
     body.metadata["name"] = "chassis"
     return body
+
+
+def build_pod_rails():
+    """Pod-side receiving rail of the BODY<->POD JOIN (one printed rail per side): two
+    nut-trap blocks bridged by a thin spine, standing on the wall's outer face inside the
+    link loop. The blocks fill the 4 mm gap (links never enter x 70..74) and reach 4 mm
+    into the loop interior, which is link-free between the bottom-run knuckle tops (z 9.5)
+    and the top-run knuckle sweep (z 41.14) for |y| <= 40 (the wrap-arc envelopes about
+    y=+-60 stay 6+ away); road wheels / idler / sprocket disc all live outboard of x 81.4.
+    Each block: M3 clearance bore + a captive-nut TOP slot (drop the nut in, then bolt --
+    so fit the rails BEFORE threading the links over them) + a blind Ø3.85 press socket
+    for the Ø4 dowel. The spine sits outboard of the vent cutters (x >= 76.2 vs 76) so
+    the three vents it crosses stay open into the gap. Print on the outer (+X) face:
+    dowel sockets become vertical blind holes, the Ø3.6 screw bore a short bridge."""
+    x0 = P["chassis_w"] / 2                            # wall outer face (70): rail sits flush
+    x1 = P["pod_rail_x1"]                              # 78
+    z_lo, z_hi = P["pod_rail_z"]
+    bw = P["pod_rail_block_w"]
+    rails = []
+    for s, nm in ((-1, "pod_rail_L"), (1, "pod_rail_R")):
+        parts = []
+        for jy in P["pod_join_y"]:
+            b = box(x1 - x0, bw, z_hi - z_lo)
+            b.apply_translation((s * (x0 + x1) / 2, jy, (z_lo + z_hi) / 2))
+            parts.append(b)
+        # spine bridging the blocks: z 30..40 (nut-slot zone), 1.8 thick at x 76.2..78 --
+        # clear of the vent cutters (they reach x 76) so the vents still breathe
+        spine = box(1.8, P["pod_join_y"][1] - P["pod_join_y"][0] + bw, 10.0)
+        spine.apply_translation((s * (76.2 + 78.0) / 2, 0, 35.0))
+        rail = uni(parts + [spine])
+        for jy in P["pod_join_y"]:
+            # M3 clearance bore Ø3.6 straight through the block at the screw axis
+            mb = cyl(1.8, (x1 - x0) + 4, axis="x")
+            mb.apply_translation((s * (x0 + x1) / 2, jy, P["pod_join_screw_z"]))
+            rail = sub(rail, mb)
+            # captive-nut slot from the top face: 3.4 (X, nut 2.4 thick) x 6.0 (Y, across
+            # flats 5.7+0.3); floor at 30.7 seats the nut's hex corner at the screw axis
+            # (34 - 6.58/2). Nut center x 76.3 -> 3.7 of thread beyond it for an M3x16
+            # driven from the cavity wall face (x 65).
+            ns = box(3.4, 6.0, (z_hi - 30.7) + 2)
+            ns.apply_translation((s * 76.3, jy, 30.7 + ((z_hi - 30.7) + 2) / 2))
+            rail = sub(rail, ns)
+            # blind dowel press socket: Ø3.85 from the inner face (x 69.4 overshoot) to
+            # x 77.0 -> 1.0 web to the outer face
+            ds = cyl((P["pod_join_dowel_d"] - 0.15) / 2, 7.6, axis="x")
+            ds.apply_translation((s * (69.4 + 77.0) / 2, jy, P["pod_join_dowel_z"]))
+            rail = sub(rail, ds)
+        _color(rail, "base")
+        rail.metadata["name"] = nm
+        rail.metadata["export"] = f"track_{nm}.stl"    # track_* -> stl/base/ via stlpaths
+        rails.append(rail)
+    return rails
 
 
 def _track_link_poses(wb, R, zc, n):
@@ -1668,6 +1826,8 @@ def build():
         add(fp, np.eye(4))
     for trk in build_tracks():
         add(trk, np.eye(4), trk.metadata["export"])
+    for rail in build_pod_rails():                   # body<->pod join receiving rails
+        add(rail, np.eye(4), rail.metadata["export"])
 
     # track drive: 2x TT gearmotor (own 1, BUY 1 more) INSIDE the chassis, gearbox face 0.1 off
     # the side-wall inner face; the shaft crosses the wall (Ø8 pass, wall thinned to a 3 mm web)
