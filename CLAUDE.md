@@ -21,12 +21,19 @@ links + 12T sprocket + F688ZZ idler + road wheels**. The 28BYJ placeholder is no
 offset shaft, 3 mm D-flats). Remaining: worm teeth are readable placeholders (regen involute/helix
 in BOSL2 in a venv), body-to-pod join, widen track gauge (head overhangs ~10 mm/side), buy list.
 
+Latest render review (2026-07-06): `make build` wrote a 20-part `web/assembly.glb`; fresh
+transparent and solid shots were inspected from iso/front/side/top plus two section cuts. The
+assembly reads correctly as a tablet-head tracked robot, but the print-final fixes are:
+**widen the track gauge**, add a low ballast bay in the chassis, model the body-to-pod M3/dowel
+joins, shroud the exposed rear tilt motor, make the front camera/lens read more deliberately,
+render neutral (`PAN=0 TILT=0`) and motion extremes, and add a bottom view to `src/shoot.py`.
+
 ## The build loop (do this on every geometry change)
 
 ```
 make build          # python3 src/build.py -> web/assembly.glb
-make viewer         # python3 src/serve.py 8765 (leave running; user watches live at
-                    #   http://localhost:8765/viewer_glb.html -- auto-reloads on rebuild)
+make viewer         # python3 src/serve.py 8770 (leave running; user watches live at
+                    #   http://localhost:8770/viewer_glb.html -- auto-reloads on rebuild)
 make shot           # headless render -> .claude/renders/chk_*.png  (serve must be up)
 ```
 
@@ -223,7 +230,10 @@ web/             viewer_glb.html + assembly.glb (committed so a fresh clone show
 stl/{base,neck,head}/   per-part STLs (head_bezel + head_back), written by `EXPORT=1 python3 src/build.py`
 exports/         Bambu .3mf plates (regenerable, gitignored)
 reference/       rpi-7in-touchscreen-model (STEP/STL, the real screen) + -case + alexa-style-* +
-                 tank-track-3062624 (link/sprocket geometry, CC-BY) + rpi-camera-v21-1564160
+                 tank-track-3062624 (link/sprocket geometry, CC-BY) + rpi-camera-v21-1564160 +
+                 design/ (5 concept renders = the STYLING TARGET: black+orange rugged two-tone,
+                 gripper arms, camera+LED strip+antenna in the head top bezel, front grille +
+                 ultrasonic pods, big exposed sprocket-gears; 1008×1024, safe to Read)
 docs/FIXES.md    the verified-defect ledger from the 3-agent review + fix-stage status
 docs/ASSEMBLY.md BOM + assembly order
 ```

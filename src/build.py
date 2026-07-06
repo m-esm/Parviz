@@ -1,21 +1,18 @@
-"""desk-pi -- pan/tilt head assembly around the real 7" touchscreen.
+"""desk-pi -- tracked pan/tilt robot around the real 7" touchscreen.
 
 Coordinate system: Z up, robot looks toward +Y (screen glass faces +Y).
-Origin (0,0,0) = center of the desk contact plane (later: top of the wheeled chassis).
+Origin (0,0,0) = center of the desk contact plane.
 
 Kinematic chain (bottom -> top):
-    base                 fixed (later bolts onto a wheeled chassis via BASE_BOLT_CIRCLE)
-      -> PAN joint       yaw about vertical Z, driven by motor_pan in the base
-        -> pan_platform + neck_post + tilt fork  (rotate as one)
-          -> TILT joint  pitch about horizontal X, driven by motor_tilt on the fork
-            -> head_cradle + screen + camera      (the head)
+    tank chassis          fixed base with two track pods and TT gearmotor placeholders
+      -> PAN joint        yaw about vertical Z, driven by a 28BYJ D-shaft in the base
+        -> pan_platform + neck_clevis  (rotate as one on the captured-BB race)
+          -> TILT joint   pitch about horizontal X, driven by a self-locking worm
+            -> rounded tablet head + screen/Pi + camera
 
-Tilt is a REAR FORK (two pivots behind the head), not a side gimbal: reads as a neck,
-narrow, compatible with wheels later. Cost is a ~CANTILEVER mm forward offset of the
-screen CoM from the tilt axis -> small constant gravity torque the tilt motor holds.
-
-Motors are UNDECIDED. motor_* are MG996R-class servo placeholders (see MOTOR params) just
-to prove the joints have room. Swap the box dims when the real motor is chosen.
+The screen and Pi ride as one module inside the head. DSI/CSI ribbons stay inside the head;
+only round power wires cross the pan/tilt joints. The default GLB render uses a preview pose
+(`preview_pan_deg`, `preview_tilt_deg`) so motion is visible; set PAN=0 TILT=0 for neutral review.
 
 Run:  python3 src/build.py            -> web/assembly.glb
       EXPORT=1 python3 src/build.py   -> also writes per-part STLs into stl/<subsystem>/
@@ -235,6 +232,12 @@ P = {
     # (axle y 0 z 178, clamp tubes x 27..99, centered worm/wheel, neck cheek overshoots).
     # See docs/FIXES.md Stage 3: unresolvable in head geometry alone.)
 
+    # --- Design-ref styling (reference/design/*.jpg): orange side rails on the head ---
+    "rail_t": 5.0,          # rail stands this proud of the head side wall
+    "rail_d": 26.0,         # rail depth (Y); stays on the wall's FLAT band (|y|<15, corner r16)
+    "rail_h": 90.0,         # rail height (Z)
+    "rail_cz": 185.0,       # rail center height (brackets the screen band, z 140..230)
+
     # --- Fastening: M3 screws into CAPTIVE HEX NUTS (user choice) ---
     "m3_clear_r": 1.75,     # M3 screw clearance
     "m3_nut_af": 5.7,       # M3 hex nut across-flats (+ clearance)
@@ -250,19 +253,26 @@ P = {
 
 EXPORT = os.environ.get("EXPORT") == "1"
 
+# Design-reference colorway (reference/design/*.jpg): matte black body + safety-orange
+# accents, silver mechanicals. NOTE the bundled viewer re-colors by NODE NAME (PAL in
+# web/viewer_glb.html) -- keep both palettes in sync.
 COLORS = {
     "screen":  [26, 30, 38, 255],
-    "cradle":  [188, 196, 210, 255],
-    "back":    [150, 158, 172, 255],
-    "neck":    [120, 140, 172, 255],
-    "fork":    [120, 140, 172, 255],
-    "pan":     [150, 156, 168, 255],
-    "base":    [92, 98, 116, 255],
-    "track":   [48, 50, 58, 255],
-    "motor":   [232, 126, 74, 255],
-    "camera":  [214, 92, 92, 255],
+    "cradle":  [46, 50, 56, 255],       # matte charcoal (head bezel)
+    "back":    [54, 58, 65, 255],       # charcoal (head back, covers)
+    "neck":    [86, 92, 102, 255],      # dark steel mechanicals
+    "fork":    [86, 92, 102, 255],
+    "pan":     [74, 79, 87, 255],       # graphite
+    "base":    [44, 48, 54, 255],       # matte charcoal chassis
+    "track":   [35, 37, 41, 255],       # near-black rubber
+    "motor":   [154, 160, 168, 255],    # silver actuation
+    "camera":  [30, 33, 38, 255],       # black camera pod
     "pi":      [56, 150, 96, 255],
-    "axle":    [40, 40, 46, 255],
+    "axle":    [196, 200, 206, 255],    # bright steel
+    "accent":  [232, 116, 34, 255],     # safety orange (design-ref two-tone)
+    "lamp":    [232, 168, 60, 255],     # amber indicator
+    "led":     [242, 244, 246, 255],    # white light strip
+    "sensor":  [184, 188, 194, 255],    # silver sensor barrels / antenna
 }
 
 
@@ -662,6 +672,21 @@ def build_head_parts():
     _color(bezel, "cradle"); bezel.metadata["name"] = "head_bezel"
     _color(back, "back"); back.metadata["name"] = "head_back"
     return bezel, back
+
+
+def build_head_rails():
+    """Orange side accent rails (design-ref front.jpg): vertical rounded pads standing proud
+    of the head side walls' FLAT band. Cosmetic two-tone parts, printed separately in orange;
+    fixing (glue vs 2x M3 from inside) decided at the print pass."""
+    rails = []
+    for sx, nm in ((-1, "trim_rail_L"), (1, "trim_rail_R")):
+        r = rounded_box(P["rail_h"], P["rail_d"], P["rail_t"], 8.0)   # X=h, Y=d, extrude Z=t
+        r.apply_transform(R(TAU / 4, (0, 1, 0)))     # footprint height -> Z, thickness -> +X
+        x = P["head_w"] / 2 if sx > 0 else -(P["head_w"] / 2 + P["rail_t"])
+        r.apply_translation((x, 0, P["rail_cz"]))    # thickness spans wall..wall+rail_t
+        _color(r, "accent"); r.metadata["name"] = nm
+        rails.append(r)
+    return rails
 
 
 def build_neck_clevis():
@@ -1455,6 +1480,9 @@ def build():
     bezel, back = build_head_parts()
     add(bezel, M_head, "head_bezel.stl")
     add(back, M_head, "head_back.stl")
+
+    for rail in build_head_rails():                  # orange side accent rails (design ref)
+        add(rail, M_head)
 
     screen = load_screen()
     screen.apply_transform(screen_pose())            # sit on the leaned front face

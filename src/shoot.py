@@ -53,6 +53,14 @@ with sync_playwright() as p:
         pass
     pg.wait_for_timeout(1500)                              # let render settle
 
+    # TRANS=0 -> solid render (styling review); default keeps the viewer's 50% ghost.
+    # Only viewer_glb.html has the slider; guard for the STL viewer.
+    trans = os.environ.get("TRANS")
+    if trans is not None and not is_stl:
+        pg.evaluate("""t => { const o=document.getElementById('opacity');
+          o.value=t; o.dispatchEvent(new Event('input')); }""", trans)
+        pg.wait_for_timeout(200)
+
     for name, az, el, dist, sec, cut in VIEWS:
         pg.evaluate("""([az,el,dist,sec,cut]) => {
           const c=window._controls, cam=window._cam, s=window._scene, T=window.THREE;
