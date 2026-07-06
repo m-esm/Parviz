@@ -1,18 +1,20 @@
 # desk-pi
 
-A 3D-printed desktop humanoid robot head: a Raspberry Pi 5 driving the official 7"
-touchscreen as a face and a Camera Module 3 as an eye, on a neck that pans (left/right)
-and tilts (up/down). The head is an Echo-Show-style wedge. Neck + head now; a wheeled
-base bolts on later.
+A 3D-printed tracked desktop robot: a Raspberry Pi 5 drives the official 7"
+touchscreen as a face and a Camera Module 3 as an eye. The screen/Pi module sits in a
+rounded tablet-style head on a pan/tilt neck, carried by a two-track tank chassis.
 
-Status: first functional assembly. Real screen model + pan/tilt kinematics + motor
-placeholders. Geometry is a first pass (masses and joints right; print splits and motor
-mounts still to do).
+Status: first full tracked assembly. The model uses the real combined touchscreen+Pi
+reference mesh, 28BYJ-48 placeholders for pan/tilt, TT gearmotor placeholders for the
+tracks, a captured-BB pan race, and a self-locking worm tilt drive. The current render
+is mechanically coherent but not print-final: widen the track gauge, add a real
+body-to-pod join, define the ballast bay, cover the exposed tilt motor, and regenerate
+the worm/wheel teeth before printing.
 
 ```bash
 make install     # trimesh toolchain + headless Chromium (first time)
 make build       # -> web/assembly.glb
-make viewer      # http://localhost:8765/viewer_glb.html (live-reloads on rebuild)
+make viewer      # http://localhost:8770/viewer_glb.html (live-reloads on rebuild)
 make shot        # headless renders -> .claude/renders/  (viewer must be running)
 ```
 
