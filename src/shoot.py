@@ -33,6 +33,7 @@ VIEWS = [
     ("iso",     35,  25, 1.7, False, 0.5),
     ("front",    0,   8, 1.7, False, 0.5),
     ("side",    90,   8, 1.7, False, 0.5),
+    ("back",   180,   8, 1.7, False, 0.5),
     ("top",      0,  89, 1.7, False, 0.5),
     ("sec_mid", 90,   0, 1.6, True,  0.5),
     ("sec_iso", 35,  20, 1.6, True,  0.5),

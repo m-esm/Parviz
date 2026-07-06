@@ -251,6 +251,15 @@ P = {
     "ant_x": -62.0, "ant_y": -8.0,  # on head_back's top (split plane is at y~2)
     "ant_d": 13.0, "ant_h": 26.0,   # fat, short stub like the reference
     "ant_collar_d": 16.0, "ant_collar_h": 3.0,
+    # Orange picture-frame around the head-back service area (design-ref back.jpg). The
+    # louvres + cable port play the reference's inner hatch. Bottom band notched over the
+    # neck slot (wall open to z=191 in x +-31 for the tilt sweep; the frame must not
+    # hover in that envelope).
+    "hatch_frame_w": 160.0, "hatch_frame_h": 105.0,  # outer X x Z
+    "hatch_frame_band": 13.0,   # ring width
+    "hatch_frame_t": 3.0,       # proud of the back face
+    "hatch_frame_cz": 176.0,    # outer z 123.5..228.5; inner 136.5..215.5 (port 138..172,
+                                # louvres 180..214 both land inside the opening)
 
     # --- Fastening: M3 screws into CAPTIVE HEX NUTS (user choice) ---
     "m3_clear_r": 1.75,     # M3 screw clearance
@@ -740,6 +749,27 @@ def build_antenna():
     ant.apply_translation((P["ant_x"], P["ant_y"], zt))
     _color(ant, "antenna"); ant.metadata["name"] = "antenna_stub"
     return ant
+
+
+def build_hatch_frame():
+    """Orange chamfer-look frame proud of the head back face (design-ref back.jpg).
+    Separate orange print over the service area; the existing louvres + cable port are
+    the 'hatch' inside it. Bottom band notched clear of the neck-slot sweep envelope."""
+    w, h, bd, t = (P["hatch_frame_w"], P["hatch_frame_h"],
+                   P["hatch_frame_band"], P["hatch_frame_t"])
+    outer = rounded_box(w, h, t, 12.0)
+    inner = rounded_box(w - 2 * bd, h - 2 * bd, t + 2, 8.0)
+    inner.apply_translation((0, 0, -1))
+    ring = sub(outer, inner)
+    ring.apply_transform(R(TAU / 4, (1, 0, 0)))      # footprint XZ, extrusion -Y
+    ring.apply_translation((0, P["body_back_y"], P["hatch_frame_cz"]))
+    # notch the bottom band over the neck slot (x +-31, wall open to z=191): the frame
+    # may not reach into the neck's tilt-sweep clearance
+    notch = box(66.0, 2 * t + 2, 70.0)
+    notch.apply_translation((0, P["body_back_y"] - t, 156.0))
+    ring = sub(ring, notch)
+    _color(ring, "accent"); ring.metadata["name"] = "trim_hatch_frame"
+    return ring
 
 
 def build_neck_clevis():
@@ -1538,6 +1568,7 @@ def build():
         add(rail, M_head)
     add(build_led_strip(), M_head)                   # forehead light strip (design ref)
     add(build_antenna(), M_head)                     # top-right antenna stub (design ref)
+    add(build_hatch_frame(), M_head)                 # rear orange hatch frame (design ref)
 
     screen = load_screen()
     screen.apply_transform(screen_pose())            # sit on the leaned front face
