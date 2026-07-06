@@ -33,6 +33,7 @@ VIEWS = [
     ("iso",     35,  25, 1.7, False, 0.5),
     ("front",    0,   8, 1.7, False, 0.5),
     ("side",    90,   8, 1.7, False, 0.5),
+    ("back",   180,   8, 1.7, False, 0.5),
     ("top",      0,  89, 1.7, False, 0.5),
     ("sec_mid", 90,   0, 1.6, True,  0.5),
     ("sec_iso", 35,  20, 1.6, True,  0.5),
@@ -52,6 +53,14 @@ with sync_playwright() as p:
     except Exception:
         pass
     pg.wait_for_timeout(1500)                              # let render settle
+
+    # TRANS=0 -> solid render (styling review); default keeps the viewer's 50% ghost.
+    # Only viewer_glb.html has the slider; guard for the STL viewer.
+    trans = os.environ.get("TRANS")
+    if trans is not None and not is_stl:
+        pg.evaluate("""t => { const o=document.getElementById('opacity');
+          o.value=t; o.dispatchEvent(new Event('input')); }""", trans)
+        pg.wait_for_timeout(200)
 
     for name, az, el, dist, sec, cut in VIEWS:
         pg.evaluate("""([az,el,dist,sec,cut]) => {

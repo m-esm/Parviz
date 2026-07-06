@@ -191,19 +191,26 @@ function makeContactShadow(cx, cy, size){
 // section plane positioned at runtime from the bbox
 const sectionPlane = new THREE.Plane(new THREE.Vector3(-1,0,0), 0);
 
-// ---- Engineering palette: color by SUBSYSTEM FUNCTION, not by name hash. ----
-// cool metals = structure · amber = actuation (moves) · green = board · coral = the eye
+// ---- Design-reference palette (reference/design/*.jpg): matte black body +
+// safety-orange accents, silver exposed mechanicals, near-black rubber tracks. ----
 const PAL = [
-  [/head_bezel/i,   {c:0xE8E3D6, m:0.06, r:0.52}],          // Echo-Show ceramic, front (brightest)
-  [/head_back|shell|cradle/i, {c:0xCEC8BA, m:0.06, r:0.58}],// ceramic, back
+  [/trim|rail|accent|hatch_frame|grille_ring|fin/i, {c:0xE87422, m:0.08, r:0.55}], // safety orange
+  [/lamp/i,         {c:0xE8A83C, m:0.1, r:0.3, e:0xB37514, ei:0.6}],  // amber indicator
+  [/led/i,          {c:0xF2F4F6, m:0.1, r:0.3, e:0x9AA4B0, ei:0.5}],  // white light strip
+  [/antenna/i,      {c:0x2A2D33, m:0.20, r:0.65, env:0.3}],  // black knurled stub
+  [/^arm_/i,        {c:0x33373E, m:0.15, r:0.65, env:0.3}],  // charcoal gripper arms
+  [/sensor/i,       {c:0xB8BCC2, m:0.75, r:0.35}],           // silver sensor barrels
+  [/head_bezel/i,   {c:0x2E3238, m:0.12, r:0.72, env:0.3}],  // matte charcoal, front
+  [/head_back|shell|cradle|cover/i, {c:0x363A41, m:0.12, r:0.72, env:0.3}], // charcoal, back
   [/screen/i,       {c:0x0E1319, m:0.10, r:0.16, e:0x0b1a24, ei:0.32}], // dark glass, faint glow
-  [/camera/i,       {c:0xE5533B, m:0.25, r:0.38}],          // the eye — signal coral
-  [/motor|byj/i,    {c:0xD8952E, m:0.55, r:0.34}],          // actuation — brass/amber
-  [/axle/i,         {c:0x3f444d, m:0.80, r:0.28}],          // dark steel
-  [/pi5|^pi_|pi$/i, {c:0x2FA36B, m:0.10, r:0.5 }],          // PCB green
-  [/neck|clevis|fork/i, {c:0x7B8798, m:0.6, r:0.4}],       // steel neck
-  [/pan|platform/i, {c:0x99A2B1, m:0.66, r:0.36}],          // aluminum pan
-  [/base/i,         {c:0x848D9C, m:0.6,  r:0.42}],          // aluminum base
+  [/camera/i,       {c:0x1E2126, m:0.30, r:0.4, env:0.35}],  // black camera pod
+  [/motor|byj|drive/i, {c:0x9AA0A8, m:0.70, r:0.35}],        // silver actuation
+  [/axle|balls/i,   {c:0xC4C8CE, m:0.85, r:0.25}],           // bright steel
+  [/pi5|^pi_|pi$/i, {c:0x2FA36B, m:0.10, r:0.5 }],           // PCB green
+  [/neck|clevis|fork|wheel|worm/i, {c:0x565C66, m:0.65, r:0.38}], // dark steel mechanicals
+  [/pan|platform/i, {c:0x4A4F57, m:0.55, r:0.42}],           // graphite pan
+  [/base|chassis/i, {c:0x2C3036, m:0.12, r:0.75, env:0.3}],  // matte charcoal chassis
+  [/track/i,        {c:0x232529, m:0.05, r:0.9, env:0.25}],  // near-black rubber tracks
 ];
 function matSpec(name){
   for(const [re,s] of PAL){ try{ if(re.test(name)) return s; }catch(_){} }
@@ -244,7 +251,7 @@ new GLTFLoader().load(MODEL, (gltf)=>{
     o.material = new THREE.MeshStandardMaterial({
       color:s.c, metalness:s.m, roughness:s.r,
       emissive:s.e||0x000000, emissiveIntensity:s.ei||0,
-      envMapIntensity:0.85, side:THREE.DoubleSide});
+      envMapIntensity:(s.env!==undefined?s.env:0.85), side:THREE.DoubleSide});
     (groups[name] = groups[name] || {meshes:[]}).meshes.push(o);
   });
   scene.add(gltf.scene);

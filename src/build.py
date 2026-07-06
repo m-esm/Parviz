@@ -1,21 +1,18 @@
-"""desk-pi -- pan/tilt head assembly around the real 7" touchscreen.
+"""desk-pi -- tracked pan/tilt robot around the real 7" touchscreen.
 
 Coordinate system: Z up, robot looks toward +Y (screen glass faces +Y).
-Origin (0,0,0) = center of the desk contact plane (later: top of the wheeled chassis).
+Origin (0,0,0) = center of the desk contact plane.
 
 Kinematic chain (bottom -> top):
-    base                 fixed (later bolts onto a wheeled chassis via BASE_BOLT_CIRCLE)
-      -> PAN joint       yaw about vertical Z, driven by motor_pan in the base
-        -> pan_platform + neck_post + tilt fork  (rotate as one)
-          -> TILT joint  pitch about horizontal X, driven by motor_tilt on the fork
-            -> head_cradle + screen + camera      (the head)
+    tank chassis          fixed base with two track pods and TT gearmotor placeholders
+      -> PAN joint        yaw about vertical Z, driven by a 28BYJ D-shaft in the base
+        -> pan_platform + neck_clevis  (rotate as one on the captured-BB race)
+          -> TILT joint   pitch about horizontal X, driven by a self-locking worm
+            -> rounded tablet head + screen/Pi + camera
 
-Tilt is a REAR FORK (two pivots behind the head), not a side gimbal: reads as a neck,
-narrow, compatible with wheels later. Cost is a ~CANTILEVER mm forward offset of the
-screen CoM from the tilt axis -> small constant gravity torque the tilt motor holds.
-
-Motors are UNDECIDED. motor_* are MG996R-class servo placeholders (see MOTOR params) just
-to prove the joints have room. Swap the box dims when the real motor is chosen.
+The screen and Pi ride as one module inside the head. DSI/CSI ribbons stay inside the head;
+only round power wires cross the pan/tilt joints. The default GLB render uses a preview pose
+(`preview_pan_deg`, `preview_tilt_deg`) so motion is visible; set PAN=0 TILT=0 for neutral review.
 
 Run:  python3 src/build.py            -> web/assembly.glb
       EXPORT=1 python3 src/build.py   -> also writes per-part STLs into stl/<subsystem>/
@@ -55,8 +52,9 @@ P = {
     "face_angle": 0.0,      # upright front face (the neck's tilt gives the look-up/down)
     "body_front_y": 31.0,   # front face plane (glass sits flush here)
     "body_back_y": -31.0,   # back face plane (behind the tilt axis; Pi bay)
-    "body_z_bot": 113.0,    # shell bottom height above desk
-    "body_z_top": 251.0,    # shell top height (243 + 8: the CM3 camera bay needs ~14 mm between
+    "body_z_bot": 88.0,     # shell bottom height above desk (113-25: design-ref head drop --
+                            # the whole head+tilt stack sits 25 lower over the chassis)
+    "body_z_top": 226.0,    # shell top height (was 251; -25 head drop. 243+8 history: the CM3 bay needs ~14 mm between
                             # the screen window top (229.9) and the ceiling; 243 gave only 9.1 --
                             # the board punched the top wall and the barrel crossed the panel)
     "corner_r": 16.0,       # rounded vertical edges (friendly, clean)
@@ -85,13 +83,13 @@ P = {
     # --- Tilt joint: REAR CLEVIS entering the shell underside; axle near the CoM ---
     #     Self-locking WORM drive (single-start): head holds tilt with the motor de-energized
     #     (no idle current/heat). Pre-balance the head on the axle so the worm barely works.
-    "tilt_axis_z": 178.0,   # tilt axis height above the desk (inside the box, near CoM)
+    "tilt_axis_z": 153.0,   # tilt axis height above the desk (178-25 head drop; near CoM)
     # Stage 2R: axle moved BACK 18 mm (y 0 -> -18). The Pi rides the display back (stack rear
     # face y=-7, z 151..207.5), so an axle at y=0 ran straight through the board plane. The
     # whole tilt drivetrain (cheeks, bearings, wheel, worm, clamp tubes) keys off this pair.
     "tilt_axis_y": -18.0,   # tilt axis Y (behind the screen+Pi stack; was 0 pre-2R)
     "tilt_cantilever": 18.5,# screen center Y in world (absolute; decoupled from the axle in 2R)
-    "screen_cz": 178.0,     # screen center height (absolute; was tied to tilt_axis_z pre-2R)
+    "screen_cz": 153.0,     # screen center height (178-25 head drop; decoupled from the axle)
     "pivot_boss_r": 10.0,   # head-side pivot boss radius (internal side walls)
     "clevis_half": 22.0,    # neck cheek half-span (cheeks at +-22 in X)
     "cheek_t": 8.0,         # clevis cheek thickness (X)
@@ -116,7 +114,7 @@ P = {
     "neck_w": 48.0,         # column width (X) -- squarer + rounded reads as a neck, not a plank
     "neck_d": 46.0,         # column depth (Y)
     "neck_round": 10.0,     # corner rounding radius
-    "neck_top_z": 150.0,    # where the column stops and the clevis cheeks rise
+    "neck_top_z": 125.0,    # where the column stops and the clevis cheeks rise (150-25 drop)
     # Stage 5: column moved inboard (-38 -> -17) so the whole base footprint rides the
     # SPINNING platform, not the fixed deck: footprint max radius = sqrt(14^2+(|ny|+13)^2)+10
     # (rounded-rect corner arcs) = 43.11 <= 44.0, inside the platform's solid top (r45 within
@@ -144,12 +142,16 @@ P = {
     "cable_exit": (12.0, -24.0),
 
     # --- Tank-tread chassis: central body + two side track pods (mobile base) ---
-    "base_h": 52.0,         # body top = pan-mount plane (keeps the neck/head at the same height)
+    "base_h": 66.0,         # body top = pan-mount plane (52->66: design-ref stance; head:base
+                            # height split. Head z_bot 88 leaves a 22 gap; swept head corner
+                            # min z~72 -> 6 mm over the platform, probe-verified)
     # solid top DECK (the old cavity reached base_h -> the pan seat cut was a no-op and the
     # race/balls/platform floated). 20 leaves a 5 mm floor under the race seat (z 32..37);
     # everything in the cavity tops out below 32 (motor ears 31.25, wiring box 29.2).
     "deck_t": 20.0,
-    "chassis_w": 120.0,     # body width between the tracks (X)
+    "chassis_w": 140.0,     # body width between the tracks (120->140: track outer faces land
+                            # at +-102 ~= head half-width 102.5, killing the head overhang;
+                            # NOT 148 -- the tucked claws at x 106..119 need 4 mm to the pods)
     "chassis_l": 156.0,     # body length front-back (Y)
     "chassis_clear": 7.0,   # ground clearance under the body
     "track_gap": 4.0,       # body side <-> track inner face
@@ -199,7 +201,8 @@ P = {
     "cam_hole_z_top": 2.565,   # top hole row Z (from board center)
     "cam_hole_z_bot": -9.935,  # bottom hole row Z
     "cam_lens_dz": 2.47,    # optical axis above board center (X = 0; official CM3 +2.469)
-    "cam_lens_z": 237.0,    # lens axis height (world Z), on the raised forehead: barrel bottom
+    "cam_lens_z": 212.0,    # lens axis height (237-25 head drop; whole camera bay shifts with
+                            # the shell+screen, so the relative clearances below hold): barrel bottom
                             # 234.1 clears the display module top (233.4) and the pocket (233.9);
                             # csk bottom 233.0 keeps a 3.1 ligament over the window top (229.9)
     # CM3 front stack: 10.8 sq AF housing (front 4.0 above board front), Ø5.75 barrel to 6.98;
@@ -235,6 +238,58 @@ P = {
     # (axle y 0 z 178, clamp tubes x 27..99, centered worm/wheel, neck cheek overshoots).
     # See docs/FIXES.md Stage 3: unresolvable in head geometry alone.)
 
+    # --- Design-ref styling (reference/design/*.jpg): orange side rails on the head ---
+    "rail_t": 5.0,          # rail stands this proud of the head side wall
+    "rail_d": 26.0,         # rail depth (Y); stays on the wall's FLAT band (|y|<15, corner r16)
+    "rail_h": 90.0,         # rail height (Z)
+    "rail_cz": 160.0,       # rail center height (brackets the screen band, z 115..205)
+    # LED strip in the top bezel, LEFT of the camera (design-ref front.jpg). Recess sized
+    # for a short WS2812 stick segment; sits on FOREHEAD wall material only: the screen
+    # pocket opening tops out at z 233.9, so the slot must stay above it.
+    "led_slot_w": 42.0,     # slot width (X)
+    "led_slot_h": 5.0,      # slot height (Z)
+    "led_slot_d": 1.5,      # recess depth into the 4 mm face wall
+    # image-LEFT of the camera in the reference front view = robot +X (front view looks -Y)
+    "led_cx": 45.0,         # slot center X (clear of the camera pier |x|<16)
+    "led_cz": 214.0,        # slot center Z (lens 212; slot z 211.5..216.5 > pocket top 208.9 ok)
+    # Knurled antenna stub on the head top face (cosmetic; Pi WiFi is internal).
+    # Image-RIGHT in the reference front view = robot -X.
+    "ant_x": -62.0, "ant_y": -8.0,  # on head_back's top (split plane is at y~2)
+    "ant_d": 13.0, "ant_h": 26.0,   # fat, short stub like the reference
+    "ant_collar_d": 16.0, "ant_collar_h": 3.0,
+    # Orange picture-frame around the head-back service area (design-ref back.jpg). The
+    # louvres + cable port play the reference's inner hatch. Bottom band notched over the
+    # neck slot (wall open to z=191 in x +-31 for the tilt sweep; the frame must not
+    # hover in that envelope).
+    "hatch_frame_w": 160.0, "hatch_frame_h": 105.0,  # outer X x Z
+    "hatch_frame_band": 13.0,   # ring width
+    "hatch_frame_t": 3.0,       # proud of the back face
+    "hatch_frame_cz": 151.0,    # outer z 98.5..203.5; inner 111.5..190.5 (port 113..147,
+                                # louvres 180..214 both land inside the opening)
+    # Chassis FRONT fascia (design-ref front.jpg). Front wall: y=78 face, x +-60, z 7..52.
+    "grille_cz": 46.0,      # orange surround outer 60x20 -> z 36..56; inner 52x12
+    "grille_w": 60.0, "grille_h": 20.0, "grille_band": 4.0, "grille_t": 2.5,
+    "us_dx": 13.0,          # ultrasonic barrel centers at x=+-13 (HC-SR04 transducer pitch ~26)
+    "us_cz": 26.0,          # barrel Ø16 -> z 18..34 (2 under the surround; board clears the floor)
+    "us_d": 16.0,
+    "lamp_x": 54.0, "lamp_cz": 26.0,    # amber corner lamps 12x7, proud 2 (hug the 140-wide corners)
+    "fled_cz": 9.5,         # white dot strip 36x2.5 at the bottom lip, proud 1
+    # Chassis REAR styling (design-ref back.jpg): orange frame panel (the wall shows
+    # through the opening as the 'hatch') above the USB-C slot (x +-7, z 15..23), and a
+    # silver cylinder pod low-right (speaker/buzzer placeholder).
+    "rear_panel_cz": 35.0,  # panel 72x22 -> z 24..46; opening 44x14 -> z 28..42
+    "rear_cyl_x": 38.0,     # image-RIGHT in the reference back view (verified in-render)
+    "rear_cyl_cz": 16.0, "rear_cyl_d": 14.0,
+    # Raised camera POD on the forehead (design ref: the camera reads as an eye). Pure
+    # cosmetic shell over the recessed CM3: the bore flares 45 deg/side from the existing
+    # countersink, wider than the 75 deg-diagonal FoV cone (half ~37.5 deg), so no vignette.
+    "cam_pod_w": 24.0, "cam_pod_h": 18.0,   # pod footprint on the face (X x Z)
+    "cam_pod_t": 5.0,                       # proud of the face
+    # Gripper arms (design ref, PLACEHOLDER pose + shapes): shoulder pivots on the side
+    # rails, tucked pose (claws down-forward beside the chassis front). Actuation, joint
+    # hardware, and the head-vs-platform mount decision are a later mechanism pass.
+    "arm_x": 112.5,         # arm plane center (outboard of the rails at 107.5)
+
     # --- Fastening: M3 screws into CAPTIVE HEX NUTS (user choice) ---
     "m3_clear_r": 1.75,     # M3 screw clearance
     "m3_nut_af": 5.7,       # M3 hex nut across-flats (+ clearance)
@@ -250,19 +305,28 @@ P = {
 
 EXPORT = os.environ.get("EXPORT") == "1"
 
+# Design-reference colorway (reference/design/*.jpg): matte black body + safety-orange
+# accents, silver mechanicals. NOTE the bundled viewer re-colors by NODE NAME (PAL in
+# web/viewer_glb.html) -- keep both palettes in sync.
 COLORS = {
     "screen":  [26, 30, 38, 255],
-    "cradle":  [188, 196, 210, 255],
-    "back":    [150, 158, 172, 255],
-    "neck":    [120, 140, 172, 255],
-    "fork":    [120, 140, 172, 255],
-    "pan":     [150, 156, 168, 255],
-    "base":    [92, 98, 116, 255],
-    "track":   [48, 50, 58, 255],
-    "motor":   [232, 126, 74, 255],
-    "camera":  [214, 92, 92, 255],
+    "cradle":  [46, 50, 56, 255],       # matte charcoal (head bezel)
+    "back":    [54, 58, 65, 255],       # charcoal (head back, covers)
+    "neck":    [86, 92, 102, 255],      # dark steel mechanicals
+    "fork":    [86, 92, 102, 255],
+    "pan":     [74, 79, 87, 255],       # graphite
+    "base":    [44, 48, 54, 255],       # matte charcoal chassis
+    "track":   [35, 37, 41, 255],       # near-black rubber
+    "motor":   [154, 160, 168, 255],    # silver actuation
+    "camera":  [30, 33, 38, 255],       # black camera pod
     "pi":      [56, 150, 96, 255],
-    "axle":    [40, 40, 46, 255],
+    "axle":    [196, 200, 206, 255],    # bright steel
+    "accent":  [232, 116, 34, 255],     # safety orange (design-ref two-tone)
+    "lamp":    [232, 168, 60, 255],     # amber indicator
+    "led":     [242, 244, 246, 255],    # white light strip
+    "sensor":  [184, 188, 194, 255],    # silver sensor barrels
+    "antenna": [42, 45, 51, 255],       # black knurled stub
+    "arm":     [51, 55, 62, 255],       # charcoal gripper arms
 }
 
 
@@ -489,7 +553,7 @@ def build_head_shell():
     # the bottom-rear neck slot / cable port. Nothing exits the top (GPIO pins point -Y).
     # (Kept separate from the bottom-rear cable port below.)
     io_side = box(14.0, 15.0, 17.0)
-    io_side.apply_translation((P["head_w"] / 2 - 2, -1.0, 200.0))
+    io_side.apply_translation((P["head_w"] / 2 - 2, -1.0, P["screen_cz"] + 22.0))
     shell = sub(shell, io_side)
     # ventilation louvres high on the back wall (Pi 5 runs hot)
     for i in range(-2, 3):
@@ -502,7 +566,7 @@ def build_head_shell():
     # sweeps over the raised 12T-worm motor + plate; the old 180 top pinned the sweep at +19 deg.
     # This slot is also the exit route for the Pi's bottom-edge USB-C / HDMI cables.
     slot = box(62.0, 60.0, 101.0)
-    slot.apply_translation((0, P["body_back_y"] + 22, 140.5))
+    slot.apply_translation((0, P["body_back_y"] + 22, P["tilt_axis_z"] - 37.5))
     shell = sub(shell, slot)
 
     # pivot hubs at the side walls, on the tilt axis (fuse through the wall, behind the bezel)
@@ -574,6 +638,12 @@ def build_head_shell():
                                    py0 - P["cam_boss_len"] + 1.9, bz + dz))
             shell = sub(shell, pil)
 
+    # LED-strip recess in the forehead, left of the camera (design ref): shallow slot cut
+    # into the face wall; the led_strip part (build()) sits in it flush with the face.
+    slot_led = box(P["led_slot_w"], P["led_slot_d"] + 1.0, P["led_slot_h"])
+    slot_led.apply_translation((P["led_cx"], fy - P["led_slot_d"] / 2 + 0.5, P["led_cz"]))
+    shell = sub(shell, slot_led)
+
     _color(shell, "cradle")
     shell.metadata["name"] = "head_shell"
     return shell
@@ -600,7 +670,7 @@ def _bezel_boss_points():
     # TOP fixings are also a PAIR at x=+-40: a top-center post's M3 shank ran through the CM3
     # camera board (x=0), and the raised ceiling needs the posts at local z=body_z_top-5-178
     # to stay fused to it. Side posts sit at 0.75*hh, above the right-wall Pi I/O slot.
-    zt_post = P["body_z_top"] - 5.0 - 178.0
+    zt_post = P["body_z_top"] - 5.0 - P["screen_cz"]
     return [(-40, ys, zt_post), (40, ys, zt_post), (-40, ys, -hh), (40, ys, -hh),
             (-hw, ys, hh * 0.75), (hw, ys, hh * 0.75),
             (-hw, ys, -hh * 0.55), (hw, ys, -hh * 0.55)]
@@ -664,6 +734,138 @@ def build_head_parts():
     return bezel, back
 
 
+def build_head_rails():
+    """Orange side accent rails (design-ref front.jpg): vertical rounded pads standing proud
+    of the head side walls' FLAT band. Cosmetic two-tone parts, printed separately in orange;
+    fixing (glue vs 2x M3 from inside) decided at the print pass."""
+    rails = []
+    for sx, nm in ((-1, "trim_rail_L"), (1, "trim_rail_R")):
+        r = rounded_box(P["rail_h"], P["rail_d"], P["rail_t"], 8.0)   # X=h, Y=d, extrude Z=t
+        r.apply_transform(R(TAU / 4, (0, 1, 0)))     # footprint height -> Z, thickness -> +X
+        x = P["head_w"] / 2 if sx > 0 else -(P["head_w"] / 2 + P["rail_t"])
+        r.apply_translation((x, 0, P["rail_cz"]))    # thickness spans wall..wall+rail_t
+        _color(r, "accent"); r.metadata["name"] = nm
+        rails.append(r)
+    return rails
+
+
+def build_led_strip():
+    """WS2812-stick placeholder in the forehead recess (design-ref front.jpg: a row of
+    discrete LEDs left of the camera). Thin base board in the recess + 8 round emitters
+    poking 0.3 proud of the face. Wiring drops behind the wall at the print pass."""
+    fy = P["body_front_y"]
+    base = box(P["led_slot_w"] - 1.0, 0.8, P["led_slot_h"] - 1.0)
+    base.apply_translation((P["led_cx"], fy - P["led_slot_d"] + 0.4, P["led_cz"]))
+    dots = [base]
+    for i in range(8):
+        d = cyl(1.2, P["led_slot_d"] + 0.3, axis="y", sections=24)
+        d.apply_translation((P["led_cx"] - 16.1 + i * 4.6,
+                             fy - (P["led_slot_d"] - 0.3) / 2, P["led_cz"]))
+        dots.append(d)
+    strip = uni(dots)
+    _color(strip, "led"); strip.metadata["name"] = "led_strip"
+    return strip
+
+
+def build_antenna():
+    """Knurled antenna stub on the head top face, right side (design-ref; cosmetic --
+    the Pi's WiFi is internal). Separate print: collar + shaft + dome, knurl read via
+    shallow ring grooves. Fixing (spigot + glue vs M3 from inside) at the print pass."""
+    zt = P["body_z_top"]
+    collar = cyl(P["ant_collar_d"] / 2, P["ant_collar_h"])
+    collar.apply_translation((0, 0, P["ant_collar_h"] / 2))
+    shaft = cyl(P["ant_d"] / 2, P["ant_h"])
+    shaft.apply_translation((0, 0, P["ant_h"] / 2))
+    dome = trimesh.creation.icosphere(subdivisions=2, radius=P["ant_d"] / 2)
+    dome.apply_translation((0, 0, P["ant_h"]))
+    ant = uni([collar, shaft, dome])
+    for gz in (10.0, 16.0, 22.0):                     # knurl-read ring grooves
+        groove = trimesh.creation.torus(major_radius=P["ant_d"] / 2, minor_radius=0.7)
+        groove.apply_translation((0, 0, gz))
+        ant = sub(ant, groove)
+    ant.apply_translation((P["ant_x"], P["ant_y"], zt))
+    _color(ant, "antenna"); ant.metadata["name"] = "antenna_stub"
+    return ant
+
+
+def build_cam_pod():
+    """Cosmetic raised eye-pod over the recessed camera aperture (design-ref front.jpg).
+    Separate charcoal print on the bezel face; 45 deg flared bore clears the CM3 FoV."""
+    fy, lz = P["body_front_y"], P["cam_lens_z"]
+    pod = rounded_box(P["cam_pod_w"], P["cam_pod_h"], P["cam_pod_t"], 7.0)
+    pod.apply_transform(R(-TAU / 4, (1, 0, 0)))      # extrude +Y, footprint XZ
+    pod.apply_translation((0, fy, lz))
+    bore = frustum(P["cam_csk_d"] / 2 + P["cam_pod_t"] + 0.5, P["cam_csk_d"] / 2,
+                   P["cam_pod_t"] + 0.5)             # 45 deg/side flare, small end at the face
+    bore.apply_transform(R(TAU / 4, (1, 0, 0)))      # shrink toward -Y (into the wall)
+    bore.apply_translation((0, fy + P["cam_pod_t"] + 0.25, lz))
+    pod = sub(pod, bore)
+    _color(pod, "camera"); pod.metadata["name"] = "camera_pod"   # /camera/ in the viewer PAL
+    return pod
+
+
+def build_hatch_frame():
+    """Orange chamfer-look frame proud of the head back face (design-ref back.jpg).
+    Separate orange print over the service area; the existing louvres + cable port are
+    the 'hatch' inside it. Bottom band notched clear of the neck-slot sweep envelope."""
+    w, h, bd, t = (P["hatch_frame_w"], P["hatch_frame_h"],
+                   P["hatch_frame_band"], P["hatch_frame_t"])
+    outer = rounded_box(w, h, t, 12.0)
+    inner = rounded_box(w - 2 * bd, h - 2 * bd, t + 2, 8.0)
+    inner.apply_translation((0, 0, -1))
+    ring = sub(outer, inner)
+    ring.apply_transform(R(TAU / 4, (1, 0, 0)))      # footprint XZ, extrusion -Y
+    ring.apply_translation((0, P["body_back_y"], P["hatch_frame_cz"]))
+    # notch the bottom band over the neck slot (x +-31, wall open to z=191): the frame
+    # may not reach into the neck's tilt-sweep clearance
+    notch = box(66.0, 2 * t + 2, 70.0)
+    notch.apply_translation((0, P["body_back_y"] - t, P["tilt_axis_z"] - 22.0))
+    ring = sub(ring, notch)
+    _color(ring, "accent"); ring.metadata["name"] = "trim_hatch_frame"
+    return ring
+
+
+def _limb(p0, p1, w=9.0, d=11.0):
+    """Arm segment between two (y,z) points, long axis in the YZ plane, X extent w."""
+    vy, vz = p1[0] - p0[0], p1[1] - p0[1]
+    L = float(np.hypot(vy, vz))
+    seg = box(w, d, L + d * 0.6)
+    seg.apply_transform(R(-np.arctan2(vy, vz), (1, 0, 0)))    # +Z -> segment direction
+    seg.apply_translation((0, (p0[0] + p1[0]) / 2, (p0[1] + p1[1]) / 2))
+    return seg
+
+
+def build_arms():
+    """Two articulated gripper arms (design-ref, PLACEHOLDER): shoulder disc on the side
+    rail, upper arm down, forearm forward, C-claw opening forward with square finger
+    pads. Static tucked pose per front.jpg; joints are cosmetic discs until the arm
+    mechanism pass. Limb X-width stays 9 so nothing reaches back past the rail face."""
+    S, E, W = (0.0, 130.0), (8.0, 88.0), (48.0, 70.0)    # shoulder/elbow/wrist (y,z)
+    C = (62.0, 68.0)                                     # claw ring center
+    arms = []
+    for sx, nm in ((-1, "arm_L"), (1, "arm_R")):
+        parts = [_limb(S, E, w=9.0, d=15.0), _limb(E, W, w=9.0, d=15.0)]
+        for (py, pz), r in ((S, 11.0), (E, 9.5), (W, 8.5)):
+            j = cyl(r, 10.0, axis="x"); j.apply_translation((0, py, pz))
+            parts.append(j)                          # h10: disc face LANDS on the rail
+                                                     # face (107.5), no burial
+        claw = sub(cyl(18.0, 13.0, axis="x", sections=48),
+                   cyl(10.0, 15.0, axis="x", sections=48))
+        notch = box(14.0, 22.0, 14.0); notch.apply_translation((0, 13.0, 0))
+        claw = sub(claw, notch)                          # C opening faces +Y (forward)
+        for szn in (-1, 1):                              # square finger pads at the C tips
+            pad = box(13.0, 7.0, 6.5)
+            pad.apply_translation((0, 13.5, szn * 10.5))
+            claw = uni([claw, pad])
+        claw.apply_translation((0, C[0], C[1]))
+        parts.append(claw)
+        arm = uni(parts)
+        arm.apply_translation((sx * P["arm_x"], 0, 0))
+        _color(arm, "arm"); arm.metadata["name"] = nm
+        arms.append(arm)
+    return arms
+
+
 def build_neck_clevis():
     """Neck column rising to a two-cheek clevis that grips the tilt axle under the head."""
     zt = P["tilt_axis_z"]
@@ -681,7 +883,8 @@ def build_neck_clevis():
     # the cheek slant that clears the -30 swept stack must still root around y=-33; this
     # block bridges column top -> cheek bottoms (and fuses with the cradle arm above it).
     root = box(52.0, 14.0, 10.0)
-    root.apply_translation((0, -33.0, 155.0))            # y -40..-26, z 150..160
+    root.apply_translation((0, -33.0, zt - 23.0))         # y -40..-26; z rides the axle
+                                                          # (bridges column top -> cheeks)
     parts.append(root)
 
     # two cheeks rising from the cheek-root block to the axle at (cx, yt, zt). Stage 2R
@@ -693,7 +896,7 @@ def build_neck_clevis():
     for sx in (-1, 1):
         cx = sx * P["clevis_half"]
         top = np.array([cx, yt, zt])
-        bot = np.array([cx, -33.0, 155.0])
+        bot = np.array([cx, -33.0, zt - 23.0])
         length = np.linalg.norm(top - bot)
         d = (top - bot) / length
         cheek = box(P["cheek_t"], 20.0, length + 20)
@@ -750,7 +953,8 @@ def build_neck_clevis():
     # Below z=94 the column keeps its full section (bolt bosses z 52..64); the cable channel
     # (front wall y=-22) stays closed behind the notch face.
     notch = box(64.0, 32.0, 57.0)
-    notch.apply_translation((0, -3.5, 122.5))           # y -19.5..12.5, z 94..151
+    notch.apply_translation((0, -3.5, zt - 55.5))       # y -19.5..12.5; z rides the axle
+                                                        # (swept-envelope chin clearance)
     neck = sub(neck, notch)
     # axle clearance bore (Ø5 axle) through the cheeks
     bore = cyl(P["axle_d"] / 2 + 0.4, 2 * P["clevis_half"] + 4 * P["cheek_t"], axis="x")
@@ -975,6 +1179,66 @@ def build_pan_clips():
     return clips
 
 
+def build_fascia():
+    """Chassis front-fascia parts (design-ref front.jpg): orange grille surround + side
+    fins (one orange print), HC-SR04 ultrasonic placeholder (silver barrels through the
+    wall), amber corner lamps, white LED dot strip. Returns a list of scene parts."""
+    fw = P["chassis_l"] / 2                          # front face y=78
+    parts = []
+    # orange surround ring + 3 vertical fins per side, as ONE orange part
+    gw, gh, bd, t = P["grille_w"], P["grille_h"], P["grille_band"], P["grille_t"]
+    ring = sub(rounded_box(gw, gh, t, 6.0),
+               rounded_box(gw - 2 * bd, gh - 2 * bd, t + 2, 4.0).apply_translation((0, 0, -1)))
+    ring.apply_transform(R(-TAU / 4, (1, 0, 0)))     # extrude +Y (proud of the front face)
+    ring.apply_translation((0, fw, P["grille_cz"]))
+    fins = [ring]
+    for sx in (-1, 1):
+        for fx in (35.0, 41.0, 47.0):
+            f = box(3.0, 2.0, 16.0)
+            f.apply_translation((sx * fx, fw + 1.0, P["grille_cz"]))
+            fins.append(f)
+    fascia = uni(fins)
+    _color(fascia, "accent"); fascia.metadata["name"] = "trim_fascia"
+    parts.append(fascia)
+    # ultrasonic: board placeholder against the inner wall + 2 mesh barrels through it
+    us = [box(45.7, 1.6, 20.9).apply_translation((0, fw - 5.0 - 0.8, P["us_cz"]))]
+    for sx in (-1, 1):
+        b = cyl(P["us_d"] / 2, 13.0, axis="y", sections=48)
+        b.apply_translation((sx * P["us_dx"], fw - 5.0 + 6.5 - 0.75, P["us_cz"]))
+        us.append(b)
+    uspod = uni(us)
+    _color(uspod, "sensor"); uspod.metadata["name"] = "sensor_us"
+    parts.append(uspod)
+    # amber indicator lamps at the fascia corners
+    for sx, nm in ((-1, "lamp_L"), (1, "lamp_R")):
+        l = rounded_box(12.0, 7.0, 2.0, 2.5)
+        l.apply_transform(R(-TAU / 4, (1, 0, 0)))
+        l.apply_translation((sx * P["lamp_x"], fw, P["lamp_cz"]))
+        _color(l, "lamp"); l.metadata["name"] = nm
+        parts.append(l)
+    # white LED dot strip at the bottom lip: slim base + 7 round emitters
+    fl = [box(36.0, 1.0, 3.0).apply_translation((0, fw + 0.5, P["fled_cz"]))]
+    for i in range(7):
+        d = cyl(1.3, 1.6, axis="y", sections=24)
+        d.apply_translation((-15.0 + i * 5.0, fw + 1.4, P["fled_cz"]))
+        fl.append(d)
+    led = uni(fl)
+    _color(led, "led"); led.metadata["name"] = "led_front"
+    parts.append(led)
+    # REAR: orange frame panel (wall shows through as the hatch) + silver cylinder pod
+    rp = sub(rounded_box(72.0, 22.0, 2.5, 6.0),
+             box(44.0, 14.0, 8.0))
+    rp.apply_transform(R(TAU / 4, (1, 0, 0)))        # extrude -Y (proud of the REAR face)
+    rp.apply_translation((0, -fw, P["rear_panel_cz"]))
+    _color(rp, "accent"); rp.metadata["name"] = "trim_rear"
+    parts.append(rp)
+    rc = cyl(P["rear_cyl_d"] / 2, 9.0, axis="y", sections=48)
+    rc.apply_translation((P["rear_cyl_x"], -fw - 4.5, P["rear_cyl_cz"]))   # lands ON the wall
+    _color(rc, "sensor"); rc.metadata["name"] = "sensor_rear"
+    parts.append(rc)
+    return parts
+
+
 def frustum(r_bottom, r_top, h, sections=96):
     """Truncated cone from z=0 (r_bottom) to z=h (r_top)."""
     if abs(r_bottom - r_top) < 1e-6:
@@ -1069,6 +1333,25 @@ def build_base():
         body = sub(body, pil)
     usb = box(14, 12, 8)                              # USB-C power entry in the rear wall
     usb.apply_translation((0, -P["chassis_l"] / 2, z0 + 12)); body = sub(body, usb)
+    # front-fascia cuts (design ref): hex grille field (blind 2.5, cosmetic-vent; decide
+    # through-vent at the print pass) + Ø16.6 ultrasonic barrel passes through the wall
+    fw = P["chassis_l"] / 2
+    hexes = []
+    for r_i, zr in enumerate((42.0, 46.0, 50.0)):
+        off = 2.1 if r_i % 2 else 0.0
+        for k in range(-6, 7):
+            hx_x = k * 4.2 + off
+            if abs(hx_x) > 24.0:
+                continue
+            hx = hex_prism(3.0, 4.0)
+            hx.apply_transform(R(TAU / 4, (1, 0, 0)))          # axis Z -> Y
+            hx.apply_translation((hx_x, fw - 0.5, zr))         # cuts 2.5 into the 5 wall
+            hexes.append(hx)
+    body = sub(body, uni(hexes))
+    for sx in (-1, 1):
+        us = cyl(P["us_d"] / 2 + 0.3, 12, axis="y")
+        us.apply_translation((sx * P["us_dx"], fw - 2.5, P["us_cz"]))
+        body = sub(body, us)
     for i in range(-2, 4):                            # side ventilation slots (i=-3 dropped: the
         v = box(12, 5, 16); v.apply_translation((0, i * 16, z0 + h / 2))    # TT nub pocket +
         v2 = v.copy(); v.apply_translation((P["chassis_w"] / 2, 0, 0))      # shaft recess live
@@ -1093,11 +1376,11 @@ def build_base():
         # deck pocket over the motor: gearbox/can top at z 36.52 but the cavity ceiling is 32;
         # cut to 36.8 (pan-seat floor is 37 and the race ring footprint r34..46 stays clear:
         # nearest pocket corner is at r 50.2)
-        dkp = box(19.4, 64.7, 4.9); dkp.apply_translation((s * 45.5, -39.65, 34.35))
+        dkp = box(19.4, 64.7, 4.9); dkp.apply_translation((s * (xw - 14.5), -39.65, 34.35))
         body = sub(body, dkp)
         # cavity-corner relief: the cavity's r12 rounded corner leaves body material where the
         # rectangular gearbox rear corner sits (probed 318.5 mm3) -- square it off locally
-        crn = box(7.0, 14.2, 24.9); crn.apply_translation((s * 51.6, -65.1, 24.35))
+        crn = box(7.0, 14.2, 24.9); crn.apply_translation((s * (xw - 8.4), -65.1, 24.35))
         body = sub(body, crn)
         tabp = box(4.2, 5.7, 6.4); tabp.apply_translation((s * axm, ys - 14.15, zs))
         body = sub(body, tabp)                        # front-tab pocket in the rear wall (1 skin)
@@ -1225,8 +1508,9 @@ def build_tracks():
             lk.apply_transform(R_x(ang))               # tangent to the loop, outer face outward
             lk.apply_translation((cx, y, z))
             pieces.append(lk)
+        wheel_pieces = []
         spr = _sprocket(sx)
-        spr.apply_translation((cx, -wb / 2, zc)); pieces.append(spr)
+        spr.apply_translation((cx, -wb / 2, zc)); wheel_pieces.append(spr)
         # idler (front): rides the knuckle crowns (r 15.82) with 0.12 running clearance; F688ZZ
         # press seat Ø15.95 through + Ø18.5 x 1.0 flange recess on the inboard face; the Ø8 stub
         # axle (hardware) cantilevers from the chassis tension-slot plate.
@@ -1234,17 +1518,26 @@ def build_tracks():
         idl = sub(cyl(ir, iw, axis="x"), cyl(P["idler_bore_d"] / 2, iw + 2, axis="x"))
         fr = cyl(18.5 / 2, 1.05, axis="x"); fr.apply_translation((-sx * (iw / 2 - 0.5), 0, 0))
         idl = sub(idl, fr)
-        idl.apply_translation((cx, wb / 2, zc)); pieces.append(idl)
+        idl.apply_translation((cx, wb / 2, zc)); wheel_pieces.append(idl)
         # road wheels: ride the bottom-run knuckle crowns (0.1 running clearance)
         for i in range(P["roadwheel_count"]):
             ry = -wb / 4 + i * (wb / 2) / max(P["roadwheel_count"] - 1, 1)
             rw = cyl(P["roadwheel_d"] / 2, 18.0, axis="x")
             rw.apply_translation((cx, ry, (zc - R) + kr + P["roadwheel_d"] / 2 + 0.1))
-            pieces.append(rw)
-        pod = trimesh.util.concatenate(pieces)
+            wheel_pieces.append(rw)
+        side = "L" if sx < 0 else "R"
+        pod = trimesh.util.concatenate(pieces)                 # links only (rubber-black)
         _color(pod, "track")
-        pod.metadata["name"] = "track_L" if sx < 0 else "track_R"
+        pod.metadata["name"] = f"track_{side}"
+        pod.metadata["export"] = f"track_{side}.stl"
         out.append(pod)
+        # running gear as its OWN node so it renders as exposed silver metal through the
+        # links (design ref: big visible wheel-gears). Same geometry as before, just split.
+        wheels = trimesh.util.concatenate(wheel_pieces)
+        _color(wheels, "motor")
+        wheels.metadata["name"] = f"drivewheels_{side}"
+        wheels.metadata["export"] = f"track_wheels_{side}.stl"
+        out.append(wheels)
     return out
 
 
@@ -1356,8 +1649,10 @@ def build():
 
     # --- FIXED: tank chassis body + two track pods ---
     add(build_base(), np.eye(4), "chassis.stl")
+    for fp in build_fascia():                        # front fascia set (design ref)
+        add(fp, np.eye(4))
     for trk in build_tracks():
-        add(trk, np.eye(4), trk.metadata["name"] + ".stl")
+        add(trk, np.eye(4), trk.metadata["export"])
 
     # track drive: 2x TT gearmotor (own 1, BUY 1 more) INSIDE the chassis, gearbox face 0.1 off
     # the side-wall inner face; the shaft crosses the wall (Ø8 pass, wall thinned to a 3 mm web)
@@ -1455,6 +1750,15 @@ def build():
     bezel, back = build_head_parts()
     add(bezel, M_head, "head_bezel.stl")
     add(back, M_head, "head_back.stl")
+
+    for rail in build_head_rails():                  # orange side accent rails (design ref)
+        add(rail, M_head)
+    add(build_led_strip(), M_head)                   # forehead light strip (design ref)
+    add(build_antenna(), M_head)                     # top-right antenna stub (design ref)
+    add(build_hatch_frame(), M_head)                 # rear orange hatch frame (design ref)
+    add(build_cam_pod(), M_head)                     # raised camera eye-pod (design ref)
+    for arm in build_arms():                         # placeholder gripper arms (design ref)
+        add(arm, M_head)
 
     screen = load_screen()
     screen.apply_transform(screen_pose())            # sit on the leaned front face

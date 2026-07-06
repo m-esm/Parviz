@@ -19,14 +19,35 @@ on `head_back` at the factory M3 bosses; **camera recessed behind the forehead**
 dims) with a lens bump + `cam_cover`; **tracks = measured-TT-motor positive drive: articulated
 links + 12T sprocket + F688ZZ idler + road wheels**. The 28BYJ placeholder is now dimensionally correct (Ø28.25, 7.875 mm
 offset shaft, 3 mm D-flats). Remaining: worm teeth are readable placeholders (regen involute/helix
-in BOSL2 in a venv), body-to-pod join, widen track gauge (head overhangs ~10 mm/side), buy list.
+in BOSL2 in a venv), body-to-pod join, buy list. (Track gauge widened 2026-07-06: chassis_w
+120->140, track outer faces +-102 ~= head half-width; base_h 52->66 for the design-ref stance.)
+
+**Design-ref styling pass (2026-07-06, branch design-styling):** the 5 concept renders in
+`reference/design/` (black+orange rugged two-tone) are now integrated as a 34-part GLB:
+COLORS/PAL colorway (keep `src/build.py` COLORS and the viewer PAL in sync — the VIEWER
+re-colors by node name and wins on render), orange head side rails (`trim_rail_L/R`, the
+arm shoulders land on them), forehead LED strip + slot, knurled `antenna_stub` (robot -X =
+image-right in the reference front view), rear orange `trim_hatch_frame` (bottom band
+notched clear of the neck-slot tilt sweep), chassis front fascia (hex grille field +
+orange surround/fins, HC-SR04 `sensor_us` in a floor recess, amber lamps, white LED bar),
+running gear split into `drivewheels_L/R` (silver; geometry untouched), and PLACEHOLDER
+gripper arms (`arm_L/R`, static tucked pose; actuation + mount decision deferred). All
+styling parts probed against all parts: 0.000 mm³ overlaps. `TRANS=0 make shot` renders
+solid (styling review); default stays 50% ghost.
+
+Latest render review (2026-07-06): `make build` wrote a 20-part `web/assembly.glb`; fresh
+transparent and solid shots were inspected from iso/front/side/top plus two section cuts. The
+assembly reads correctly as a tablet-head tracked robot, but the print-final fixes are:
+**widen the track gauge**, add a low ballast bay in the chassis, model the body-to-pod M3/dowel
+joins, shroud the exposed rear tilt motor, make the front camera/lens read more deliberately,
+render neutral (`PAN=0 TILT=0`) and motion extremes, and add a bottom view to `src/shoot.py`.
 
 ## The build loop (do this on every geometry change)
 
 ```
 make build          # python3 src/build.py -> web/assembly.glb
-make viewer         # python3 src/serve.py 8765 (leave running; user watches live at
-                    #   http://localhost:8765/viewer_glb.html -- auto-reloads on rebuild)
+make viewer         # python3 src/serve.py 8770 (leave running; user watches live at
+                    #   http://localhost:8770/viewer_glb.html -- auto-reloads on rebuild)
 make shot           # headless render -> .claude/renders/chk_*.png  (serve must be up)
 ```
 
@@ -126,12 +147,13 @@ NOTE: this mesh is NOT watertight — manifold booleans on it raise; probe scree
 surface-sample containment, never with `ivol()`-style try/except (that returned vacuous 0.000 for
 three stages, see docs/FIXES.md Stage 4). Overall assembly bbox ≈ 209 × 170.5 × 251 mm.
 
-Still first-guess (validate on a print): tilt axis at y=−18 / z=178 (moved back 18 mm in stage 2R to
-clear the Pi-on-display stack), screen center y 18.5 / z 178, tilt ±30, pan ±90,
+Still first-guess (validate on a print): tilt axis at y=−18 / z=153 (moved back 18 mm in stage 2R
+to clear the Pi-on-display stack; z was 178 until the 2026-07-06 head drop shifted the whole
+head+tilt stack −25), screen center y 18.5 / z 153, tilt ±30, pan ±90,
 worm module 1.25 / 12T wheel, track pitch 10 / 36 links / 12T sprocket, pan BB circle Ø80. Neck
 column at `neck_y=−17` (stage 5: footprint max r 43.1 fits the spinning platform's solid r45; the
-cable channel is decoupled at `neck_chan_y=−26`). Head width 205 vs track gauge ~184 → head
-overhangs ~10 mm/side (widen the gauge or accept it).
+cable channel is decoupled at `neck_chan_y=−26`). Head width 205 vs track outer width 204
+(chassis_w 140, base_h 66: the design-ref stance pass; no more head overhang).
 
 ## Power (decided)
 
@@ -183,7 +205,7 @@ engagement beats a friction belt that slips when the head pans.
 - Params: `chassis_w/l`, `track_wheel_r`, `track_wheelbase`, `track_width`, `track_pitch`,
   `track_links`, `sprocket_teeth`, `idler_bore_d`, `roadwheel_*`, `track_gap`, `chassis_clear`.
 - **Still TODO:** body-to-pod join (2× M3 nut-trap + 2× Ø4 dowel per side), links as real TPU/PLA
-  print vs the rigid model, widen the gauge (head overhangs ~10 mm/side). Pi rides the head (high CoM)
+  print vs the rigid model. (Gauge widened: chassis_w 140.) Pi rides the head (high CoM)
   → keep the chassis heavy/low and the wheelbase long so it doesn't tip on accel or a fast head pan.
 
 ## Print notes (first pass — not finalized)
@@ -223,7 +245,10 @@ web/             viewer_glb.html + assembly.glb (committed so a fresh clone show
 stl/{base,neck,head}/   per-part STLs (head_bezel + head_back), written by `EXPORT=1 python3 src/build.py`
 exports/         Bambu .3mf plates (regenerable, gitignored)
 reference/       rpi-7in-touchscreen-model (STEP/STL, the real screen) + -case + alexa-style-* +
-                 tank-track-3062624 (link/sprocket geometry, CC-BY) + rpi-camera-v21-1564160
+                 tank-track-3062624 (link/sprocket geometry, CC-BY) + rpi-camera-v21-1564160 +
+                 design/ (5 concept renders = the STYLING TARGET: black+orange rugged two-tone,
+                 gripper arms, camera+LED strip+antenna in the head top bezel, front grille +
+                 ultrasonic pods, big exposed sprocket-gears; 1008×1024, safe to Read)
 docs/FIXES.md    the verified-defect ledger from the 3-agent review + fix-stage status
 docs/ASSEMBLY.md BOM + assembly order
 ```
