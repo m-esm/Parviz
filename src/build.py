@@ -831,21 +831,26 @@ def _limb(p0, p1, w=9.0, d=11.0):
 
 def build_arms():
     """Two articulated gripper arms (design-ref, PLACEHOLDER): shoulder disc on the side
-    rail, upper arm down, forearm forward, C-claw opening forward. Static tucked pose per
-    front.jpg; joints are cosmetic discs until the arm mechanism pass."""
+    rail, upper arm down, forearm forward, C-claw opening forward with square finger
+    pads. Static tucked pose per front.jpg; joints are cosmetic discs until the arm
+    mechanism pass. Limb X-width stays 9 so nothing reaches back past the rail face."""
     S, E, W = (0.0, 155.0), (8.0, 112.0), (48.0, 90.0)   # shoulder/elbow/wrist (y,z)
     C = (62.0, 88.0)                                     # claw ring center
     arms = []
     for sx, nm in ((-1, "arm_L"), (1, "arm_R")):
-        parts = [_limb(S, E), _limb(E, W)]
-        for (py, pz), r in ((S, 9.0), (E, 7.5), (W, 7.0)):
+        parts = [_limb(S, E, w=9.0, d=15.0), _limb(E, W, w=9.0, d=15.0)]
+        for (py, pz), r in ((S, 11.0), (E, 9.5), (W, 8.5)):
             j = cyl(r, 10.0, axis="x"); j.apply_translation((0, py, pz))
             parts.append(j)                          # h10: disc face LANDS on the rail
                                                      # face (107.5), no burial
-        claw = sub(cyl(15.0, 10.0, axis="x", sections=48),
-                   cyl(8.5, 12.0, axis="x", sections=48))
-        notch = box(12.0, 18.0, 12.0); notch.apply_translation((0, 12.0, 0))
+        claw = sub(cyl(18.0, 13.0, axis="x", sections=48),
+                   cyl(10.0, 15.0, axis="x", sections=48))
+        notch = box(14.0, 22.0, 14.0); notch.apply_translation((0, 13.0, 0))
         claw = sub(claw, notch)                          # C opening faces +Y (forward)
+        for szn in (-1, 1):                              # square finger pads at the C tips
+            pad = box(13.0, 7.0, 6.5)
+            pad.apply_translation((0, 13.5, szn * 10.5))
+            claw = uni([claw, pad])
         claw.apply_translation((0, C[0], C[1]))
         parts.append(claw)
         arm = uni(parts)
