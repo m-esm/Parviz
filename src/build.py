@@ -52,8 +52,9 @@ P = {
     "face_angle": 0.0,      # upright front face (the neck's tilt gives the look-up/down)
     "body_front_y": 31.0,   # front face plane (glass sits flush here)
     "body_back_y": -31.0,   # back face plane (behind the tilt axis; Pi bay)
-    "body_z_bot": 113.0,    # shell bottom height above desk
-    "body_z_top": 251.0,    # shell top height (243 + 8: the CM3 camera bay needs ~14 mm between
+    "body_z_bot": 88.0,     # shell bottom height above desk (113-25: design-ref head drop --
+                            # the whole head+tilt stack sits 25 lower over the chassis)
+    "body_z_top": 226.0,    # shell top height (was 251; -25 head drop. 243+8 history: the CM3 bay needs ~14 mm between
                             # the screen window top (229.9) and the ceiling; 243 gave only 9.1 --
                             # the board punched the top wall and the barrel crossed the panel)
     "corner_r": 16.0,       # rounded vertical edges (friendly, clean)
@@ -82,13 +83,13 @@ P = {
     # --- Tilt joint: REAR CLEVIS entering the shell underside; axle near the CoM ---
     #     Self-locking WORM drive (single-start): head holds tilt with the motor de-energized
     #     (no idle current/heat). Pre-balance the head on the axle so the worm barely works.
-    "tilt_axis_z": 178.0,   # tilt axis height above the desk (inside the box, near CoM)
+    "tilt_axis_z": 153.0,   # tilt axis height above the desk (178-25 head drop; near CoM)
     # Stage 2R: axle moved BACK 18 mm (y 0 -> -18). The Pi rides the display back (stack rear
     # face y=-7, z 151..207.5), so an axle at y=0 ran straight through the board plane. The
     # whole tilt drivetrain (cheeks, bearings, wheel, worm, clamp tubes) keys off this pair.
     "tilt_axis_y": -18.0,   # tilt axis Y (behind the screen+Pi stack; was 0 pre-2R)
     "tilt_cantilever": 18.5,# screen center Y in world (absolute; decoupled from the axle in 2R)
-    "screen_cz": 178.0,     # screen center height (absolute; was tied to tilt_axis_z pre-2R)
+    "screen_cz": 153.0,     # screen center height (178-25 head drop; decoupled from the axle)
     "pivot_boss_r": 10.0,   # head-side pivot boss radius (internal side walls)
     "clevis_half": 22.0,    # neck cheek half-span (cheeks at +-22 in X)
     "cheek_t": 8.0,         # clevis cheek thickness (X)
@@ -113,7 +114,7 @@ P = {
     "neck_w": 48.0,         # column width (X) -- squarer + rounded reads as a neck, not a plank
     "neck_d": 46.0,         # column depth (Y)
     "neck_round": 10.0,     # corner rounding radius
-    "neck_top_z": 150.0,    # where the column stops and the clevis cheeks rise
+    "neck_top_z": 125.0,    # where the column stops and the clevis cheeks rise (150-25 drop)
     # Stage 5: column moved inboard (-38 -> -17) so the whole base footprint rides the
     # SPINNING platform, not the fixed deck: footprint max radius = sqrt(14^2+(|ny|+13)^2)+10
     # (rounded-rect corner arcs) = 43.11 <= 44.0, inside the platform's solid top (r45 within
@@ -196,7 +197,8 @@ P = {
     "cam_hole_z_top": 2.565,   # top hole row Z (from board center)
     "cam_hole_z_bot": -9.935,  # bottom hole row Z
     "cam_lens_dz": 2.47,    # optical axis above board center (X = 0; official CM3 +2.469)
-    "cam_lens_z": 237.0,    # lens axis height (world Z), on the raised forehead: barrel bottom
+    "cam_lens_z": 212.0,    # lens axis height (237-25 head drop; whole camera bay shifts with
+                            # the shell+screen, so the relative clearances below hold): barrel bottom
                             # 234.1 clears the display module top (233.4) and the pocket (233.9);
                             # csk bottom 233.0 keeps a 3.1 ligament over the window top (229.9)
     # CM3 front stack: 10.8 sq AF housing (front 4.0 above board front), Ø5.75 barrel to 6.98;
@@ -236,7 +238,7 @@ P = {
     "rail_t": 5.0,          # rail stands this proud of the head side wall
     "rail_d": 26.0,         # rail depth (Y); stays on the wall's FLAT band (|y|<15, corner r16)
     "rail_h": 90.0,         # rail height (Z)
-    "rail_cz": 185.0,       # rail center height (brackets the screen band, z 140..230)
+    "rail_cz": 160.0,       # rail center height (brackets the screen band, z 115..205)
     # LED strip in the top bezel, LEFT of the camera (design-ref front.jpg). Recess sized
     # for a short WS2812 stick segment; sits on FOREHEAD wall material only: the screen
     # pocket opening tops out at z 233.9, so the slot must stay above it.
@@ -245,7 +247,7 @@ P = {
     "led_slot_d": 1.5,      # recess depth into the 4 mm face wall
     # image-LEFT of the camera in the reference front view = robot +X (front view looks -Y)
     "led_cx": 45.0,         # slot center X (clear of the camera pier |x|<16)
-    "led_cz": 239.0,        # slot center Z (lens axis is 237; slot z 236.5..241.5 > 233.9 ok)
+    "led_cz": 214.0,        # slot center Z (lens 212; slot z 211.5..216.5 > pocket top 208.9 ok)
     # Knurled antenna stub on the head top face (cosmetic; Pi WiFi is internal).
     # Image-RIGHT in the reference front view = robot -X.
     "ant_x": -62.0, "ant_y": -8.0,  # on head_back's top (split plane is at y~2)
@@ -258,7 +260,7 @@ P = {
     "hatch_frame_w": 160.0, "hatch_frame_h": 105.0,  # outer X x Z
     "hatch_frame_band": 13.0,   # ring width
     "hatch_frame_t": 3.0,       # proud of the back face
-    "hatch_frame_cz": 176.0,    # outer z 123.5..228.5; inner 136.5..215.5 (port 138..172,
+    "hatch_frame_cz": 151.0,    # outer z 98.5..203.5; inner 111.5..190.5 (port 113..147,
                                 # louvres 180..214 both land inside the opening)
     # Chassis FRONT fascia (design-ref front.jpg). Front wall: y=78 face, x +-60, z 7..52.
     "grille_cz": 38.0,      # orange surround outer 60x20 -> z 28..48; inner 52x12
@@ -547,7 +549,7 @@ def build_head_shell():
     # the bottom-rear neck slot / cable port. Nothing exits the top (GPIO pins point -Y).
     # (Kept separate from the bottom-rear cable port below.)
     io_side = box(14.0, 15.0, 17.0)
-    io_side.apply_translation((P["head_w"] / 2 - 2, -1.0, 200.0))
+    io_side.apply_translation((P["head_w"] / 2 - 2, -1.0, P["screen_cz"] + 22.0))
     shell = sub(shell, io_side)
     # ventilation louvres high on the back wall (Pi 5 runs hot)
     for i in range(-2, 3):
@@ -560,7 +562,7 @@ def build_head_shell():
     # sweeps over the raised 12T-worm motor + plate; the old 180 top pinned the sweep at +19 deg.
     # This slot is also the exit route for the Pi's bottom-edge USB-C / HDMI cables.
     slot = box(62.0, 60.0, 101.0)
-    slot.apply_translation((0, P["body_back_y"] + 22, 140.5))
+    slot.apply_translation((0, P["body_back_y"] + 22, P["tilt_axis_z"] - 37.5))
     shell = sub(shell, slot)
 
     # pivot hubs at the side walls, on the tilt axis (fuse through the wall, behind the bezel)
@@ -664,7 +666,7 @@ def _bezel_boss_points():
     # TOP fixings are also a PAIR at x=+-40: a top-center post's M3 shank ran through the CM3
     # camera board (x=0), and the raised ceiling needs the posts at local z=body_z_top-5-178
     # to stay fused to it. Side posts sit at 0.75*hh, above the right-wall Pi I/O slot.
-    zt_post = P["body_z_top"] - 5.0 - 178.0
+    zt_post = P["body_z_top"] - 5.0 - P["screen_cz"]
     return [(-40, ys, zt_post), (40, ys, zt_post), (-40, ys, -hh), (40, ys, -hh),
             (-hw, ys, hh * 0.75), (hw, ys, hh * 0.75),
             (-hw, ys, -hh * 0.55), (hw, ys, -hh * 0.55)]
@@ -813,7 +815,7 @@ def build_hatch_frame():
     # notch the bottom band over the neck slot (x +-31, wall open to z=191): the frame
     # may not reach into the neck's tilt-sweep clearance
     notch = box(66.0, 2 * t + 2, 70.0)
-    notch.apply_translation((0, P["body_back_y"] - t, 156.0))
+    notch.apply_translation((0, P["body_back_y"] - t, P["tilt_axis_z"] - 22.0))
     ring = sub(ring, notch)
     _color(ring, "accent"); ring.metadata["name"] = "trim_hatch_frame"
     return ring
@@ -834,8 +836,8 @@ def build_arms():
     rail, upper arm down, forearm forward, C-claw opening forward with square finger
     pads. Static tucked pose per front.jpg; joints are cosmetic discs until the arm
     mechanism pass. Limb X-width stays 9 so nothing reaches back past the rail face."""
-    S, E, W = (0.0, 155.0), (8.0, 112.0), (48.0, 90.0)   # shoulder/elbow/wrist (y,z)
-    C = (62.0, 88.0)                                     # claw ring center
+    S, E, W = (0.0, 130.0), (8.0, 88.0), (48.0, 70.0)    # shoulder/elbow/wrist (y,z)
+    C = (62.0, 68.0)                                     # claw ring center
     arms = []
     for sx, nm in ((-1, "arm_L"), (1, "arm_R")):
         parts = [_limb(S, E, w=9.0, d=15.0), _limb(E, W, w=9.0, d=15.0)]
@@ -877,7 +879,8 @@ def build_neck_clevis():
     # the cheek slant that clears the -30 swept stack must still root around y=-33; this
     # block bridges column top -> cheek bottoms (and fuses with the cradle arm above it).
     root = box(52.0, 14.0, 10.0)
-    root.apply_translation((0, -33.0, 155.0))            # y -40..-26, z 150..160
+    root.apply_translation((0, -33.0, zt - 23.0))         # y -40..-26; z rides the axle
+                                                          # (bridges column top -> cheeks)
     parts.append(root)
 
     # two cheeks rising from the cheek-root block to the axle at (cx, yt, zt). Stage 2R
@@ -889,7 +892,7 @@ def build_neck_clevis():
     for sx in (-1, 1):
         cx = sx * P["clevis_half"]
         top = np.array([cx, yt, zt])
-        bot = np.array([cx, -33.0, 155.0])
+        bot = np.array([cx, -33.0, zt - 23.0])
         length = np.linalg.norm(top - bot)
         d = (top - bot) / length
         cheek = box(P["cheek_t"], 20.0, length + 20)
@@ -946,7 +949,8 @@ def build_neck_clevis():
     # Below z=94 the column keeps its full section (bolt bosses z 52..64); the cable channel
     # (front wall y=-22) stays closed behind the notch face.
     notch = box(64.0, 32.0, 57.0)
-    notch.apply_translation((0, -3.5, 122.5))           # y -19.5..12.5, z 94..151
+    notch.apply_translation((0, -3.5, zt - 55.5))       # y -19.5..12.5; z rides the axle
+                                                        # (swept-envelope chin clearance)
     neck = sub(neck, notch)
     # axle clearance bore (Ø5 axle) through the cheeks
     bore = cyl(P["axle_d"] / 2 + 0.4, 2 * P["clevis_half"] + 4 * P["cheek_t"], axis="x")
