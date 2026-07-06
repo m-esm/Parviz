@@ -152,8 +152,10 @@ to clear the Pi-on-display stack; z was 178 until the 2026-07-06 head drop shift
 head+tilt stack −25), screen center y 18.5 / z 153, tilt ±30, pan ±90,
 worm module 1.25 / 12T wheel, track pitch 10 / 36 links / 12T sprocket, pan BB circle Ø80. Neck
 column at `neck_y=−17` (stage 5: footprint max r 43.1 fits the spinning platform's solid r45; the
-cable channel is decoupled at `neck_chan_y=−26`). Head width 205 vs track outer width 204
-(chassis_w 140, base_h 66: the design-ref stance pass; no more head overhang).
+cable channel is decoupled at `neck_chan_y=−26`). Head width 205 vs track outer width 238
+(chassis_w 140, base_h 66, track_width 44.8 (2026-07-07: 2x design-ref chunk then -20%
+per user); pods now flank the head like the reference; sprocket band stays 8 wide in the
+links' central channel, idler grows outboard-only to clear the tension plate).
 
 ## Power (decided)
 

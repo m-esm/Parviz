@@ -159,7 +159,8 @@ P = {
     # on filament-rod hinge pins, a 12-tooth sprocket meshing the pins -> no slip on a desk.
     "track_wheel_r": 19.32,  # pin-circle radius = exact 12T x 10.0-pitch polygon (audit corr. 1)
     "track_wheelbase": 120.0,   # sprocket-axis <-> idler-axis (Y)
-    "track_width": 28.0,    # link body width (X); sprocket engages the central ~8 mm
+    "track_width": 44.8,    # link body width (X): 2x design-ref chunk, then -20% per user
+                            # (28 -> 56 -> 44.8); sprocket engages only the central ~8 mm channel
     "track_pitch": 10.0,    # link pin-to-pin (our re-model; the 3062624 reference pitch is 9.65)
     "track_links": 36,      # 36 x 10 = 360 mm loop
     "track_pad_th": 4.5,    # pin axis -> pad OUTER face (link overall 8: knuckle r3.5 inward)
@@ -288,7 +289,8 @@ P = {
     # Gripper arms (design ref, PLACEHOLDER pose + shapes): shoulder pivots on the side
     # rails, tucked pose (claws down-forward beside the chassis front). Actuation, joint
     # hardware, and the head-vs-platform mount decision are a later mechanism pass.
-    "arm_x": 112.5,         # arm plane center (outboard of the rails at 107.5)
+    "arm_x": 127.0,         # arm plane center: outboard of the pods (outer face 118.8); a
+                            # standoff tube bridges the rail face (107.5) to the shoulder
 
     # --- Fastening: M3 screws into CAPTIVE HEX NUTS (user choice) ---
     "m3_clear_r": 1.75,     # M3 screw clearance
@@ -836,26 +838,32 @@ def _limb(p0, p1, w=9.0, d=11.0):
 
 
 def build_arms():
-    """Two articulated gripper arms (design-ref, PLACEHOLDER): shoulder disc on the side
-    rail, upper arm down, forearm forward, C-claw opening forward with square finger
-    pads. Static tucked pose per front.jpg; joints are cosmetic discs until the arm
-    mechanism pass. Limb X-width stays 9 so nothing reaches back past the rail face."""
-    S, E, W = (0.0, 130.0), (8.0, 88.0), (48.0, 70.0)    # shoulder/elbow/wrist (y,z)
-    C = (62.0, 68.0)                                     # claw ring center
+    """Two articulated gripper arms (design-ref, PLACEHOLDER): RAISED pose per
+    front-2.jpg -- upper arm up-forward, forearm up, C-claw opening upward. Raised
+    (not tucked) because the 56-wide pods put their tops under the old tucked-claw
+    sweep (claw dug into the pod top at pan ~20 deg + tilt down); raised claws stay
+    above z~140 at every pan x tilt combination. A standoff tube bridges the rail
+    face to the outboard shoulder. Joints stay cosmetic until the arm mechanism pass."""
+    S, E, W = (0.0, 130.0), (20.0, 160.0), (30.0, 195.0)  # shoulder/elbow/wrist (y,z)
+    C = (32.0, 212.0)                                     # claw ring center
     arms = []
     for sx, nm in ((-1, "arm_L"), (1, "arm_R")):
         parts = [_limb(S, E, w=9.0, d=15.0), _limb(E, W, w=9.0, d=15.0)]
+        # shoulder standoff: rail face (107.5) -> arm plane; chunky r8 hub, local -X
+        span = P["arm_x"] - (P["head_w"] / 2 + P["rail_t"])
+        so = cyl(8.0, span + 4.0, axis="x")              # inboard is -sx after the mirror
+        so.apply_translation((-sx * ((span + 4.0) / 2 - 4.0), S[0], S[1]))
+        parts.append(so)
         for (py, pz), r in ((S, 11.0), (E, 9.5), (W, 8.5)):
             j = cyl(r, 10.0, axis="x"); j.apply_translation((0, py, pz))
-            parts.append(j)                          # h10: disc face LANDS on the rail
-                                                     # face (107.5), no burial
+            parts.append(j)
         claw = sub(cyl(18.0, 13.0, axis="x", sections=48),
                    cyl(10.0, 15.0, axis="x", sections=48))
-        notch = box(14.0, 22.0, 14.0); notch.apply_translation((0, 13.0, 0))
-        claw = sub(claw, notch)                          # C opening faces +Y (forward)
-        for szn in (-1, 1):                              # square finger pads at the C tips
-            pad = box(13.0, 7.0, 6.5)
-            pad.apply_translation((0, 13.5, szn * 10.5))
+        notch = box(14.0, 14.0, 22.0); notch.apply_translation((0, 0, 13.0))
+        claw = sub(claw, notch)                          # C opening faces +Z (up, per ref)
+        for syn in (-1, 1):                              # square finger pads at the C tips
+            pad = box(13.0, 6.5, 7.0)
+            pad.apply_translation((0, syn * 10.5, 13.5))
             claw = uni([claw, pad])
         claw.apply_translation((0, C[0], C[1]))
         parts.append(claw)
@@ -1433,8 +1441,11 @@ def _track_zc():
 # Link knuckle X-comb (half-width 14): near set A (outer pair) interleaves the neighbour's far
 # set B (inner pair) around the shared pin; the central +-4.9 stays OPEN so the sprocket teeth
 # sweep between the B knuckles and engage the (unmodelled Ø1.75 filament) pins.
-_KNUCKLE_A = ((-14.0, -9.4), (9.4, 14.0))
-_KNUCKLE_B = ((-8.9, -4.9), (4.9, 8.9))
+# near set A (outer pair) runs from x=9.4 out to the link edge (tw/2, width-derived);
+# far set B (inner pair) is fixed so the sprocket channel (+-4.9) never changes.
+def _KNUCKLES(tw):
+    return (((-tw / 2, -9.4), (9.4, tw / 2)),          # A: near knuckles (own pin)
+            ((-8.9, -4.9), (4.9, 8.9)))                # B: far knuckles (next pin)
 
 
 def _track_link():
@@ -1447,10 +1458,11 @@ def _track_link():
     parts = [box(tw, 3.2, 2.7), box(tw, 2.0, 1.5)]     # web z -4.5..-1.8, grouser z -6.0..-4.5
     parts[0].apply_translation((0, 5.0, -3.15))
     parts[1].apply_translation((0, 5.0, -5.25))
-    for (x0, x1) in _KNUCKLE_A:                        # near knuckles (own pin) + bridge to web
+    ka, kb = _KNUCKLES(tw)
+    for (x0, x1) in ka:                                # near knuckles (own pin) + bridge to web
         k = cyl(kr, x1 - x0, axis="x"); k.apply_translation(((x0 + x1) / 2, 0, 0)); parts.append(k)
         b = box(x1 - x0, 3.1, 2.7); b.apply_translation(((x0 + x1) / 2, 2.05, -3.15)); parts.append(b)
-    for (x0, x1) in _KNUCKLE_B:                        # far knuckles (next pin) + bridge to web
+    for (x0, x1) in kb:                                # far knuckles (next pin) + bridge to web
         k = cyl(kr, x1 - x0, axis="x"); k.apply_translation(((x0 + x1) / 2, pitch, 0)); parts.append(k)
         b = box(x1 - x0, 2.6, 2.7); b.apply_translation(((x0 + x1) / 2, 7.7, -3.15)); parts.append(b)
     link = uni(parts)
@@ -1472,8 +1484,9 @@ def _sprocket(sx):
     tw = P["track_width"]
     cx = P["chassis_w"] / 2 + P["track_gap"] + tw / 2              # pod centre (78)
     hub_in = (P["chassis_w"] / 2 - 2.0 + 0.3) - cx                 # world 58.3 -> local -19.7
-    spr = gear_disc(P["sprocket_outer_d"] / 2 - 1.5, P["sprocket_teeth"], tw - 20, 3.0, axis="x")
-    spr = inter(spr, cyl(P["sprocket_outer_d"] / 2, tw - 19, axis="x"))    # truncate tooth-box
+    # band pinned to 8 (the links' open +-4.9 sprocket channel), NOT tw-derived
+    spr = gear_disc(P["sprocket_outer_d"] / 2 - 1.5, P["sprocket_teeth"], 8.0, 3.0, axis="x")
+    spr = inter(spr, cyl(P["sprocket_outer_d"] / 2, 9.0, axis="x"))        # truncate tooth-box
     hub = cyl(6.0, -hub_in - 3.5, axis="x")                        # corners to the 18.8 tip circle
     hub.apply_translation(((hub_in - 3.5) / 2, 0, 0))
     spr = uni([spr, hub])
@@ -1483,7 +1496,7 @@ def _sprocket(sx):
     spr = sub(spr, dd)
     bore = cyl(3.0, 16.0, axis="x"); bore.apply_translation((-3.3, 0, 0))
     spr = sub(spr, bore)                                           # Ø6 free bore to the outer face
-    cb = cyl(4.5, 1.7, axis="x"); cb.apply_translation((tw / 2 - 10 - 0.75, 0, 0))
+    cb = cyl(4.5, 1.7, axis="x"); cb.apply_translation((3.25, 0, 0))       # band_half - 0.75
     spr = sub(spr, cb)                                             # retaining-screw counterbore
     if sx < 0:
         spr.apply_transform(R(TAU / 2, (0, 0, 1)))
@@ -1514,15 +1527,17 @@ def build_tracks():
         # idler (front): rides the knuckle crowns (r 15.82) with 0.12 running clearance; F688ZZ
         # press seat Ø15.95 through + Ø18.5 x 1.0 flange recess on the inboard face; the Ø8 stub
         # axle (hardware) cantilevers from the chassis tension-slot plate.
-        ir, iw = R - kr - 0.12, 18.0
+        ir, iw = R - kr - 0.12, 30.0                   # widened with the 56 links
         idl = sub(cyl(ir, iw, axis="x"), cyl(P["idler_bore_d"] / 2, iw + 2, axis="x"))
         fr = cyl(18.5 / 2, 1.05, axis="x"); fr.apply_translation((-sx * (iw / 2 - 0.5), 0, 0))
         idl = sub(idl, fr)
-        idl.apply_translation((cx, wb / 2, zc)); wheel_pieces.append(idl)
+        # 30-wide idler grows OUTBOARD only: inner face stays at |cx|-9, 0.1 clear of
+        # the chassis tension plate (symmetric growth swallowed the plate, 830 mm3)
+        idl.apply_translation((cx + sx * 6.0, wb / 2, zc)); wheel_pieces.append(idl)
         # road wheels: ride the bottom-run knuckle crowns (0.1 running clearance)
         for i in range(P["roadwheel_count"]):
             ry = -wb / 4 + i * (wb / 2) / max(P["roadwheel_count"] - 1, 1)
-            rw = cyl(P["roadwheel_d"] / 2, 18.0, axis="x")
+            rw = cyl(P["roadwheel_d"] / 2, 30.0, axis="x")
             rw.apply_translation((cx, ry, (zc - R) + kr + P["roadwheel_d"] / 2 + 0.1))
             wheel_pieces.append(rw)
         side = "L" if sx < 0 else "R"
