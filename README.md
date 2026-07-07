@@ -18,6 +18,8 @@ through a headless render-and-inspect loop and a pairwise + pose-grid interferen
 before it counts as done. 39 parts, of which 10 are watertight printed structural parts;
 the rest are cosmetics, bought hardware, and mechanism placeholders.
 
+**Status:** design-complete and interference-gated in CAD, not yet printed or assembled.
+
 ## Designed to a concept, not vibes
 
 <p align="center">
@@ -34,13 +36,13 @@ module with room for the bezel.
 ## How it's engineered
 
 **Tilt = self-locking worm drive.** The head pitches on a single-start involute worm meshing
-a 12-tooth helical wheel, module 1.25, center distance 11.9 mm, lead angle 8.085°. Single-start
+a 12-tooth helical wheel, module 1.25, center distance 11.9 mm, lead angle ~8.1°. Single-start
 plus printed-PLA friction (µ ≈ 0.3 vs the 0.129 self-lock threshold) means the head holds any
 tilt angle with the motor de-energized: no idle current, no heat. The worm rides a 28BYJ-48
 stepper (shaft +Y, right-angle to the axle); the wheel keys to a Ø5 hollow axle turning in two
 695-2RS bearings pressed into the neck cheeks. Real tooth geometry is generated from first
-principles (numpy involute → manifold twisted extrude) and verified to 0.0000 mm³ mesh
-interference at nominal center distance. See [docs/WORM.md](docs/WORM.md).
+principles (numpy involute → manifold twisted extrude) and verified to mesh cleanly (zero boolean interference)
+at nominal center distance. See [docs/WORM.md](docs/WORM.md).
 
 **Pan = direct D-hub on a captured-ball race.** A second 28BYJ-48 sits offset in the base so its
 double-D shaft lands exactly on the pan axis and keys straight into a D-bore hub under the
@@ -72,7 +74,6 @@ segment with swept-conduit clearance probes after the head geometry moved.
   <img src="docs/media/front-neutral.jpg" alt="Parviz front, neutral pose" width="480">
 </p>
 
-<!-- details slot: single strip today; may split to details-1/2/3.jpg -->
 <p align="center">
   <img src="docs/media/details.jpg" alt="Fascia, worm mesh, and rear service door closeups" width="900">
 </p>
@@ -104,27 +105,27 @@ constraints before you start.
 
 **Order now** (the long-lead / not-in-a-typical-bin parts):
 
-- 2× F688ZZ flanged bearings (8×16×5) — the track idler seats are modeled around them
+- 2× F688ZZ flanged bearings (8×16×5): the track idler seats are modeled around them
 - 1× TT gearmotor 1:120 to match the owned one (or commit to 2× N20 for a lower CoM)
-- Official Raspberry Pi 27W USB-C PD supply (5.1V/5A) — a 3A brick browns out under screen + camera + steppers
+- Official Raspberry Pi 27W USB-C PD supply (5.1V/5A): a 3A brick browns out under screen + camera + steppers
 - Ø5 rod (~100 mm) for the tilt axle; a bag of 6 mm airsoft BBs (need 18) for the pan race
 - 1 m narrow addressable LED strip (SK6805-2427 / WS2812-2020) for the forehead + front dots
 
 **The one special tool:** a slim M3 driver with ~95 mm reach. The four screen-module standoff
 screws drive down blind Ø7 channels ~88.5 mm long with ~0.75 mm around an M3 pan head. Pan/cheese
-head only — a countersunk M3 (Ø6.0) will not enter the channel.
+head only, a countersunk M3 (Ø6.0) will not enter the channel.
 
 ## Software
 
 A working spike lives in `software/` (deployed to the Pi over rsync, key auth):
 
-- **`face/`** — fullscreen 800×480 face renderer (pygame): navy background, cyan outlined eyes with
+- **`face/`**: fullscreen 800×480 face renderer (pygame): navy background, cyan outlined eyes with
   offset pupils, arc brows, smile, idle blink. `set_expression()` API with neutral / happy / sad /
   surprised / sleepy / look_* states.
-- **`motion/`** — 28BYJ-48 half-step driver (lgpio) with `PanStepper` (±88° hard clamp) and
+- **`motion/`**: 28BYJ-48 half-step driver (lgpio) with `PanStepper` (±88° hard clamp) and
   `TiltStepper` (±30°, 12:1 gear ratio, coils release after each move since the worm self-locks).
   Dry-run mode records coil writes without touching GPIO; 19/19 unit tests pass on any machine.
-- **`camera/`** — one-frame capture check, Picamera2 with an `rpicam-still` fallback.
+- **`camera/`**: one-frame capture check, Picamera2 with an `rpicam-still` fallback.
 
 Runs on Raspberry Pi 5 (2GB), Raspberry Pi OS trixie, Camera Module 3 (imx708). See
 [software/README.md](software/README.md) for deploy and smoke-test commands.
@@ -147,22 +148,24 @@ Runs on Raspberry Pi 5 (2GB), Raspberry Pi OS trixie, Camera Module 3 (imx708). 
 Parviz stands on other people's models. All Thingiverse references are Creative Commons; keep the
 attribution if you reuse them.
 
-- **Tank track** — thing:3062624 by **advancedvb**, CC BY. Link pads, sprocket, and idler geometry.
-- **Yellow TT motor** — thing:1079893 by **CCFIVE**, CC BY. Drive-motor placeholder.
-- **Official 7" touchscreen reference model** — thing:1646255 by **clough42**, CC BY-SA. The
+- **Tank track**: thing:3062624 by **advancedvb**, CC BY. Link pads, sprocket, and idler geometry.
+- **Yellow TT motor**: thing:1079893 by **CCFIVE**, CC BY. Drive-motor placeholder.
+- **Official 7" touchscreen reference model**: thing:1646255 by **clough42**, CC BY-SA. The
   combined screen+Pi (pins-out) mesh the whole robot is built around.
-- **7" touchscreen case** — thing:1585924 by **luc_e**, CC BY-NC. Style/fit reference.
-- **RPi Camera v2.1 model** — thing:1564160 by **jbeale**, CC BY. Camera placeholder (CM3 dims from
+- **7" touchscreen case**: thing:1585924 by **luc_e**, CC BY-NC. Style/fit reference.
+- **RPi Camera v2.1 model**: thing:1564160 by **jbeale**, CC BY. Camera placeholder (CM3 dims from
   the official Raspberry Pi mechanical drawing in `reference/rpi-camera-module-3/`).
-- **Alexa-style smart display** — the wedge that inspired the original head shape
+- **Alexa-style smart display**: the wedge that inspired the original head shape
   (`reference/alexa-style-smart-display/`).
-- **Concept renders** — the five AI-generated concept images in `reference/design/` that set the
+- **Concept renders**: the five AI-generated concept images in `reference/design/` that set the
   black-and-orange design language.
 - Official Raspberry Pi CAD (touchscreen + Camera Module 3) from Raspberry Pi Ltd.
 
 ## License
 
-TODO: no license file yet. Pick one before publishing. Note the mixed obligations from the
-references above: the touchscreen model is **CC BY-SA** (share-alike) and the touchscreen case is
-**CC BY-NC** (non-commercial), so anything that redistributes those meshes inherits those terms.
-Your own source (`src/`, `software/`, `docs/`) can carry whatever license you choose.
+No project license file yet (the repo is private for now). One caveat drives the choice: the
+bundled `reference/` meshes carry mixed Creative Commons terms, and two are restrictive. The
+touchscreen model is **CC BY-SA** (share-alike) and the touchscreen case is **CC BY-NC**
+(non-commercial), so any redistribution of those two meshes inherits those terms. To keep the
+project freely and commercially licensable, drop those two folders from the tree (fetch them at
+build time instead) and license your own work (`src/`, `software/`, `docs/`) as you like.
