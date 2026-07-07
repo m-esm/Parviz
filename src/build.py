@@ -2154,7 +2154,8 @@ def _track_link():
 
 def _sprocket(sx):
     """Drive sprocket + inboard hub tube reaching the TT shaft through the chassis-wall web.
-    Disc (tip r 18.8) at the pod centre; hub OD12 runs inboard to x=|58.3| where the D-socket
+    Disc (tip r 18.8) at the pod centre (96.4 at chassis_w 140 / tw 44.8; hub local -28.1 --
+    values are chassis_w/track_width-derived); hub OD12 runs inboard to where the D-socket
     (bore Ø5.65, flat gap 3.85 print clearance, 8.0 deep = TT flat length) grips the shaft flats.
     Outer face: Ø9 x 1.5 counterbore for the M2 retaining screw + washer into the shaft tip's
     Ø2 axial hole. Built for the +X pod, spun 180deg about Z for -X."""
