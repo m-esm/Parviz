@@ -1,0 +1,15 @@
+Parviz
+Copyright 2026 Mohsen Esmaeili
+
+This product includes software and design files developed by Mohsen Esmaeili,
+licensed under the Apache License, Version 2.0 (see LICENSE).
+
+It also bundles third-party 3D models under their own Creative Commons terms.
+Those files live under reference/ and are NOT covered by the Apache license.
+See THIRD-PARTY-NOTICES.md for the full attribution and per-file terms.
+
+Note: one bundled reference mesh is CC BY-NC (non-commercial). Redistributing
+this repository as a whole is therefore limited to non-commercial use unless
+that mesh is removed. The original code, CAD source, and docs authored here
+(src/, software/, docs/, tools/, web/, stl/) are Apache-2.0 and carry no such
+restriction on their own.

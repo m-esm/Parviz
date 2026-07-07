@@ -82,7 +82,7 @@ Cozmo/Vector get their entire body language from a single 1-DoF lift plus head p
 pan + tilt + track motion already exist, so arm raise/wave/droop/point completes the vocabulary.
 An elbow servo doubles wiring and mass for a marginal gain. Do not do 2-DoF arms.
 
-### Actuator choice, checked against the moshes-inventory MCP (2026-07-07)
+### Actuator choice, checked against a personal parts inventory (2026-07-07)
 
 | owned | qty | mass | torque | verdict |
 |---|---|---|---|---|

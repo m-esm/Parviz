@@ -1,11 +1,11 @@
-# Mechanism fix ledger — mechanisms-finalize
+# Mechanism fix ledger, mechanisms-finalize
 
 Three review agents (geometry verifier / mechanical loads / assembly walk) audited commit
 `fa13f64` and converged on ~20 verified defects. Four fix stages run sequentially (they all edit
 `src/build.py`); stage 4 is an independent re-verification. Status legend:
 `[x]` fixed+probed, `[~]` in progress, `[ ]` queued, `(!)` accepted-as-is with reason.
 
-## Stage 1 — chassis + pan stack  [DONE, all probes pass]
+## Stage 1, chassis + pan stack  [DONE, all probes pass]
 
 - [x] **No chassis deck** (worst defect: race/balls/platform floated; whole head load hung on the
   pan motor's 5 mm plastic shaft). Cavity now stops `deck_t=20` below the top (5 mm of material
@@ -13,64 +13,64 @@ Three review agents (geometry verifier / mechanical loads / assembly walk) audit
 - [x] **Race grooves too deep + oversize** (platform sank 3.0 mm onto the ring; ring groove floor
   was 0.1 mm). Grooves engage 1.8 mm of ball each, oversize 0.2; stack derived in one helper
   (`_pan_stack`); plate 7.6 thick, top flush at z=52; tangency probe error 0.0000.
-- [x] **No uplift retention** — 3 L-clips at 120° screwed to deck pockets, engaging a platform rim
+- [x] **No uplift retention**, 3 L-clips at 120° screwed to deck pockets, engaging a platform rim
   REBATE below deck level (top-side clips would be sheared by the neck sweep, measured r≤62.9).
-- [x] **Pan D-bore jammed on the round shaft section** — D-profile now only over the flat zone
+- [x] **Pan D-bore jammed on the round shaft section**, D-profile now only over the flat zone
   (z 44.5..52), Ø5.3 round counterbore below; hub stops 0.3 above the motor's Ø9.1 boss.
-- [x] **Platform overconstrained** (located by shaft AND race) — D-bore arcs opened +0.27/side,
+- [x] **Platform overconstrained** (located by shaft AND race): D-bore arcs opened +0.27/side,
   flats snug: race locates, shaft only drives. Hub grub deleted.
-- [x] **Pan motor pad/ear mismatch** (can sank 5.5 into the pad, ears floated 12.4 above pilots) —
+- [x] **Pan motor pad/ear mismatch** (can sank 5.5 into the pad, ears floated 12.4 above pilots),
   pedestal top at the ear plane, Ø29 can relief, Ø2.5 pilots, wiring-box relief.
-- [x] **Neck bolts broke the platform rim + all pilots were Ø3.5 clearance (nothing bites)** —
+- [x] **Neck bolts broke the platform rim + all pilots were Ø3.5 clearance (nothing bites)**,
   bolt circle r16→12, neck pilots Ø2.5×12, underside counterbores for the heads.
-- [x] **JST won't pass Ø12 bores** — platform + neck passes are 16×8 obrounds.
+- [x] **JST won't pass Ø12 bores**, platform + neck passes are 16×8 obrounds.
 - (!) Cable exit relocated to (12,−24): the spec position (0,−38) punches the fixed race ring.
 - (!) Marginal, unfixed: outer neck-bolt counterbores nick the groove outer flank ~0.9 mm (outside
   ball contact); neck bottom coplanar with deck top (zero-gap rub when panning).
 
-## Stage 2 — tilt drive + neck + Pi + axle  [DONE — all probes pass]
+## Stage 2, tilt drive + neck + Pi + axle  [DONE, all probes pass]
 
-- [x] **695 bearing seats sealed inside the cheeks** — open flush to the inner faces (x=±18),
+- [x] **695 bearing seats sealed inside the cheeks**, open flush to the inner faces (x=±18),
   bore Ø12.85. Probe: Ø12.7 test plug vs neck = 0.000 mm³ both sides (insertable).
-- [x] **Worm wheel freewheels / rubs / unconstrained axially** — width 7 centered on x=0,
+- [x] **Worm wheel freewheels / rubs / unconstrained axially**, width 7 centered on x=0,
   grub-keyed hub (M3 pilot), Ø8 spacer tubes to both 695 inner races. Probe: wheel spans
   x −18.00..+18.00 (races at ±18), wheel-vs-neck = 0.000 mm³.
-- [x] **Tilt speed 16 s per 60°** — worm_wheel_teeth 24→12; center distance factored into
+- [x] **Tilt speed 16 s per 60°**, worm_wheel_teeth 24→12; center distance factored into
   `worm_cd()` (one helper, both former call sites). Probe: teeth=12, cd=11.50.
-- [x] **Worm undriveable** — full-depth double-D bore (vol 845 vs 942 unbored), worm_len 16,
+- [x] **Worm undriveable**, full-depth double-D bore (vol 845 vs 942 unbored), worm_len 16,
   Ø6 tail stub riding a Ø6.4 bushing post off the bracket. Probe: worm-vs-neck = 0.000 mm³.
-- [x] **Tilt motor buried + ear holes 7.9 mm off** — Ø29 can pocket + wiring-box and ear-bar
+- [x] **Tilt motor buried + ear holes 7.9 mm off**, Ø29 can pocket + wiring-box and ear-bar
   reliefs; motor ROLLED about its shaft so the 7.875 offset points UP (can hangs below the worm
   axis, clear of the back-wall sweep; ears horizontal at the CAN axis); gear face on the plate
   back face. Probe: motor-vs-neck = 0.000 mm³.
-- [x] **Pi 5 inside the mechanism volume** — Pi now PORTRAIT (85 edge vertical) and offset to
+- [x] **Pi 5 inside the mechanism volume**, Pi now PORTRAIT (85 edge vertical) and offset to
   x −84..−28: everything on the neck stays inside |x|≤26, so no tilt angle can reach it.
   Standoffs moved to the new 49(X)×58(Z) pattern, 3 mm long, all four rooted outside the slot;
   pivot bosses shortened 24→12 so the −X one clears the board. Probe: pi vs
   neck/motor/worm/bezel/back/axle/screen = 0.000 mm³ at −30/0/+30 (and every 5° between).
-- [x] **Axle end-grip topology** — Ø7 clamp-boss torque tubes from x=±27 out to the side walls,
+- [x] **Axle end-grip topology**, Ø7 clamp-boss torque tubes from x=±27 out to the side walls,
   Ø2.5 grub pilots at x=±30 (driven from below through the slot), snug Ø5.1 bore at the bosses,
   far-wall bores demoted to loose Ø5.3. Probe: boss material 489 mm³/side; a Ø5.24 plug bites
   the boss 4.97 mm³ (grips) and the wall 0.00 (loose slip fit).
-- [x] **Tilt envelope −11°..+19° vs ±30° spec** — full ±30 achieved, no ±25 fallback. Neck slot
+- [x] **Tilt envelope −11°..+19° vs ±30° spec**, full ±30 achieved, no ±25 fallback. Neck slot
   narrowed to 62 wide (cheeks end at |x|=26; Pi bosses keep wall roots) but raised to z=191;
   the bottom-CENTER bezel↔back post swept into the neck column, replaced by a pair at x=±40.
   Probe: sweep −30..+30 at 5°, 14 fixed-vs-head pairs, all 0.00 mm³.
-- [x] **Tilt ULN2003 had no mount** — 4× Ø6 standoffs + M3 pilots on the column back face
+- [x] **Tilt ULN2003 had no mount**, 4× Ø6 standoffs + M3 pilots on the column back face
   (35×32 pattern centered z=110). Probe: 746 mm³ standoff material behind the back face.
 
 Stage-2 side effects for Stage 3: the Pi is portrait at (x −56, y −16, z 192.5) → re-aim the
 back-cover I/O slot for ports exiting the board's ±X/±Z edges there; bezel↔back fastening is now
-7 posts (M3×35 ×7, nuts +1); pivot bosses are 12 long (they still protrude past the outer wall —
+7 posts (M3×35 ×7, nuts +1); pivot bosses are 12 long (they still protrude past the outer wall,
 the Stage 3 trim item stands).
 
-## Stage 3 — head/screen/camera + tracks  [DONE: head/camera 3a, tracks/drive 3b]
+## Stage 3, head/screen/camera + tracks  [DONE: head/camera 3a, tracks/drive 3b]
 
 Head/camera fixed by the Stage-3a agent (attempt 2). Combined screen+Pi model swap (user design
 change) done FIRST; several fixes below were re-scoped by what the new mesh + official CM3 data
 proved.
 
-- [x] **Screen+Pi combined reference model** — `screen_ref_stl` → `..._-_Pins_Out_v8.stl` (display
+- [x] **Screen+Pi combined reference model**, `screen_ref_stl` → `..._-_Pins_Out_v8.stl` (display
   WITH the Pi on its own 58×49 back standoffs; bbox 192.96 × 38.01 × 110.76, 13.02 deeper on the
   back). `load_screen()` now anchors the GLASS FACE at local y=12.494 instead of the bbox centroid
   (which the deeper back dragged 6.51 forward). Probe: glass world y old 30.9940 / new 30.9940,
@@ -85,7 +85,7 @@ proved.
 - [x] **Camera aperture per OFFICIAL CM3** (ledger's Ø10→Ø18 guess superseded by RP-008153-DS):
   Ø6.3 through-bore, countersink to Ø8.0 at the outer face at 45°/side, `cam_lens_dz` kept 2.47.
   Probe: 75° diagonal FoV cone (Ø2.63 pupil 3 mm behind the face) vs bezel = 0.0000 mm³.
-- [x] **CM3 does not fit the old forehead — bay redesigned** (proven, not styled): the stack needs
+- [x] **CM3 does not fit the old forehead, bay redesigned** (proven, not styled): the stack needs
   ~14 mm between the window top (229.9) and the interior ceiling; 243 top gave 9.1, so the board +
   connector punched the top wall 347.6 mm³, all 4 M2 bosses floated in the pocket void and punched
   the display panel band (measured y 25.03..30.99), and the barrel crossed the module's top edge.
@@ -94,12 +94,12 @@ proved.
   cutout; 1 mm bosses, blind Ø1.7 pilots). Probe: cam|bezel/back/cover = 0.0000, cover|bezel =
   0.0000, board top 246.46 vs ceiling 247.0, barrel bottom 234.12 vs module top 233.4,
   screen-samples inside cam/cover = 0, FoV cone 0.0000.
-- [x] **cam_cover fastening** — 2× M2 through the cover into the diagonal boss pilots
+- [x] **cam_cover fastening**, 2× M2 through the cover into the diagonal boss pilots
   (`cam_m2_clear_r` now used) + ribbon pinch slot; cover trimmed to board height (a +2 skirt
   punched the new ceiling). Probe: pilot voids 0.00 (fully drilled), self-tap annulus present,
   cover watertight.
 - [x] **Glass-lip interference** (found by sampling, not in the original ledger): glass front
-  30.99 sits FLUSH with the face (31), so the 0.5-deep retaining lip interpenetrated it 0.49 mm —
+  30.99 sits FLUSH with the face (31), so the 0.5-deep retaining lip interpenetrated it 0.49 mm,
   the module could not seat on its factory-screw mounts. The pocket now pierces the face (front
   31.1): flush edge-to-edge glass, pocket side walls locate, factory screws retain. Probe: the
   lip-band screen-in-bezel sample cells are gone.
@@ -119,7 +119,7 @@ proved.
 - [x] Regression: head parts tilt sweep −30/0/+30 vs neck = 0.0000 all angles; bezel/back/cover
   watertight; EXPORT=1 rewrites all STLs (bezel 93818 mm³, back 178880 mm³, cover 1317 mm³).
 
-**[x] RESOLVED (Stage 2R) — combined screen+Pi stack vs the TILT MECHANISM.** User call: keep the
+**[x] RESOLVED (Stage 2R): combined screen+Pi stack vs the TILT MECHANISM.** User call: keep the
 Pi on the display back, rework the tilt geometry. The **tilt axle moved BACK 18 mm** to
 **(y −18, z 178)** (`tilt_axis_y` new param; `tilt_axis_z` unchanged; screen anchored separately via
 `screen_cz`, it did not move). Everything keyed off the axle moved with it: cheeks, 695 seats, clamp
@@ -127,8 +127,8 @@ tubes/hubs/grubs, wheel, axle, worm group. Consequential rework, all probe-drive
 cheek boxes now stop AT the axle + a Ø19 bearing hoop (kills the pre-existing 260-sample cheek-top
 overshoot into the display back; worst cheektop→display gap now **3.12 mm @ −30°**); worm group sits
 4 mm further behind the axle (face offset 4→8) with the bracket plate shortened 46→36 tall (old top
-clipped the head back wall at +10..+25°); the outboard bushing post — which both crossed the −30°
-swept stack and clipped the wheel-tooth circle — became an **open-top cradle** (arm+riser+pad hugging
+clipped the head back wall at +10..+25°); the outboard bushing post, which both crossed the −30°
+swept stack and clipped the wheel-tooth circle, became an **open-top cradle** (arm+riser+pad hugging
 the measured swept-stack profile; worm separation force presses the Ø5 tail stub down into the
 groove, so open-top is load-correct); gusset front pulled to y −20; column front-top notch
 (y −21..−13, z 94..112) clears the head bottom-wall arc at −30°. Probes (12k stack surface samples +
@@ -142,7 +142,7 @@ Tracks/drive fixed by the Stage-3b agent. Measured-param corrections applied fir
 19.0 → 19.32 (exact 12T × 10.0 polygon), pin bores Ø2.0 (new `track_pin_bore_d`), `track_pitch`
 comment fixed (reference pitch is 9.65; our 10.0 is a re-model by design).
 
-- [x] **Track loop below ground** — wheel centres raised to `_track_zc()` = R + 4.5 + 1.5 =
+- [x] **Track loop below ground**, wheel centres raised to `_track_zc()` = R + 4.5 + 1.5 =
   25.32 so the bottom-run grouser face IS the ground line; road wheels + idler ride the knuckle
   crowns (r 15.82 about the pins) with 0.12/0.10 running clearance, since the sprocket needs the
   central ±4.9 channel open and the pad inner web (radial 21.12) is above the crowns. Probe:
@@ -153,7 +153,7 @@ comment fixed (reference pitch is 9.65; our 10.0 is a re-model by design).
   web; Ø6 free bore + Ø9 × 1.7 counterbore on the outer face for the M2 retaining screw +
   washer into the shaft tip's Ø2 axial hole. Probe: tip r 18.800, sprocket|links 0.0000,
   sprocket watertight.
-- [x] **TT motor rebuilt measured + real wall mount** — `motor_tt()` now: gearbox 36.80 × 22.40
+- [x] **TT motor rebuilt measured + real wall mount**, `motor_tt()` now: gearbox 36.80 × 22.40
   × 18.64 + Ø22.4 collar (flat on the shaft side) + can Ø20/14.99 AF + Ø9.9 × 2.2 boss + shaft
   Ø5.40/3.70 flats 8.8 proud, PERPENDICULAR to the body, 11.5 behind the front face. Motor sits
   INSIDE the chassis (gearbox face 0.1 off the wall inner face), shaft axis = sprocket axis.
@@ -168,7 +168,7 @@ comment fixed (reference pitch is 9.65; our 10.0 is a re-model by design).
   never bind), Ø2.0 pin bores for Ø1.75 filament, 45° inner-face draft chamfers at the web
   ends. Probe: all 36 adjacent pairs 0.0000 mm³ both pods (worst 0.0000), link watertight,
   track_L/R export as 52 watertight bodies each.
-- [x] **Idler tension slot + F688ZZ seat** — idler wheel r 15.7 × 18 wide with Ø15.95 press
+- [x] **Idler tension slot + F688ZZ seat**, idler wheel r 15.7 × 18 wide with Ø15.95 press
   seat through, Ø18.5 × 1.0 flange recess on the inboard face; chassis grows a wall arm +
   Ø28 slotted plate inside the front loop arc (everything radial < 15.7 so the wrapping links
   clear), obround Ø8.2 slot with ±`idler_slot`/2 = ±2 Y-travel for the Ø8 stub axle (hardware;
@@ -178,12 +178,12 @@ comment fixed (reference pitch is 9.65; our 10.0 is a re-model by design).
 Notes for stage 4 / buy list:
 - The tt-motor reference CAD is SINGLE-shaft; purchased TT motors are often dual-shaft. If the
   real unit has a rear shaft, the far pod side needs a Ø7.5+ clearance pocket mirrored about the
-  gearbox (currently nothing is there — the pods have no outboard wall — so it only matters if
+  gearbox (currently nothing is there, the pods have no outboard wall, so it only matters if
   a pod wall/cover is added). Verify the actual motor before closing that side.
 - `body_z_top` grew to 251 in stage 3a (head +8, CoM higher): size the chassis ballast for the
-  taller head when the buy list is done — keep the mass in the chassis floor, wheelbase is 120.
+  taller head when the buy list is done, keep the mass in the chassis floor, wheelbase is 120.
 
-## Stage 4 — independent re-verification  [DONE: NOT READY, 2 blocking + 2 minor defects]
+## Stage 4, independent re-verification  [DONE: NOT READY, 2 blocking + 2 minor defects]
 
 Independent probes (own scripts, `scratchpad/stage4_*.py`), nothing reused from stages 1-3b.
 Method note that invalidates several earlier "0.000" claims: the screen reference mesh is NOT
@@ -273,9 +273,9 @@ should ride along; docs drift items 1-8 belong in the same pass.
 
 ## Accepted findings (no geometry change)
 
-- Worm lead angle 9.46°: self-locks dry, backdrives greased — but the 28BYJ's internal 64:1 train
+- Worm lead angle 9.46°: self-locks dry, backdrives greased, but the 28BYJ's internal 64:1 train
   never backdrives, so the de-energized hold stands regardless. (Honest-worm option: worm_od 14.)
-- Hollow-axle cable routing at Ø2.5 is fiction for a 5 A pair — the real route is the bottom-rear
+- Hollow-axle cable routing at Ø2.5 is fiction for a 5 A pair, the real route is the bottom-rear
   slot beside the clevis (tilt is only ±30°); the bore stays as weight relief. Docs updated.
 - 18 uncaged BBs: grease-stick at assembly; a printed cage ring is a nice-to-have part.
 - Axle: buy Ø5 brass/steel tube (K&S 300 mm stock); a printed axle is unusable (5.9 mm sag).
@@ -289,7 +289,7 @@ ears) · M3 grub ×4-5 · M4×10+nut ×2 (tilt ears) · M2.5×8+nut ×4 (Pi) · 
 self-tap ×2 (sprocket retain) · 6 mm BB ×18 · Ø1.75 filament pins ×72 ·
 Ø5×209 tube ×1 · 28BYJ-48 ×2 + ULN2003 ×2 (owned) · TT gearmotor ×2 (own 1, **buy 1**).
 
-## Stage 5 — fix pass (D1-D4) + neck-on-platform  [DONE]
+## Stage 5, fix pass (D1-D4) + neck-on-platform  [DONE]
 
 - [x] Neck base footprint r62.9 overhangs the spinning platform (r48; solid top r45 inside the
   clip rebate) and rides the FIXED deck with zero gap. Move the column in (neck_y -38 -> ~-14)
@@ -339,7 +339,7 @@ self-tap ×2 (sprocket retain) · 6 mm BB ×18 · Ø1.75 filament pins ×72 ·
   everywhere except the by-design multi-body track_L/track_R (52) and pan_clips (3).
   Renders (st5_iso/side via port 8770) inspected: assembly coherent, no floaters.
 
-## Stage 6 — independent re-verification of stage 5  [DONE: READY TO COMMIT]
+## Stage 6, independent re-verification of stage 5  [DONE: READY TO COMMIT]
 
 Same methodology as stage 4 (own probes, `scratchpad/stage4_*.py` + `stage6_d123.py`; screen
 mesh checked by surface-sample containment, booleans raise on failure, nothing reused from the

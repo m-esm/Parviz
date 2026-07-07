@@ -2,7 +2,7 @@
 
 Camera: Raspberry Pi Camera Module 3 (imx708, 4608x2592) on CSI.
 Prefers Picamera2 (python3-picamera2, preinstalled on Raspberry Pi OS);
-falls back to the rpicam-still CLI. No deps beyond the OS packages —
+falls back to the rpicam-still CLI. No deps beyond the OS packages,
 JPEG dimensions are parsed from the SOF marker, no PIL needed.
 
 Run on the Pi:   python3 preview.py [--out /tmp/desk_pi_cam.jpg]

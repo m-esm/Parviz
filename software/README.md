@@ -1,18 +1,18 @@
 # desk-pi software
 
 Software spike for the tracked desk robot: face renderer, neck stepper
-driver, camera check. Lives here in the repo and mirrored to `~/desk-pi-sw`
-on the Pi (`ssh moshe@moshe-pi5-2gb.local`, key auth).
+driver, camera check. Lives here in the repo and mirrored to `~/parviz-sw`
+on the Pi (`ssh pi@parviz.local`, key auth).
 
 ## Deploy
 
 ```sh
-rsync -av --exclude __pycache__ software/ moshe@moshe-pi5-2gb.local:desk-pi-sw/
+rsync -av --exclude __pycache__ software/ pi@parviz.local:parviz-sw/
 ```
 
 ## Pieces
 
-### face/face.py — fullscreen face (800x480, official 7" touchscreen)
+### face/face.py, fullscreen face (800x480, official 7" touchscreen)
 
 Design-ref face (see `reference/design/front.jpg`): dark navy background,
 two cyan outlined eyes with offset pupils + highlight dots, arc brows,
@@ -29,7 +29,7 @@ SDL_VIDEODRIVER=kmsdrm python3 face/face.py --demo --seconds 10
 # (face.py sets SDL_VIDEODRIVER=kmsdrm itself when no DISPLAY/WAYLAND_DISPLAY)
 
 # If a Wayland desktop session owns the display, kmsdrm will fail
-# ("Could not initialize KMSDRM" — the compositor holds DRM master).
+# ("Could not initialize KMSDRM", the compositor holds DRM master).
 # Run inside the session instead:
 WAYLAND_DISPLAY=wayland-0 XDG_RUNTIME_DIR=/run/user/1000 python3 face/face.py --seconds 10
 # X11 desktop: DISPLAY=:0 python3 face/face.py --seconds 10
@@ -40,11 +40,11 @@ python3 face/face.py --windowed --demo --seconds 10
 
 `--seconds N` auto-exits (SSH smoke tests, nothing left running). Esc/q quits.
 
-### motion/steppers.py — 28BYJ-48 half-step driver (lgpio)
+### motion/steppers.py, 28BYJ-48 half-step driver (lgpio)
 
 `PanStepper` / `TiltStepper` on a shared `LimitedStepper`:
 
-- **Pins are required, no defaults** — nothing is wired yet.
+- **Pins are required, no defaults**, nothing is wired yet.
 - **Pan hard clamp default ±88°** (constructor param `limit_deg`). The Pi
   power service loop in the neck must never over-wind; the ±90 mechanical
   target keeps a 2° software margin. `move_to`/`move_by` both clamp; relative
@@ -65,7 +65,7 @@ python3 -c "from steppers import PanStepper; PanStepper(pins=(17,18,27,22)).move
 lgpio comes from the OS package `python3-lgpio` (should be present on
 Raspberry Pi OS trixie; if not: `pip3 install --user lgpio`).
 
-### camera/preview.py — one-frame capture check
+### camera/preview.py, one-frame capture check
 
 Tries Picamera2, falls back to `rpicam-still`. Writes `/tmp/desk_pi_cam.jpg`
 and prints backend + resolution (parses JPEG SOF, no PIL needed).
@@ -77,9 +77,9 @@ python3 camera/preview.py
 
 ## Hardware verification status (2026-07-07)
 
-**Nothing verified on hardware this pass — the Pi was unreachable.**
-`moshe-pi5-2gb.local` did not resolve (mDNS), the last known IP
-192.168.1.185 timed out, and a full subnet sweep found no Raspberry Pi MAC
+**Nothing verified on hardware this pass, the Pi was unreachable.**
+`parviz.local` did not resolve (mDNS), the last known IP
+<pi-lan-ip> timed out, and a full subnet sweep found no Raspberry Pi MAC
 on the LAN. The Pi is powered off or off WiFi.
 
 Verified locally (macOS, python 3.9):

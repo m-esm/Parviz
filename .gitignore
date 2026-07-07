@@ -1,7 +1,8 @@
-.claude/renders/
+.claude/
 _t_*
 _test_*
 exports/*.3mf
+*.3mf
 *.mp4
 *.mov
 __pycache__/

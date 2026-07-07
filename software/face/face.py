@@ -1,6 +1,6 @@
 """desk-pi face renderer: fullscreen animated face for the official 7" display.
 
-Design ref: reference/design/front.jpg — near-black screen, two big cyan
+Design ref: reference/design/front.jpg, near-black screen, two big cyan
 outlined round eyes with offset pupils + white highlight dots, thin arc
 eyebrows, small smile arc. Idle blink every few seconds.
 
@@ -10,14 +10,14 @@ Running over SSH with no desktop session (console owns the display):
     SDL_VIDEODRIVER=kmsdrm python3 face.py
 KMS/DRM needs the 'render'+'video' groups (default for the first user on
 Raspberry Pi OS) and a free (non-desktop) VT. If a Wayland/X desktop session
-owns the display, kmsdrm will fail with "Could not initialize KMSDRM" —
+owns the display, kmsdrm will fail with "Could not initialize KMSDRM",
 in that case run it INSIDE the session instead:
     WAYLAND_DISPLAY=wayland-0 XDG_RUNTIME_DIR=/run/user/$(id -u) python3 face.py
 (or DISPLAY=:0 on X11). Don't fight the compositor for the DRM master.
 
 Dev on a laptop:  python3 face.py --windowed --seconds 10
 
-API stub: FaceRenderer.set_expression(name) — supported names in EXPRESSIONS.
+API stub: FaceRenderer.set_expression(name), supported names in EXPRESSIONS.
 pygame is imported lazily so this module imports (and its geometry is
 testable) on machines without pygame.
 """

@@ -1,4 +1,4 @@
-# desk-pi — tracked desk robot (Raspberry Pi head)
+# desk-pi, tracked desk robot (Raspberry Pi head)
 
 A small **tank-tracked mobile robot**: a **Raspberry Pi 5** driving the **official 7" touchscreen**
 as an animated face, with a **Camera Module 3** as an eye, on a **neck that pans + tilts** the head,
@@ -26,7 +26,7 @@ order. (Track gauge widened 2026-07-06: chassis_w
 
 **Design-ref styling pass (2026-07-06, branch design-styling):** the 5 concept renders in
 `reference/design/` (black+orange rugged two-tone) are now integrated as a 34-part GLB:
-COLORS/PAL colorway (keep `src/build.py` COLORS and the viewer PAL in sync — the VIEWER
+COLORS/PAL colorway (keep `src/build.py` COLORS and the viewer PAL in sync, the VIEWER
 re-colors by node name and wins on render), orange head side rails (`trim_rail_L/R`, the
 arm shoulders land on them), forehead LED strip + slot, knurled `antenna_stub` (robot -X =
 image-right in the reference front view), rear orange `trim_hatch_frame` (bottom band
@@ -95,7 +95,7 @@ tank chassis        DRIVE base: central body (build_base) + track_L/track_R (bui
   axle and driven by the `tilt_worm` (single-start) on motor_tilt, whose shaft runs +Y (right-angle to
   the axle). Single-start worm self-locks, so the head holds ±30° with the motor de-energized (no idle
   current/heat). Pre-balance the head on the axle (Pi as counterweight) so the worm barely works. Axle
-  position (y=−18, z=178, `tilt_axis_y`/`tilt_axis_z`) MUST match the cheek bearings — an earlier bug
+  position (y=−18, z=178, `tilt_axis_y`/`tilt_axis_z`) MUST match the cheek bearings, an earlier bug
   lifted the clevis 46 mm; build in world coords. **Stage 2R moved the axle BACK 18 mm (y 0 → −18):**
   the Pi rides the display back, and at y=0 the axle/worm/cheeks ran through the board plane. The
   whole drivetrain (cheeks+hoops, wheel, worm, brackets) keys off the `tilt_axis_*` pair; the screen
@@ -112,11 +112,11 @@ tank chassis        DRIVE base: central body (build_base) + track_L/track_R (bui
   in the head behind the tilt axis. DSI + CSI ribbons stay entirely in the head (zero joint
   crossings); the board doubles as the tilt counterweight. Only round wires (Pi power) cross the
   joints. Tradeoff: heavier head + higher CoM → ballast the base low.
-- **Cable path:** the Pi power pair (5A, ~Ø3.6 envelope) does NOT fit the Ø2.5 axle bore — that
+- **Cable path:** the Pi power pair (5A, ~Ø3.6 envelope) does NOT fit the Ø2.5 axle bore, that
   hollow is weight relief only. The real route: base USB-C wall port → base cavity (pan **service
   loop**) → 16×8 obround pass in the platform → neck channel → out the column top → into the head
   through the bottom-rear slot with a tilt drape (±30° is easy). Pan is ±90°, so a service loop
-  beats a slip ring — it carries the full 5A rail silently and free; software-limit pan so it never
+  beats a slip ring, it carries the full 5A rail silently and free; software-limit pan so it never
   over-winds. A 2A/circuit capsule slip ring can't pass 5A without paralleling contacts; only add
   one for 360° pan.
 
@@ -147,7 +147,7 @@ display's own 58×49 standoffs, GPIO pins out): 192.96 (W) × 38.01 (D) × 110.7
 `reference/rpi-7in-touchscreen-model/files/Raspberry_Pi_Touch_Screen_Assembly_-_Pins_Out_v8.stl`,
 posed by the GLASS PLANE (not bbox center; the pins-out mesh is 13 mm deeper on the back) via
 `screen_pose()`. `PARAMS["screen_d"]=25.0` describes the display module alone, not this mesh.
-NOTE: this mesh is NOT watertight — manifold booleans on it raise; probe screen clearances with
+NOTE: this mesh is NOT watertight, manifold booleans on it raise; probe screen clearances with
 surface-sample containment, never with `ivol()`-style try/except (that returned vacuous 0.000 for
 three stages, see docs/FIXES.md Stage 4). Overall assembly bbox ≈ 209 × 170.5 × 251 mm.
 
@@ -166,16 +166,16 @@ links' central channel, idler grows outboard-only to clear the tension plate).
 Use the **official Raspberry Pi 27W USB-C PD supply (5.1V / 5A)**. The Pi 5 only unlocks full
 USB current on a true 5A PD supply; a 15W/3A brick software-limits USB to ~600mA and browns out
 once screen + camera + servos draw together. Two servos (pan + tilt) may want their **own 5–6V
-supply** rather than pulling off the Pi's rail — decide when the servo BOM is picked.
+supply** rather than pulling off the Pi's rail, decide when the servo BOM is picked.
 
-## Motors — 28BYJ-48 pan/tilt (dimensionally correct now) + TT track drive
+## Motors, 28BYJ-48 pan/tilt (dimensionally correct now) + TT track drive
 
-Motor choice made against the parts on hand (see the moshes-inventory MCP): the head is driven by
+Motor choice made against the parts on hand (see a personal parts inventory): the head is driven by
 **28BYJ-48 5V geared steppers** (×6 in Bags 5 & 14) with **ULN2003 boards** (×9); the 9g servos are
 too weak to swing a 193mm screen head. `motor_28byj()` is now dimensionally correct: **Ø28.25 can,
 18.8 tall, 7.875 mm shaft offset, Ø4.93 double-D shaft with 3.0 mm flats over the top 6 mm**, ears at
 35 mm, wiring box. The governing rule for both joints: **locate the CAN so the offset shaft lands on
-the target axis — don't fight the offset with an eccentric coupler.**
+the target axis, don't fight the offset with an eccentric coupler.**
 
 - **Pan (direct D-hub):** 28BYJ upright in the base, can offset `-motor_shaft_off` so the shaft is on
   the pan axis; it keys into a **double-D bore hub** under `pan_platform` (`dbore_neg`/`dbore_hub`) +
@@ -193,7 +193,7 @@ the target axis — don't fight the offset with an eccentric coupler.**
 **Buy list (gaps; full inventory-checked BOM in docs/ASSEMBLY.md, 2026-07-07):** a 2nd track
 drive motor (see below), 2× F688ZZ flanged bearings 8×16×5 (idlers), 6 mm airsoft BBs (pan
 race), Ø5 rod for the tilt axle, the official 27W USB-C PD supply (not in inventory), 1 m of
-NARROW (4–5 mm) addressable strip (SK6805-2427/WS2812-2020 — a standard 8×5050 stick is
+NARROW (4–5 mm) addressable strip (SK6805-2427/WS2812-2020, a standard 8×5050 stick is
 53.3×10.2 and does NOT fit the 42×5 `led_slot`). M2/M3 screws are covered by the owned kits.
 The "608zz ×30" are unused in the design and still unverified (may be plastic rings).
 
@@ -216,7 +216,7 @@ engagement beats a friction belt that slips when the head pans.
   print vs the rigid model. (Gauge widened: chassis_w 140.) Pi rides the head (high CoM)
   → keep the chassis heavy/low and the wheelbase long so it doesn't tip on accel or a fast head pan.
 
-## Print notes (first pass — not finalized)
+## Print notes (first pass, not finalized)
 
 - 10 printed parts (`chassis`, `track_L`, `track_R`, `neck_clevis`, `pan_platform`, `pan_race`,
   `pan_clips`, `head_bezel`, `head_back`, `cam_cover`) export via `EXPORT=1`. `worm_wheel`/
@@ -239,7 +239,7 @@ engagement beats a friction belt that slips when the head pans.
   open-side-down, neck on its back, base flange-down.
 - **Still a refinement:** explicit 45° self-supporting chamfers on the largest back openings
   (I/O slot ~64mm), the offset-shaft coupler part, a second ULN mount for the tilt driver, and the
-  pan-joint slip ring (a purchased capsule — model its seat once you buy one). Screen standoffs wait
+  pan-joint slip ring (a purchased capsule, model its seat once you buy one). Screen standoffs wait
   on measuring the display's real mount holes from the reference STEP.
 
 ## Layout
@@ -264,7 +264,7 @@ docs/ASSEMBLY.md BOM + assembly order
 ## Gotchas
 
 - **`TAU` in build.py is `2*np.pi` (a full turn).** It was once wrongly set to `np.pi`, which made
-  `R(TAU/2)` a 90° rotation — that silently laid the LCD on its back (the "screen position wrong"
+  `R(TAU/2)` a 90° rotation, that silently laid the LCD on its back (the "screen position wrong"
   bug) and half-rotated the tilt motor and vents. If you touch `TAU`, keep it `2π` and remember
   `cyl(axis="x"/"y")` relies on `R(TAU/4)` = 90°.
 - The screen STL loads as X=width, Y=depth, Z=height (correct, upright). `screen_flip=True` applies a
@@ -274,7 +274,7 @@ docs/ASSEMBLY.md BOM + assembly order
   path (works on 3.9). Move to build123d in a venv when we want native fillets/chamfers.
 - serve.py serves `web/` at root: the model URL is `/assembly.glb`. Passing `web/assembly.glb` to
   shoot.py 404s.
-- The viewer **ghosts** housing-like parts by name (anything with shell/body/housing/case/lid) —
+- The viewer **ghosts** housing-like parts by name (anything with shell/body/housing/case/lid),
   that's why `head_shell` renders as a translucent outline. Toggle **solid** in the viewer to see it
   filled. `shoot.py` can't toggle it, so to render the shell solid, rename it in a temp scene.
 - Screen STL axes already match ours (X=W, Y=D, Z=H); no swap needed, just recenter + `screen_pose()`.

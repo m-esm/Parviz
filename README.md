@@ -163,9 +163,11 @@ attribution if you reuse them.
 
 ## License
 
-No project license file yet (the repo is private for now). One caveat drives the choice: the
-bundled `reference/` meshes carry mixed Creative Commons terms, and two are restrictive. The
-touchscreen model is **CC BY-SA** (share-alike) and the touchscreen case is **CC BY-NC**
-(non-commercial), so any redistribution of those two meshes inherits those terms. To keep the
-project freely and commercially licensable, drop those two folders from the tree (fetch them at
-build time instead) and license your own work (`src/`, `software/`, `docs/`) as you like.
+The original work here (`src/`, `software/`, `docs/`, `tools/`, `web/`, `stl/`, CAD) is licensed
+under **Apache-2.0** (see [LICENSE](LICENSE) and [NOTICE](NOTICE)).
+
+The bundled `reference/` meshes are third-party and keep their own Creative Commons terms, listed
+in [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md). Two are restrictive: the touchscreen model is
+**CC BY-SA** and the touchscreen case is **CC BY-NC**, so redistributing the repo as a whole is
+non-commercial while those files are present. Remove them (and fetch at build time) if you need a
+fully permissive tree.
