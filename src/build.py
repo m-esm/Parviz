@@ -984,8 +984,12 @@ def build_head_parts():
         sl = w[1] - wall_in                              # standoff length (88.48, deep head)
         b = cyl(P["scr_boss_r"], sl, axis="y"); b.apply_translation((w[0], wall_in + sl / 2, w[2]))
         back = uni([back, b])
-        # deep Ø6.5 screw-head/driver channel from the back wall, stopping 6 short of the tab
-        ch = cyl(3.25, sl - 6 + 4, axis="y")
+        # deep Ø7.0 screw-head/driver channel from the back wall, stopping 6 short of the tab.
+        # Task #28 (assembly): was Ø6.5 -> open radius 3.2, an M3 PAN head (Ø5.5, r2.75)
+        # cleared by 0.45 over this 88.5-long blind channel and a countersunk M3 head (Ø6.0)
+        # would NOT enter. Ø7.0 (r3.5) gives ~0.75 around any M3 head + room for a hex bit to
+        # grip the head down the channel. Standoff is Ø9, so 1.0 wall remains.
+        ch = cyl(3.5, sl - 6 + 4, axis="y")
         ch.apply_translation((w[0], P["body_back_y"] - 4 + (sl - 6 + 8) / 2, w[2]))
         back = sub(back, ch)
         # M3 clearance through the remaining 6 mm seat (screw threads into the display pan)
