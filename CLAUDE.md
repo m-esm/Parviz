@@ -18,8 +18,10 @@ official Pins-Out assembly: Pi on the display's own 58×49 standoffs), retained 
 on `head_back` at the factory M3 bosses; **camera recessed behind the forehead** (official CM3
 dims) with a lens bump + `cam_cover`; **tracks = measured-TT-motor positive drive: articulated
 links + 12T sprocket + F688ZZ idler + road wheels**. The 28BYJ placeholder is now dimensionally correct (Ø28.25, 7.875 mm
-offset shaft, 3 mm D-flats). Remaining: worm teeth are readable placeholders (regen involute/helix
-in BOSL2 in a venv), body-to-pod join, buy list. (Track gauge widened 2026-07-06: chassis_w
+offset shaft, 3 mm D-flats). Remaining gaps closed 2026-07-07: REAL involute worm teeth integrated (tools/gears/ generator,
+docs/WORM.md, CD 11.9, PLACEHOLDER_GEARS=1 falls back), body-to-pod join modeled, BOM
+inventory-checked (docs/ASSEMBLY.md), belly plate + head rear door, verified 18-step assembly
+order. (Track gauge widened 2026-07-06: chassis_w
 120->140, track outer faces +-102 ~= head half-width; base_h 52->66 for the design-ref stance.)
 
 **Design-ref styling pass (2026-07-06, branch design-styling):** the 5 concept renders in

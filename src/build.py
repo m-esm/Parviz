@@ -658,6 +658,23 @@ def worm(pitch_r, length, starts=1, axis="y"):
     return uni(ribs)
 
 
+def load_gear_stl(name):
+    """Load a generated real-tooth gear blank (tools/gears/gen_worm_drive.py, docs/WORM.md).
+    Both blanks are committed under stl/neck/; hard-fail with the regen pointer if one is
+    missing so EXPORT/regeneration flows don't crash cryptically mid-boolean."""
+    path = stlp(name)
+    if not os.path.exists(path):
+        raise SystemExit(
+            f"build.py: missing real gear mesh {path}\n"
+            "  Regenerate with tools/gears/gen_worm_drive.py (docs/WORM.md 'How to "
+            "regenerate'), or set PLACEHOLDER_GEARS=1 to build with the readable "
+            "gear_disc/worm placeholders.")
+    m = trimesh.load(path, force="mesh")
+    if not m.is_volume:
+        raise SystemExit(f"build.py: {path} is not watertight -- regenerate it (docs/WORM.md)")
+    return m
+
+
 # ---------------------------------------------------------------------------
 # Reference screen (loaded, recentered, oriented so glass faces +Y)
 # ---------------------------------------------------------------------------
@@ -2367,24 +2384,52 @@ def build():
     # worm wheel keyed to the axle -> turns WITH the head (M_head). Width 7 centered on x=0,
     # grub-keyed hub (M3 grub to the Ø5 axle -- a plain bore freewheeled), and spacer TUBES out
     # to both 695 inner races: they react the ~10 N worm thrust / 3.7 N wheel axial load.
-    wheel = gear_disc(wheel_r, P["worm_wheel_teeth"], P["worm_wheel_w"], 2.5 * P["worm_module"], axis="x")
+    # REAL generated teeth (docs/WORM.md): 12T involute helical wheel + single-start worm,
+    # verified meshing at CD 11.9 / 0.000 mm3. PLACEHOLDER_GEARS=1 restores the readable
+    # gear_disc/worm placeholders (cheap insurance + regen testing).
+    placeholder_gears = os.environ.get("PLACEHOLDER_GEARS") == "1"
+    if placeholder_gears:
+        wheel = gear_disc(wheel_r, P["worm_wheel_teeth"], P["worm_wheel_w"],
+                          2.5 * P["worm_module"], axis="x")
+    else:
+        # toothed blank only: axis X, bore Ø5.2, width 7, centered at origin -- exactly where
+        # gear_disc built; the hub/tube union, bore re-cut and grub pilot below apply unchanged.
+        wheel = load_gear_stl("worm_wheel_real.stl")
+        # cosmetic mesh clocking: at the assembly's relative pose (wheel midplane crosses the
+        # worm at worm-local y +6) the blank's zero-interference phase is 24.5 deg (scanned per
+        # docs/WORM.md note 4 / mesh_check in tools/gears/gen_worm_drive.py). M_head then adds
+        # tilt_deg about the SAME axis, so pre-rotate by (24.5 - tilt) mod one tooth pitch (30)
+        # and the teeth visually mesh at ANY preview/sweep pose. Physically meaningless (the
+        # wheel is 30-deg tooth-periodic); the grub pilot below stays clocked +Z regardless.
+        wheel.apply_transform(R(((24.5 - tilt_deg) % 30.0) * DEG, (1, 0, 0)))
     hub = cyl(5.5, 5.5, axis="x"); hub.apply_translation((6.25, 0, 0))          # x 3.5..9
     tub_p = cyl(4.0, 9.0, axis="x"); tub_p.apply_translation((13.5, 0, 0))      # hub -> +X race
     tub_m = cyl(4.0, 14.5, axis="x"); tub_m.apply_translation((-10.75, 0, 0))   # wheel -> -X race
     wheel = uni([wheel, hub, tub_p, tub_m])
     wheel = sub(wheel, cyl(P["axle_d"] / 2 + 0.1, 40, axis="x"))                # Ø5.2 over the axle
     wgrub = cyl(1.25, 8); wgrub.apply_translation((6.25, 0, 3.5))               # M3 grub pilot
+    # DFA: the grub is BENCH-ONLY -- the axle cartridge (wheel + spacer tubes + 695 bearings)
+    # is slid together and grub-keyed on the bench BEFORE the cheeks close around it; the pilot
+    # lands on the plain hub (x 5.0..7.5, blank teeth end at |x| 3.5), never through a tooth root.
     wheel = sub(wheel, wgrub)
     _color(wheel, "fork"); wheel.metadata["name"] = "worm_wheel"
     wheel.apply_translation((wx, yt, zt))
-    add(wheel, M_head)
+    add(wheel, M_head, "worm_wheel.stl")
     # worm on the motor shaft (axis Y), tangent below the wheel; fixed to the neck frame (M_pan).
     # FULL-DEPTH double-D bore (the old worm had no bore at all) + a Ø6 tail stub riding the
     # neck bracket's outboard bushing post (the far end was a free cantilever).
     face_y = yt - 0.5 * P["worm_len"] - 9.5          # keep in sync with build_neck_clevis()
-    yc = face_y + 3.5 + P["worm_len"] / 2            # thread ribs overhang the body 1 mm each
-                                                     # end; keep 0.5 off the plate front face
-    wm = worm(P["worm_od"] / 2, P["worm_len"], axis="y")
+    yc = face_y + 3.5 + P["worm_len"] / 2            # real worm thread spans exactly +-7 (the
+                                                     # old placeholder ribs overhung 1 mm/end);
+                                                     # keep 0.5 off the plate front face
+    if placeholder_gears:
+        wm = worm(P["worm_od"] / 2, P["worm_len"], axis="y")
+    else:
+        # real single-start RH worm (docs/WORM.md): axis Y, OD 10.55, solid core Ø7, thread
+        # span exactly +-7 about origin. The Ø7 core takes the full-depth double-D bore in
+        # SOLID stock (probed: bore surface 100% inside the solid over the thread span;
+        # round wall 0.915 mm, flat wall 1.88 -- thin but the D-flats carry the torque).
+        wm = load_gear_stl("tilt_worm_real.stl")
     # Ø5 tail stub: bare past the thread end (y=-16, local +8) so the cradle groove band
     # (y -15.5..-13) grips ROUND stock, not thread (stage-4 D2); r2.5 keeps it under the
     # wheel-tooth sweep where it emerges
@@ -2399,7 +2444,7 @@ def build():
     wm = sub(wm, db)
     _color(wm, "motor"); wm.metadata["name"] = "tilt_worm"
     wm.apply_translation((wx, yc, wz))
-    add(wm, M_pan)
+    add(wm, M_pan, "tilt_worm.stl")
     # tilt motor: shaft +Z -> +Y, then ROLLED about the shaft so the 7.875 offset points UP:
     # the can hangs BELOW the worm axis (clear of the head's back-wall sweep) and the ears run
     # horizontal at the CAN axis. Gear face lands on the bracket plate's BACK face.

@@ -22,6 +22,7 @@ SUBSYSTEMS = [
     ("plinth", "base"),
     ("belly", "base"),       # belly access plate under the chassis floor
     ("neck", "neck"),          # pan column, tilt yoke, linkages
+    ("worm", "neck"),          # tilt worm drive (real generated teeth, docs/WORM.md)
     ("yoke", "neck"),
     ("pan", "neck"),
     ("tilt", "neck"),
