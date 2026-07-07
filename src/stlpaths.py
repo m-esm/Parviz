@@ -20,6 +20,7 @@ SUBSYSTEMS = [
     ("chassis", "base"),
     ("track", "base"),
     ("plinth", "base"),
+    ("belly", "base"),       # belly access plate under the chassis floor
     ("neck", "neck"),          # pan column, tilt yoke, linkages
     ("yoke", "neck"),
     ("pan", "neck"),

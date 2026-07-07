@@ -201,7 +201,7 @@ const PAL = [
   [/^arm_/i,        {c:0x33373E, m:0.15, r:0.65, env:0.3}],  // charcoal gripper arms
   [/sensor/i,       {c:0xB8BCC2, m:0.75, r:0.35}],           // silver sensor barrels
   [/head_bezel/i,   {c:0x2E3238, m:0.12, r:0.72, env:0.3}],  // matte charcoal, front
-  [/head_back|shell|cradle|cover/i, {c:0x363A41, m:0.12, r:0.72, env:0.3}], // charcoal, back
+  [/head_back|head_door|shell|cradle|cover/i, {c:0x363A41, m:0.12, r:0.72, env:0.3}], // charcoal, back
   [/screen/i,       {c:0x0E1319, m:0.10, r:0.16, e:0x0b1a24, ei:0.32}], // dark glass, faint glow
   [/camera/i,       {c:0x1E2126, m:0.30, r:0.4, env:0.35}],  // black camera pod
   [/motor|byj|drive/i, {c:0x9AA0A8, m:0.70, r:0.35}],        // silver actuation
@@ -209,7 +209,7 @@ const PAL = [
   [/pi5|^pi_|pi$/i, {c:0x2FA36B, m:0.10, r:0.5 }],           // PCB green
   [/neck|clevis|fork|wheel|worm/i, {c:0x565C66, m:0.65, r:0.38}], // dark steel mechanicals
   [/pan|platform/i, {c:0x4A4F57, m:0.55, r:0.42}],           // graphite pan
-  [/base|chassis/i, {c:0x2C3036, m:0.12, r:0.75, env:0.3}],  // matte charcoal chassis
+  [/base|chassis|belly/i, {c:0x2C3036, m:0.12, r:0.75, env:0.3}],  // matte charcoal chassis
   [/track/i,        {c:0x232529, m:0.05, r:0.9, env:0.25}],  // near-black rubber tracks
 ];
 function matSpec(name){

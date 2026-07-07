@@ -227,6 +227,28 @@ P = {
     "blst_rib_xmax": 40.0,                  # rib outer end (TT clearance, see above)
     "blst_usb_hw": 10.0,                    # rib-free USB corridor half-width
 
+    # --- BELLY ACCESS PLATE (task #26): bolt-on floor plate under the cavity ---
+    # Opening 100x110 keeps a >=12 rim inside the 130x146 cavity footprint EXCEPT a
+    # retained floor STRAP (x -34..25, y -26..51): the pan-motor pedestal (x -31.9..
+    # 16.1, y +-24) and the inboard ULN posts ((20.5, 36) on ULN#1, (-20.5, 29) on
+    # ULN#2) root on the floor -- a clean 100x110 cut would set all three afloat. The
+    # strap splits the opening into a full-width rear bay window (ballast, TT rears,
+    # USB) + two front channels (ULN wiring). Plate = 1.45 flange in a 1.5 rebate
+    # (belly face stays flush at z=7: ground clearance is only 7) + a 3-thick plug
+    # filling the opening; the two inboard ballast ribs move ONTO the plug.
+    "belly_open_wl": (100.0, 110.0),        # opening W(X) x L(Y), corners r8
+    "belly_open_c": (0.0, -6.0),            # centre (rear-biased toward the ballast bay)
+    "belly_keep": (-34.0, -26.0, 25.0, 51.0),   # retained strap (x0, y0, x1, y1)
+    "belly_rebate_grow": 8.0,               # rebate ledge past the opening, per side
+    "belly_lip_t": 1.5,                     # rebate depth (up from the belly face z=7)
+    "belly_fit": 0.15,                      # plate<->rebate/opening clearance per side
+    # 6x M3 countersunk from below (heads flush at z=7) into Ø7 self-tap bosses
+    # standing on the interior rim/strap (Ø2.5 pilots). Stations dodge the TT gearboxes
+    # (|x|>=46.26 at y<-40), the ballast ribs (|x|<=40) and both ULN board envelopes.
+    "belly_screws": ((-42.0, -65.5), (42.0, -65.5), (-54.0, -5.0), (54.0, -5.0),
+                     (-30.0, 53.0), (30.0, 53.0)),
+    "belly_boss_r": 3.5, "belly_boss_h": 6.0,
+
     # --- 28BYJ-48 5V geared stepper (owned x6, + ULN2003 x9). Dims from the beckdac SCARA
     #     SCAD model, cross-checked vs the Mouser datasheet (real, not eyeballed). ---
     "motor_can_d": 28.25,   # can (body) diameter
@@ -314,7 +336,28 @@ P = {
     "hatch_frame_band": 13.0,   # ring width
     "hatch_frame_t": 3.0,       # proud of the back face
     "hatch_frame_cz": 151.0,    # outer z 98.5..203.5; inner 111.5..190.5 (louvres
-                                # 171..189 land inside the opening)
+                                # 171..187 land inside the opening)
+
+    # --- HEAD REAR DOOR (task #26): the wall inside trim_hatch_frame is removable ---
+    # U-SHAPED (the bottom-centre stays OPEN: it is the tilt-sweep motor bay, x +-33 /
+    # z 78..168 -- the pan-frame drivetrain crosses the wall plane there at tilt
+    # extremes, so a head-riding door may not fill it). Outline clears the screen-
+    # standoff roots (bosses reach |x| 57.11, gusset webs |x| 59.6..66.6) and keeps
+    # the seam inside the orange frame opening (x +-67, z 111.5..190.5).
+    "door_hx": 56.5,            # door half-width (0.61 to the Ø9 standoff boss edge)
+    "door_z": (113.5, 190.2),   # outline z span (2 over the frame's inner 111.5;
+                                # 0.3 under its inner 190.5 -> seam reads in-frame)
+    "door_notch_hx": 35.0,      # bay notch half-width (2 past the x +-33 bay edge)
+    "door_notch_ztop": 170.0,   # bay notch top (2 past the z=168 bay lip)
+    "door_lip": 2.0,            # fixed-wall support lip all around (through-void inset)
+    "door_fit": 0.15,           # perimeter fit clearance
+    # Retention: 2x M3 csk (axis +Y) at the leg bottoms into captive-nut blocks on
+    # head_back + 2x 3mm top HOOK tabs (insert top-first, swing in, screw the bottom).
+    # SCREWS, not magnets: the tracked base + three steppers vibrate the head
+    # constantly; magnets walk and chatter under vibration, a screwed door stays put
+    # and still opens with the same driver as everything else.
+    "door_screws": ((-46.0, 119.0), (46.0, 119.0)),
+    "door_hook_x": 47.0, "door_hook_w": 14.0, "door_hook_lip": 3.0,
     # Chassis FRONT fascia (design-ref front.jpg). Front wall: y=78 face, x +-60, z 7..52.
     "grille_cz": 46.0,      # orange surround outer 60x20 -> z 36..56; inner 52x12
     "grille_w": 60.0, "grille_h": 20.0, "grille_band": 4.0, "grille_t": 2.5,
@@ -700,13 +743,15 @@ def build_head_shell():
     io_side = box(14.0, 15.0, 17.0)
     io_side.apply_translation((P["head_w"] / 2 - 2, -1.0, P["screen_cz"] + 22.0))
     shell = sub(shell, io_side)
-    # ventilation louvres high on the back wall (Pi 5 runs hot). 3x 70-wide (was 5x 50 at
-    # z 153..189): the deep-head motor BAY below opens the wall to z=168, so the louvres
-    # moved up into the z 171..189 band -- above the bay web (3 mm) and still inside the
-    # hatch-frame opening (z < 190.5). Wider (x +-35) keeps ~the vent area.
+    # ventilation louvres high on the back wall (Pi 5 runs hot). 3x 76-wide x 3 at
+    # z 171..187 (was 4-tall/70-wide at 171..189): the rear DOOR (task #26) now carries
+    # them, and its through-void tops out at z 188.2 -- 4-tall louvres reaching 189 cut
+    # the door's 2 mm support lip into slivers. Shrunk to 3 tall / 6.5 pitch (top 187,
+    # 1.2 inside the void) and widened to x +-38 (door plug reaches +-54.5), keeping
+    # the vent area ~= 684 mm^2 and the 3 mm web over the z=168 bay lip.
     for i in range(3):
-        louvre = box(70, 30.0, 4.0)
-        louvre.apply_translation((0, P["body_back_y"], P["screen_cz"] + 20 + i * 7))
+        louvre = box(76, 30.0, 3.0)
+        louvre.apply_translation((0, P["body_back_y"], P["screen_cz"] + 19.5 + i * 6.5))
         shell = sub(shell, louvre)
 
     # bottom-rear MOTOR BAY (task #27 deep head): one slot voids the bottom wall (x +-33,
@@ -947,9 +992,71 @@ def build_head_parts():
         c = cyl(P["scr_m3_clear_r"], 16, axis="y"); c.apply_translation((w[0], w[1] - 3, w[2]))
         back = sub(back, c)
 
+    # --- REAR SERVICE DOOR (task #26): the 4-thick wall (y -70..-66) inside the orange
+    # frame becomes a removable U-shaped panel. Through-void = outline inset door_lip
+    # (2 mm fixed-wall lip all around, incl. a 2 mm ring left standing around the x +-33
+    # bay); a 2-deep rebate off the OUTER face takes the door's 1.9 flange (0.1 axial +
+    # 0.15 perimeter clearance), a 2.1 plug fills the void flush with the inner face.
+    # The gusset webs (|x| 59.6..66.6, y -67..-27) and standoff bosses (edge |x| 57.11)
+    # stay entirely on head_back: void reaches |x| 54.5, rebate |x| 56.5.
+    zb0, zb1 = P["door_z"]; dlip = P["door_lip"]; dfit = P["door_fit"]
+    outline = sg.box(-P["door_hx"], zb0, P["door_hx"], zb1).difference(
+        sg.box(-P["door_notch_hx"], zb0 - 5.0, P["door_notch_hx"], P["door_notch_ztop"]))
+    void = outline.buffer(-dlip, join_style=2)
+    wall_out = P["body_back_y"]                          # outer back face (-70)
+
+    def _xz(poly, t, y0):
+        """Extrude an XZ-footprint poly (x, z) to thickness t, spanning y0-t..y0."""
+        m = extrude_polygon(poly, t)
+        m.apply_transform(R(TAU / 4, (1, 0, 0)))         # (x, y, z) -> (x, -z, y)
+        m.apply_translation((0, y0, 0))
+        return m
+
+    back = sub(back, _xz(void, 8.0, wall_out + 7.0))         # through-void, y -71..-63
+    back = sub(back, _xz(outline, 2.5, wall_out + 2.0))      # 2-deep outer rebate + overshoot
+    door = uni([_xz(outline.buffer(-dfit, join_style=2), 2.0 - 0.1, wall_out + 2.0 - 0.1),
+                _xz(void.buffer(-dfit, join_style=2), 2.1, wall_out + 4.0)])
+    # top HOOK tabs (x +-47, 14 wide: outboard of the x +-38 louvres, inboard of the
+    # z-186.8 standoff bosses at |x| 57.11): a root block inside the void + a 1.3 plate
+    # lapping 3 mm up behind the fixed wall above the seam (0.15 off its inner face).
+    hx, hw = P["door_hook_x"], P["door_hook_w"]
+    for sx in (-1, 1):
+        root = box(hw, 2.45, 2.0)
+        root.apply_translation((sx * hx, -65.775, 187.0))    # y -67..-64.55, z 186..188
+        plate = box(hw, 1.3, 3.2 + P["door_hook_lip"])       # z 187..193.2 (1 into the
+        plate.apply_translation((sx * hx, -65.2, 187.0 + (3.2 + P["door_hook_lip"]) / 2))
+        door = uni([door, root, plate])                      # root so the union fuses)
+    # louvres live in the door: same cuts build_head_shell made in the wall
+    for i in range(3):
+        louvre = box(76, 30.0, 3.0)
+        louvre.apply_translation((0, wall_out, P["screen_cz"] + 19.5 + i * 6.5))
+        door = sub(door, louvre)
+    # bottom retention: per side an M3 csk through the door leg into a captive-nut
+    # block on head_back (rooted into the full-thickness wall below the z 113.5 seam,
+    # rising 0.15 clear behind the door plug). M3x10: tip -60.05, room to -57.5.
+    for dx, dz in P["door_screws"]:
+        blk = box(12.0, 8.35, 18.0)
+        blk.apply_translation((dx, -61.675, 113.0))          # y -65.85..-57.5, z 104..122
+        tongue = box(12.0, 1.0, 9.3)
+        tongue.apply_translation((dx, -66.35, 108.65))       # fuses into the wall, z<113.3
+        back = uni([back, blk, tongue])
+        bore = cyl(1.75, 9.0, axis="y"); bore.apply_translation((dx, -62.0, dz))
+        back = sub(back, bore)
+        nut = hex_prism(P["m3_nut_af"] + 0.3, P["m3_nut_h"])
+        nut.apply_transform(R(TAU / 4, (1, 0, 0)))           # axis +Z -> Y
+        nut.apply_translation((dx, -62.1, dz))               # captive, y -63.5..-60.7
+        back = sub(back, nut)
+        csk = frustum(3.35, 1.7, 1.65)                       # M3 flat head, 90 deg cone
+        csk.apply_transform(R(-TAU / 4, (1, 0, 0)))          # big face toward -Y (outside)
+        csk.apply_translation((dx, wall_out - 0.05, dz))
+        door = sub(door, csk)
+        mc = cyl(1.75, 6.0, axis="y"); mc.apply_translation((dx, wall_out + 2.5, dz))
+        door = sub(door, mc)
+
     _color(bezel, "cradle"); bezel.metadata["name"] = "head_bezel"
     _color(back, "back"); back.metadata["name"] = "head_back"
-    return bezel, back
+    _color(door, "back"); door.metadata["name"] = "head_door"
+    return bezel, back, door
 
 
 def build_head_rails():
@@ -1561,6 +1668,35 @@ def frustum(r_bottom, r_top, h, sections=96):
     return sub(c, cut)
 
 
+def _belly_polys():
+    """(opening, rebate) shapely polys for the belly access plate (task #26).
+    Opening = rounded 100x110 MINUS the retained strap (keeps the pedestal + inboard
+    ULN posts rooted); rebate = one bigger rounded rect, cut 1.5 up from the belly
+    face EVERYWHERE inside it (incl. under the strap, thinned to 3.5 there) so the
+    plate is a single flat flange."""
+    w, l = P["belly_open_wl"]; cx, cy = P["belly_open_c"]
+    op = sg.box(cx - w / 2, cy - l / 2, cx + w / 2, cy + l / 2)
+    op = op.buffer(-8, join_style=1).buffer(8, join_style=1)
+    op = op.difference(sg.box(*P["belly_keep"]))
+    g = P["belly_rebate_grow"]
+    reb = sg.box(cx - w / 2 - g, cy - l / 2 - g, cx + w / 2 + g, cy + l / 2 + g)
+    reb = reb.buffer(-10, join_style=1).buffer(10, join_style=1)
+    return op, reb
+
+
+def _belly_csk_neg(bx, by):
+    """Shared csk negative for one belly screw: M3 flat-head cone (Ø6.7 -> Ø3.4, head
+    finishes flush at the z=7 belly face) + Ø3.5 clearance reaching z=9.2. Subtracted
+    from BOTH the plate and the chassis ledge (the cone's last 0.15 crosses the z=8.5
+    rebate ceiling; without the shared cut the head would stand the plate off)."""
+    cone = frustum(3.35, 1.7, 1.65)
+    cone.apply_translation((0, 0, P["chassis_clear"] - 0.05))     # z 6.95..8.6
+    clr = cyl(1.75, 3.2); clr.apply_translation((0, 0, 7.6))      # z 6.0..9.2
+    neg = uni([cone, clr])
+    neg.apply_translation((bx, by, 0))
+    return neg
+
+
 def build_base():
     """Tank chassis BODY: hollow rounded box between the tracks. Top = pan-mount plane; houses
     the pan motor + driver + wiring. (Track pods are build_tracks.)"""
@@ -1695,12 +1831,13 @@ def build_base():
         body = sub(body, pil)
     usb = box(14, 12, 8)                              # USB-C power entry in the rear wall
     usb.apply_translation((0, -P["chassis_l"] / 2, z0 + 12)); body = sub(body, usb)
-    # BALLAST BAY retaining ribs on the cavity floor (see the PARAMS note): 3 ribs across X
-    # (2 wide x 4 tall, z 12..16) at y -63 / -51.5 / -40 -> three ~9.5-wide pockets against
-    # the rear wall, each split into L/R halves by the USB-C plug corridor (x +-10). Mass
-    # sits low + rearward to counter the forward-high head/Pi CoM.
+    # BALLAST BAY retaining ribs (see the PARAMS note): the REAR rib (y=-63) stays on
+    # the chassis -- it lands on the 12-wide floor rim behind the belly opening (edge
+    # y=-61). The two inboard ribs (-51.5, -40) root on floor that is now the belly
+    # OPENING, so they moved onto the belly plate (build_belly_plate); pocket walls +
+    # USB corridor are unchanged. Mass sits low + rearward against the head/Pi CoM.
     rib_l = P["blst_rib_xmax"] - P["blst_usb_hw"]     # 30 per half-rib
-    for ry in P["blst_rib_y"]:
+    for ry in P["blst_rib_y"][:1]:
         for sx in (-1, 1):
             rib = box(rib_l, P["blst_rib_w"], P["blst_rib_h"])
             rib.apply_translation((sx * (P["blst_usb_hw"] + rib_l / 2), ry,
@@ -1824,9 +1961,56 @@ def build_base():
         body = sub(body, blind_socket(P["fix_socket2_r"], P["fix_socket_deep"], (0, -1, 0),
                                       (P["rear_cyl_x"] + sxp * P["rearpod_pin_dx"], -fw,
                                        P["rear_cyl_cz"])))
+    # --- BELLY ACCESS PLATE opening (task #26; the plate itself is build_belly_plate).
+    # Cut LAST so no later union refills it. Opening through the 5-floor (z 7..12) +
+    # a 1.5-deep rebate off the belly face; 6x Ø7 self-tap bosses on the rim/strap
+    # with Ø2.5 pilots (blind: stop 0.5 under the boss top), csk negatives shared
+    # with the plate so the M3 flat heads finish flush at z=7 (ground clearance 7).
+    op_poly, reb_poly = _belly_polys()
+    op_cut = extrude_polygon(op_poly, 9.0)
+    op_cut.apply_translation((0, 0, 4.0))                    # z 4..13, through the floor
+    body = sub(body, op_cut)
+    reb_cut = extrude_polygon(reb_poly, P["belly_lip_t"] + 2.0)
+    reb_cut.apply_translation((0, 0, z0 + P["belly_lip_t"] - (P["belly_lip_t"] + 2.0)))
+    body = sub(body, reb_cut)                                # z 4.5..8.5
+    for bx_, by_ in P["belly_screws"]:
+        b = cyl(P["belly_boss_r"], P["belly_boss_h"])
+        b.apply_translation((bx_, by_, z0 + floor + P["belly_boss_h"] / 2))   # z 12..18
+        body = uni([body, b])
+        body = sub(body, _belly_csk_neg(bx_, by_))
+        pil = cyl(1.25, 8.3); pil.apply_translation((bx_, by_, 9.2 + 8.3 / 2))
+        body = sub(body, pil)                                # pilot z 9.2..17.5
     _color(body, "base")
     body.metadata["name"] = "chassis"
     return body
+
+
+def build_belly_plate():
+    """Bolt-on BELLY PLATE (task #26): closes the chassis-floor access opening. A 1.45
+    flange rides the 1.5-deep rebate (belly stays flush at z=7, 0.05 axial + 0.15
+    perimeter clearance) and a 3-thick U-plug fills the opening around the retained
+    strap. The two inboard ballast ribs live HERE now (their old floor is the opening),
+    so ballast loads from below with the plate off; rib tops (z 14) clear the TT cans
+    (|x|>=44 only) and the pan motor (bottom z ~26). 6x M3x10 csk from below."""
+    z0 = P["chassis_clear"]; f = P["belly_fit"]
+    op, reb = _belly_polys()
+    flange = extrude_polygon(reb.buffer(-f, join_style=1), P["belly_lip_t"] - 0.05)
+    flange.apply_translation((0, 0, z0))                     # z 7..8.45
+    plug = extrude_polygon(op.buffer(-f, join_style=1), 3.0)
+    plug.apply_translation((0, 0, z0))                       # z 7..10
+    plate = uni([flange, plug])
+    rib_l = P["blst_rib_xmax"] - P["blst_usb_hw"]
+    for ry in P["blst_rib_y"][1:]:                           # (-51.5, -40): plate ribs
+        for sx in (-1, 1):
+            rib = box(rib_l, P["blst_rib_w"], P["blst_rib_h"])
+            rib.apply_translation((sx * (P["blst_usb_hw"] + rib_l / 2), ry,
+                                   z0 + 3.0 + P["blst_rib_h"] / 2))   # z 10..14
+            plate = uni([plate, rib])
+    for bx_, by_ in P["belly_screws"]:
+        plate = sub(plate, _belly_csk_neg(bx_, by_))
+    _color(plate, "base")
+    plate.metadata["name"] = "belly_plate"
+    return plate
 
 
 def build_pod_rails():
@@ -2140,6 +2324,7 @@ def build():
 
     # --- FIXED: tank chassis body + two track pods ---
     add(build_base(), np.eye(4), "chassis.stl")
+    add(build_belly_plate(), np.eye(4), "belly_plate.stl")   # bolt-on floor access plate
     for fp in build_fascia():                        # front fascia set (design ref)
         add(fp, np.eye(4))
     for trk in build_tracks():
@@ -2239,10 +2424,11 @@ def build():
     # uplift retention: 3 L-clips screwed to the deck, tabs over the platform's rim rebate
     add(build_pan_clips(), np.eye(4), "pan_clips.stl")
 
-    # --- HEAD (tilt + pan): split into front bezel + back cover ---
-    bezel, back = build_head_parts()
+    # --- HEAD (tilt + pan): split into front bezel + back cover + rear service door ---
+    bezel, back, door = build_head_parts()
     add(bezel, M_head, "head_bezel.stl")
     add(back, M_head, "head_back.stl")
+    add(door, M_head, "head_door.stl")
 
     for rail in build_head_rails():                  # orange side accent rails (design ref)
         add(rail, M_head)
