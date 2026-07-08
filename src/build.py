@@ -449,6 +449,20 @@ P = {
     # flange so the pins (x 38 +- 7) land 0.9 outside the Ø10 bore.
     "rearpod_hole_r": 5.0, "rearpod_flange_r": 8.5, "rearpod_flange_t": 1.5,
     "rearpod_pin_dx": 7.0,
+    # --- microSD service slot (maintenance pass 2026-07-08): the Pi 5's card is modeled in
+    # the pins-out mesh at x -41.6..-40.0, y 9.4..10.4, z 151.0..162.1 and ejects toward -X
+    # down a probe-verified FREE corridor to the left wall (nothing between the card edge and
+    # the pocket wall at -97 in this y/z band; the display's deep back never reaches x<-90
+    # here). A slot through the left wall + trim_rail_L on the eject axis swaps the card with
+    # straight forceps (~61 mm reach, sight line down the axis) -- before this, a reflash
+    # meant door + 8x M3x35 + screen module out. The slot sits FORWARD of the split plane
+    # (y=2) so it lands in the BEZEL's side-wall band; y max 12.0 keeps a 1.0 web to the
+    # rail edge (y 13), y min 7.4 keeps 1.1 to the pivot boss sweep (boss reaches y -5...
+    # far below). Plugged by sd_plug (friction fit) against desk dust.
+    "sd_slot_y": (7.4, 12.0),       # slot Y band (card faces at 9.4/10.4: 2.0/1.6 jaw room)
+    "sd_slot_z": (148.5, 164.5),    # slot Z band (card 151..162.1 + 2.5/2.4; rail pin at
+                                    # (8,146) keeps a 1.4 ligament to the corner)
+    "sd_plug_fit": 0.15,            # plug body clearance per side
 
     # --- Fastening: M3 screws into CAPTIVE HEX NUTS (user choice) ---
     "m3_clear_r": 1.75,     # M3 screw clearance
@@ -760,6 +774,14 @@ def build_head_shell():
     io_side = box(14.0, 15.0, 17.0)
     io_side.apply_translation((P["head_w"] / 2 - 2, -1.0, P["screen_cz"] + 22.0))
     shell = sub(shell, io_side)
+    # microSD service slot through the LEFT wall on the card's eject axis (see PARAMS
+    # "sd_slot_*"): the matching cut in trim_rail_L is made in build_head_rails(); the
+    # printed sd_plug fills it. Box overshoots the rail face (-107.5) and pierces the
+    # pocket wall (-97) so the corridor to the card (x -41.6) is open end to end.
+    sy0, sy1 = P["sd_slot_y"]; sz0, sz1 = P["sd_slot_z"]
+    sd = box(14.0, sy1 - sy0, sz1 - sz0)
+    sd.apply_translation((-103.0, (sy0 + sy1) / 2, (sz0 + sz1) / 2))
+    shell = sub(shell, sd)
     # ventilation louvres high on the back wall (Pi 5 runs hot). 3x 76-wide x 3 at
     # z 171..187 (was 4-tall/70-wide at 171..189): the rear DOOR (task #26) now carries
     # them, and its through-void tops out at z 188.2 -- 4-tall louvres reaching 189 cut
@@ -801,6 +823,23 @@ def build_head_shell():
         t = cyl(7.0, 72.0, axis="x")
         t.apply_translation((sx * 63.0, yt, zt))     # spans |x| 27..99: through the pivot boss
         bosses.append(t)                             # into the side wall
+    # TILT HARD-STOP FINS (homing pass 2026-07-08): 4 radial fins on the clamp tubes
+    # (x +-27..31, rooted r5.5 into the Ø14 tubes, tips r16.75), clocked +-55 deg off the
+    # straight-down (-Y) direction. They meet the neck's stop posts (build_neck_clevis,
+    # r 12..17 behind the axle) at +-33.8 deg tilt (shapely-computed on the real rotated
+    # rectangles; the +-30 sweep poses keep a 3.8 deg gap): the worm self-locks so the
+    # head HOLDS pose unpowered, but the controller still loses step count at power-off,
+    # so firmware stall-homes tilt against a stop at boot (28BYJ stall through the 12:1
+    # worm is ~0.2 Nm at the axle, fine for PLA flats).
+    # Fins live inside the motor-bay void (|x| < 33) and clear the cheek hoops (x <= 26),
+    # the grub-driver lines at x +-30 (fins never reach the y = yt plane) and the worm.
+    for sx in (-1, 1):
+        for ang in (-55.0, 55.0):
+            fin = box(4.0, 11.25, 4.0)
+            fin.apply_translation((sx * 29.0, -(5.5 + 11.25 / 2), 0))
+            fin.apply_transform(R(ang * DEG, (1, 0, 0)))
+            fin.apply_translation((0, yt, zt))
+            bosses.append(fin)
     shell = uni([shell] + bosses)
     # axle bore: SNUG Ø5.1 through the clamp bosses; far-wall bores demoted to LOOSE Ø5.3
     # supports (they locate, the x=+-30 grubs grip).
@@ -1103,9 +1142,32 @@ def build_head_rails():
             mc = cyl(P["m3_clear_r"], P["rail_t"] + 2.0, axis="x")
             mc.apply_translation((sx * (P["head_w"] / 2 + P["rail_t"] / 2), sy, sz))
             r = sub(r, mc)
+        if sx < 0:                                   # microSD service slot continues through
+            sy0, sy1 = P["sd_slot_y"]                # the LEFT rail (same box as the wall cut
+            sz0, sz1 = P["sd_slot_z"]                # in build_head_shell)
+            sd = box(14.0, sy1 - sy0, sz1 - sz0)
+            sd.apply_translation((-103.0, (sy0 + sy1) / 2, (sz0 + sz1) / 2))
+            r = sub(r, sd)
         _color(r, "accent"); r.metadata["name"] = nm
         rails.append(r)
     return rails
+
+
+def build_sd_plug():
+    """Friction plug for the microSD service slot (left wall + trim_rail_L). Body fills the
+    slot at sd_plug_fit per side; a 1.5-proud face plate on the rail face is the grab tab.
+    Pull the plug, sight straight down the eject axis, reach the card with straight forceps.
+    Prints plate-down, no supports."""
+    (y0, y1), (z0, z1) = P["sd_slot_y"], P["sd_slot_z"]
+    fit = P["sd_plug_fit"]
+    rail_out = -(P["head_w"] / 2 + P["rail_t"])          # left rail outer face (-107.5)
+    body = box(8.8, (y1 - y0) - 2 * fit, (z1 - z0) - 2 * fit)
+    body.apply_translation((rail_out + 0.1 + 4.4, (y0 + y1) / 2, (z0 + z1) / 2))
+    plate = box(1.5, (y1 - y0) + 1.6, (z1 - z0) + 3.0)   # overlaps the slot 0.8 / 1.5 per side
+    plate.apply_translation((rail_out - 0.75, (y0 + y1) / 2, (z0 + z1) / 2))
+    plug = uni([body, plate])
+    _color(plug, "accent"); plug.metadata["name"] = "sd_plug"
+    return plug
 
 
 def build_led_strip():
@@ -1298,6 +1360,19 @@ def build_neck_clevis():
         hoop = cyl(9.5, P["cheek_t"], axis="x")               # bearing-seat land around the axle
         hoop.apply_translation(top)
         parts += [cheek, hoop]
+        # TILT-STOP POST (homing pass 2026-07-08): a block r 12..17 straight behind the
+        # axle (y -35..-30, z zt +-2.5), spanning x 20..32 so the head's +-55 deg stop
+        # fins (x 27..31, build_head_shell) land flat on it at +-33.8 deg. It starts at
+        # r12 because boxes near the axis are angularly fat at the root (the first cut
+        # of this feature contacted the fins at 28.8 deg and failed the +-30 sweep).
+        # A leg drops to the cheek-root block / cheek rear flank for fusion; the block
+        # clears the bearing-seat bore (r12 > seat r6.4), the motor can (z 150.5+ vs
+        # can top 147.4) and the head's clamp tubes (r7).
+        post = box(12.0, 5.0, 5.0)
+        post.apply_translation((sx * 26.0, yt - 14.5, zt))
+        leg = box(6.0, 5.0, 22.0)
+        leg.apply_translation((sx * 23.0, yt - 14.5, zt - 9.0))
+        parts += [post, leg]
 
     # tilt WORM-motor bracket: the motor shaft runs along +Y (perpendicular to the tilt axle) and
     # carries the worm; the worm meshes the wheel on the axle. center distance = wheel_r + worm_r.
@@ -1360,15 +1435,23 @@ def build_neck_clevis():
         seat = cyl(seat_r, P["brg_w"] + 1.5, axis="x")
         seat.apply_translation((sx * (inner_x - 1.0 + (P["brg_w"] + 1.5) / 2), yt, zt))
         neck = sub(neck, seat)
-    # worm-motor shaft clearance (Ø10 clears the Ø9.1 shaft boss) through the bracket plate
-    sh = cyl(5.0, 20, axis="y"); sh.apply_translation((wx, face_y, wz)); neck = sub(neck, sh)
-    # M4 ear holes at the CAN axis (the 28BYJ ears center on the CAN, not the shaft: the shaft
-    # is offset motor_shaft_off; the motor is rolled so the can hangs BELOW the worm axis and
-    # the ears run horizontal). The old holes were drilled at the shaft axis: 7.9 mm off.
+    # worm PASS through the bracket plate: Ø12.2 (cartridge pass 2026-07-08: was Ø10, just
+    # shaft-boss clearance -- now the WORM (OD 10.55) extracts rearward through the plate
+    # with the motor as one cartridge; sliding the worm axially out of mesh only spins the
+    # free wheel, worm-as-rack, so the head gently tilts as the cartridge pulls out).
+    sh = cyl(6.1, 20, axis="y"); sh.apply_translation((wx, face_y, wz)); neck = sub(neck, sh)
+    # (the old in-plate M4 ear holes are GONE: the motor's ears now bolt to the removable
+    # tilt_carrier on the bench -- see build_tilt_carrier. The plate instead takes the
+    # carrier's 4 M3s in thread-form pilots, driven from the open rear bay.)
     can_z = wz - P["motor_shaft_off"]
-    for dxe in (-P["motor_ear_cc"] / 2, P["motor_ear_cc"] / 2):
-        ear = cyl(P["motor_ear_hole_d"] / 2, 20, axis="y")
-        ear.apply_translation((wx + dxe, face_y, can_z)); neck = sub(neck, ear)
+    # Upper pilots open at the plate rear face (-36.5); the LOWER pair sits below the
+    # column top (z<125), where the column's own rear face (y=-40) is the landing plane,
+    # so their pilots open there instead (5.5 of thread into column + plate zone).
+    for cpx, cpz, py in ((-14.0, wz + 4.1, face_y - 0.1), (14.0, wz + 4.1, face_y - 0.1),
+                         (-13.0, 120.0, -38.1), (13.0, 120.0, -38.1)):
+        pil = cyl(1.25, 4.0, axis="y")
+        pil.apply_translation((wx + cpx, py, cpz))
+        neck = sub(neck, pil)
     # Ø29 CAN POCKET behind the plate (the motor body was buried in solid neck material):
     # clears the Ø28.25 can + Ø27.25 gearbox stack; separate relief for the blue wiring box.
     pocket = cyl(29.0 / 2, 32.5, axis="y")
@@ -1436,6 +1519,57 @@ def build_neck_clevis():
     return neck
 
 
+def build_tilt_carrier():
+    """Removable TILT-MOTOR CARTRIDGE carrier (maintenance pass 2026-07-08). The 28BYJ is
+    the likeliest part to die, and replacing it used to mean un-hanging the head and then
+    reaching ear screws with 2.1 mm of driver room. Now: the motor's M4 ears bolt to THIS
+    plate on the bench (open access), the worm goes on the D-shaft, and the loaded carrier
+    inserts from the open rear bay: the can registers in the neck's Ø29 pocket (the mesh
+    lead-in; worm CD is held by pocket + tail cradle, same registers the WORM.md mesh was
+    verified against), the worm passes the plate's Ø12.2 bore, and 4x M3x16 drive from the
+    rear through Ø7 bosses into the plate's thread-form pilots. Extraction reverses it;
+    sliding the worm axially just spins the free wheel (worm-as-rack), no teardown.
+    Lower corners are clipped past x +-17 to clear the cheek slants; the bottom ring is
+    notched for the blue wiring box."""
+    zt, yt = P["tilt_axis_z"], P["tilt_axis_y"]
+    wz = zt - worm_cd()
+    can_z = wz - P["motor_shaft_off"]
+    face_y = yt - 0.5 * P["worm_len"] - 9.5              # neck bracket-plate front face
+    cy = -48.55                                          # carrier mid-plane (front -46.55:
+    plate = box(46.0, 4.0, 40.0)                         # 0.05 off the motor-ear rear face)
+    plate.apply_translation((0, cy, can_z))
+    for sxs in (-1, 1):                                  # clip past the cheek slants (their
+        cc = box(10.6, 8.0, 18.0)                        # bottom-end corners reach y -47 over
+        cc.apply_translation((sxs * 19.3, cy, can_z - 11.7))     # x 14.5..23, z 123..129)
+        plate = sub(plate, cc)
+    # Upper bosses (10 long) land on the plate/gusset rear plane (-36.5, 0.05 air) at
+    # x +-14 -- x +-19 clipped the cheek rear flanks, which bulge to y -37.2 over
+    # x 18..26 at this height. The LOWER pair (6.5 long) lands on the COLUMN rear face
+    # (y=-40): below the column top the plate region is embedded in column material.
+    for bx, bz, bl in ((-14.0, wz + 4.1, 10.0), (14.0, wz + 4.1, 10.0),
+                       (-13.0, 120.0, 6.5), (13.0, 120.0, 6.5)):
+        b = cyl(3.5, bl, axis="y")
+        b.apply_translation((bx, -46.55 + bl / 2, bz))
+        plate = uni([plate, b])
+    bore = cyl(14.55, 8.0, axis="y")                     # can pass Ø29.1 (can Ø28.25)
+    bore.apply_translation((0, cy, can_z))
+    plate = sub(plate, bore)
+    notch = box(17.6, 8.0, 13.0)                         # wiring-box pass under the bore
+    notch.apply_translation((0, cy, can_z - 14.0))
+    plate = sub(plate, notch)
+    for bx, bz in ((-14.0, wz + 4.1), (14.0, wz + 4.1), (-13.0, 120.0), (13.0, 120.0)):
+        mc = cyl(1.75, 18.0, axis="y")                   # M3 clearance, carrier + boss
+        mc.apply_translation((bx, -43.0, bz))
+        plate = sub(plate, mc)
+    for dxe in (-P["motor_ear_cc"] / 2, P["motor_ear_cc"] / 2):
+        eh = cyl(2.1, 8.0, axis="y")                     # M4 ear holes (bench nuts)
+        eh.apply_translation((dxe, cy, can_z))
+        plate = sub(plate, eh)
+    _color(plate, "neck")
+    plate.metadata["name"] = "tilt_carrier"
+    return plate
+
+
 def _T(x, y, z):
     m = np.eye(4); m[:3, 3] = (x, y, z); return m
 
@@ -1495,6 +1629,15 @@ def build_pan_platform():
     rb = cyl(5.3 / 2, d_bot - hub_bot + 4)
     rb.apply_translation((0, 0, (hub_bot + d_bot) / 2))
     plate = sub(plate, rb)
+
+    # PAN-STOP LUG (homing pass 2026-07-08): hangs from the plate underside at r28,
+    # azimuth 225, down to 0.6 above the seat floor; hits the two deck posts (azimuth
+    # 118/332, build_base) at +-93.3 deg pan. Corners r 23.8..32.2: clear of the ring ID
+    # (34), the D-hub (r7), the cable slot (13+ away) and the neck-bolt cbores (19.9+).
+    lug = box(6.0, 6.0, plate_bot - (seat_floor + 0.6))
+    lug.apply_translation((28.0 * np.cos(225 * DEG), 28.0 * np.sin(225 * DEG),
+                           (plate_bot + seat_floor + 0.6) / 2))
+    plate = uni([plate, lug])
 
     # upper race groove: wraps pan_groove_engage (1.8) of ball up into the plate. Torus center
     # = ball top - minor r = zball - groove_clear -> ball top tangent to the groove ceiling.
@@ -1556,7 +1699,26 @@ def build_pan_race():
         b.apply_translation((cr * np.cos(a), cr * np.sin(a), zball))
         balls.append(b)
     ballring = uni(balls); _color(ballring, "axle"); ballring.metadata["name"] = "pan_balls"
-    return lower, ballring
+
+    # BALL CAGE (maintenance pass 2026-07-08; the FIXES.md "nice-to-have" cage ring): a flat
+    # printed ring floating in the 2.4 mm air gap between ring top (42.0) and plate bottom
+    # (44.4), with 18 Ø6.6 through-pockets around the ball equators (zball 43.2). It does NOT
+    # retain the balls axially -- the lower groove + gravity do that -- it SPACES them, so a
+    # turret lift leaves 18 balls sitting evenly in the groove instead of bunching and rolling
+    # out, and the race runs smoother under the top-heavy head. Running fits: 0.3 axial air
+    # each face, 0.3 radial per side in the pockets, 1.2 rim ligaments past the pocket edges
+    # (pocket edges r 36.7..43.3 vs ring r 35.5..44.5). Seat wall (r49) and platform hub (r7)
+    # are far. Prints flat, no supports.
+    cage_t = 1.8
+    cage = sub(cyl(44.5, cage_t, sections=96), cyl(35.5, cage_t + 2, sections=96))
+    cage.apply_translation((0, 0, zball))
+    for i in range(P["pan_race_n"]):
+        a = TAU * i / P["pan_race_n"]
+        pk = cyl(3.3, cage_t + 2, sections=32)
+        pk.apply_translation((cr * np.cos(a), cr * np.sin(a), zball))
+        cage = sub(cage, pk)
+    _color(cage, "pan"); cage.metadata["name"] = "pan_cage"
+    return lower, ballring, cage
 
 
 def build_pan_clips():
@@ -1738,6 +1900,19 @@ def build_base():
     seat_depth = z1 - seat_floor
     seat = cyl(P["pan_plate_d"] / 2 + 1.0, seat_depth, sections=96)
     seat.apply_translation((0, 0, z1 - seat_depth / 2)); body = sub(body, seat)
+    # PAN HARD STOPS (homing pass 2026-07-08): two posts rise from the seat floor at r28,
+    # azimuth 118 and 332 deg, meeting the platform's underside lug (azimuth 225, see
+    # build_pan_platform). Contact at pan +-93.3 (shapely-computed on the real 6x6 boxes,
+    # not arc math): open-loop 28BYJs lose step count at every power-off, so firmware
+    # stall-homes against a stop at boot, backs off, and calls that +-90; the +-90 sweep
+    # poses keep a 3.3 deg gap. Posts stay inside the race-ring ID (corner r 32.2 < 34),
+    # clear of both Ø30 membrane cbores (center distance 25+ vs r15) and the deck cable
+    # pass. Top at 58.2 leaves 0.2 running air under the plate bottom (58.4).
+    for az in (118.0, 332.0):
+        px, py = 28.0 * np.cos(az * DEG), 28.0 * np.sin(az * DEG)
+        post = box(6.0, 6.0, 7.2)
+        post.apply_translation((px, py, seat_floor + 3.6))
+        body = uni([body, post])
     # clearance through the deck membrane under the seat: Ø30 at the pan axis (platform hub +
     # shaft) AND Ø30 at the CAN axis (the 28BYJ gearbox stack, r13.6 about the can, crosses
     # z 32..40.25). Both circles stay inside the race ring ID (r 34) -> the seat floor holds.
@@ -1852,6 +2027,20 @@ def build_base():
         body = sub(body, pil)
     usb = box(14, 12, 8)                              # USB-C power entry in the rear wall
     usb.apply_translation((0, -P["chassis_l"] / 2, z0 + 12)); body = sub(body, usb)
+    # PD-trigger mount (wiring pass 2026-07-08): 2x Ø1.7 M2 self-tap pilots in the rear
+    # wall's interior face flanking the USB slot -- the trigger/breakout board hangs on
+    # the wall with its jack aligned to the slot. Plus 2x Ø3.2 zip anchors through the
+    # floor rim behind the belly opening: the incoming wall cable zip-ties down before
+    # the jack, so a yanked cable loads the tie, not the board (the robot WILL drag its
+    # own tether eventually).
+    for sxp in (-1, 1):
+        pd = cyl(0.85, 4.0, axis="y")
+        pd.apply_translation((sxp * 9.0, -P["chassis_l"] / 2 + 5 - 1.9, z0 + 12))
+        body = sub(body, pd)
+    for sxp in (-1, 1):
+        zh = cyl(1.6, 7.0)
+        zh.apply_translation((sxp * 6.0, -68.0, z0 + 2.5))
+        body = sub(body, zh)
     # BALLAST BAY retaining ribs (see the PARAMS note): the REAR rib (y=-63) stays on
     # the chassis -- it lands on the 12-wide floor rim behind the belly opening (edge
     # y=-61). The two inboard ribs (-51.5, -40) root on floor that is now the belly
@@ -1939,9 +2128,10 @@ def build_base():
         slot.apply_translation((s * (cxp - 9.0 - 0.1 - 1.0), -ys, zs))
         body = sub(body, slot)
     # --- BODY<->POD JOIN, wall side (rail side is build_pod_rails): per station one M3
-    # clearance (screw from inside the cavity into the rail's captive nut -- the 4 mm gap
-    # takes no driver) + one Ø4.1 dowel slip hole (Ø4x12 pin pressed on into the rail's
-    # blind socket; dowels carry the shear, screws only clamp).
+    # clearance (M3x12 from inside the cavity, thread-forming into the rail's blind Ø2.5
+    # pilot -- no nut, no ordering constraint vs the links) + one Ø4.1 dowel slip hole
+    # (Ø4x12 pin pressed on into the rail's blind socket; dowels carry the shear, screws
+    # only clamp).
     for s in (-1, 1):
         for jy in P["pod_join_y"]:
             mh = cyl(P["m3_clear_r"], 12, axis="x")
@@ -2027,6 +2217,24 @@ def build_belly_plate():
             rib.apply_translation((sx * (P["blst_usb_hw"] + rib_l / 2), ry,
                                    z0 + 3.0 + P["blst_rib_h"] / 2))   # z 10..14
             plate = uni([plate, rib])
+    # POWER TRAY (wiring pass 2026-07-08, see firmware/WIRING.md): the main 5.1 V buck
+    # mounts on the plug's rear bay, so dropping the belly plate drops the power stage
+    # as a service tray (leave harness slack). Posts Ø6 x 6 with Ø2.5 M3 self-tap
+    # pilots on a 40x20 grid (XL4015-class 5 A buck); the board floats over the 4-tall
+    # ballast ribs (a post that kisses a rib just fuses -- same part). Keep-outs held:
+    # TT cans |x| >= 44.4 (board edge stops at 10), strap y >= -26, plug edge x -49.85.
+    # A future I2C co-processor (Pico/PCA9685) stacks on the same grid with 20 mm
+    # standoffs -- no dedicated pad until that decision lands.
+    tray = [(-35.75, -53.0), (-35.75, -33.0), (4.25, -53.0), (4.25, -33.0)]
+    for px_, py_ in tray:
+        post = cyl(3.0, 6.0); post.apply_translation((px_, py_, z0 + 3.0 + 3.0))
+        plate = uni([plate, post])
+        pil = cyl(1.25, 5.0); pil.apply_translation((px_, py_, z0 + 9.0 - 2.5))
+        plate = sub(plate, pil)
+    # zip anchor pair for a taped/zipped mini buck (aux 5V rail, MP1584-class)
+    for zx in (20.0, 34.0):
+        zh = cyl(1.6, 6.0); zh.apply_translation((zx, -58.0, z0 + 1.5))
+        plate = sub(plate, zh)
     for bx_, by_ in P["belly_screws"]:
         plate = sub(plate, _belly_csk_neg(bx_, by_))
     _color(plate, "base")
@@ -2041,11 +2249,15 @@ def build_pod_rails():
     into the loop interior, which is link-free between the bottom-run knuckle tops (z 9.5)
     and the top-run knuckle sweep (z 41.14) for |y| <= 40 (the wrap-arc envelopes about
     y=+-60 stay 6+ away); road wheels / idler / sprocket disc all live outboard of x 81.4.
-    Each block: M3 clearance bore + a captive-nut TOP slot (drop the nut in, then bolt --
-    so fit the rails BEFORE threading the links over them) + a blind Ø3.85 press socket
-    for the Ø4 dowel. The spine sits outboard of the vent cutters (x >= 76.2 vs 76) so
-    the three vents it crosses stay open into the gap. Print on the outer (+X) face:
-    dowel sockets become vertical blind holes, the Ø3.6 screw bore a short bridge."""
+    Each block: a blind Ø2.5 THREAD-FORM pilot for the M3 (self-tap, same convention as
+    the belly plate / pan clips / pan-motor ears) + a blind Ø3.85 press socket for the
+    Ø4 dowel. Thread-form pass 2026-07-08: the old captive-nut TOP slots opened upward
+    and got buried once the links wrapped the pod, forcing rails-before-links ordering
+    and a blind nut-drop; a screwed joint that is assembled once doesn't need a nut.
+    M3x12 from the cavity wall face (x 65) lands its tip at 77 -> 7 mm of formed thread.
+    The spine sits outboard of the vent cutters (x >= 76.2 vs 76) so the three vents it
+    crosses stay open into the gap. Print on the outer (+X) face: dowel sockets and the
+    pilot become vertical blind holes."""
     x0 = P["chassis_w"] / 2                            # wall outer face (70): rail sits flush
     x1 = P["pod_rail_x1"]                              # 78
     z_lo, z_hi = P["pod_rail_z"]
@@ -2063,17 +2275,11 @@ def build_pod_rails():
         spine.apply_translation((s * (76.2 + 78.0) / 2, 0, 35.0))
         rail = uni(parts + [spine])
         for jy in P["pod_join_y"]:
-            # M3 clearance bore Ø3.6 straight through the block at the screw axis
-            mb = cyl(1.8, (x1 - x0) + 4, axis="x")
-            mb.apply_translation((s * (x0 + x1) / 2, jy, P["pod_join_screw_z"]))
+            # blind Ø2.5 thread-form pilot from the inner face (x 69.4 overshoot) to
+            # x 77.0 -> 1.0 web to the outer face, 7 mm of engagement for an M3x12
+            mb = cyl(1.25, 7.6, axis="x")
+            mb.apply_translation((s * (69.4 + 77.0) / 2, jy, P["pod_join_screw_z"]))
             rail = sub(rail, mb)
-            # captive-nut slot from the top face: 3.4 (X, nut 2.4 thick) x 6.0 (Y, across
-            # flats 5.7+0.3); floor at 30.7 seats the nut's hex corner at the screw axis
-            # (34 - 6.58/2). Nut center x 76.3 -> 3.7 of thread beyond it for an M3x16
-            # driven from the cavity wall face (x 65).
-            ns = box(3.4, 6.0, (z_hi - 30.7) + 2)
-            ns.apply_translation((s * 76.3, jy, 30.7 + ((z_hi - 30.7) + 2) / 2))
-            rail = sub(rail, ns)
             # blind dowel press socket: Ø3.85 from the inner face (x 69.4 overshoot) to
             # x 77.0 -> 1.0 web to the outer face
             ds = cyl((P["pod_join_dowel_d"] - 0.15) / 2, 7.6, axis="x")
@@ -2152,6 +2358,45 @@ def _track_link():
     return link
 
 
+def _track_master_link():
+    """MASTER LINK (maintenance pass 2026-07-08): closes the loop with a drop-on jaw instead
+    of flexing the last two links together under tension (the old worst-per-pod step), and
+    makes track removal a 2-screw job. Geometry = a normal link, except the OWN-pin (y=0)
+    A knuckles become open C-JAWS: a 2.0-wide slot from the bore's lower half out through
+    the outer face and the side faces. Closing: the master's y=pitch end is pinned to its
+    neighbour normally ON THE BENCH; after wrapping, the loop's last pin sits in the other
+    neighbour's B knuckles and the master SWINGS down onto it (idler retracted for slack).
+    Two printed KEEPER bars then slide into the jaw slot from the side faces -- each locked
+    by one M2 self-tap into a side-face pilot -- and seat the pin: belt tension is carried
+    by the jaw walls (same section as a plain bore), the keepers only block pin drop-out.
+    Returns (body, [keeper_L_local, keeper_R_local]) in link-local coords."""
+    pitch, tw = P["track_pitch"], P["track_width"]
+    body = _track_link()
+    ka, _ = _KNUCKLES(tw)
+    for (x0, x1) in ka:                                # jaw slots through both A knuckles,
+        s = box((x1 - x0) + 1.2, 2.0, 7.0)             # open out the side faces (+0.6/end)
+        s.apply_translation(((x0 + x1) / 2, 0, -4.4))  # z -7.9..-0.9: bore keeps its top arc
+        body = sub(body, s)
+        # keeper-screw pilot Ø1.7 along X from the side face, in knuckle material beside
+        # the slot (y 2.2 < chord 2.94 at z -1.9), 7 deep
+        sxs = 1 if x1 > 0 else -1
+        pil = cyl(0.85, 7.0, axis="x")
+        pil.apply_translation((sxs * (tw / 2 - 3.5), 2.2, -1.9))
+        body = sub(body, pil)
+    keepers = []
+    for sxs in (-1, 1):
+        bar = box(13.3, 1.9, 2.2)                      # rides the slot walls, top face -0.95
+        bar.apply_translation((sxs * (9.7 + 23.0) / 2, 0, -0.95 - 1.1))    # seats the pin;
+        tab = box(1.8, 7.0, 4.0)                       # outboard end fuses into the tab
+        tab.apply_translation((sxs * (tw / 2 + 0.05 + 0.9), 0.7, -1.7))
+        k = uni([bar, tab])
+        mc = cyl(1.15, 4.0, axis="x")                  # M2 clearance through the tab
+        mc.apply_translation((sxs * (tw / 2 + 0.95), 2.2, -1.9))
+        k = sub(k, mc)
+        keepers.append(k)
+    return body, keepers
+
+
 def _sprocket(sx):
     """Drive sprocket + inboard hub tube reaching the TT shaft through the chassis-wall web.
     Disc (tip r 18.8) at the pod centre (96.4 at chassis_w 140 / tw 44.8; hub local -28.1 --
@@ -2189,16 +2434,24 @@ def build_tracks():
     R, tw, wb = P["track_wheel_r"], P["track_width"], P["track_wheelbase"]
     zc = _track_zc()
     kr = 3.5
-    master = _track_link()
+    plain = _track_link()
+    mbody, mkeepers = _track_master_link()             # link 0 = the loop-closing master
     out = []
     for sx in (-1, 1):
         cx = sx * (P["chassis_w"] / 2 + P["track_gap"] + tw / 2)
         pieces = []
-        for (y, z, ang) in _track_link_poses(wb, R, zc, P["track_links"]):
-            lk = master.copy()
+        keeper_pieces = []
+        for i, (y, z, ang) in enumerate(_track_link_poses(wb, R, zc, P["track_links"])):
+            lk = (mbody if i == 0 else plain).copy()   # master seam on the bottom straight run
             lk.apply_transform(R_x(ang))               # tangent to the loop, outer face outward
             lk.apply_translation((cx, y, z))
             pieces.append(lk)
+            if i == 0:
+                for k in mkeepers:
+                    kk = k.copy()
+                    kk.apply_transform(R_x(ang))
+                    kk.apply_translation((cx, y, z))
+                    keeper_pieces.append(kk)
         wheel_pieces = []
         spr = _sprocket(sx)
         spr.apply_translation((cx, -wb / 2, zc)); wheel_pieces.append(spr)
@@ -2235,6 +2488,12 @@ def build_tracks():
         wheels.metadata["name"] = f"drivewheels_{side}"
         wheels.metadata["export"] = f"track_wheels_{side}.stl"
         out.append(wheels)
+        # master-link keeper bars: the removable service bits, their own (orange) node
+        keep = trimesh.util.concatenate(keeper_pieces)
+        _color(keep, "accent")
+        keep.metadata["name"] = f"track_keeper_{side}"
+        keep.metadata["export"] = f"track_keeper_{side}.stl"
+        out.append(keep)
     return out
 
 
@@ -2383,8 +2642,11 @@ def build():
     wz = zt - cd
     wheel_r = P["worm_module"] * P["worm_wheel_teeth"] / 2
     # worm wheel keyed to the axle -> turns WITH the head (M_head). Width 7 centered on x=0,
-    # grub-keyed hub (M3 grub to the Ø5 axle -- a plain bore freewheeled), and spacer TUBES out
-    # to both 695 inner races: they react the ~10 N worm thrust / 3.7 N wheel axial load.
+    # D-KEYED hub (maintenance pass 2026-07-08: a key ledge in the hub bore rides a flat
+    # filed on the Ø5 axle -- positive torque, no slip; replaces the old M3 grub, which was
+    # BLIND once the cartridge sat in the cheeks and relied on point friction), and spacer
+    # TUBES out to both 695 inner races: they react the ~10 N worm thrust / 3.7 N wheel
+    # axial load (they also locate the wheel axially, so no extra retainer is needed).
     # REAL generated teeth (docs/WORM.md): 12T involute helical wheel + single-start worm,
     # verified meshing at CD 11.9 / 0.000 mm3. PLACEHOLDER_GEARS=1 restores the readable
     # gear_disc/worm placeholders (cheap insurance + regen testing).
@@ -2408,11 +2670,18 @@ def build():
     tub_m = cyl(4.0, 14.5, axis="x"); tub_m.apply_translation((-10.75, 0, 0))   # wheel -> -X race
     wheel = uni([wheel, hub, tub_p, tub_m])
     wheel = sub(wheel, cyl(P["axle_d"] / 2 + 0.1, 40, axis="x"))                # Ø5.2 over the axle
-    wgrub = cyl(1.25, 8); wgrub.apply_translation((6.25, 0, 3.5))               # M3 grub pilot
-    # DFA: the grub is BENCH-ONLY -- the axle cartridge (wheel + spacer tubes + 695 bearings)
-    # is slid together and grub-keyed on the bench BEFORE the cheeks close around it; the pilot
-    # lands on the plain hub (x 5.0..7.5, blank teeth end at |x| 3.5), never through a tooth root.
-    wheel = sub(wheel, wgrub)
+    # D-KEY LEDGE in the hub bore (x 3.5..9, the plain hub zone -- never through a tooth
+    # root): a chord segment whose flat face sits 1.65 off the axis = a 1.0-deep flat on
+    # the Ø5 axle (flat at 1.5) + 0.15 hand-filed-flat clearance. Print a test coupon
+    # before committing the axle: too loose reintroduces the backlash the grub was hiding.
+    # AXLE SPEC (docs/ASSEMBLY.md): the flat must run from the axle's INSERTION end to
+    # ~15 past center (a keyed bore needs its channel from the rod's leading end); only
+    # the ~6 mm under the hub needs a clean 1.0 +-0.1 depth, the rest can be rough.
+    half = box(6.0, 6.0, 2.0)
+    half.apply_translation((0, 0, 1.65 + 1.0))           # halfspace z >= 1.65 (the flat plane)
+    ledge = inter(cyl(2.7, 5.5, axis="x"), half)         # r2.7: 0.1 into the bore wall, fuses
+    ledge.apply_translation((6.25, 0, 0))
+    wheel = uni([wheel, ledge])
     _color(wheel, "fork"); wheel.metadata["name"] = "worm_wheel"
     wheel.apply_translation((wx, yt, zt))
     add(wheel, M_head, "worm_wheel.stl")
@@ -2455,6 +2724,9 @@ def build():
     mt.apply_translation((wx, face_y - 2 - (P["motor_body_h"] + P["motor_gear_h"]),
                           wz - P["motor_shaft_off"]))
     add(mt, M_pan)
+    # removable cartridge carrier: the motor's ears bolt to it on the bench; 4x M3 from the
+    # rear bay clamp it to the bracket plate (see build_tilt_carrier)
+    add(build_tilt_carrier(), M_pan, "tilt_carrier.stl")
 
     # (Pi 5 placeholder removed: the Pi now rides the display's OWN 58x49 back standoffs and
     # is part of the combined screen reference mesh, "Pins Out" assembly. See load_screen().)
@@ -2468,9 +2740,10 @@ def build():
 
     # pan bearing: captured-BB lazy-Susan lower race + ball ring (fixed frame; platform is the
     # upper race). Balls carry the head weight on a wide circle -> no wobble, quiet, cheap.
-    lower_race, balls = build_pan_race()
+    lower_race, balls, cage = build_pan_race()
     add(lower_race, np.eye(4), "pan_race.stl")
     add(balls, np.eye(4))
+    add(cage, np.eye(4), "pan_cage.stl")             # BB spacer cage (drops in with the balls)
     # uplift retention: 3 L-clips screwed to the deck, tabs over the platform's rim rebate
     add(build_pan_clips(), np.eye(4), "pan_clips.stl")
 
@@ -2482,6 +2755,7 @@ def build():
 
     for rail in build_head_rails():                  # orange side accent rails (design ref)
         add(rail, M_head)
+    add(build_sd_plug(), M_head, "sd_plug.stl")      # microSD service-slot friction plug
     add(build_led_strip(), M_head)                   # forehead light strip (design ref)
     add(build_antenna(), M_head)                     # top-right antenna stub (design ref)
     add(build_hatch_frame(), M_head)                 # rear orange hatch frame (design ref)
@@ -2539,6 +2813,12 @@ def build():
     # bearings, driven in the middle by the worm wheel. Hollow -> Pi power wires cross on-axis.
     axle = sub(cyl(P["axle_d"] / 2, P["head_w"] + 4, axis="x"),
                cyl(P["axle_bore_d"] / 2, P["head_w"] + 8, axis="x"))
+    # D-KEY FLAT (matches the worm wheel's hub ledge): 1.0 deep (flat face z=+1.5), from
+    # the +X insertion end to 15 past center, so the wheel's key ledge rides the flat as
+    # the axle slides in. Clocked +Z at neutral; axle and wheel both ride M_head.
+    flat = box(123.0, 8.0, 1.4)
+    flat.apply_translation((46.5, 0, 1.5 + 0.7))
+    axle = sub(axle, flat)
     _color(axle, "axle"); axle.metadata["name"] = "tilt_axle"
     axle.apply_translation((0, yt, zt))
     add(axle, M_head)

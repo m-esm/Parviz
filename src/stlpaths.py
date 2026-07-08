@@ -31,6 +31,8 @@ SUBSYSTEMS = [
     ("shell", "head"),
     ("cam", "head"),
     ("bracket", "head"),
+    ("sd", "head"),            # microSD service-slot plug
+
 ]
 
 

@@ -7,7 +7,11 @@ sitting on a **two-track tank chassis** so it can drive around the desk.
 The head is a **clean rounded box** (a tablet-head; earlier it was an Echo-Show wedge, since
 simplified). Screen upright on the front, neck tilt gives the look up/down.
 
-Status: **FIX CAMPAIGN COMPLETE (stages 1-5 + independent verification, see docs/FIXES.md).**
+Status: **FIX CAMPAIGN COMPLETE (stages 1-5 + independent verification, see docs/FIXES.md);
+MAINTENANCE/DFA PASS 2026-07-08** (workflow-reviewed, all gates green): tilt-motor cartridge
+(`tilt_carrier`), D-keyed worm wheel on a flatted axle, track master links + keepers, pan BB
+cage, pan/tilt stall-homing hard stops, microSD wall slot + `sd_plug`, pod-rail thread-form
+joints, and the 12V dual-buck power tray (firmware/WIRING.md).
 `src/build.py` builds the whole robot around the combined screen+Pi reference mesh; 10 watertight
 per-part STLs (chassis, track_L, track_R, neck_clevis, pan_platform, pan_race, pan_clips,
 head_bezel, head_back, cam_cover) plus placeholder sub-parts (worm_wheel, tilt_worm, pan_balls,
@@ -161,12 +165,17 @@ cable channel is decoupled at `neck_chan_y=−26`). Head width 205 vs track oute
 per user); pods now flank the head like the reference; sprocket band stays 8 wide in the
 links' central channel, idler grows outboard-only to clear the tension plate).
 
-## Power (decided)
+## Power (decided 2026-07-08, see firmware/WIRING.md)
 
-Use the **official Raspberry Pi 27W USB-C PD supply (5.1V / 5A)**. The Pi 5 only unlocks full
-USB current on a true 5A PD supply; a 15W/3A brick software-limits USB to ~600mA and browns out
-once screen + camera + servos draw together. Two servos (pan + tilt) may want their **own 5–6V
-supply** rather than pulling off the Pi's rail, decide when the servo BOM is picked.
+One wall USB-C cable → rear-jack **PD trigger set to 12 V** → two bucks on the **belly-plate
+power tray** (drop the belly plate = drop the power stage for service): an XL4015-class 5 A
+buck makes the **Pi rail** (trimmed 5.25 V at the tray, ~5.1 V at the head after the neck
+run, into the Pi's GPIO 5V pins + inline 5 A fuse), an MP1584 mini buck makes the **motor
+rail** (ULNs, MX1588, chassis LEDs). Why not 5 V straight through: PD negotiation can't
+cross a 2-wire joint run, 5 A droops 0.3-0.4 V over the harness, and TT stall transients
+would land on the Pi rail. GPIO powering needs `usb_max_current_enable=1` + EEPROM
+`PSU_MAX_CURRENT=5000`. Any 30 W+ PD brick works now (the official 27 W included). Firmware
+rule: cap TT PWM at 80% and never full-drive both TTs while a stepper steps (27 W budget).
 
 ## Motors, 28BYJ-48 pan/tilt (dimensionally correct now) + TT track drive
 
@@ -178,24 +187,32 @@ too weak to swing a 193mm screen head. `motor_28byj()` is now dimensionally corr
 the target axis, don't fight the offset with an eccentric coupler.**
 
 - **Pan (direct D-hub):** 28BYJ upright in the base, can offset `-motor_shaft_off` so the shaft is on
-  the pan axis; it keys into a **double-D bore hub** under `pan_platform` (`dbore_neg`/`dbore_hub`) +
-  an M3 grub on a flat. No reduction. Rides the lazy-Susan BB race (see Mechanical intent).
-- **Tilt (self-locking worm):** the worm sits on the motor's D-shaft (shaft +Y, right-angle to the
-  axle), meshing a 12T `worm_wheel` keyed to the Ø5 axle. Single-start → self-locks, so the head holds
-  ±30° with the driver OFF (no idle heat). Pre-balance the head so the worm loafs. Center distance =
-  wheel_r + worm_r (`PARAMS["worm_*"]`). **NOTE:** `gear_disc`/`worm` teeth are readable placeholders;
-  regenerate the real involute wheel + helical worm in BOSL2 (OpenSCAD) in a venv before printing.
-- **Axle + bearings:** Ø5 hollow axle on **695-2RS bearings (5×13×4, owned ×30)** pressed into the
-  neck cheeks. Head clamps the axle ends (grub screw); axle turns with the head.
-- **ULN2003 mounts / motor pockets:** the base has a pan-motor pad + ULN standoffs; the tilt bracket
-  is a plate + gusset off the neck. The real Ø28 pockets/ear traps are still to be detailed.
+  the pan axis; it keys into a **double-D bore hub** under `pan_platform` (`dbore_neg`/`dbore_hub`;
+  flats drive snug, round arcs loose -- mini-Oldham, the race locates). No reduction. Rides the
+  lazy-Susan BB race (see Mechanical intent). **Homing:** stall against the deck stop posts at
+  ±93.3° (lug az 225 on the platform underside, posts az 118/332), back off, call it ±90.
+- **Tilt (self-locking worm, CARTRIDGE):** the worm sits on the motor's D-shaft (shaft +Y,
+  right-angle to the axle), meshing a 12T `worm_wheel` **D-keyed to the flatted Ø5 axle** (hub
+  ledge on a filed 1.0-deep flat, 2026-07-08; the old M3 grub was blind and friction-only).
+  Single-start → self-locks, so the head holds ±30° with the driver OFF. Motor + worm ride the
+  removable **`tilt_carrier`** (ears bolted on the bench, 4× M3×16 from the open rear bay; the
+  worm extracts axially through the plate's Ø12.2 bore, spinning the free wheel as it goes) --
+  a dead 28BYJ swaps without touching the head. **Homing:** stall the head's ±55° clamp-tube
+  fins against the cheek posts at ±33.8°. Real generated teeth per docs/WORM.md.
+- **Axle + bearings:** Ø5 hollow axle (flat filed from the insertion end to ~15 past center)
+  on **695-2RS bearings (5×13×4, owned ×30)** pressed into the neck cheeks. Head clamps the
+  axle ends (grub screws at x=±30, kept: they give continuous tilt-zero trim).
+- **ULN2003 mounts / motor pockets:** the base has a pan-motor pad + ULN standoffs; the tilt
+  motor's Ø29 can pocket doubles as the cartridge's mesh lead-in.
 
-**Buy list (gaps; full inventory-checked BOM in docs/ASSEMBLY.md, 2026-07-07):** a 2nd track
+**Buy list (gaps; full inventory-checked BOM in docs/ASSEMBLY.md, 2026-07-08):** a 2nd track
 drive motor (see below), 2× F688ZZ flanged bearings 8×16×5 (idlers), 6 mm airsoft BBs (pan
-race), Ø5 rod for the tilt axle, the official 27W USB-C PD supply (not in inventory), 1 m of
-NARROW (4–5 mm) addressable strip (SK6805-2427/WS2812-2020, a standard 8×5050 stick is
-53.3×10.2 and does NOT fit the 42×5 `led_slot`). M2/M3 screws are covered by the owned kits.
-The "608zz ×30" are unused in the design and still unverified (may be plastic rings).
+race), Ø5 rod for the tilt axle (gets a filed D-flat), the power set from firmware/WIRING.md
+(30W+ PD brick, 12V PD trigger, XL4015 5A buck, MP1584 mini buck, JST-XH kit + crimper,
+18 AWG pair, 5A fuse), Ø4×12 dowels ×4, 1 m of NARROW (4–5 mm) addressable strip
+(SK6805-2427/WS2812-2020, a standard 8×5050 stick is 53.3×10.2 and does NOT fit the 42×5
+`led_slot`). M2/M3 screws are covered by the owned kits. The "608zz ×30" are unused in the
+design and still unverified (may be plastic rings).
 
 ## Tank chassis (the mobile base)
 
@@ -212,17 +229,28 @@ engagement beats a friction belt that slips when the head pans.
   2× N20 metal-gear for a lower CoM).** One MX1588 (own ×5) drives both. Skid/differential steer.
 - Params: `chassis_w/l`, `track_wheel_r`, `track_wheelbase`, `track_width`, `track_pitch`,
   `track_links`, `sprocket_teeth`, `idler_bore_d`, `roadwheel_*`, `track_gap`, `chassis_clear`.
-- **Still TODO:** body-to-pod join (2× M3 nut-trap + 2× Ø4 dowel per side), links as real TPU/PLA
-  print vs the rigid model. (Gauge widened: chassis_w 140.) Pi rides the head (high CoM)
+- **Body-to-pod join (modeled):** 2× M3×12 thread-forming into the rail's blind Ø2.5 pilots
+  (2026-07-08: was captive nuts in top slots that got buried by the links) + 2× Ø4 dowel per
+  side (shear). **Master link:** link 0 of each loop is a drop-on C-jaw link; two printed
+  keeper bars slide in from the side faces, 1× M2 each (`track_keeper_L/R`) -- the loop closes
+  without flexing and opens with 2 screws.
+- **Still TODO:** links as real TPU/PLA print vs the rigid model. Pi rides the head (high CoM)
   → keep the chassis heavy/low and the wheelbase long so it doesn't tip on accel or a fast head pan.
 
 ## Print notes (first pass, not finalized)
 
-- 10 printed parts (`chassis`, `track_L`, `track_R`, `neck_clevis`, `pan_platform`, `pan_race`,
-  `pan_clips`, `head_bezel`, `head_back`, `cam_cover`) export via `EXPORT=1`. `worm_wheel`/
-  `tilt_worm`/`pan_balls`/`motor_*`/`drive_*` are placeholders (bought parts or regen-in-BOSL2).
-  track_L/R (links + wheels) and pan_clips (3 clips) are multi-body by design, not single solids.
-- **Fastening = M3 into CAPTIVE HEX NUTS** (M2 for the camera). `screw_post`/`hex_prism`.
+- Printed set (exports via `EXPORT=1`): `chassis`, `belly_plate`, `track_L/R`,
+  `drivewheels_L/R` (as track_wheels_*), `track_keeper_L/R`, `pod_rail_L/R` (as
+  track_pod_rail_*), `neck_clevis`, `tilt_carrier`, `pan_platform`, `pan_race`,
+  `pan_clips`, `pan_cage`, `head_bezel`, `head_back`, `head_door`, `cam_cover`,
+  `sd_plug`, plus the real generated `worm_wheel`/`tilt_worm` (docs/WORM.md).
+  `pan_balls`/`motor_*`/`drive_*` are bought-part placeholders. track_L/R (links +
+  wheels), track_keeper_* (2 bars) and pan_clips (3 clips) are multi-body by design.
+- **Fastening = M3 into CAPTIVE HEX NUTS on serviced seams, Ø2.5 THREAD-FORM pilots on
+  assemble-once joints** (M2 for the camera / master-link keepers). `screw_post`/`hex_prism`.
+  Thread-form (2026-07-08): pod rails (M3×12 from the cavity), tilt_carrier's 4 M3×16,
+  belly tray posts, pan-motor ears, pan clips, belly plate. Captive nuts kept: bezel↔back,
+  head door, TT gearbox ("nut in the gap"), arm shoulders.
   - bezel↔back: 8 perimeter posts (stage 3a: bottom + top centers each became a ±40 pair), nut
     captive in the back boss, screw from the front. M3×35 ×8.
   - screen+Pi module: 4 rear standoffs on `head_back` landing on the display's factory M3 boss
