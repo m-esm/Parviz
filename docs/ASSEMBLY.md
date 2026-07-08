@@ -45,7 +45,7 @@ Owned quantities cross-checked against a personal parts inventory (2026-07-07).
 | 695-2RS | 5x13x4, tilt-axle cheeks | 2 | 30 (Bag 13) |, |
 | F688ZZ flanged | 8x16x5, flange Ø18; front idlers (seat Ø15.95 press + 18.5x1.0 flange recess; idler now 30 wide) | 2 | 0 | **2** |
 | 6 mm airsoft BBs | pan race, Ø80 circle, `pan_race_n`=18 | 18 | 0 | **smallest bag (100+)** |
-| Ø5 rod/tube | tilt axle, ~100 mm (silver steel or alu tube). **File a 1.0-deep flat** from the insertion end to ~15 past center (D-key for the worm wheel's hub ledge); only the ~6 mm under the hub needs a clean 1.0 ±0.1 depth. Print a D-bore coupon first | 1 | 0 | **1** |
+| Ø5 SOLID rod | tilt axle, ~100 mm silver steel (**NOT tube**: a 1.0 flat on a Ø5/Ø2.5 tube leaves a 0.25 wall). **File a 1.0-deep flat** from the insertion end to ~15 past center (D-key for the worm wheel's hub ledge); only the ~6 mm under the hub needs a clean 1.0 ±0.1 depth. The flat crosses the +X 695 seat, so that inner race rides a D-profile (fine, the spacer tubes clamp it). Print a D-bore coupon first, starting at **+0.05** clearance (+0.15 measured as ±4.4° of head backlash) | 1 | 0 | **1** |
 | Ø8 stub axle | idler tension axle, ~20 mm, M3 set-screw lock; a short M8 bolt works | 2 | unknown, the Bag 13 "Machine Bolts" bag may have M8; verify | 2x M8x20 if not |
 | 608zz | **not used** in the current design. The "608zz x30" Bag 13 entry is still flagged: photos look like white plastic rings/spacers, NEEDS ID. Don't design around them | 0 | 30? (unverified) |, |
 
@@ -54,7 +54,7 @@ Owned quantities cross-checked against a personal parts inventory (2026-07-07).
 | Part | Spec | Need | Owned | Buy |
 |---|---|---|---|---|
 | M3 screws + hex nuts | captive-nut joints everywhere; incl. M3x35 x8 bezel↔back | lots | 540pc M3 stainless kit + 175pc M3 30–50 mm kit + 600pc M2-M5 kit + 1263pc M2-M4 kit (all Tray 1) |, |
-| M2 screws | camera board (2 screwed + 2 locating pads) + cam_cover (2) + track master-link keepers (2/pod) + PD-trigger mount (2) | 8+ | in the 600pc M2-M5 and 1263pc M2-M4 kits |, (CLAUDE.md's "buy M2" is stale) |
+| M2 screws | camera board (2 screwed + 2 locating pads) + cam_cover (2) + track master-link keepers (2/pod, **M2×8 pan head**, sunk in the tab counterbores) + PD-trigger mount (2) | 8+ | in the 600pc M2-M5 and 1263pc M2-M4 kits |, (CLAUDE.md's "buy M2" is stale) |
 | M3 nylon standoffs | ULN2003 / driver mounts | few | 380pc kit (Tray 1) |, |
 | Track hinge pins | Ø1.75 filament, bore 2.0. 36 links x 2 pods = **72 pins x ~46 mm** (track_width 44.8 + trim) ≈ 3.4 m, cut from an owned spool (the black CR-PETG is tougher than PLA for pins) | 72 | spooled (Tray 1) |, |
 | Ø4 dowel pins | body-to-pod join (2 per side), Ø4x12: modeled (wall slip holes + rail press sockets) | 4 | 0 | **4** |
@@ -117,15 +117,14 @@ tweezers, and thread-lock or CA glue (cosmetics). Use **M3 PAN/CHEESE-head** scr
 
 1. **Print + prep the chassis.** Confirm the deck pan-seat, the pedestal, and both TT
    motor pockets are clean.
-2. **Pod rails onto the body.** Bolt `pod_rail_L/R` to the body walls: M3×12 from the
-   cavity wall face thread-forming into each rail block's blind Ø2.5 pilot (no nuts, no
-   ordering constraint against the links any more), press the Ø4×12 dowels.
-3. **Body↔pod join + TT motors, BEFORE ULN #1.** Drive the body↔pod M3x12s from INSIDE the
-   cavity into the rail thread-form pilots. Then set
-   each TT gearmotor: shaft +X into the sprocket hub's double-D socket, front tab into the
-   rear-wall pocket, nub into the wall pocket, 2× M3 through the gearbox + wall with the
-   nut floating in the pod gap. ULN #1 mounts later because its board covers the cavity-side
-   screw access for this step.
+2. **Body↔pod join (rails), BEFORE ULN #1.** Press the Ø4×12 dowels into each rail's blind
+   sockets, seat `pod_rail_L/R` on the body walls (dowels into the wall slip holes), and
+   drive the 2× M3×12 per side from INSIDE the cavity, thread-forming into the rail blocks'
+   blind Ø2.5 pilots. These four screws ARE the body↔pod join -- there is no second screw
+   set. ULN #1 mounts later because its board covers this cavity-side access.
+3. **TT motors.** Set each TT gearmotor: shaft +X into the sprocket hub's double-D socket,
+   front tab into the rear-wall pocket, nub into the wall pocket, 2× M3 through the
+   gearbox + wall with the nut floating in the pod gap.
 4. **Track running gear.** Press F688ZZ into each idler (Ø15.95 seat + Ø18.5 flange recess);
    slide the idler on its Ø8 stub axle into the chassis tension slot FROM OUTBOARD, set
    tension, lock the M3 set-screw. Fit the sprockets on the TT shafts, road wheels on their
@@ -171,10 +170,12 @@ tweezers, and thread-lock or CA glue (cosmetics). Use **M3 PAN/CHEESE-head** scr
     the open rear bay: the worm passes the bracket plate's Ø12.2 bore, its tail lands in
     the open-top cradle groove, the can registers in the Ø29 pocket, and the carrier's 4
     bosses land on the plate/column rear faces. Drive 4× M3×16 from the rear into the
-    thread-form pilots. (Extraction reverses this; sliding the worm axially just spins the
-    free wheel, so the head gently tilts as the cartridge comes out.) Route the tilt ULN
-    wiring on the column back standoffs (motor + driver both ride the pan group, so no
-    leads cross a joint).
+    thread-form pilots. (Extraction reverses this; sliding the worm axially spins the free
+    wheel, nodding the head down ~46° over the pull -- so with the head hung and grubbed,
+    **drive the head fully UP first** to bank the travel against the ~34° stop, or loosen
+    the two head-clamp grubs. Before the head is hung, extraction is unconditional.) Route
+    the tilt ULN wiring on the column back standoffs, board centered at z 93, below the
+    carrier (motor + driver both ride the pan group, so no leads cross a joint).
 12. **Hang the head on the axle.** Lower `head_back` so its side hubs take the axle ends, then
     set the two head-clamp grubs at x=±30 with a 1.5 mm hex key driven UP through the bottom
     motor bay (4.0 mm clear). The axle now turns with the head; the worm holds tilt with the
@@ -237,8 +238,13 @@ last-track-pin loop flex.)
 
 ### Recommendations (bigger than this pass)
 
-- Print a D-bore coupon and dial the axle-flat clearance (currently +0.15) before
-  committing the filed axle: too loose is backlash at the head.
+- Print a D-bore coupon and dial the axle-flat clearance (modeled at +0.05; +0.15 measured
+  as ±4.4° of head backlash) before committing the filed axle.
+- Print supports: paint a support enforcer under the neck's two tilt-stop posts (x 20..32,
+  z 150..156 -- their outboard halves start mid-air with the neck on its back) and extend
+  the clamp-tube supports over the head_back stop fins (55° overhangs feeding a ~0.9 mm
+  homing margin; treat the first stall-home angle as calibration). Print the track keepers
+  lying on their 13.3×1.9 bar face so the slot-critical 1.9 width is XY-accurate.
 - Track gauge is still ~184 vs a 205-wide head (~10 mm overhang/side): widen the gauge or
   accept it (tracked elsewhere).
 - If field-servicing the screen without un-gluing the hatch frame matters, notch the frame

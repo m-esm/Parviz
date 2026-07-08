@@ -2,7 +2,7 @@
 # and web/assembly.glb. Run `make help`. See the 3d-print-modeling skill for the loop.
 PORT ?= 8770         # dedicated to desk-pi; 8765 collides with the finnish-doors serve.py
 
-.PHONY: help install build viewer shot watch check check-sweep
+.PHONY: help install build viewer shot watch check check-sweep fits
 
 help:                ## List targets
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
@@ -29,3 +29,7 @@ check:               ## Interference gate on web/assembly.glb (pairwise booleans
 
 check-sweep:         ## Interference gate across the pan x tilt pose grid (rebuilds via _check.glb)
 	python3 src/assembly_check.py --sweep
+
+fits:                ## Fit/pressure map -> web/fit_report.json + NEUTRAL-pose assembly.glb
+	FITS=1 PAN=0 TILT=0 python3 src/build.py
+	@echo "viewer now shows the neutral pose matching the fit patches; 'make build' restores the preview pose"

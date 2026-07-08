@@ -96,9 +96,10 @@ P = {
     "pivot_boss_r": 10.0,   # head-side pivot boss radius (internal side walls)
     "clevis_half": 22.0,    # neck cheek half-span (cheeks at +-22 in X)
     "cheek_t": 8.0,         # clevis cheek thickness (X)
-    # Ø5 tilt axle on 695-2RS bearings (5x13x4, owned x30). Hollow for the Pi power wires.
+    # Ø5 tilt axle on 695-2RS bearings (5x13x4, owned x30). SOLID rod (review 2026-07-08:
+    # the old hollow Ø2.5 weight relief left a 0.25 wall under the D-key flat; the cable
+    # never used the bore anyway -- it drapes through the bottom-rear slot).
     "axle_d": 5.0,          # tilt axle outer Ø (rides 695 bores)
-    "axle_bore_d": 2.5,     # hollow (power wires cross tilt on-axis; no ribbons cross)
     "brg_od": 13.0,         # 695-2RS outer Ø (press into the head-side hubs)
     "brg_w": 4.0,
     # single-start worm + worm wheel (module 1.25). Wheel keyed to the axle; worm on the motor.
@@ -689,6 +690,111 @@ def load_gear_stl(name):
     return m
 
 
+def _fit_report(geo):
+    """FIT / PRESSURE MAP (ported from finnish-doors 2026-07-08): for every CLOSE pair of
+    assembled parts, sample the smaller part's surface and take signed distances into the
+    other -> press depth (interference / friction) or minimum clearance, plus a contact
+    PATCH point cloud tracing the shape of each contact area. Written to web/fit_report.json
+    for the viewer's 'Fits' panel.
+
+    OPT-IN: runs only with FITS=1 (the desk-pi watch loop rebuilds in ~2 s; this pass costs
+    minutes). Run at NEUTRAL pose for the canonical report: `make fits` = FITS=1 PAN=0
+    TILT=0. Cross-group numbers (head vs pan vs fixed) are pose-dependent; same-group fits
+    (bores, seats, presses) are not.
+
+    CONTACT AUDIT: every pair that touches (min clearance <= 0.005 or press) must be in
+    _FIT_CONTACT_OK -- designed seats, presses, and face-mounted cosmetics only. Anything
+    else touching prints a loud failure; that is the whole point of the map."""
+    import json as _json
+    SKIP = ("screen_ref",)                # not watertight: signed distance lies (FIXES stage 4)
+    _FIT_DESIGNED = set()                 # intended PRESS pairs (none yet; presses are hardware)
+    _FIT_CONTACT_OK = {
+        # drivetrain seats / meshes (mirrors assembly_check WHITELIST)
+        frozenset(("worm_wheel", "tilt_worm")),      # gear mesh
+        frozenset(("worm_wheel", "neck_clevis")),    # spacer tubes in the bearing seats
+        frozenset(("pan_platform", "pan_balls")),    # captured-BB groove (upper race)
+        frozenset(("pan_race", "pan_balls")),        # captured-BB groove (lower race)
+        frozenset(("pan_platform", "motor_pan")),    # D-shaft in the platform hub
+        # resting / bolted seats
+        frozenset(("pan_race", "chassis")),          # ring sits on the seat floor
+        frozenset(("pan_clips", "chassis")),         # clips screwed into deck pockets
+        frozenset(("motor_pan", "chassis")),         # ear bar clamped on the pedestal pads
+        frozenset(("drive_L", "chassis")), frozenset(("drive_R", "chassis")),
+        frozenset(("motor_tilt", "neck_clevis")),    # gear face on the bracket plate
+        frozenset(("camera_ref", "head_bezel")),     # board front on the M2 boss tips
+        frozenset(("cam_cover", "camera_ref")),      # cover posts clamp the board
+        # face-mounted cosmetics (glue + pins) and service parts on their seats
+        frozenset(("trim_rail_L", "head_bezel")), frozenset(("trim_rail_L", "head_back")),
+        frozenset(("trim_rail_R", "head_bezel")), frozenset(("trim_rail_R", "head_back")),
+        frozenset(("trim_hatch_frame", "head_back")),
+        frozenset(("camera_pod", "head_bezel")), frozenset(("antenna_stub", "head_back")),
+        frozenset(("led_strip", "head_bezel")),
+        frozenset(("trim_fascia", "chassis")), frozenset(("trim_rear", "chassis")),
+        frozenset(("sensor_us", "chassis")), frozenset(("sensor_rear", "chassis")),
+        frozenset(("lamp_L", "chassis")), frozenset(("lamp_R", "chassis")),
+        frozenset(("led_front", "chassis")),
+        frozenset(("sd_plug", "trim_rail_L")),       # plug face plate rests on the rail
+        frozenset(("pod_rail_L", "chassis")),        # rail sits flush on the wall outer face
+        frozenset(("pod_rail_R", "chassis")),
+        frozenset(("head_back", "head_bezel")),      # bolted seam at the split plane (y=2)
+    }
+    names = sorted(n for n, m in geo.items() if m is not None and not any(k in n for k in SKIP))
+    rows = []
+    for i in range(len(names)):
+        for j in range(i + 1, len(names)):
+            a, b = geo[names[i]], geo[names[j]]
+            lo = np.maximum(a.bounds[0], b.bounds[0])
+            hi = np.minimum(a.bounds[1], b.bounds[1])
+            if np.any(lo - hi > 2.5):
+                continue                                     # AABBs > 2.5 mm apart: not a fit
+            small, big = (a, b) if a.area <= b.area else (b, a)
+            try:
+                pts, _ = trimesh.sample.sample_surface(small, 2600)
+                d = trimesh.proximity.signed_distance(big, pts)   # >0 = inside big (press)
+                k = int(np.argmax(d))
+                if d[k] < -2.0:
+                    continue                                 # nothing within 2 mm: skip
+                _vol = 0.0
+                if d[k] > 0.005:                             # boolean-confirm presses: the
+                    try:                                     # sampler glitches at corners,
+                        _iv = trimesh.boolean.intersection([a, b], engine="manifold")
+                        _vol = float(_iv.volume) if _iv is not None and len(_iv.faces) else 0.0
+                    except Exception:
+                        _vol = -1.0                          # unknown -- keep the press flag
+                sel = np.where(d > -0.6)[0]                  # contact patch: samples < 0.6 off
+                if len(sel) > 260:
+                    sel = np.random.default_rng(0).choice(sel, 260, replace=False)
+                patch = [[round(float(pts[q][0]), 2), round(float(pts[q][1]), 2),
+                          round(float(pts[q][2]), 2), round(float(-d[q]), 3)] for q in sel]
+                _pair = frozenset((names[i], names[j]))
+                rows.append(dict(a=names[i], b=names[j],
+                                 expected=_pair in _FIT_CONTACT_OK,
+                                 mm=round(float(-d[k]), 3),  # +clearance / -press depth
+                                 press=bool(d[k] > 0.005 and _vol != 0.0),
+                                 vol=round(_vol, 2),
+                                 designed=_pair in _FIT_DESIGNED,
+                                 at=[round(float(x), 2) for x in pts[k]],
+                                 patch=patch))
+            except Exception:
+                continue
+    rows.sort(key=lambda r: (-1e3 - r["mm"]) if r["press"] else r["mm"])
+    _json.dump(rows, open(webpath("fit_report.json"), "w"), indent=1)
+    print("wrote fit_report.json (%d close pairs; %d press fits)"
+          % (len(rows), sum(r["press"] for r in rows)))
+    touching = [r for r in rows if r["mm"] <= 0.005 or r["press"]]
+    bad = [r for r in touching if not r["expected"]]
+    if bad:
+        print("!! CONTACT AUDIT FAILED -- %d unexpected touching/press pair(s):" % len(bad))
+        for r in bad:
+            print("!!   %s <-> %s  %s at %s" % (r["a"], r["b"],
+                  ("PRESS %.2f (vol %.2f mm^3)" % (-r["mm"], r["vol"])) if r["press"]
+                  else "touching (%.3f)" % r["mm"], r["at"]))
+        print("!!   fix the geometry, or add to _FIT_CONTACT_OK only if it is a designed seat")
+    else:
+        print("contact audit: %d touching pair(s), all expected" % len(touching))
+    return not bad
+
+
 # ---------------------------------------------------------------------------
 # Reference screen (loaded, recentered, oriented so glass faces +Y)
 # ---------------------------------------------------------------------------
@@ -1161,8 +1267,12 @@ def build_sd_plug():
     (y0, y1), (z0, z1) = P["sd_slot_y"], P["sd_slot_z"]
     fit = P["sd_plug_fit"]
     rail_out = -(P["head_w"] / 2 + P["rail_t"])          # left rail outer face (-107.5)
-    body = box(8.8, (y1 - y0) - 2 * fit, (z1 - z0) - 2 * fit)
-    body.apply_translation((rail_out + 0.1 + 4.4, (y0 + y1) / 2, (z0 + z1) / 2))
+    # body reaches 0.7 INTO the plate so they fuse (printability review: the first cut left
+    # a 0.1 air gap and the STL split into two loose bodies). The y-min face gets +0.4 extra
+    # clearance: printed face-down, the slot's y=7.4 face is a 16 mm unsupported bridge in
+    # the bezel and sags into a 0.15 fit.
+    body = box(9.6, (y1 - y0) - 2 * fit - 0.4, (z1 - z0) - 2 * fit)
+    body.apply_translation((rail_out - 0.7 + 4.8, (y0 + y1) / 2 + 0.2, (z0 + z1) / 2))
     plate = box(1.5, (y1 - y0) + 1.6, (z1 - z0) + 3.0)   # overlaps the slot 0.8 / 1.5 per side
     plate.apply_translation((rail_out - 0.75, (y0 + y1) / 2, (z0 + z1) / 2))
     plug = uni([body, plate])
@@ -1444,13 +1554,22 @@ def build_neck_clevis():
     # tilt_carrier on the bench -- see build_tilt_carrier. The plate instead takes the
     # carrier's 4 M3s in thread-form pilots, driven from the open rear bay.)
     can_z = wz - P["motor_shaft_off"]
-    # Upper pilots open at the plate rear face (-36.5); the LOWER pair sits below the
-    # column top (z<125), where the column's own rear face (y=-40) is the landing plane,
-    # so their pilots open there instead (5.5 of thread into column + plate zone).
-    for cpx, cpz, py in ((-14.0, wz + 4.1, face_y - 0.1), (14.0, wz + 4.1, face_y - 0.1),
-                         (-13.0, 120.0, -38.1), (13.0, 120.0, -38.1)):
-        pil = cyl(1.25, 4.0, axis="y")
-        pil.apply_translation((wx + cpx, py, cpz))
+    # Carrier screw landings, re-derived (review 2026-07-08: the first cut gave the upper
+    # M3x16s only 2.0 of thread and jammed the lower ones into a 3.9 hole needing 5.5).
+    # UPPER pair: a Ø8 x 2 raised PAD on the plate rear face moves the landing to -38.5,
+    # so an M3x16 through carrier (4) + boss (8) forms 4.0 of thread in a 6.0 pilot.
+    # LOWER pair: lands on the column rear face (y=-40, the plate region is embedded in
+    # column there); pilot 6.5 deep -> 5.5 of thread, 0.95 tip margin.
+    for cpx, cpz in ((-14.0, wz + 4.1), (14.0, wz + 4.1)):
+        pad = cyl(4.0, 2.5, axis="y")                    # 0.5 buried: face-tangent bodies
+        pad.apply_translation((wx + cpx, -37.25, cpz))   # don't fuse (stage-4 D4)
+        neck = uni([neck, pad])
+        pil = cyl(1.25, 6.0, axis="y")
+        pil.apply_translation((wx + cpx, -35.6, cpz))    # spans -38.6..-32.6
+        neck = sub(neck, pil)
+    for cpx, cpz in ((-13.0, 120.0), (13.0, 120.0)):
+        pil = cyl(1.25, 6.5, axis="y")
+        pil.apply_translation((wx + cpx, -36.85, cpz))   # spans -40.1..-33.6
         neck = sub(neck, pil)
     # Ø29 CAN POCKET behind the plate (the motor body was buried in solid neck material):
     # clears the Ø28.25 can + Ø27.25 gearbox stack; separate relief for the blue wiring box.
@@ -1502,17 +1621,22 @@ def build_neck_clevis():
         pilot = cyl(1.25, 14); pilot.apply_translation((hx, hy, z0 + 5))   # bites z0..z0+12
         neck = sub(neck, pilot)
     # tilt ULN2003 driver standoffs on the column BACK face (same pattern as the base's pan
-    # driver mount; motor + driver both live on the pan group so their leads cross no joint)
+    # driver mount; motor + driver both live on the pan group so their leads cross no joint).
+    # Board center DROPPED 110 -> 93 (review 2026-07-08): at 110 the board plane
+    # (y -48..-49.6, z 94..126) ran straight through the tilt_carrier's band
+    # (y -50.55..-46.55, z 113.2..153.2) -- 162 mm^3 of overlap the gate can't see because
+    # the board itself isn't modeled. At 93 the board spans z 77..109, 4.2 under the
+    # carrier, still fully on the column back (z 66..125).
     uln_y = ny - P["neck_d"] / 2                      # column back face
     for sx in (-1, 1):
         for sz in (-1, 1):
             # 8.5 long, buried 0.5 INTO the column: a face-tangent cylinder does not fuse
             # in uni() and exported as a disjoint floating body (stage-4 defect D4)
             b = cyl(3.0, 8.5, axis="y")
-            b.apply_translation((sx * P["uln_w"] / 2, uln_y - 3.75, 110 + sz * P["uln_h"] / 2))
+            b.apply_translation((sx * P["uln_w"] / 2, uln_y - 3.75, 93 + sz * P["uln_h"] / 2))
             neck = uni([neck, b])
             pil = cyl(1.25, 12, axis="y")
-            pil.apply_translation((sx * P["uln_w"] / 2, uln_y - 3, 110 + sz * P["uln_h"] / 2))
+            pil.apply_translation((sx * P["uln_w"] / 2, uln_y - 3, 93 + sz * P["uln_h"] / 2))
             neck = sub(neck, pil)
     _color(neck, "neck")
     neck.metadata["name"] = "neck_clevis"
@@ -1527,10 +1651,16 @@ def build_tilt_carrier():
     inserts from the open rear bay: the can registers in the neck's Ø29 pocket (the mesh
     lead-in; worm CD is held by pocket + tail cradle, same registers the WORM.md mesh was
     verified against), the worm passes the plate's Ø12.2 bore, and 4x M3x16 drive from the
-    rear through Ø7 bosses into the plate's thread-form pilots. Extraction reverses it;
-    sliding the worm axially just spins the free wheel (worm-as-rack), no teardown.
-    Lower corners are clipped past x +-17 to clear the cheek slants; the bottom ring is
-    notched for the blue wiring box."""
+    rear through Ø7 bosses into the plate's thread-form pilots. Extraction reverses it.
+    CAVEAT (review 2026-07-08): sliding the worm out spins the free wheel (worm-as-rack)
+    only while the head can rotate: clearing the mesh needs ~6.0 mm of axial travel =
+    ~46 deg of head nod, but the fin hard stops allow only ~34 deg down from neutral --
+    with the head hung and grubbed, DRIVE THE HEAD FULLY UP first (extraction nods it
+    down, banking the full ~68 deg range), or loosen the two head-clamp grubs. Before
+    step 12 (head not hung) extraction is unconditional.
+    The flanks keep only their rear wing over the cheek-corner zone (review: the first
+    corner-clip cut severed the part into 3 bodies); the bottom ring is notched for the
+    blue wiring box."""
     zt, yt = P["tilt_axis_z"], P["tilt_axis_y"]
     wz = zt - worm_cd()
     can_z = wz - P["motor_shaft_off"]
@@ -1538,15 +1668,26 @@ def build_tilt_carrier():
     cy = -48.55                                          # carrier mid-plane (front -46.55:
     plate = box(46.0, 4.0, 40.0)                         # 0.05 off the motor-ear rear face)
     plate.apply_translation((0, cy, can_z))
-    for sxs in (-1, 1):                                  # clip past the cheek slants (their
-        cc = box(10.6, 8.0, 18.0)                        # bottom-end corners reach y -47 over
-        cc.apply_translation((sxs * 19.3, cy, can_z - 11.7))     # x 14.5..23, z 123..129)
+    # cheek relief, TWO-STAGE (review iterations): the cheek slant's reach grows with
+    # depth -- y -48.0 at z ~127, y -49.5 at z ~120, past -50.6 at z 116. So:
+    #  (a) z 112..126.5, x 17..24: FULL clip (the cheek spans the whole carrier depth
+    #      there). Connectivity holds via x 8.8..17 (the bore only reaches x 12.6 at
+    #      z 126.5) -- the first severed-into-3-bodies cut clipped from x 14.
+    #  (b) x 13.5..24, z 112..132: thin to the REAR WING (y -50.55..-48.4, 2.15 thick),
+    #      clearing the shallower cheek reach above the clip by 0.4.
+    for sxs in (-1, 1):
+        cc = box(7.6, 8.0, 14.5)                         # (a) x 17..24.6, z 112..126.5
+        cc.apply_translation((sxs * 20.8, cy, 119.25))
         plate = sub(plate, cc)
-    # Upper bosses (10 long) land on the plate/gusset rear plane (-36.5, 0.05 air) at
-    # x +-14 -- x +-19 clipped the cheek rear flanks, which bulge to y -37.2 over
-    # x 18..26 at this height. The LOWER pair (6.5 long) lands on the COLUMN rear face
-    # (y=-40): below the column top the plate region is embedded in column material.
-    for bx, bz, bl in ((-14.0, wz + 4.1, 10.0), (14.0, wz + 4.1, 10.0),
+        fr = box(10.5, 2.4, 20.0)                        # (b) x 13.5..24, y -48.4..-46.0
+        fr.apply_translation((sxs * 18.75, -47.2, 122.0))        # z 112..132
+        plate = sub(plate, fr)
+    # Upper bosses (8 long) land on the neck plate's raised Ø8 pads (-38.5, 0.05 air) at
+    # x +-14 -- x +-19 clipped the cheek rear flanks, which bulge to y -37.2 over x 18..26
+    # at this height, and the 2-thick pads buy the M3x16s 4.0 of thread (review fix).
+    # The LOWER pair (6.5 long) lands on the COLUMN rear face (y=-40): below the column
+    # top the plate region is embedded in column material.
+    for bx, bz, bl in ((-14.0, wz + 4.1, 8.0), (14.0, wz + 4.1, 8.0),
                        (-13.0, 120.0, 6.5), (13.0, 120.0, 6.5)):
         b = cyl(3.5, bl, axis="y")
         b.apply_translation((bx, -46.55 + bl / 2, bz))
@@ -1632,17 +1773,22 @@ def build_pan_platform():
 
     # PAN-STOP LUG (homing pass 2026-07-08): hangs from the plate underside at r28,
     # azimuth 225, down to 0.6 above the seat floor; hits the two deck posts (azimuth
-    # 118/332, build_base) at +-93.3 deg pan. Corners r 23.8..32.2: clear of the ring ID
-    # (34), the D-hub (r7), the cable slot (13+ away) and the neck-bolt cbores (19.9+).
+    # 118/332, build_base) at +-93.3 deg pan. RADIALLY ALIGNED like the posts (review
+    # fix, see build_base). Corners r 23.8..32.2: clear of the ring ID (34), the D-hub
+    # (r7), the cable slot (13+ away) and the neck-bolt cbores (19.9+).
     lug = box(6.0, 6.0, plate_bot - (seat_floor + 0.6))
-    lug.apply_translation((28.0 * np.cos(225 * DEG), 28.0 * np.sin(225 * DEG),
-                           (plate_bot + seat_floor + 0.6) / 2))
+    lug.apply_translation((28.0, 0, (plate_bot + seat_floor + 0.6) / 2))
+    lug.apply_transform(R(225 * DEG, (0, 0, 1)))
     plate = uni([plate, lug])
 
     # upper race groove: wraps pan_groove_engage (1.8) of ball up into the plate. Torus center
     # = ball top - minor r = zball - groove_clear -> ball top tangent to the groove ceiling.
+    # FINE tessellation (fit-map finding 2026-07-08: default ~32 major sections chord a r40
+    # circle 0.19 INSIDE nominal -- the printed groove's flats would genuinely pinch the
+    # balls 0.055; 96/48 sections cut the sag to 0.02/0.01).
     minor = P["pan_race_ball_d"] / 2 + P["pan_groove_clear"]
-    groove = trimesh.creation.torus(P["pan_race_circle_d"] / 2, minor)
+    groove = trimesh.creation.torus(P["pan_race_circle_d"] / 2, minor,
+                                    major_sections=96, minor_sections=48)
     groove.apply_translation((0, 0, zball - P["pan_groove_clear"]))
     plate = sub(plate, groove)
 
@@ -1687,15 +1833,16 @@ def build_pan_race():
     # groove wraps 1.8 of ball down into the ring top: torus center = ball bottom + minor r
     # = zball + groove_clear -> ball rests tangent on the groove floor (was centered AT the
     # ball with minor r ball+0.4 -> the plate sank 3 mm and the groove floor was 0.1 thin).
-    groove = trimesh.creation.torus(cr, bd / 2 + P["pan_groove_clear"])
-    groove.apply_translation((0, 0, zball + P["pan_groove_clear"]))
+    groove = trimesh.creation.torus(cr, bd / 2 + P["pan_groove_clear"],
+                                    major_sections=96, minor_sections=48)   # see the upper-
+    groove.apply_translation((0, 0, zball + P["pan_groove_clear"]))         # groove sag note
     lower = sub(ring, groove)
     _color(lower, "pan"); lower.metadata["name"] = "pan_race"
 
     balls = []
     for i in range(P["pan_race_n"]):
         a = TAU * i / P["pan_race_n"]
-        b = trimesh.creation.icosphere(subdivisions=1, radius=bd / 2)
+        b = trimesh.creation.icosphere(subdivisions=2, radius=bd / 2)
         b.apply_translation((cr * np.cos(a), cr * np.sin(a), zball))
         balls.append(b)
     ballring = uni(balls); _color(ballring, "axle"); ballring.metadata["name"] = "pan_balls"
@@ -1902,16 +2049,17 @@ def build_base():
     seat.apply_translation((0, 0, z1 - seat_depth / 2)); body = sub(body, seat)
     # PAN HARD STOPS (homing pass 2026-07-08): two posts rise from the seat floor at r28,
     # azimuth 118 and 332 deg, meeting the platform's underside lug (azimuth 225, see
-    # build_pan_platform). Contact at pan +-93.3 (shapely-computed on the real 6x6 boxes,
-    # not arc math): open-loop 28BYJs lose step count at every power-off, so firmware
-    # stall-homes against a stop at boot, backs off, and calls that +-90; the +-90 sweep
-    # poses keep a 3.3 deg gap. Posts stay inside the race-ring ID (corner r 32.2 < 34),
-    # clear of both Ø30 membrane cbores (center distance 25+ vs r15) and the deck cable
-    # pass. Top at 58.2 leaves 0.2 running air under the plate bottom (58.4).
+    # build_pan_platform). Posts and lug are RADIALLY ALIGNED (rotated about the pan axis,
+    # review fix: the first cut left them axis-aligned, whose corners met at +-91.6 while
+    # the docs promised +-93.3 -- the shapely sim had rotated boxes, the code didn't).
+    # Contact at pan +-93.3: firmware stall-homes at boot, backs off, calls it +-90; the
+    # +-90 sweep poses keep a 3.3 deg gap. Posts stay inside the race-ring ID (corner
+    # r 32.2 < 34), clear of both Ø30 membrane cbores and the deck cable pass. Top at
+    # 58.2 leaves 0.2 running air under the plate bottom (58.4).
     for az in (118.0, 332.0):
-        px, py = 28.0 * np.cos(az * DEG), 28.0 * np.sin(az * DEG)
         post = box(6.0, 6.0, 7.2)
-        post.apply_translation((px, py, seat_floor + 3.6))
+        post.apply_translation((28.0, 0, seat_floor + 3.6))
+        post.apply_transform(R(az * DEG, (0, 0, 1)))
         body = uni([body, post])
     # clearance through the deck membrane under the seat: Ø30 at the pan axis (platform hub +
     # shaft) AND Ø30 at the CAN axis (the 28BYJ gearbox stack, r13.6 about the can, crosses
@@ -2276,9 +2424,10 @@ def build_pod_rails():
         rail = uni(parts + [spine])
         for jy in P["pod_join_y"]:
             # blind Ø2.5 thread-form pilot from the inner face (x 69.4 overshoot) to
-            # x 77.0 -> 1.0 web to the outer face, 7 mm of engagement for an M3x12
-            mb = cyl(1.25, 7.6, axis="x")
-            mb.apply_translation((s * (69.4 + 77.0) / 2, jy, P["pod_join_screw_z"]))
+            # x 77.4 -> 0.6 web to the outer face, 7 mm of engagement for an M3x12
+            # (tip lands at 77.0: 0.4 bottoming margin, review nit -- was zero)
+            mb = cyl(1.25, 8.0, axis="x")
+            mb.apply_translation((s * (69.4 + 77.4) / 2, jy, P["pod_join_screw_z"]))
             rail = sub(rail, mb)
             # blind dowel press socket: Ø3.85 from the inner face (x 69.4 overshoot) to
             # x 77.0 -> 1.0 web to the outer face
@@ -2373,26 +2522,44 @@ def _track_master_link():
     pitch, tw = P["track_pitch"], P["track_width"]
     body = _track_link()
     ka, _ = _KNUCKLES(tw)
+    # keeper-screw BOSSES first, then the jaw slots re-cut THROUGH them, then the pilots.
+    # Printability review: the bare pilot at y 2.2 broke out of the knuckle (edge 3.05 >
+    # chord 2.94) leaving <0.4 walls -- the Ø4.5 boss restores thread stock. Review round
+    # 2: a full-cylinder boss refilled the slot where the keeper bar rides, so the slot
+    # is subtracted AFTER the boss union (boss becomes a C around the slot) and the
+    # pilot moved to y 2.6 so its edge keeps 0.75 to the slot wall. Boss fuses into the
+    # knuckle + web corner, stays above ground (low -4.15 > -6), x-clear of the
+    # neighbour's B knuckles (which end at x 8.9).
+    for (x0, x1) in ka:
+        sxs = 1 if x1 > 0 else -1
+        bs = cyl(2.25, 7.0, axis="x")
+        bs.apply_translation((sxs * (tw / 2 - 3.5), 2.6, -1.9))
+        body = uni([body, bs])
     for (x0, x1) in ka:                                # jaw slots through both A knuckles,
         s = box((x1 - x0) + 1.2, 2.0, 7.0)             # open out the side faces (+0.6/end)
         s.apply_translation(((x0 + x1) / 2, 0, -4.4))  # z -7.9..-0.9: bore keeps its top arc
         body = sub(body, s)
-        # keeper-screw pilot Ø1.7 along X from the side face, in knuckle material beside
-        # the slot (y 2.2 < chord 2.94 at z -1.9), 7 deep
         sxs = 1 if x1 > 0 else -1
         pil = cyl(0.85, 7.0, axis="x")
-        pil.apply_translation((sxs * (tw / 2 - 3.5), 2.2, -1.9))
+        pil.apply_translation((sxs * (tw / 2 - 3.5), 2.6, -1.9))
         body = sub(body, pil)
     keepers = []
     for sxs in (-1, 1):
         bar = box(13.3, 1.9, 2.2)                      # rides the slot walls, top face -0.95
         bar.apply_translation((sxs * (9.7 + 23.0) / 2, 0, -0.95 - 1.1))    # seats the pin;
-        tab = box(1.8, 7.0, 4.0)                       # outboard end fuses into the tab
-        tab.apply_translation((sxs * (tw / 2 + 0.05 + 0.9), 0.7, -1.7))
-        k = uni([bar, tab])
-        mc = cyl(1.15, 4.0, axis="x")                  # M2 clearance through the tab
-        mc.apply_translation((sxs * (tw / 2 + 0.95), 2.2, -1.9))
+        tab = box(2.6, 5.5, 5.5)                       # outboard end fuses into the tab.
+        tab.apply_translation((sxs * (tw / 2 + 0.05 + 1.3), 2.6, -1.9))    # Tab centered on
+        k = uni([bar, tab])                            # the M2 at y 2.6 (reviews: the old
+        # 1.8x7x4 tab left 0.65-0.85 hole ligaments AND let the M2 head stand 0.55-0.85
+        # off the chassis wall on the top run; 2.6 thick x 5.5 + a head counterbore gives
+        # >=1.5 walls and sinks the head to >=1.1 wall clearance. Tab y -0.15..5.35 keeps
+        # 1.15 to the next link's knuckle side faces on the straight run.
+        mc = cyl(1.15, 6.0, axis="x")                  # M2 clearance through the tab
+        mc.apply_translation((sxs * (tw / 2 + 1.3), 2.6, -1.9))
         k = sub(k, mc)
+        cb = cyl(2.1, 1.5, axis="x")                   # Ø4.2 head counterbore, outer face
+        cb.apply_translation((sxs * (tw / 2 + 0.05 + 2.6 - 0.7), 2.6, -1.9))
+        k = sub(k, cb)
         keepers.append(k)
     return body, keepers
 
@@ -2596,10 +2763,13 @@ def build():
     M_head = pan @ tilt          # head parts: tilt then pan
     M_pan = pan                  # pan-group parts
 
+    fit_geo = {}                     # name -> posed world mesh, for the FITS=1 pressure map
+
     def add(mesh, M, export_name=None):
         g = mesh.copy()
         g.apply_transform(M)
         scene.add_geometry(g, node_name=mesh.metadata["name"])
+        fit_geo[mesh.metadata["name"]] = g
         if EXPORT and export_name:
             mesh.export(stlp(export_name))
 
@@ -2671,15 +2841,25 @@ def build():
     wheel = uni([wheel, hub, tub_p, tub_m])
     wheel = sub(wheel, cyl(P["axle_d"] / 2 + 0.1, 40, axis="x"))                # Ø5.2 over the axle
     # D-KEY LEDGE in the hub bore (x 3.5..9, the plain hub zone -- never through a tooth
-    # root): a chord segment whose flat face sits 1.65 off the axis = a 1.0-deep flat on
-    # the Ø5 axle (flat at 1.5) + 0.15 hand-filed-flat clearance. Print a test coupon
-    # before committing the axle: too loose reintroduces the backlash the grub was hiding.
-    # AXLE SPEC (docs/ASSEMBLY.md): the flat must run from the axle's INSERTION end to
-    # ~15 past center (a keyed bore needs its channel from the rod's leading end); only
-    # the ~6 mm under the hub needs a clean 1.0 +-0.1 depth, the rest can be rough.
+    # root): a chord segment whose flat face sits 1.55 off the axis = a 1.0-deep flat on
+    # the Ø5 axle (flat at 1.5) + 0.05 clearance (review: the first cut's +0.15 was
+    # +-4.4 deg of head backlash -- worse than the grub it replaced; coupon from +0.05
+    # and open only if the axle won't slide). Both ledge ends get 45 deg lead-in ramps:
+    # printed axle-vertical, a square ledge end is a floating internal shelf whose
+    # drooped loops land exactly on the sliding surface, and the ramp doubles as the
+    # axle-flat lead-in. AXLE SPEC (docs/ASSEMBLY.md): SOLID rod only (a tube leaves
+    # 0.25 wall under the flat); flat runs from the INSERTION end to ~15 past center
+    # (a keyed bore needs its channel from the rod's leading end); only the ~6 mm under
+    # the hub needs a clean 1.0 +-0.1 depth. The flat crossing the +X 695 seat means
+    # that inner race rides a D-profile -- fine, the race is clamped by the tubes.
     half = box(6.0, 6.0, 2.0)
-    half.apply_translation((0, 0, 1.65 + 1.0))           # halfspace z >= 1.65 (the flat plane)
+    half.apply_translation((0, 0, 1.55 + 1.0))           # halfspace z >= 1.55 (the flat plane)
     ledge = inter(cyl(2.7, 5.5, axis="x"), half)         # r2.7: 0.1 into the bore wall, fuses
+    for se in (-1, 1):                                   # 45 deg end ramps (see above)
+        wdg = box(2.0, 7.0, 2.0)
+        wdg.apply_transform(R(TAU / 8, (0, 1, 0)))
+        wdg.apply_translation((se * 2.75, 0, 1.55))
+        ledge = sub(ledge, wdg)
     ledge.apply_translation((6.25, 0, 0))
     wheel = uni([wheel, ledge])
     _color(wheel, "fork"); wheel.metadata["name"] = "worm_wheel"
@@ -2811,8 +2991,9 @@ def build():
 
     # HOLLOW Ø5 tilt axle: clamped to the head (turns with it), rotates in the neck-cheek 695
     # bearings, driven in the middle by the worm wheel. Hollow -> Pi power wires cross on-axis.
-    axle = sub(cyl(P["axle_d"] / 2, P["head_w"] + 4, axis="x"),
-               cyl(P["axle_bore_d"] / 2, P["head_w"] + 8, axis="x"))
+    # SOLID Ø5 axle (review 2026-07-08: was hollow Ø2.5 "weight relief", but the D-flat
+    # leaves a 0.25 wall on a tube -- the spec is now solid rod, so the model matches).
+    axle = cyl(P["axle_d"] / 2, P["head_w"] + 4, axis="x")
     # D-KEY FLAT (matches the worm wheel's hub ledge): 1.0 deep (flat face z=+1.5), from
     # the +X insertion end to 15 past center, so the wheel's key ledge rides the flat as
     # the axle slides in. Clocked +Z at neutral; axle and wheel both ride M_head.
@@ -2828,6 +3009,11 @@ def build():
     print(f"wrote {out}  ({len(scene.geometry)} parts)")
     if EXPORT:
         print("exported per-part STLs into stl/")
+    if os.environ.get("FITS") == "1":
+        if pan_deg or tilt_deg:
+            print("NOTE: fit map at pan=%g tilt=%g -- cross-group numbers are pose-"
+                  "dependent; `make fits` runs the canonical neutral pose" % (pan_deg, tilt_deg))
+        _fit_report(fit_geo)
 
 
 if __name__ == "__main__":

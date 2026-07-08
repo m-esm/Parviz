@@ -41,9 +41,13 @@ wall 27W+ USB-C PD brick
   (~13-16 W worst case, inside the buck's 25 W envelope).
 - **Buck B (motor rail):** steppers + TT + chassis accessories. A TT stall folds
   THIS buck, not the Pi rail. 28BYJ ~240 mA each energized, TT ~0.5 A cruise.
-- **Budget:** 27 W total. Pi rail worst ~16 W + motor rail worst ~9 W = 25 W. Firmware
-  rule: never drive both TT motors at 100 % duty while a stepper is stepping; cap TT
-  PWM at 80 %. Stall-homing (pan/tilt hard stops) happens at boot with tracks idle.
+- **Budget (honest version, review 2026-07-08):** 27 W at the wall is ~24 W after ~90 %
+  buck efficiency. Pi rail worst ~16 W already eats two thirds of that, and a DUAL TT
+  stall is >15 W on its own -- the naive worst case is over budget and the firmware
+  rules are load-bearing, not advisory: cap TT PWM at 80 %, never drive both TTs hard
+  while a stepper steps, and stall-home (pan/tilt hard stops) at boot with tracks idle.
+  If the input brick folds anyway, buck B browns first and the Pi rail survives -- that
+  is the point of the split.
 
 ## Pi 5 configuration (mandatory)
 
@@ -102,8 +106,9 @@ the Pi. Then the pan loop shrinks to: Pi-rail pair + 5V/GND + SDA/SCL (or TX/RX)
   Dropping the belly plate (6x M3) drops the whole power stage for service --
   leave 60 mm of harness slack on every tray run.
 - **Driver mounts:** ULN#1 on the chassis standoffs at (38, 20); MX1588 on the
-  `uln2_c` standoffs at (-38, 45); tilt ULN on the neck-column standoffs (rides
-  the pan frame).
+  `uln2_c` standoffs at (-38, 45); tilt ULN on the neck-column standoffs, board
+  centered at z 93 (dropped from 110: the tilt_carrier occupies z 113..153 in the
+  same y band; rides the pan frame).
 
 ## Buy list delta
 

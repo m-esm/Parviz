@@ -83,6 +83,21 @@
 
   #legend{margin:6px 2px 0;font:10.5px/1.5 var(--mono);color:var(--ink-dim);display:none}
   #legend span{white-space:nowrap}
+
+  /* ---- Fits panel (clearance / press map, ported from finnish-doors) ---- */
+  #fits{display:none;flex-direction:column;gap:1px;max-height:34vh;overflow:auto;margin-top:4px}
+  #fits::-webkit-scrollbar{width:6px}
+  #fits::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:6px}
+  #fits .fhd{font:600 9px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;
+    color:var(--ink-faint);margin:7px 2px 3px}
+  #fits .fr{display:flex;align-items:center;gap:7px;padding:3px 6px;border-radius:7px;
+    cursor:pointer;font:10.5px/1.3 var(--mono);color:var(--ink)}
+  #fits .fr:hover{background:rgba(255,255,255,.055)}
+  #fits .fr.on{background:var(--accent-soft)}
+  #fits .fr .dot{width:7px;height:7px;border-radius:50%;flex:0 0 auto}
+  #fits .fr .pair{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #fits .fr .mm{font-weight:600}
+  #fits .flegend{margin:7px 2px 2px;font:10px/1.6 var(--mono);color:var(--ink-dim)}
   .foot{margin-top:15px;padding-top:11px;border-top:1px solid var(--hair);
     font:10.5px/1.5 var(--mono);color:var(--ink-faint)}
 
@@ -114,6 +129,11 @@
     <span style="color:#86e29a">■ W width&nbsp;(Y)</span>&nbsp;
     <span style="color:#8fc8fb">■ H height&nbsp;(Z)</span>
   </div>
+
+  <div class="sec">Fits</div>
+  <label class="chk"><input type="checkbox" id="t_fits"> Fit map
+    <span id="fits_sum" style="margin-left:auto;font:10px var(--mono);color:var(--ink-faint)"></span></label>
+  <div id="fits"></div>
 
   <div class="sec">View</div>
   <label class="chk"><input type="checkbox" id="t_section"> Section cut
@@ -369,6 +389,105 @@ function applySection(){
 $('t_section').addEventListener('change',applySection);
 $('sec_axis').addEventListener('change',applySection);
 $('cut').addEventListener('input',applySection);
+
+// ---- FITS panel: clearance / press-fit map (fit_report.json, written by `make fits`).
+// Ported from finnish-doors 2026-07-08. TEAL = intended contact (designed seats/presses),
+// RED = only PROBLEMS (unexpected touch/press), amber/yellow/green = clearance scale.
+// Each pair renders a contact-PATCH point cloud; click a row to isolate it + glow the parts.
+let fitData=null, fitDots=null, fitSelNames=null;
+const FITCOLS={ok:'#5cc7d4',bad:'#ff6b6b',tight:'#ffb300',run:'#ffd866',free:'#6ecf7a'};
+const FITHEADS={bad:'PROBLEMS · unexpected contact',ok:'INTENDED · seats & presses',
+                tight:'TIGHT · under 0.15',run:'RUNNING · 0.15–0.4',free:'FREE · over 0.4'};
+function pairStatus(r){ const touch=r.press||r.mm<=0.005;
+  if(touch) return (r.designed||r.expected)?'ok':'bad';
+  return r.mm<0.15?'tight':r.mm<0.4?'run':'free'; }
+function fitTag(r){ const st=pairStatus(r);
+  if(st==='ok') return r.press?('press '+(-r.mm).toFixed(2)):'seated';
+  if(st==='bad') return (r.press?'PRESS '+(-r.mm).toFixed(2):'TOUCH')+' !';
+  return r.mm.toFixed(2); }
+function fitColD(d,st){ if(st==='ok') return FITCOLS.ok;
+  if(d<0.005) return st==='bad'?FITCOLS.bad:FITCOLS.tight;
+  return d<0.15?FITCOLS.tight:d<0.4?FITCOLS.run:FITCOLS.free; }
+function showFitDots(){
+  if(fitDots||!fitData) return;
+  fitDots=new THREE.Group(); fitDots.userData.byPair={};
+  fitData.forEach((r,idx)=>{
+    const pts=(r.patch&&r.patch.length)?r.patch:[[r.at[0],r.at[1],r.at[2],r.mm]];
+    const pos=new Float32Array(pts.length*3), col=new Float32Array(pts.length*3);
+    const st=pairStatus(r);
+    pts.forEach((p,i)=>{ pos[i*3]=p[0];pos[i*3+1]=p[1];pos[i*3+2]=p[2];
+      const c=new THREE.Color(parseInt(fitColD(p[3],st).slice(1),16));
+      col[i*3]=c.r;col[i*3+1]=c.g;col[i*3+2]=c.b; });
+    const g=new THREE.BufferGeometry();
+    g.setAttribute('position',new THREE.BufferAttribute(pos,3));
+    g.setAttribute('color',new THREE.BufferAttribute(col,3));
+    const m=new THREE.Points(g,new THREE.PointsMaterial({size:1.5,vertexColors:true,
+      transparent:true,opacity:.9,depthTest:false,sizeAttenuation:true}));
+    m.renderOrder=999; fitDots.add(m); fitDots.userData.byPair[idx]=m;
+  });
+  scene.add(fitDots);
+}
+function hideFitDots(){ if(fitDots){ scene.remove(fitDots); fitDots=null; } }
+function focusFitPair(idx){ if(!fitDots) return;
+  Object.entries(fitDots.userData.byPair).forEach(([i,m])=>{
+    m.material.opacity=(idx==null||+i===idx)?.95:.07;
+    m.material.size=(+i===idx)?2.6:1.5; }); }
+function clearFitSel(){
+  if(fitSelNames) fitSelNames.forEach(n=>{ const g=groups[n]; if(!g) return;
+    g.meshes.forEach(o=>{ if(o.userData._em!==undefined){
+      o.material.emissive.setHex(o.userData._em); o.material.emissiveIntensity=o.userData._ei; } }); });
+  fitSelNames=null;
+  document.querySelectorAll('#fits .fr.on').forEach(e=>e.classList.remove('on'));
+}
+function pickFit(r,el,idx){
+  const same=el.classList.contains('on');
+  clearFitSel(); if(same){ focusFitPair(null); return; }
+  fitSelNames=[r.a,r.b];
+  fitSelNames.forEach(n=>{ const g=groups[n]; if(!g) return;
+    g.meshes.forEach(o=>{ if(o.userData._em===undefined){
+        o.userData._em=o.material.emissive.getHex(); o.userData._ei=o.material.emissiveIntensity; }
+      o.material.emissive.setHex(0x5cc7d4); o.material.emissiveIntensity=.55; }); });
+  focusFitPair(idx); el.classList.add('on');
+}
+async function openFits(){
+  const panel=$('fits');
+  if(!fitData){
+    try{ fitData=await (await fetch('fit_report.json?'+Date.now())).json(); }
+    catch(e){ panel.innerHTML='<div class="fhd" style="color:var(--ink-dim)">no fit_report.json — run `make fits`</div>'; return; }
+  }
+  const bad=fitData.filter(r=>pairStatus(r)==='bad');
+  const nContact=fitData.filter(r=>['ok','bad'].includes(pairStatus(r))).length;
+  $('fits_sum').textContent = bad.length? bad.length+' ✗' : '✓';
+  $('fits_sum').style.color = bad.length? FITCOLS.bad : FITCOLS.ok;
+  panel.innerHTML = bad.length
+    ? '<div class="fhd" style="color:#ff6b6b">✗ '+bad.length+' unexpected contact'+(bad.length>1?'s':'')+' — fix before printing</div>'
+    : '<div class="fhd" style="color:#5cc7d4">✓ all '+nContact+' contacts are designed seats/presses</div>';
+  ['bad','ok','tight','run','free'].forEach(st=>{
+    const rows=fitData.map((r,idx)=>[r,idx]).filter(([r])=>pairStatus(r)===st);
+    if(!rows.length) return;
+    const h=document.createElement('div'); h.className='fhd';
+    h.style.color=FITCOLS[st]; h.textContent=FITHEADS[st]; panel.appendChild(h);
+    rows.forEach(([r,idx])=>{
+      const el=document.createElement('div'); el.className='fr';
+      el.innerHTML='<span class="dot" style="background:'+FITCOLS[st]+'"></span>'
+        +'<span class="pair">'+r.a+' ↔ '+r.b+'</span>'
+        +'<span class="mm" style="color:'+FITCOLS[st]+'">'+fitTag(r)+'</span>';
+      if(st==='bad') el.style.background='rgba(255,107,107,.14)';
+      el.addEventListener('click',()=>pickFit(r,el,idx));
+      panel.appendChild(el);
+    });
+  });
+  const lg=document.createElement('div'); lg.className='flegend';
+  lg.innerHTML='<span style="color:#5cc7d4">■</span> intended · <span style="color:#ff6b6b">■</span> problem'
+    +' · <span style="color:#ffb300">■</span> &lt;0.15 · <span style="color:#ffd866">■</span> 0.15–0.4 · <span style="color:#6ecf7a">■</span> free'
+    +'<br>patches trace each contact area · click a pair to isolate';
+  panel.appendChild(lg);
+}
+$('t_fits').addEventListener('change',e=>{
+  const panel=$('fits');
+  if(e.target.checked){ panel.style.display='flex'; openFits().then(showFitDots); }
+  else{ panel.style.display='none'; clearFitSel(); hideFitDots(); }
+});
 
 addEventListener('resize',()=>{
   camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix();

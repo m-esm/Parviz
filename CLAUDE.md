@@ -17,7 +17,7 @@ per-part STLs (chassis, track_L, track_R, neck_clevis, pan_platform, pan_race, p
 head_bezel, head_back, cam_cover) plus placeholder sub-parts (worm_wheel, tilt_worm, pan_balls,
 motor_*, drive_L/R). A 6-agent research pass drove the mechanism decisions now in geometry:
 **pan = 28BYJ direct D-hub on a captured-BB lazy-Susan race**; **tilt = self-locking single-start
-WORM drive** (Ø5 hollow axle on 695-2RS bearings, owned); **screen+Pi ride as one module** (the
+WORM drive** (Ø5 solid axle on 695-2RS bearings, owned); **screen+Pi ride as one module** (the
 official Pins-Out assembly: Pi on the display's own 58×49 standoffs), retained by 4 rear standoffs
 on `head_back` at the factory M3 bosses; **camera recessed behind the forehead** (official CM3
 dims) with a lens bump + `cam_cover`; **tracks = measured-TT-motor positive drive: articulated
@@ -55,6 +55,15 @@ make build          # python3 src/build.py -> web/assembly.glb
 make viewer         # python3 src/serve.py 8770 (leave running; user watches live at
                     #   http://localhost:8770/viewer_glb.html -- auto-reloads on rebuild)
 make shot           # headless render -> .claude/renders/chk_*.png  (serve must be up)
+make check          # interference gate (run after every geometry change)
+make fits           # fit/pressure map (ported from finnish-doors 2026-07-08): neutral-pose
+                    #   clearance/press report for every close pair -> web/fit_report.json,
+                    #   rendered by the viewer's "Fit map" toggle (contact patches, click a
+                    #   pair to isolate). Its CONTACT AUDIT fails loudly on any touching
+                    #   pair not whitelisted in _FIT_CONTACT_OK (build.py). Costs minutes,
+                    #   so it is opt-in, not part of the watch loop. It leaves assembly.glb
+                    #   at NEUTRAL pose (patches are neutral-pose coords; a preview-pose GLB
+                    #   would misplace them) -- `make build` restores the preview pose.
 ```
 
 Then **downscale and actually Read every PNG** before claiming a change works:
@@ -80,7 +89,7 @@ tank chassis        DRIVE base: central body (build_base) + track_L/track_R (bui
       └─ pan_platform + neck_clevis   rotate as one
           └─ TILT joint   pitch about horizontal X (±30°). SELF-LOCKING WORM: motor_tilt (shaft +Y)
               │           carries tilt_worm meshing worm_wheel keyed to the axle. Holds tilt de-
-              │           energized. Ø5 hollow axle rotates in 695-2RS bearings in the cheeks.
+              │           energized. Ø5 SOLID axle rotates in 695-2RS bearings in the cheeks.
               └─ head = head_bezel + head_back (rounded box) + screen + camera + cam_cover + Pi 5
 ```
 
@@ -93,7 +102,7 @@ tank chassis        DRIVE base: central body (build_base) + track_L/track_R (bui
   carries the top-heavy head without wobble. No worm on pan (a balanced vertical axis has no gravity
   torque to hold).
 - **Tilt is a SELF-LOCKING WORM drive on a REAR CLEVIS** (not a side gimbal, not direct-drive). The
-  head clamps a **Ø5 hollow axle** at its side-wall hubs (axle turns WITH the head); the axle rotates
+  head clamps a **Ø5 solid axle** at its side-wall hubs (axle turns WITH the head); the axle rotates
   in **695-2RS bearings** pressed into the neck cheeks (x=±22); the `worm_wheel` (12T, was 24T; halved
   in stage 2 for tilt speed) is keyed to the
   axle and driven by the `tilt_worm` (single-start) on motor_tilt, whose shaft runs +Y (right-angle to
@@ -116,13 +125,13 @@ tank chassis        DRIVE base: central body (build_base) + track_L/track_R (bui
   in the head behind the tilt axis. DSI + CSI ribbons stay entirely in the head (zero joint
   crossings); the board doubles as the tilt counterweight. Only round wires (Pi power) cross the
   joints. Tradeoff: heavier head + higher CoM → ballast the base low.
-- **Cable path:** the Pi power pair (5A, ~Ø3.6 envelope) does NOT fit the Ø2.5 axle bore, that
-  hollow is weight relief only. The real route: base USB-C wall port → base cavity (pan **service
-  loop**) → 16×8 obround pass in the platform → neck channel → out the column top → into the head
-  through the bottom-rear slot with a tilt drape (±30° is easy). Pan is ±90°, so a service loop
-  beats a slip ring, it carries the full 5A rail silently and free; software-limit pan so it never
-  over-winds. A 2A/circuit capsule slip ring can't pass 5A without paralleling contacts; only add
-  one for 360° pan.
+- **Cable path:** the axle is SOLID (the old Ø2.5 weight-relief bore left a 0.25 wall under the
+  D-key flat, review 2026-07-08; nothing routed through it anyway). The route: base USB-C wall
+  port → base cavity (pan **service loop**) → 16×8 obround pass in the platform → neck channel →
+  out the column top → into the head through the bottom-rear slot with a tilt drape (±30° is
+  easy). Pan is ±90°, so a service loop beats a slip ring, it carries the full Pi rail silently
+  and free; software-limit pan so it never over-winds. A 2A/circuit capsule slip ring can't pass
+  the rail current without paralleling contacts; only add one for 360° pan.
 
 ## Head is a 2-piece print (bezel + back)
 
@@ -196,18 +205,23 @@ the target axis, don't fight the offset with an eccentric coupler.**
   ledge on a filed 1.0-deep flat, 2026-07-08; the old M3 grub was blind and friction-only).
   Single-start → self-locks, so the head holds ±30° with the driver OFF. Motor + worm ride the
   removable **`tilt_carrier`** (ears bolted on the bench, 4× M3×16 from the open rear bay; the
-  worm extracts axially through the plate's Ø12.2 bore, spinning the free wheel as it goes) --
-  a dead 28BYJ swaps without touching the head. **Homing:** stall the head's ±55° clamp-tube
-  fins against the cheek posts at ±33.8°. Real generated teeth per docs/WORM.md.
-- **Axle + bearings:** Ø5 hollow axle (flat filed from the insertion end to ~15 past center)
-  on **695-2RS bearings (5×13×4, owned ×30)** pressed into the neck cheeks. Head clamps the
-  axle ends (grub screws at x=±30, kept: they give continuous tilt-zero trim).
+  worm extracts axially through the plate's Ø12.2 bore, spinning the free wheel as it goes --
+  BUT with the head hung + grubbed, DRIVE THE HEAD FULLY UP first: clearing mesh needs ~46° of
+  worm-as-rack nod and the stops only allow ~34° from neutral, review 2026-07-08) -- a dead
+  28BYJ swaps without touching the head. **Homing:** stall the head's ±55° clamp-tube fins
+  against the cheek posts at ±33.8°. Real generated teeth per docs/WORM.md.
+- **Axle + bearings:** Ø5 SOLID rod (flat filed 1.0 deep from the insertion end to ~15 past
+  center; a tube dies under the flat -- 0.25 wall; D-key ledge fit +0.05, coupon first, the
+  old +0.15 was ±4.4° of head backlash; the +X 695 inner race rides the D-profile, fine
+  since the spacer tubes clamp it) on **695-2RS bearings (5×13×4, owned ×30)** pressed into
+  the neck cheeks. Head clamps the axle ends (grub screws at x=±30, kept: they give
+  continuous tilt-zero trim).
 - **ULN2003 mounts / motor pockets:** the base has a pan-motor pad + ULN standoffs; the tilt
   motor's Ø29 can pocket doubles as the cartridge's mesh lead-in.
 
 **Buy list (gaps; full inventory-checked BOM in docs/ASSEMBLY.md, 2026-07-08):** a 2nd track
 drive motor (see below), 2× F688ZZ flanged bearings 8×16×5 (idlers), 6 mm airsoft BBs (pan
-race), Ø5 rod for the tilt axle (gets a filed D-flat), the power set from firmware/WIRING.md
+race), Ø5 SOLID rod for the tilt axle (gets a filed D-flat; no tube), the power set from firmware/WIRING.md
 (30W+ PD brick, 12V PD trigger, XL4015 5A buck, MP1584 mini buck, JST-XH kit + crimper,
 18 AWG pair, 5A fuse), Ø4×12 dowels ×4, 1 m of NARROW (4–5 mm) addressable strip
 (SK6805-2427/WS2812-2020, a standard 8×5050 stick is 53.3×10.2 and does NOT fit the 42×5
