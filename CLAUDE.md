@@ -18,8 +18,8 @@ head_bezel, head_back, cam_cover) plus placeholder sub-parts (worm_wheel, tilt_w
 motor_*, drive_L/R). A 6-agent research pass drove the mechanism decisions now in geometry:
 **pan = 28BYJ direct D-hub on a captured-BB lazy-Susan race**; **tilt = self-locking single-start
 WORM drive** (Ø5 solid axle on 695-2RS bearings, owned); **screen+Pi ride as one module** (the
-official Pins-Out assembly: Pi on the display's own 58×49 standoffs), retained by 4 rear standoffs
-on `head_back` at the factory M3 bosses; **camera recessed behind the forehead** (official CM3
+official Pins-Out assembly: Pi on the display's own 58×49 standoffs), carried by the bench-mounted
+`screen_tray` at the factory M3 bosses (2026-07-08; was 4 rear standoffs with blind channels); **camera recessed behind the forehead** (official CM3
 dims) with a lens bump + `cam_cover`; **tracks = measured-TT-motor positive drive: articulated
 links + 12T sprocket + F688ZZ idler + road wheels**. The 28BYJ placeholder is now dimensionally correct (Ø28.25, 7.875 mm
 offset shaft, 3 mm D-flats). Remaining gaps closed 2026-07-07: REAL involute worm teeth integrated (tools/gears/ generator,
@@ -116,11 +116,14 @@ tank chassis        DRIVE base: central body (build_base) + track_L/track_R (bui
 - **Camera is RECESSED behind the forehead** (the 24 mm board can't fit the ~10 mm forehead gap): lens
   bump on the front at `cam_lens_z`, board on 4x M2 bosses at the 21×12.5 pattern, `cam_cover` traps
   it, CSI ribbon drops to the Pi bay. Lens optical axis is X=0, Z=+2.47 above board center (not centred).
-- **Screen is held by its 4 FACTORY M3 holes** (outer 126.2×65.65 case-mount pattern) via 4 REAR
-  STANDOFFS on `head_back` (stage 3a/5: the old bezel bosses ran through the glass, then punched
-  the display's raised mount bosses). The standoff faces land on the boss REAR plane (y 22.48);
-  screws drive through back-wall channels, axis +Y into the display's metal chassis. The front
-  glass lip is only a locator. See `PARAMS["scr_mount_pts"]`.
+- **Screen is held by its 4 FACTORY M3 holes** (outer 126.2×65.65 case-mount pattern) via the
+  **`screen_tray`** (2026-07-08, replaced the 4 rear standoffs + their 88.5 mm blind driver
+  channels; stage 3a/5 history still applies: bezel bosses through the glass are forbidden).
+  The module bolts to the tray ON THE BENCH (4× M3×10 into the factory bosses, pillars z-offset
+  so the driver line is open), tray faces land on the boss REAR plane (y 22.48, the D1 datum);
+  the loaded tray drops into head_back and 4× M3×10 drive from OUTSIDE the back wall (heads in
+  the fixed strip between the door outline and hatch-frame opening). The front glass lip is only
+  a locator. See `PARAMS["scr_mount_pts"]` + `build_screen_tray()`.
 - **Pi 5 rides the DISPLAY's own 58×49 standoffs** (official mounting, the Pins-Out combined mesh),
   in the head behind the tilt axis. DSI + CSI ribbons stay entirely in the head (zero joint
   crossings); the board doubles as the tilt counterweight. Only round wires (Pi power) cross the
@@ -138,9 +141,10 @@ tank chassis        DRIVE base: central body (build_base) + track_L/track_R (bui
 `build_head_parts()` slices the wedge on a plane parallel to the front face, ~4mm behind the screen:
 - `head_bezel` (front): the face + camera lens bump (CM3 aperture: Ø6.3 bore + Ø8 csk) + the 8
   bezel↔back nut-trap bosses. The stepped aperture lip is just a locator. Print face-down.
-- `head_back` (rear): pivot hubs, neck slot, the 4 screen-module rear standoffs + driver channels,
+- `head_back` (rear): pivot hubs, neck slot, the 4 screen-tray wall holes + counterbores,
   Pi I/O slot (right wall), cable port, vents. Print open-side-down.
-The screen+Pi module drops in from behind and bolts to the 4 head_back standoffs; bezel bolts to back.
+The screen+Pi module bolts to `screen_tray` on the bench, the tray drops into head_back (4× M3×10
+from outside the back wall); bezel bolts to back.
 
 ## Head style: simple rounded box (simplified from the Echo-Show wedge, per user)
 
@@ -151,7 +155,7 @@ top/bottom, rounded vertical edges, upright front `face_angle=0`). The screen si
 on the front; the neck's tilt provides the look up/down. It started as an Echo-Show "doorstop" wedge
 (reference in `reference/alexa-style-smart-display/`, a Touch Display 2 design we borrowed the style
 from) but the user asked to simplify the head shape. Still split by `build_head_parts()` into
-`head_bezel` (front, locator lip, camera nub) + `head_back` (screen standoffs, hubs, vents).
+`head_bezel` (front, locator lip, camera nub) + `head_back` (screen-tray holes, hubs, vents).
 
 ## Key numbers (measured, not guessed)
 
@@ -256,8 +260,8 @@ engagement beats a friction belt that slips when the head pans.
 - Printed set (exports via `EXPORT=1`): `chassis`, `belly_plate`, `track_L/R`,
   `drivewheels_L/R` (as track_wheels_*), `track_keeper_L/R`, `pod_rail_L/R` (as
   track_pod_rail_*), `neck_clevis`, `tilt_carrier`, `pan_platform`, `pan_race`,
-  `pan_clips`, `pan_cage`, `head_bezel`, `head_back`, `head_door`, `cam_cover`,
-  `sd_plug`, plus the real generated `worm_wheel`/`tilt_worm` (docs/WORM.md).
+  `pan_clips`, `pan_cage`, `head_bezel`, `head_back`, `head_door`, `screen_tray`,
+  `cam_cover`, `sd_plug`, plus the real generated `worm_wheel`/`tilt_worm` (docs/WORM.md).
   `pan_balls`/`motor_*`/`drive_*` are bought-part placeholders. track_L/R (links +
   wheels), track_keeper_* (2 bars) and pan_clips (3 clips) are multi-body by design.
 - **Fastening = M3 into CAPTIVE HEX NUTS on serviced seams, Ø2.5 THREAD-FORM pilots on
@@ -267,9 +271,10 @@ engagement beats a friction belt that slips when the head pans.
   head door, TT gearbox ("nut in the gap"), arm shoulders.
   - bezel↔back: 8 perimeter posts (stage 3a: bottom + top centers each became a ±40 pair), nut
     captive in the back boss, screw from the front. M3×35 ×8.
-  - screen+Pi module: 4 rear standoffs on `head_back` landing on the display's factory M3 boss
-    rear plane (126.2×65.65 pattern), screws driven through back-wall channels. No bezel bosses;
-    no separate Pi mount (the Pi rides the display's own 58×49 standoffs).
+  - screen+Pi module: `screen_tray` (2 rails + spine, prints plate-face down): 4× M3×10 bench
+    screws into the display's factory bosses (126.2×65.65, faces on the boss rear plane) +
+    4× M3×10 from outside the back wall into the tray pillar pilots. No bezel bosses; no
+    separate Pi mount (the Pi rides the display's own 58×49 standoffs).
   - camera: 4× M2 bosses at 21×12.5; `cam_cover` traps the board (2× M2 + ribbon pinch).
   - neck↔pan_platform: 3× M3 on r16 at (270°, 30°, 150°) about `(0, neck_y)` (stage 5 re-clock;
     the old r12/90° layout put a hole inside the D-bore hub).

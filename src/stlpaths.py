@@ -32,6 +32,7 @@ SUBSYSTEMS = [
     ("cam", "head"),
     ("bracket", "head"),
     ("sd", "head"),            # microSD service-slot plug
+    ("screen", "head"),        # bench-mounted screen tray
 
 ]
 

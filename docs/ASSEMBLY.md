@@ -71,7 +71,10 @@ Owned quantities cross-checked against a personal parts inventory (2026-07-07).
   vertical cable channel
 - `head_bezel`: front of the rounded tablet head: screen locator lip, camera aperture,
   forehead LED recess (42x5)
-- `head_back`: rear cover: pivot hubs, screen standoffs, Pi bay, cable port, vents
+- `head_back`: rear cover: pivot hubs, screen-tray wall holes, Pi bay, cable port, vents
+- `screen_tray`: bench-mounted module carrier (2 rails + spine): the screen+Pi bolts to it
+  on the bench (4x M3x10 into the factory bosses, open access), the loaded tray drops into
+  head_back, 4x M3x10 drive from OUTSIDE the back wall (visible, between door and frame)
 - `cam_cover`: camera board cover and cable trap
 - `sd_plug`: friction plug for the microSD service slot (left wall + trim_rail_L); pull it,
   reach the card with straight forceps down the eject axis (~61 mm, sight line clear)
@@ -94,10 +97,9 @@ probes on the neutral-pose mesh; the numbers in parentheses are the worst measur
 clearance. Read the **order constraints** and **nasty steps** at the bottom before you
 start: several joints are only reachable at ONE point in the sequence.
 
-Tools you need: a long slim **M3 driver ~95 mm reach** (screen standoffs), a **short/stubby
-Ø3 hex bit** (tilt-motor ears), a **1.5 mm hex key** (grub screws), a standard M3/M2 driver,
-tweezers, and thread-lock or CA glue (cosmetics). Use **M3 PAN/CHEESE-head** screws for the
-4 screen standoffs, **NOT countersunk** (a Ø6.0 csk head will not enter the channel).
+Tools you need: a **1.5 mm hex key** (head-clamp grubs), a standard M3/M2 driver, tweezers,
+and thread-lock or CA glue (cosmetics). (The old ~95 mm slim driver is retired: the screen
+tray killed the 88.5 mm blind channels, 2026-07-08.)
 
 ### Sub-assemblies to build on the bench FIRST (they become unreachable once seated)
 
@@ -180,11 +182,14 @@ tweezers, and thread-lock or CA glue (cosmetics). Use **M3 PAN/CHEESE-head** scr
     set the two head-clamp grubs at x=±30 with a 1.5 mm hex key driven UP through the bottom
     motor bay (4.0 mm clear). The axle now turns with the head; the worm holds tilt with the
     driver off (self-locking single-start).
-13. **Screen + Pi module.** Seat the combined touchscreen+Pi (Pi on the display's own 58×49
-    standoffs) into the `head_bezel` pocket from behind against the front locator lip; bring
-    `head_back` to it and drive the **4× M3 pan-head** screws down the **Ø7 rear driver
-    channels** (~88.5 mm long, use the ~95 mm slim driver) into the display's factory
-    126.2×65.65 mount holes. Do this BEFORE any cosmetic frame goes on the back.
+13. **Screen + Pi module (tray).** On the BENCH: bolt `screen_tray` to the combined
+    touchscreen+Pi with 4× M3×10 pan heads straight into the display's factory 126.2×65.65
+    bosses (the pillars are z-offset from the bores, so the driver line is open). Power-test
+    the module on the desk if you like -- it is now a self-contained unit. Then drop the
+    loaded tray into `head_back` from the open front (the pillars pass z-clear of the clamp
+    tubes) and drive 4× M3×10 from OUTSIDE the back wall into the pillar-end pilots: short,
+    visible screws in the fixed strip between the door outline and the hatch-frame opening.
+    The bezel pocket locates the glass when the head closes (step 15).
 14. **Camera + forehead LED.** Mount the CM3 front-face-in on the 4× M2 pier bosses, trap it
     with `cam_cover` (2× M2 + ribbon pinch), drop the CSI ribbon into the pocket. Seat the
     WS2812 forehead segment in its recess and route the 3 wires through the wire pass to the
@@ -222,19 +227,15 @@ tweezers, and thread-lock or CA glue (cosmetics). Use **M3 PAN/CHEESE-head** scr
 - Neck↔platform bolt-up (sub-assembly A) **before** seating on the balls, counterbores face down.
 - BBs + cage (step 8) **before** the platform (step 9); power tray + ballast (step 7)
   **before** the belly plate closes the floor.
-- Screen standoff screws (step 13) **before** the hatch frame (step 17).
 
 ### Nasty-but-possible steps (measured)
 
-- **4× screen standoff screws:** ~95 mm slim driver down an 88.5 mm blind Ø7 channel; ~0.75 mm
-  around an M3 pan head. Pan/cheese head only, a countersunk M3 (Ø6.0) will not enter.
-  (One-time: the module never comes out for routine service now that the SD card has its
-  own slot and the tilt motor its own cartridge.)
 - **Head-clamp grubs (step 12):** 1.5 mm hex key driven blind UP through the motor bay,
   4.0 mm clearance. Kept deliberately: the grubs give continuous tilt-zero trim.
 
-(2026-07-08 pass retired the old tilt-motor-ear reach, the worm-wheel bench grub, and the
-last-track-pin loop flex.)
+(2026-07-08 passes retired the old tilt-motor-ear reach, the worm-wheel bench grub, the
+last-track-pin loop flex, and the 4× 88.5 mm blind screen-standoff screws -- the worst
+step in the build is now four short bench screws plus four visible wall screws.)
 
 ### Recommendations (bigger than this pass)
 

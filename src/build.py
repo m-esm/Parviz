@@ -737,6 +737,7 @@ def _fit_report(geo):
         frozenset(("pod_rail_L", "chassis")),        # rail sits flush on the wall outer face
         frozenset(("pod_rail_R", "chassis")),
         frozenset(("head_back", "head_bezel")),      # bolted seam at the split plane (y=2)
+        frozenset(("screen_tray", "head_back")),     # pillar ends bolted to the back wall
     }
     names = sorted(n for n, m in geo.items() if m is not None and not any(k in n for k in SKIP))
     rows = []
@@ -1115,48 +1116,30 @@ def build_head_parts():
     # in with the screen module. The back cover only has to CLEAR the combined stack.)
     zt = P["tilt_axis_z"]
 
-    # screen retention: 4x M3 into the display's OWN outer case-mount holes (126.2 x 65.65).
-    # The factory holes are threaded bosses in the metal back-pan and OPEN BACKWARD (-Y); a
-    # bezel boss running forward from the tab plane passes THROUGH the glass (front 30.99,
-    # measured 69/50k screen samples inside the old bosses). So the screen mounts on REAR
-    # STANDOFFS on head_back: Ø9 pillars from the inner back wall (y=-66) forward to the
-    # display boss REAR plane (hole plane - scr_boss_lip = 22.53; the raised boss around each
-    # factory hole spans the last 2.5 mm -- landing on the hole plane buried the standoff in
-    # the boss, stage-4 D1), with a Ø6.5 driver channel + short M3 seat so a stock M3x12
-    # reaches the display from behind. At x=+-63 they clear the Pi stack (|x|<=48.1), the
-    # clamp tubes (z 171..185 vs rows 146.2/211.8), the louvres, the neck and io_side slots.
+    # screen retention: SCREEN TRAY (2026-07-08, user: "I don't like the 4 long screws").
+    # The old scheme -- 4 rear standoffs with 88.5-long blind Ø7 driver channels through
+    # the back wall (nasty step #1 in both reviews) -- is GONE. The module now bolts to
+    # the separate `screen_tray` on the BENCH (build_screen_tray; the factory bosses still
+    # open backward and a bezel boss still punches the glass, so the boss-rear-plane datum
+    # at y 22.48 is unchanged, stage-4 D1), and the loaded tray drops into head_back from
+    # the open front. head_back keeps only 4 short M3x10 CLEARANCE holes through the back
+    # wall at the tray pillar pilots: (x = boss_x -+ 1.5 inboard, z 134/174), inside the
+    # fixed-wall strip between the door outline (|x| > 56.5) and the hatch-frame opening
+    # (screw heads reach |x| 66.3 max < 67) -- short, visible, normal driver.
     wall_in = P["body_back_y"] + P["head_wall"]          # inner back wall (-66, deep head)
-    # GUSSET WEBS (task #27): the deep head stretches the 4 rear standoffs to 88.5-long
-    # Ø9 cantilevers off the back wall. Per side, a 4-thick vertical web ties the upper
-    # and lower standoff together (z 121.15..186.8, spanning the boss centers so it fuses
-    # both), rooted 1 mm into the back wall. y -67..-27: the rear end fuses to the wall,
-    # the front end stops 2.0 behind the axle clamp tubes (y -25..-11) and WELL behind
-    # the display+Pi stack (y >= -7; the webs also sit outboard at |x| 59.6..66.6 vs the
-    # stack's |x| <= 48.1). The Ø6.5 driver channels are cut AFTER this union, so they
-    # stay open where they graze the web ends.
     wpts = [(sp @ np.append(lp, 1.0))[:3] for lp in P["scr_mount_pts"]]
-    for wx_side in sorted({round(w[0], 2) for w in wpts}):
-        zs = sorted(w[2] for w in wpts if round(w[0], 2) == wx_side)
-        web = box(4.0, 40.0, zs[1] - zs[0])
-        web.apply_translation((wx_side, -47.0, (zs[0] + zs[1]) / 2))
-        back = uni([back, web])
-    for lp in P["scr_mount_pts"]:
-        w = (sp @ np.append(lp, 1.0))[:3]
-        w[1] -= P["scr_boss_lip"] + P["scr_seat_clear"]  # bearing face = boss rear plane
-        sl = w[1] - wall_in                              # standoff length (88.48, deep head)
-        b = cyl(P["scr_boss_r"], sl, axis="y"); b.apply_translation((w[0], wall_in + sl / 2, w[2]))
-        back = uni([back, b])
-        # deep Ø7.0 screw-head/driver channel from the back wall, stopping 6 short of the tab.
-        # Task #28 (assembly): was Ø6.5 -> open radius 3.2, an M3 PAN head (Ø5.5, r2.75)
-        # cleared by 0.45 over this 88.5-long blind channel and a countersunk M3 head (Ø6.0)
-        # would NOT enter. Ø7.0 (r3.5) gives ~0.75 around any M3 head + room for a hex bit to
-        # grip the head down the channel. Standoff is Ø9, so 1.0 wall remains.
-        ch = cyl(3.5, sl - 6 + 4, axis="y")
-        ch.apply_translation((w[0], P["body_back_y"] - 4 + (sl - 6 + 8) / 2, w[2]))
-        back = sub(back, ch)
-        # M3 clearance through the remaining 6 mm seat (screw threads into the display pan)
-        c = cyl(P["scr_m3_clear_r"], 16, axis="y"); c.apply_translation((w[0], w[1] - 3, w[2]))
-        back = sub(back, c)
+    for bx_ in sorted({round(w[0], 2) for w in wpts}):
+        # pattern is off-center (-64.59 / +61.61): the LEFT pilot shifts 1.5 inboard to
+        # keep its Ø7.2 head inside the frame opening; the RIGHT sits on the pillar axis
+        # (head 58.0..65.2: 1.5 off the door outline, 1.8 off the frame)
+        px_ = bx_ + 1.5 if bx_ < 0 else bx_
+        for bz_ in (134.0, 174.0):
+            hole = cyl(1.75, 6.0, axis="y")
+            hole.apply_translation((px_, P["body_back_y"] + 2.0, bz_))
+            back = sub(back, hole)
+            cb = cyl(3.6, 1.4, axis="y")                 # Ø7.2 head counterbore, outer face
+            cb.apply_translation((px_, P["body_back_y"] + 0.6, bz_))
+            back = sub(back, cb)
 
     # --- REAR SERVICE DOOR (task #26): the 4-thick wall (y -70..-66) inside the orange
     # frame becomes a removable U-shaped panel. Through-void = outline inset door_lip
@@ -1223,6 +1206,62 @@ def build_head_parts():
     _color(back, "back"); back.metadata["name"] = "head_back"
     _color(door, "back"); door.metadata["name"] = "head_door"
     return bezel, back, door
+
+
+def build_screen_tray():
+    """SCREEN TRAY (2026-07-08, user: "I don't like the 4 long screws"). The screen+Pi
+    module bolts to THIS tray on the bench -- 4x M3x10 pan heads straight into the
+    display's factory bosses with unlimited driver access -- then the loaded tray drops
+    into head_back from the open front and 4x M3x10 drive from OUTSIDE the back wall
+    into the pillar-end pilots. Replaces the 4 rear standoffs and their 88.5 mm blind
+    Ø7 driver channels (nasty step #1 in both reviews); the module also becomes a
+    bench-testable unit (power the Pi on the desk before it enters the head).
+
+    Geometry: per side, a 12 x 4 vertical PLATE whose front face lands on the display
+    boss REAR plane (y 22.48 -- same stage-4 D1 datum as the old standoffs; between
+    bosses the back-pan sits at 25.03, so the plate has 2.5 air except at the boss
+    rims) carrying the two M3 clearance bores on the factory 126.2 x 65.65 pattern,
+    plus one 8 x 8 PILLAR per foot pair at z 134 and 174 running back to the inner
+    wall. The pillars are z-OFFSET from the bore axes (bench driver line stays open)
+    and z-clear of the Ø14 clamp tubes (146..160) so insertion needs no slots. Wall
+    pilots sit 1.5 inboard of the pillar axis so the outside screw heads stay inside
+    the hatch-frame opening (|x| < 67) and outside the door outline (|x| > 56.5).
+    Prints on its side (plate face down), pillars horizontal."""
+    sp = screen_pose()
+    wall_in = P["body_back_y"] + P["head_wall"]          # inner back wall (-66)
+    wpts = [(sp @ np.append(lp, 1.0))[:3] for lp in P["scr_mount_pts"]]
+    face = wpts[0][1] - P["scr_boss_lip"] - P["scr_seat_clear"]   # boss rear plane (22.48)
+    parts, cuts = [], []
+    for bx_ in sorted({round(w[0], 2) for w in wpts}):
+        px_ = bx_ + 1.5 if bx_ < 0 else bx_              # pilot x: MUST match head_back's
+        zs = sorted(w[2] for w in wpts if round(w[0], 2) == bx_)  # holes (121.15, 186.8)
+        plate = box(12.0, 4.0, 83.8)                     # z 112.2..196: reaches the spine
+        plate.apply_translation((bx_, face - 2.0, 154.1))
+        parts.append(plate)
+        for bz_ in zs:                                   # M3 clearance to the factory boss
+            c = cyl(P["scr_m3_clear_r"], 8.0, axis="y")
+            c.apply_translation((bx_, face - 2.0, bz_))
+            cuts.append(c)
+        for bz_ in (134.0, 174.0):                       # pillars to the wall, z-clear of
+            pl = box(8.0, (face - 3.5) - wall_in + 0.05, 8.0)    # the clamp tubes
+            pl.apply_translation((bx_, (face - 3.5 + wall_in + 0.05) / 2, bz_))
+            parts.append(pl)
+            pil = cyl(1.25, 8.0, axis="y")               # wall-screw pilot
+            pil.apply_translation((px_, wall_in + 0.05 + 3.9, bz_))
+            cuts.append(pil)
+    # SPINE tying the two rails into one part (bench handling): z 190.7..195.7, the
+    # 6-mm window between the display's mid back-pan face (y 22.5 plane, tops at z 190
+    # -- the spine face at 22.48 would only have 0.02 air inside its z-range) and the
+    # bezel's camera pier / CM3 envelope (both start at z 196.6).
+    spine = box(131.0, 4.0, 5.0)
+    spine.apply_translation((-1.49, face - 2.0, 193.2))
+    parts.append(spine)
+    tray = uni(parts)
+    for c in cuts:
+        tray = sub(tray, c)
+    _color(tray, "back")
+    tray.metadata["name"] = "screen_tray"
+    return tray
 
 
 def build_head_rails():
@@ -2932,6 +2971,7 @@ def build():
     add(bezel, M_head, "head_bezel.stl")
     add(back, M_head, "head_back.stl")
     add(door, M_head, "head_door.stl")
+    add(build_screen_tray(), M_head, "screen_tray.stl")  # bench-mounted module carrier
 
     for rail in build_head_rails():                  # orange side accent rails (design ref)
         add(rail, M_head)
