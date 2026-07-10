@@ -115,6 +115,15 @@
   <div class="sec">Parts</div>
   <div id="parts"></div>
 
+  <div class="sec">Pose</div>
+  <label class="ctl">Pan <span class="val" id="pan_v">–</span>
+    <input type="range" id="pan" min="-93" max="93" step="0.1" value="0" disabled
+           title="rebuild (make build) to write pose.json"></label>
+  <label class="ctl">Tilt <span class="val" id="tilt_v">–</span>
+    <input type="range" id="tilt" min="-34" max="34" step="0.1" value="0" disabled
+           title="rebuild (make build) to write pose.json"></label>
+  <label class="chk"><input type="checkbox" id="t_sweep"> Sweep (animate head)</label>
+
   <div class="sec">Appearance</div>
   <label class="ctl">Transparency <span class="val" id="opacity_v">0%</span>
     <input type="range" id="opacity" min="0" max="0.92" step="0.02" value="0.5"></label>
@@ -221,7 +230,7 @@ const PAL = [
   [/^arm_/i,        {c:0x33373E, m:0.15, r:0.65, env:0.3}],  // charcoal gripper arms
   [/sensor/i,       {c:0xB8BCC2, m:0.75, r:0.35}],           // silver sensor barrels
   [/head_bezel/i,   {c:0x2E3238, m:0.12, r:0.72, env:0.3}],  // matte charcoal, front
-  [/head_back|head_door|shell|cradle|cover/i, {c:0x363A41, m:0.12, r:0.72, env:0.3}], // charcoal, back
+  [/head_back|head_door|shell|cradle|cover|rear_pack|tilt_shroud/i, {c:0x363A41, m:0.12, r:0.72, env:0.3}], // charcoal, back
   [/screen/i,       {c:0x0E1319, m:0.10, r:0.16, e:0x0b1a24, ei:0.32}], // dark glass, faint glow
   [/camera/i,       {c:0x1E2126, m:0.30, r:0.4, env:0.35}],  // black camera pod
   [/motor|byj|drive/i, {c:0x9AA0A8, m:0.70, r:0.35}],        // silver actuation
@@ -328,6 +337,7 @@ new GLTFLoader().load(MODEL, (gltf)=>{
   // apply the slider's default transparency (50%) to the freshly loaded materials
   $('opacity').dispatchEvent(new Event('input'));
   window.__ready = true;
+  applyPose();                                       // pose.json may have loaded first
 }, undefined, err=>{ document.getElementById('bbox').textContent='LOAD ERROR: '+err; });
 
 const $=id=>document.getElementById(id);
@@ -364,15 +374,62 @@ $('t_bbox').addEventListener('change',e=>{
   updateLegend();
 });
 
+// ---- Pose: live pan/tilt of the head. The GLB bakes the build's preview pose into the
+// vertices, so pose.json (written by build.py) supplies the BAKED angles, the tilt-axis
+// position and each posed node's kinematic group; the sliders then apply DELTA rotations
+// about the same neutral-frame axes: pan = Rz about the origin, tilt = Rx about
+// (0, tilt_axis_y, tilt_axis_z). Head parts get Rz(pan)·Rx(Δtilt)·Rz(-bakedPan) so the
+// tilt axis swings with the pan, exactly like build.py's M_head = pan @ tilt.
+let pose=null;
+const poseM={head:new THREE.Matrix4(), pan:new THREE.Matrix4()};   // current group deltas
+const DEG=Math.PI/180;
+fetch(MODEL.replace(/\.glb$/,'')+'.pose.json?'+Date.now()).then(r=>r.ok?r.json():null).then(p=>{
+  if(!p||!p.groups) return;
+  pose=p;
+  const pan=$('pan'), tilt=$('tilt');
+  pan.min=-p.pan_stop_deg;  pan.max=p.pan_stop_deg;  pan.value=p.pan_deg;
+  tilt.min=-p.tilt_stop_deg; tilt.max=p.tilt_stop_deg; tilt.value=p.tilt_deg;
+  pan.disabled=tilt.disabled=false; pan.title=tilt.title='';
+  applyPose();
+}).catch(()=>{});
+function applyPose(){
+  if(!pose) return;
+  const pn=parseFloat($('pan').value), tn=parseFloat($('tilt').value);
+  $('pan_v').textContent=pn.toFixed(0)+'°'; $('tilt_v').textContent=tn.toFixed(0)+'°';
+  const rz=a=>new THREE.Matrix4().makeRotationZ(a*DEG);
+  const T =new THREE.Matrix4().makeTranslation(0, pose.tilt_axis_y, pose.tilt_axis_z);
+  const Ti=new THREE.Matrix4().makeTranslation(0,-pose.tilt_axis_y,-pose.tilt_axis_z);
+  const rxt=a=>T.clone().multiply(new THREE.Matrix4().makeRotationX(a*DEG)).multiply(Ti);
+  poseM.pan  = rz(pn - pose.pan_deg);            // same axis, so the deltas collapse
+  poseM.head = rz(pn).multiply(rxt(tn - pose.tilt_deg)).multiply(rz(-pose.pan_deg));
+  applyTransforms();
+}
+$('pan').addEventListener('input',applyPose);
+$('tilt').addEventListener('input',applyPose);
+
+// one place composes pose × explode per mesh (they must not fight over o.position)
+function applyTransforms(){
+  if(!window.__ready) return;
+  const t=parseFloat($('explode').value), spread=diag*0.6;
+  for(const [name,g] of Object.entries(groups)){
+    const off=g.explodeDir.clone().multiplyScalar(t*spread);
+    const k=pose ? (pose.groups.head.includes(name)?'head'
+                   :pose.groups.pan.includes(name)?'pan':null) : null;
+    g.meshes.forEach((o,i)=>{
+      const p=g.home[i].clone().add(off);
+      if(k){
+        const M=poseM[k].clone().multiply(new THREE.Matrix4().makeTranslation(p.x,p.y,p.z));
+        M.decompose(o.position,o.quaternion,o.scale);
+      } else o.position.copy(p);
+    });
+    if(g.dim) g.dim.position.copy(g.dimHome).add(off);
+  }
+}
+
 // explode along each group's radial direction from the assembly center
 $('explode').addEventListener('input',e=>{
-  const t=parseFloat(e.target.value), spread=diag*0.6;
-  $('explode_v').textContent = pct(t);
-  Object.values(groups).forEach(g=>{
-    const off=g.explodeDir.clone().multiplyScalar(t*spread);
-    g.meshes.forEach((o,i)=>o.position.copy(g.home[i]).add(off));
-    if(g.dim) g.dim.position.copy(g.dimHome).add(off);
-  });
+  $('explode_v').textContent = pct(parseFloat(e.target.value));
+  applyTransforms();
 });
 
 // section cut on a chosen axis
@@ -499,6 +556,12 @@ let last=performance.now();
   requestAnimationFrame(loop);
   const dt=(t-last)/1000; last=t;
   if($('t_spin').checked){ scene.rotation.z += dt * parseFloat($('spinspd').value)*Math.PI/180; }
+  if(pose && $('t_sweep').checked){                  // lazy figure-8 sweep inside the stops
+    const s=t/1000;
+    $('pan').value  = (Math.sin(s*0.7) * pose.pan_stop_deg  * 0.95).toFixed(1);
+    $('tilt').value = (Math.sin(s*1.3) * pose.tilt_stop_deg * 0.90).toFixed(1);
+    applyPose();
+  }
   controls.update();
   renderer.render(scene,camera);
   labelRnd.render(scene,camera);

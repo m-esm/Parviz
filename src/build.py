@@ -165,7 +165,17 @@ P = {
     # Modular positive-drive track (advancedvb 'Tank track' 3062624 geometry): printed link pads
     # on filament-rod hinge pins, a 12-tooth sprocket meshing the pins -> no slip on a desk.
     "track_wheel_r": 19.32,  # pin-circle radius = exact 12T x 10.0-pitch polygon (audit corr. 1)
-    "track_wheelbase": 120.0,   # sprocket-axis <-> idler-axis (Y)
+    "track_wheelbase": 116.325,  # sprocket-axis <-> idler-axis (Y). SOLVED value: with the
+                            # raised loop (track_raise/track_ground_hy below) the perimeter
+                            # closes at exactly 36 x 10.0 -- _track_link_poses asserts it
+    # RAISED TANK LOOP (2026-07-10, user's RC-tank chassis refs): sprocket + idler axles
+    # sit track_raise ABOVE the old stadium centreline, so the track climbs ~33 deg ramps
+    # at both ends and wraps ~147 deg -- the classic hull profile. Raise is capped at 9:
+    # the sprocket rides the TT shaft, and at zs 34.32 the motor's upper M3 mount hole
+    # (zs+8.75, r1.6 -> 44.7) and the gearbox top (45.5) still stay under the z46 deck
+    # seam, so the deck stays screw-free over the motors.
+    "track_raise": 9.0,     # axle z = _track_zc() + raise (34.32); loop top pin z 53.64
+    "track_ground_hy": 50.0,  # flat ground-run half-span (ramp tangent leaves here)
     "track_width": 44.8,    # link body width (X): 2x design-ref chunk, then -20% per user
                             # (28 -> 56 -> 44.8); sprocket engages only the central ~8 mm channel
     "track_pitch": 10.0,    # link pin-to-pin (our re-model; the 3062624 reference pitch is 9.65)
@@ -176,8 +186,10 @@ P = {
     "sprocket_teeth": 12,
     "sprocket_outer_d": 37.6,   # tip r 18.8 = pin circle 19.32 - 0.5 clearance (OD 42 jammed links)
     "idler_bore_d": 15.95,  # F688ZZ (8x16x5, flange 18) press seat; flange recess 18.5 x 1.0
-    "roadwheel_d": 22.0,    # inner bottom-run support wheels (ride the knuckle crowns)
-    "roadwheel_count": 2,
+    "roadwheel_d": 20.0,    # dished road wheels riding the bottom-run knuckle crowns
+    "roadwheel_count": 4,   # dense row like the ref; centers = (i - (n-1)/2) * pitch
+    "roadwheel_pitch": 21.0,  # 1 mm gap between Ø20 wheels; outermost at y +-31.5 keeps
+                            # 0.9+ mm lateral gap to the raised sprocket/idler discs
     "idler_slot": 4.0,      # idler Y-slide for tensioning (M3 set-screw lock)
     # TT gearmotor drive (own 1x; BUY 1 more -> 2 for skid steer; MX1588 drives both).
     # Measured dims from reference/tt-motor-1079893/NOTES.md (STEP B-rep). Shaft is
@@ -203,6 +215,17 @@ P = {
     "pod_rail_z": (14.0, 40.0), # rail z band: 4.5 above the bottom-run knuckle tops (9.5),
                                 # 1.14 below the top-run knuckle sweep (41.14)
     "pod_rail_block_w": 9.0,    # per-station block width (Y): 1.0 clear of each vent slot
+    # Chassis print split: the old one-piece tub+deck trapped deep pockets, side-wall holes,
+    # pan-seat features, and internal posts in one support-heavy print. Split at z=46,
+    # right under the solid deck, so the lower tub prints open-top and the pan deck prints
+    # separately; 4x M3 from the top deck into lower thread-form pilots clamp/register it.
+    "chassis_split_z": 46.0,
+    "chassis_split_screws": ((-64.0, 60.0), (64.0, 60.0), (-34.0, -71.0), (34.0, -71.0)),
+                            # rear pair moved off the side walls 2026-07-10: the raised
+                            # TT gearboxes (track_raise, top z 45.5) now own that zone;
+                            # bosses ride the rear wall instead (sensor hole z16, trim
+                            # pins outer-face only, motor tabs x +-55.6 -- all clear)
+    "chassis_split_boss_r": 4.0,
     # Pan-motor seat detailing (re-derived for base_h 66: can bottom 26.45, ear-bar
     # underside = pedestal top = 44.25, can top 45.25, gear face 54.25): the 7-wide x
     # 1-thick ear bar clamps on two DEFINED pads instead of the whole 48x48 top, and the
@@ -338,6 +361,9 @@ P = {
     "hatch_frame_t": 3.0,       # proud of the back face
     "hatch_frame_cz": 151.0,    # outer z 98.5..203.5; inner 111.5..190.5 (louvres
                                 # 171..187 land inside the opening)
+    # (rear_pack + tilt_shroud REMOVED 2026-07-10: the rear_pack slabs and the detached
+    # shroud were superseded by the door's extruded pod, which closes the whole opening
+    # and hides the tilt motor inside its cavity. See the door pod params below.)
 
     # --- HEAD REAR DOOR (task #26): the wall inside trim_hatch_frame is removable ---
     # U-SHAPED (the bottom-centre stays OPEN: it is the tilt-sweep motor bay, x +-33 /
@@ -352,13 +378,39 @@ P = {
     "door_notch_ztop": 170.0,   # bay notch top (2 past the z=168 bay lip)
     "door_lip": 2.0,            # fixed-wall support lip all around (through-void inset)
     "door_fit": 0.15,           # perimeter fit clearance
-    # Retention: 2x M3 csk (axis +Y) at the leg bottoms into captive-nut blocks on
-    # head_back + 2x 3mm top HOOK tabs (insert top-first, swing in, screw the bottom).
-    # SCREWS, not magnets: the tracked base + three steppers vibrate the head
-    # constantly; magnets walk and chatter under vibration, a screwed door stays put
-    # and still opens with the same driver as everything else.
-    "door_screws": ((-46.0, 119.0), (46.0, 119.0)),
+    # Retention (2026-07-10, user: "easy to open and close" -- replaced the 2x M3 csk +
+    # captive nuts): 2x 3mm top HOOK tabs (the pivot) + per-leg SNAP TONGUES at the
+    # bottom. Each tongue is the leg's own outer strip, freed by one vertical slit
+    # (root at the top, the door's bottom edge is the free end), with an outboard barb
+    # at plug level that clicks behind the fixed wall band beside the void. Close =
+    # hook the top, swing in, click. Open = firm pull on the door's bottom edge (the
+    # 3.4-proud face panel is the finger grip): the barb's back ramp cams the tongue
+    # inboard -- no tools. NOT magnets (they walk and chatter under stepper vibration);
+    # the snap preloads the flange into its rebate like the screws did.
     "door_hook_x": 47.0, "door_hook_w": 14.0, "door_hook_lip": 3.0,
+    "door_snap_w": 2.75,        # tongue strip width in X at plug level
+    "door_snap_slot_w": 1.5,    # freeing slit width (prints as a clean gap)
+    "door_snap_root_z": 146.0,  # slit top = tongue root (L~29 to the barb -> ~1% strain
+                                # at 1.2 engagement, in-plane of the face-down layers)
+    "door_snap_barb": 1.2,      # barb proudness past the void wall (engagement depth)
+    "door_snap_barb_z": (116.0, 119.5),  # barb z band (just above the plug bottom edge)
+    # EXTRUDED REAR POD (2026-07-10, replaced the raised panel + latch/hinge cosmetics +
+    # through-relief): the stepped "backpack" bump from the design ref, hollow so the
+    # tilt drivetrain's swept intrusion lives INSIDE it (no relief hole). See the pod
+    # block in build_head_parts() for the sweep numbers.
+    "door_face_r": 8.0,      # rounded corners on the pod root-slab footprint
+    "pod_top_z": 169.0,      # flat pod top -- below the louvre band (~171..187) so the
+                             # vents stay open above the bump, like the reference
+    "pod_tiers": ((62.0, -85.0), (51.0, -95.0), (38.0, -105.0)),  # (half-width, rear y)
+                             # 15/25/35 proud of the wall (2026-07-10, user: "much more
+                             # depth horizontally" -- was 6/10/15)
+    "pod_cavity": (17.0, -98.0, 130.0, 162.0),   # hx, floor y, z0, z1 -- wraps the
+                             # probe-measured drivetrain sweep (y to -78.1) with margin
+    "pod_notch": (27.0, 134.0, -98.0),  # center-bottom corridor (half-width, top z,
+                             # floor y): at the +-33.8 stall the neck cheeks rake to
+                             # x +-24 / y -86.9 / z <=130.7 in the DOOR frame (probe-
+                             # measured). Now a POCKET, not a through-hole: the deep
+                             # pod's rear wall (7 solid) closes it from behind
     # Chassis FRONT fascia (design-ref front.jpg). Front wall: y=78 face, x +-60, z 7..52.
     "grille_cz": 46.0,      # orange surround outer 60x20 -> z 36..56; inner 52x12
     "grille_w": 60.0, "grille_h": 20.0, "grille_band": 4.0, "grille_t": 2.5,
@@ -716,10 +768,11 @@ def _fit_report(geo):
         frozenset(("pan_race", "pan_balls")),        # captured-BB groove (lower race)
         frozenset(("pan_platform", "motor_pan")),    # D-shaft in the platform hub
         # resting / bolted seats
-        frozenset(("pan_race", "chassis")),          # ring sits on the seat floor
-        frozenset(("pan_clips", "chassis")),         # clips screwed into deck pockets
-        frozenset(("motor_pan", "chassis")),         # ear bar clamped on the pedestal pads
-        frozenset(("drive_L", "chassis")), frozenset(("drive_R", "chassis")),
+        frozenset(("pan_race", "chassis_deck")),     # ring sits on the seat floor
+        frozenset(("pan_clips", "chassis_deck")),    # clips screwed into deck pockets
+        frozenset(("motor_pan", "chassis_deck")),    # ear bar clamped on the pedestal pads
+        frozenset(("motor_pan", "chassis_lower")),
+        frozenset(("drive_L", "chassis_lower")), frozenset(("drive_R", "chassis_lower")),
         frozenset(("motor_tilt", "neck_clevis")),    # gear face on the bracket plate
         frozenset(("camera_ref", "head_bezel")),     # board front on the M2 boss tips
         frozenset(("cam_cover", "camera_ref")),      # cover posts clamp the board
@@ -729,13 +782,16 @@ def _fit_report(geo):
         frozenset(("trim_hatch_frame", "head_back")),
         frozenset(("camera_pod", "head_bezel")), frozenset(("antenna_stub", "head_back")),
         frozenset(("led_strip", "head_bezel")),
-        frozenset(("trim_fascia", "chassis")), frozenset(("trim_rear", "chassis")),
-        frozenset(("sensor_us", "chassis")), frozenset(("sensor_rear", "chassis")),
-        frozenset(("lamp_L", "chassis")), frozenset(("lamp_R", "chassis")),
-        frozenset(("led_front", "chassis")),
+        frozenset(("trim_fascia", "chassis_lower")), frozenset(("trim_fascia", "chassis_deck")),
+        frozenset(("trim_rear", "chassis_lower")), frozenset(("trim_rear", "chassis_deck")),
+        frozenset(("sensor_us", "chassis_lower")), frozenset(("sensor_us", "chassis_deck")),
+        frozenset(("sensor_rear", "chassis_lower")),
+        frozenset(("lamp_L", "chassis_lower")), frozenset(("lamp_R", "chassis_lower")),
+        frozenset(("led_front", "chassis_lower")),
         frozenset(("sd_plug", "trim_rail_L")),       # plug face plate rests on the rail
-        frozenset(("pod_rail_L", "chassis")),        # rail sits flush on the wall outer face
-        frozenset(("pod_rail_R", "chassis")),
+        frozenset(("pod_rail_L", "chassis_lower")),  # rail sits flush on the wall outer face
+        frozenset(("pod_rail_R", "chassis_lower")),
+        frozenset(("chassis_deck", "chassis_lower")),
         frozenset(("head_back", "head_bezel")),      # bolted seam at the split plane (y=2)
         frozenset(("screen_tray", "head_back")),     # pillar ends bolted to the back wall
     }
@@ -1165,6 +1221,55 @@ def build_head_parts():
     back = sub(back, _xz(outline, 2.5, wall_out + 2.0))      # 2-deep outer rebate + overshoot
     door = uni([_xz(outline.buffer(-dfit, join_style=2), 2.0 - 0.1, wall_out + 2.0 - 0.1),
                 _xz(void.buffer(-dfit, join_style=2), 2.1, wall_out + 4.0)])
+    # EXTRUDED REAR POD (2026-07-10, user's red-box ref: the back of the head carries a
+    # chunky stepped "backpack" bump). Replaces the old 3.4-proud 2-tier face + latch +
+    # hinge cosmetics + through-relief slot, which read as a plate floating in a recessed
+    # hole (and the detached tilt_shroud + rear_pack slabs, both removed). The pod IS the
+    # door: three stepped tiers (x +-62/51/38, rear faces y -76/-80/-84), flat top at
+    # z 169 so the louvre band above (~171..187) stays open like the ref, 45-deg top-rear
+    # chamfer, 0.3-sloped bottom (helps the tilt-stall floor sweep: bottom-rear corner
+    # bottoms at z~87 at the +33.8 stall, 21 over the deck). HOLLOW: the inner cavity
+    # (x +-17, z 119.5..161, floor y -81.5) swallows the tilt drivetrain's swept
+    # intrusion -- probe-measured x +-13.5 / y to -78.1 / z 122.4..157.8 over +-33.8 deg
+    # -- so the 28BYJ hides INSIDE the pod and no relief hole shows. Roots to the U
+    # flange via a 2.1-thick base slab on the old face footprint.
+    face = sg.box(-P["door_hx"], zb0, P["door_hx"], zb1).buffer(
+        -P["door_face_r"], join_style=1).buffer(P["door_face_r"], join_style=1)
+    face = face.buffer(-dfit, join_style=2)
+    # extend the head_back rebate to the FULL root footprint (the root's 0.1 inner skin
+    # must not sit on un-rebated wall). x reaches 56.8 < the standoff bosses at 57.11.
+    back = sub(back, _xz(face.buffer(0.3, join_style=2), 2.5, wall_out + 2.0))
+    door = uni([door, _xz(face, 2.1 + 0.1, wall_out + 0.1)])     # root slab, y -72..-69.9
+    XPERM = np.array([[0., 0., 1., 0.], [1., 0., 0., 0.],       # (y,z)-profile poly ...
+                      [0., 1., 0., 0.], [0., 0., 0., 1.]])      # ... extruded along +X
+    zpt = P["pod_top_z"]
+    for xw, yr in P["pod_tiers"]:
+        dpt = -(yr + 70.0)                                      # tier proudness off wall
+        prof = sg.Polygon([(-71.5, zb0 + 0.1), (-71.5, zpt), (yr + 5.0, zpt),
+                           (yr, zpt - 5.0), (yr, zb0 + 0.1 + 0.3 * dpt)])
+        tier = extrude_polygon(prof, 2 * xw)                    # front buried 0.5 in root
+        tier.apply_transform(XPERM)
+        tier.apply_translation((-xw, 0, 0))
+        rrc = sg.box(-xw, -115.0, xw, -60.0).buffer(-3.0, join_style=1).buffer(
+            3.0, join_style=1)                                  # round vertical corners
+        rrp = extrude_polygon(rrc, 120.0)
+        rrp.apply_translation((0, 0, 100.0))
+        door = uni([door, inter(tier, rrp)])
+    chx, cfy, cz0, cz1 = P["pod_cavity"]
+    cav = box(2 * chx, -60.0 - cfy, cz1 - cz0)                  # drivetrain sweep cavity,
+    cav.apply_translation((0, (cfy - 60.0) / 2, (cz0 + cz1) / 2))   # open toward the bay
+    door = sub(door, cav)
+    nhx, nzt, nfl = P["pod_notch"]                              # bottom corridor POCKET
+    ntc = box(2 * nhx, -60.0 - nfl, nzt - 100.0)                # (see the PARAMS note)
+    ntc.apply_translation((0, (nfl - 60.0) / 2, (100.0 + nzt) / 2))
+    door = sub(door, ntc)
+    for gx in (-31.5, 31.5):                                    # panel-line grooves on the
+        gr = box(1.6, 1.6, 26.0)                                # core face (design ref)
+        gr.apply_translation((gx, P["pod_tiers"][-1][1], 149.0))
+        door = sub(door, gr)
+    gr = box(2 * P["pod_tiers"][-1][0] - 12.0, 1.6, 1.6)
+    gr.apply_translation((0, P["pod_tiers"][-1][1], 158.0))
+    door = sub(door, gr)
     # top HOOK tabs (x +-47, 14 wide: outboard of the x +-38 louvres, inboard of the
     # z-186.8 standoff bosses at |x| 57.11): a root block inside the void + a 1.3 plate
     # lapping 3 mm up behind the fixed wall above the seam (0.15 off its inner face).
@@ -1180,27 +1285,41 @@ def build_head_parts():
         louvre = box(76, 30.0, 3.0)
         louvre.apply_translation((0, wall_out, P["screen_cz"] + 19.5 + i * 6.5))
         door = sub(door, louvre)
-    # bottom retention: per side an M3 csk through the door leg into a captive-nut
-    # block on head_back (rooted into the full-thickness wall below the z 113.5 seam,
-    # rising 0.15 clear behind the door plug). M3x10: tip -60.05, room to -57.5.
-    for dx, dz in P["door_screws"]:
-        blk = box(12.0, 8.35, 18.0)
-        blk.apply_translation((dx, -61.675, 113.0))          # y -65.85..-57.5, z 104..122
-        tongue = box(12.0, 1.0, 9.3)
-        tongue.apply_translation((dx, -66.35, 108.65))       # fuses into the wall, z<113.3
-        back = uni([back, blk, tongue])
-        bore = cyl(1.75, 9.0, axis="y"); bore.apply_translation((dx, -62.0, dz))
-        back = sub(back, bore)
-        nut = hex_prism(P["m3_nut_af"] + 0.3, P["m3_nut_h"])
-        nut.apply_transform(R(TAU / 4, (1, 0, 0)))           # axis +Z -> Y
-        nut.apply_translation((dx, -62.1, dz))               # captive, y -63.5..-60.7
-        back = sub(back, nut)
-        csk = frustum(3.35, 1.7, 1.65)                       # M3 flat head, 90 deg cone
-        csk.apply_transform(R(-TAU / 4, (1, 0, 0)))          # big face toward -Y (outside)
-        csk.apply_translation((dx, wall_out - 0.05, dz))
-        door = sub(door, csk)
-        mc = cyl(1.75, 6.0, axis="y"); mc.apply_translation((dx, wall_out + 2.5, dz))
-        door = sub(door, mc)
+    # bottom retention: SNAP TONGUES (2026-07-10, replaced the 2x M3 csk + captive-nut
+    # blocks -- see the PARAMS door_snap_* note). Per leg: a corner notch clears the pod
+    # mass off the tongue zone, then one vertical slit frees the leg's outer strip as
+    # a cantilever tongue (root at door_snap_root_z, free at the door's bottom edge);
+    # a barb at plug level, proud past the void wall (x 54.5), rides over the 2-thick
+    # wall band beside the void as the door swings shut and clicks behind its inner
+    # face (y -66). The barb profile carries its own ramps: 45 deg entry nose, ~50 deg
+    # back ramp so a firm pull on the door bottom cams the tongue inboard and releases.
+    # Tongue X-thickness ~= plug strip + flange strip (~4.8): strain at 1.2 deflection
+    # over the ~29 arm is ~1%, and the flex is in-plane of the face-down print's layers.
+    vo = P["door_hx"] - dlip - dfit                          # plug outer x edge (54.35)
+    bz0, bz1 = P["door_snap_barb_z"]
+    for sxd in (-1, 1):
+        # free the tongue from the POD mass: clip the pod's lower corner over the whole
+        # tongue + slit zone (x 49.9..63, up to just past the root z) so only flange +
+        # plug flex; the 0.2 flange sliver lost at y -70..-69.8 is inside the rebate.
+        notch = box(13.1, 36.4, 34.0)                        # y -106..-69.8: past the
+        notch.apply_translation((sxd * 56.45, -87.9, 130.0)) # deepest tier that reaches
+        door = sub(door, notch)                              # the tongue x-zone
+        slit = box(P["door_snap_slot_w"], 16.0, P["door_snap_root_z"] - 113.0)
+        slit.apply_translation((sxd * (vo - P["door_snap_w"] - P["door_snap_slot_w"] / 2),
+                                wall_out, (113.0 + P["door_snap_root_z"]) / 2))
+        door = sub(door, slit)
+        # barb: (x, y) profile extruded over the z band. Root slab dips to y -66.8 so it
+        # fuses into the plug strip; everything proud of the void wall (x > 54.35) stays
+        # y >= -65.85 (0.15 behind the wall inner face -66 = the catch, nothing to add
+        # on head_back). Entry nose 45 deg, catch/release ramp 1.2 over 1.0 (~50 deg).
+        bt = P["door_snap_barb"]
+        prof = sg.Polygon([(sxd * (vo - 1.2), -66.8), (sxd * vo, -66.8),
+                           (sxd * vo, -65.85), (sxd * (vo + bt), -64.85),
+                           (sxd * (vo + bt), -63.9), (sxd * vo, -62.7),
+                           (sxd * (vo - 1.2), -62.7)])
+        barb = extrude_polygon(prof, bz1 - bz0)              # (x, y) footprint -> +Z
+        barb.apply_translation((0, 0, bz0))
+        door = uni([door, barb])
 
     _color(bezel, "cradle"); bezel.metadata["name"] = "head_bezel"
     _color(back, "back"); back.metadata["name"] = "head_back"
@@ -1393,18 +1512,25 @@ def build_cam_pod():
     return pod
 
 
-def build_hatch_frame():
-    """Orange chamfer-look frame proud of the head back face (design-ref back.jpg).
-    Separate orange print over the service area; the existing louvres + cable port are
-    the 'hatch' inside it. Bottom band notched clear of the neck-slot sweep envelope."""
+def _hatch_ring(grow=0.0):
+    """The positioned hatch-frame ring solid; grow>0 inflates it (pack nest clearance)."""
     w, h, bd, t = (P["hatch_frame_w"], P["hatch_frame_h"],
                    P["hatch_frame_band"], P["hatch_frame_t"])
-    outer = rounded_box(w, h, t, 12.0)
-    inner = rounded_box(w - 2 * bd, h - 2 * bd, t + 2, 8.0)
+    outer = rounded_box(w + 2 * grow, h + 2 * grow, t + grow, 12.0)
+    inner = rounded_box(w - 2 * bd - 2 * grow, h - 2 * bd - 2 * grow, t + grow + 2, 8.0)
     inner.apply_translation((0, 0, -1))
     ring = sub(outer, inner)
     ring.apply_transform(R(TAU / 4, (1, 0, 0)))      # footprint XZ, extrusion -Y
     ring.apply_translation((0, P["body_back_y"], P["hatch_frame_cz"]))
+    return ring
+
+
+def build_hatch_frame():
+    """Orange chamfer-look frame proud of the head back face (design-ref back.jpg).
+    Separate orange print over the service area; the existing louvres + cable port are
+    the 'hatch' inside it. Bottom band notched clear of the neck-slot sweep envelope."""
+    t = P["hatch_frame_t"]
+    ring = _hatch_ring()
     # notch the bottom band over the deep-head motor BAY (back wall open x +-33 to z=168):
     # the frame may not reach into the tilt-sweep clearance envelope
     notch = box(70.0, 2 * t + 2, 74.0)
@@ -2066,7 +2192,7 @@ def _belly_csk_neg(bx, by):
     return neg
 
 
-def build_base():
+def build_chassis_core():
     """Tank chassis BODY: hollow rounded box between the tracks. Top = pan-mount plane; houses
     the pan motor + driver + wiring. (Track pods are build_tracks.)"""
     wall, floor = 5.0, 5.0
@@ -2271,8 +2397,9 @@ def build_base():
         body = sub(sub(body, v), v2)
 
     # --- TT drive-motor mount (both walls; see motor_tt + reference/tt-motor-1079893/NOTES.md).
-    # Shaft axis at (y=-wb/2, z=_track_zc()); gearbox face 0.1 inside the wall inner face.
-    zs, ys = _track_zc(), -P["track_wheelbase"] / 2   # 25.32, -60
+    # Shaft axis at (y=-wb/2, z=_track_zc()+track_raise): the raised tank loop lifts the
+    # sprocket (and so the motor) by track_raise; gearbox face 0.1 inside the wall inner face.
+    zs, ys = _track_zc() + P["track_raise"], -P["track_wheelbase"] / 2   # 34.32, -58.16
     xw = P["chassis_w"] / 2                           # wall outer face (60); inner face 55
     axm = xw - 5.0 - P["tt_gearbox"][2] / 2 - 0.1     # motor axis x (45.58)
     for s in (-1, 1):
@@ -2285,14 +2412,15 @@ def build_base():
             body = sub(body, mh)
         nubp = cyl(2.1, 2.3, axis="x"); nubp.apply_translation((s * (xw - 5.0 + 1.1), ys + 11.0, zs))
         body = sub(body, nubp)                        # Ø4.2 x 2.2 locating-nub pocket, inner face
-        # deck pocket over the motor: gearbox/can top at z 36.52 but the cavity ceiling is 32;
-        # cut to 36.8 (pan-seat floor is 37 and the race ring footprint r34..46 stays clear:
-        # nearest pocket corner is at r 50.2)
-        dkp = box(19.4, 64.7, 4.9); dkp.apply_translation((s * (xw - 14.5), -39.65, 34.35))
+        # pocket over the motor: the raised gearbox/can top is at z 45.52 (zs 34.32 + 11.2)
+        # but the cavity ceiling is 32 -- cut to 45.8, still under the z46 deck seam (the
+        # pan-seat floor plane and the race ring footprint r34..46 stay clear: nearest
+        # pocket corner is at r 50.2)
+        dkp = box(19.4, 64.7, 13.9); dkp.apply_translation((s * (xw - 14.5), ys + 20.35, 38.85))
         body = sub(body, dkp)
         # cavity-corner relief: the cavity's r12 rounded corner leaves body material where the
-        # rectangular gearbox rear corner sits (probed 318.5 mm3) -- square it off locally
-        crn = box(7.0, 14.2, 24.9); crn.apply_translation((s * (xw - 8.4), -65.1, 24.35))
+        # rectangular gearbox rear corner sits -- square it off locally (spans old + raised z)
+        crn = box(7.0, 14.2, 33.9); crn.apply_translation((s * (xw - 8.4), ys - 5.1, 28.85))
         body = sub(body, crn)
         tabp = box(4.2, 5.7, 6.4); tabp.apply_translation((s * axm, ys - 14.15, zs))
         body = sub(body, tabp)                        # front-tab pocket in the rear wall (1 skin)
@@ -2381,6 +2509,51 @@ def build_base():
     _color(body, "base")
     body.metadata["name"] = "chassis"
     return body
+
+
+def build_chassis_parts():
+    """Printable chassis split: lower open tub + removable upper pan deck.
+
+    The old `chassis.stl` combined deep internal posts, side motor mounts, idler arms,
+    front/rear cosmetics sockets, the pan seat, and the underside access opening into one
+    awkward print. This keeps the same assembled geometry but inserts a horizontal service
+    seam at `chassis_split_z`: lower tub prints open-top, upper deck prints as a shallow
+    removable plate. M3 screws come down from the deck into lower thread-form pilots."""
+    from trimesh.intersections import slice_mesh_plane
+
+    z0 = P["chassis_clear"]
+    z1 = P["base_h"]
+    seam = P["chassis_split_z"]
+    core = build_chassis_core()
+
+    # Screw bosses span the seam before slicing, so both halves get matching local pads.
+    boss_bot = seam - 9.0
+    boss_top = seam + 12.0
+    for sx_, sy_ in P["chassis_split_screws"]:
+        boss = cyl(P["chassis_split_boss_r"], boss_top - boss_bot)
+        boss.apply_translation((sx_, sy_, (boss_bot + boss_top) / 2))
+        core = uni([core, boss])
+
+    lower = slice_mesh_plane(core, plane_normal=(0, 0, -1), plane_origin=(0, 0, seam), cap=True)
+    deck = slice_mesh_plane(core, plane_normal=(0, 0, 1), plane_origin=(0, 0, seam), cap=True)
+
+    for sx_, sy_ in P["chassis_split_screws"]:
+        # Top deck: M3 clearance plus a sub-flush pan/cheese head counterbore from above.
+        clr = cyl(P["m3_clear_r"], z1 - seam + 8.0)
+        clr.apply_translation((sx_, sy_, seam + (z1 - seam + 8.0) / 2 - 2.0))
+        deck = sub(deck, clr)
+        cb = cyl(3.4, 3.0)
+        cb.apply_translation((sx_, sy_, z1 - 1.5))
+        deck = sub(deck, cb)
+
+        # Lower tub: blind Ø2.5 thread-form pilot from the seam down into the boss.
+        pil = cyl(1.25, 8.5)
+        pil.apply_translation((sx_, sy_, seam - 8.5 / 2))
+        lower = sub(lower, pil)
+
+    _color(lower, "base"); lower.metadata["name"] = "chassis_lower"
+    _color(deck, "base"); deck.metadata["name"] = "chassis_deck"
+    return lower, deck
 
 
 def build_belly_plate():
@@ -2481,25 +2654,61 @@ def build_pod_rails():
 
 
 def _track_link_poses(wb, R, zc, n):
-    """(y, z, angle) for n link pads walked around the stadium loop in the Y-Z plane.
-    Bottom run at z=zc-R (ground), top at z=zc+R; semicircles around the two wheel centers."""
-    straight, arc = wb, np.pi * R
-    perim = 2 * straight + 2 * arc
+    """(y, z, angle) for n link pads walked around the RAISED TANK LOOP in the Y-Z plane
+    (2026-07-10, RC-tank chassis refs; was a flat stadium). Flat ground run at pin z=zc-R
+    between +-track_ground_hy, ~33 deg ramps up to the raised sprocket/idler pin circles
+    (axles at zc + track_raise), ~147 deg end wraps, flat top run at z = axle + R.
+    Pad angle = walking-direction angle (outward normal = (sin a, -cos a)), continuous at
+    every tangency. track_wheelbase is pre-solved so the perimeter closes at n * pitch."""
+    za = zc + P["track_raise"]
+    g = P["track_ground_hy"]
+    zg = zc - R
+    ci = np.array([wb / 2, za])                       # front (idler) pin-circle center
+    v = np.array([g, zg]) - ci                        # hull tangent from the ground exit
+    d = float(np.hypot(v[0], v[1]))
+    beta = float(np.arccos(R / d))
+    acb = float(np.arctan2(v[1], v[0]))               # center -> ground-point direction
+    tp = None
+    for s_ in (1.0, -1.0):                            # pick the rising, below-axle touch
+        cand = ci + R * np.array([np.cos(acb + s_ * beta), np.sin(acb + s_ * beta)])
+        dv = cand - np.array([g, zg])
+        if dv[0] > 0 and dv[1] > 0 and cand[1] < za:
+            tp = cand
+            ramp_len = float(np.hypot(dv[0], dv[1]))
+            ramp_ang = float(np.arctan2(dv[1], dv[0]))
+    phi = float(np.arctan2(tp[1] - ci[1], tp[0] - ci[0]))   # touch angle on the circle
+    wrap = (np.pi / 2 - phi) % TAU                    # touch -> top point, CCW
+    segs = (2 * g, ramp_len, wrap * R, wb, wrap * R, ramp_len)
+    perim = sum(segs)
+    assert abs(perim - n * P["track_pitch"]) < 0.15, \
+        "track loop perimeter %.3f != %d x %.1f -- re-solve track_wheelbase" \
+        % (perim, n, P["track_pitch"])
     poses = []
     for i in range(n):
         s = perim * i / n
-        if s < straight:                              # bottom run, +Y
-            y, z, ang = -wb / 2 + s, zc - R, 0.0
-        elif s < straight + arc:                       # front semicircle (+wb/2, zc)
-            t = (s - straight) / R
-            y, z, ang = wb / 2 + R * np.sin(t), zc - R * np.cos(t), t
-        elif s < 2 * straight + arc:                   # top run, -Y
-            u = s - straight - arc
-            y, z, ang = wb / 2 - u, zc + R, np.pi
-        else:                                          # rear semicircle (-wb/2, zc)
-            t = (s - 2 * straight - arc) / R
-            y, z, ang = -wb / 2 - R * np.sin(t), zc + R * np.cos(t), np.pi + t
-        poses.append((y, z, ang))
+        if s < segs[0]:                                # ground run, +Y
+            poses.append((-g + s, zg, 0.0)); continue
+        s -= segs[0]
+        if s < segs[1]:                                # front ramp, rising forward
+            poses.append((g + s * np.cos(ramp_ang), zg + s * np.sin(ramp_ang), ramp_ang))
+            continue
+        s -= segs[1]
+        if s < segs[2]:                                # idler wrap: touch -> top, CCW
+            a = phi + s / R
+            poses.append((ci[0] + R * np.cos(a), ci[1] + R * np.sin(a), a + np.pi / 2))
+            continue
+        s -= segs[2]
+        if s < segs[3]:                                # top run, -Y
+            poses.append((wb / 2 - s, za + R, np.pi)); continue
+        s -= segs[3]
+        if s < segs[4]:                                # sprocket wrap: top -> rear touch
+            a = np.pi / 2 + s / R                      # CCW on the rear circle
+            poses.append((-wb / 2 + R * np.cos(a), za + R * np.sin(a), a + np.pi / 2))
+            continue
+        s -= segs[4]                                   # rear ramp: falls FORWARD from the
+        y0, z0_ = -tp[0], tp[1]                        # rear touch down to the ground start
+        poses.append((y0 + s * np.cos(-ramp_ang),
+                      z0_ + s * np.sin(-ramp_ang), TAU - ramp_ang))
     return poses
 
 
@@ -2627,6 +2836,11 @@ def _sprocket(sx):
     spr = sub(spr, bore)                                           # Ø6 free bore to the outer face
     cb = cyl(4.5, 1.7, axis="x"); cb.apply_translation((3.25, 0, 0))       # band_half - 0.75
     spr = sub(spr, cb)                                             # retaining-screw counterbore
+    for k in range(6):                                 # lightening-hole ring (tank-ref
+        aa = TAU * k / 6                               # spoked sprocket look): 6x Ø4.6
+        lh = cyl(2.3, 12.0, axis="x")                  # through the web at r 11.5,
+        lh.apply_translation((0, 11.5 * np.cos(aa), 11.5 * np.sin(aa)))
+        spr = sub(spr, lh)                             # between hub (r6) and tooth roots
     if sx < 0:
         spr.apply_transform(R(TAU / 2, (0, 0, 1)))
     return spr
@@ -2658,9 +2872,10 @@ def build_tracks():
                     kk.apply_transform(R_x(ang))
                     kk.apply_translation((cx, y, z))
                     keeper_pieces.append(kk)
+        za = zc + P["track_raise"]                     # raised axle line (tank-ref loop)
         wheel_pieces = []
         spr = _sprocket(sx)
-        spr.apply_translation((cx, -wb / 2, zc)); wheel_pieces.append(spr)
+        spr.apply_translation((cx, -wb / 2, za)); wheel_pieces.append(spr)
         # idler (front): rides the knuckle crowns (r 15.82) with 0.12 running clearance; F688ZZ
         # press seat Ø15.95 through + Ø18.5 x 1.0 flange recess on the inboard face; the Ø8 stub
         # axle (hardware) cantilevers from the chassis tension-slot plate.
@@ -2668,18 +2883,33 @@ def build_tracks():
         idl = sub(cyl(ir, iw, axis="x"), cyl(P["idler_bore_d"] / 2, iw + 2, axis="x"))
         fr = cyl(18.5 / 2, 1.05, axis="x"); fr.apply_translation((-sx * (iw / 2 - 0.5), 0, 0))
         idl = sub(idl, fr)
+        # dished faces (tank-ref look): shallow annulus recess between the bore boss and rim
+        for fs in (-1, 1):
+            dsh = sub(cyl(ir - 2.6, 2.0, axis="x"), cyl(11.0, 3.0, axis="x"))
+            dsh.apply_translation((fs * (iw / 2 - 0.9), 0, 0))
+            idl = sub(idl, dsh)
         # 30-wide idler grows OUTBOARD only: inner face stays at |cx|-9, 0.1 clear of
         # the chassis tension plate (symmetric growth swallowed the plate, 830 mm3)
-        idl.apply_translation((cx + sx * 6.0, wb / 2, zc)); wheel_pieces.append(idl)
-        # road wheels: ride the bottom-run knuckle crowns (0.1 running clearance)
+        idl.apply_translation((cx + sx * 6.0, wb / 2, za)); wheel_pieces.append(idl)
+        # road wheels (tank-ref style): dense dished row riding the bottom-run knuckle
+        # crowns (0.1 running clearance). Rim ring + recessed dish + raised hub with a
+        # 5-hole bolt circle on each face; Ø4.2 center bore for a future Ø4 stub axle.
+        rr_ = P["roadwheel_d"] / 2
         for i in range(P["roadwheel_count"]):
-            ry = -wb / 4 + i * (wb / 2) / max(P["roadwheel_count"] - 1, 1)
-            rw = cyl(P["roadwheel_d"] / 2, 30.0, axis="x")
-            # Ø4.2 centered through-bore: a solid wheel was unbuildable running gear
-            # (PRINTABILITY 4). No axle exists in the chassis yet -- the bore takes a
-            # future Ø4 stub-axle pin (slip fit), pin scheme lands with the pod-join pass.
+            ry = (i - (P["roadwheel_count"] - 1) / 2) * P["roadwheel_pitch"]
+            rw = cyl(rr_, 30.0, axis="x")
+            for fs in (-1, 1):
+                dsh = sub(cyl(rr_ - 2.2, 2.4, axis="x"), cyl(5.2, 3.4, axis="x"))
+                dsh.apply_translation((fs * (30.0 / 2 - 1.1), 0, 0))
+                rw = sub(rw, dsh)
+                for k in range(5):
+                    aa = TAU * k / 5
+                    bh = cyl(0.9, 2.0, axis="x")       # bolt circle on the hub boss
+                    bh.apply_translation((fs * (30.0 / 2 - 0.9),
+                                          3.6 * np.cos(aa), 3.6 * np.sin(aa)))
+                    rw = sub(rw, bh)
             rw = sub(rw, cyl(2.1, 34.0, axis="x"))
-            rw.apply_translation((cx, ry, (zc - R) + kr + P["roadwheel_d"] / 2 + 0.1))
+            rw.apply_translation((cx, ry, (zc - R) + kr + rr_ + 0.1))
             wheel_pieces.append(rw)
         side = "L" if sx < 0 else "R"
         pod = trimesh.util.concatenate(pieces)                 # links only (rubber-black)
@@ -2803,17 +3033,24 @@ def build():
     M_pan = pan                  # pan-group parts
 
     fit_geo = {}                     # name -> posed world mesh, for the FITS=1 pressure map
+    pose_groups = {"head": [], "pan": []}   # node -> kinematic group, for the viewer's
+                                            # live pan/tilt sliders (web/pose.json)
 
     def add(mesh, M, export_name=None):
         g = mesh.copy()
         g.apply_transform(M)
         scene.add_geometry(g, node_name=mesh.metadata["name"])
         fit_geo[mesh.metadata["name"]] = g
+        if M is M_head:
+            pose_groups["head"].append(mesh.metadata["name"])
+        elif M is M_pan:
+            pose_groups["pan"].append(mesh.metadata["name"])
         if EXPORT and export_name:
             mesh.export(stlp(export_name))
 
-    # --- FIXED: tank chassis body + two track pods ---
-    add(build_base(), np.eye(4), "chassis.stl")
+    # --- FIXED: printable split tank chassis body + two track pods ---
+    for ch in build_chassis_parts():
+        add(ch, np.eye(4), f"{ch.metadata['name']}.stl")
     add(build_belly_plate(), np.eye(4), "belly_plate.stl")   # bolt-on floor access plate
     for fp in build_fascia():                        # front fascia set (design ref)
         add(fp, np.eye(4))
@@ -2833,7 +3070,7 @@ def build():
         dm = motor_tt("drive_L" if sx < 0 else "drive_R")
         if sx < 0:
             dm.apply_transform(R(TAU / 2, (0, 1, 0)))   # mirror about Y: shaft -X, tab stays rear
-        dm.apply_translation((sx * ax, -wbd / 2, _track_zc()))
+        dm.apply_translation((sx * ax, -wbd / 2, _track_zc() + P["track_raise"]))
         add(dm, np.eye(4))
 
     # --- PAN GROUP ---
@@ -2842,6 +3079,7 @@ def build():
     neck = build_neck_clevis()                       # already built in world Z (sits on base top)
     scene_neck = neck.copy(); scene_neck.apply_transform(M_pan)
     scene.add_geometry(scene_neck, node_name="neck_clevis")
+    pose_groups["pan"].append("neck_clevis")         # bypasses add(): tag its group by hand
     if EXPORT:
         neck.export(stlp("neck_clevis.stl"))
 
@@ -3046,6 +3284,18 @@ def build():
 
     out = webpath(out_name)
     scene.export(out)
+    # pose sidecar for the viewer's live pan/tilt sliders: the GLB has the pose BAKED
+    # into each node's vertices, so the viewer needs the baked angles + the kinematic
+    # group of every posed node to re-pose them (delta rotations about the same axes).
+    # Named per-model (assembly.pose.json, neutral.pose.json ...): an OUT= side build
+    # must not clobber the sidecar of the GLB the viewer is actually showing.
+    import json as _json
+    _json.dump({
+        "pan_deg": pan_deg, "tilt_deg": tilt_deg,
+        "tilt_axis_y": yt, "tilt_axis_z": zt,
+        "pan_stop_deg": 93.3, "tilt_stop_deg": 33.8,   # homing hard-stop sweep limits
+        "groups": pose_groups,
+    }, open(webpath(out_name.rsplit(".", 1)[0] + ".pose.json"), "w"), indent=1)
     print(f"wrote {out}  ({len(scene.geometry)} parts)")
     if EXPORT:
         print("exported per-part STLs into stl/")

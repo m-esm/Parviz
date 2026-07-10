@@ -60,7 +60,10 @@ Owned quantities cross-checked against a personal parts inventory (2026-07-07).
 | Ø4 dowel pins | body-to-pod join (2 per side), Ø4x12: modeled (wall slip holes + rail press sockets) | 4 | 0 | **4** |
 
 ### Printed parts (watertight; tank base + split head)
-- `chassis`: tank body between the tracks; pan motor cavity + pan-mount on top
+- `chassis_lower`: open-top tank tub between the tracks; TT motor wall mounts, pod joins,
+  electronics/ballast floor, and belly-plate opening
+- `chassis_deck`: removable pan deck; pan race seat, pan clips, and pan-motor top register.
+  4x M3 drive down from the deck into lower Ø2.5 thread-form pilots on front/side ledges
 - `track_L` / `track_R`: tank track pods: 36 links/side on Ø1.75 filament pins, 12T sprocket,
   F688ZZ idler (30 wide, tension slot), plain printed road wheels (2/side, 30 wide)
 - `pan_platform`: disc that yaws on the base (central shaft bore + off-axis cable pass)
@@ -195,9 +198,13 @@ tray killed the 88.5 mm blind channels, 2026-07-08.)
     WS2812 forehead segment in its recess and route the 3 wires through the wire pass to the
     Pi. Route the Pi power pair per the cable step below.
 15. **Close the head.** Bezel to back: 8× M3×35 through the perimeter posts into the captive
-    nuts in the back bosses (screws from the front). Fit the rear service `head_door`:
-    engage the two top hook tabs first, swing the door in, then 2× M3 csk at the leg bottoms
-    into the captive-nut blocks.
+    nuts in the back bosses (screws from the front). Fit the rear service `head_door`
+    (the stepped rear pod): engage the two top hook tabs first, swing the door in until
+    both leg snap tongues CLICK behind the wall band beside the void (tool-free; replaced
+    the 2× M3 csk 2026-07-10). To open: firm pull on the pod's bottom edge (35 mm proud,
+    that IS the grip); the barbs' back ramps cam the tongues inboard and release. Open at
+    roughly neutral tilt: at the ±33.8° stalls the tilt drivetrain reaches into the pod's
+    internal cavity.
 
 ### Cables (per docs/CABLE-CHECK.md + firmware/WIRING.md)
 

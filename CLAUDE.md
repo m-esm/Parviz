@@ -34,7 +34,27 @@ COLORS/PAL colorway (keep `src/build.py` COLORS and the viewer PAL in sync, the 
 re-colors by node name and wins on render), orange head side rails (`trim_rail_L/R`, the
 arm shoulders land on them), forehead LED strip + slot, knurled `antenna_stub` (robot -X =
 image-right in the reference front view), rear orange `trim_hatch_frame` (bottom band
-notched clear of the neck-slot tilt sweep), chassis front fascia (hex grille field +
+notched clear of the neck-slot tilt sweep), the EXTRUDED REAR POD on `head_door`
+(2026-07-10, the user's red-box ref: the back of the head carries a chunky stepped
+"backpack" bump; deepened same day per user "much more depth horizontally". The pod IS
+the door: 3 stepped tiers x +-62/51/38 to y -85/-95/-105 (15/25/35 proud of the wall),
+flat top z 169 keeps the louvre band open above like the ref, HOLLOW inside -- the
+cavity x +-17 / z 130..162 / floor -98 swallows the tilt drivetrain's swept intrusion
+(probe-measured x +-13.5 / y to -78.1 over +-33.8 deg) so the 28BYJ hides inside with
+no relief hole, and a center-bottom corridor POCKET x +-27 / z<134 / floor -98 (closed
+from behind by the deep rear wall) clears the neck cheeks' stall rake (x +-24 / y -86.9
+/ z<=130.7 in the door frame). Probed at 21 tilt steps to the +-33.8 stalls against the
+pan frame AND the fixed chassis set: 0 overlap, worst drivetrain->door clearance 1.85 mm. This
+REPLACED the 2026-07-08 raised panel + latch/hinge cosmetics + through-relief AND the
+glue-on `rear_pack` slabs AND the never-mounted floating `tilt_shroud` -- both parts
+deleted. TOOL-FREE retention 2026-07-10, user "easy to open and close": per-leg SNAP
+TONGUES -- a corner notch clears the pod mass off the tongue zone, one slit frees each
+leg's outer strip, an outboard barb at plug level clicks behind the fixed wall band
+beside the void; open = firm pull on the pod's bottom edge (35 proud = the grip), the
+barb back ramp releases. Replaced the 2x M3x10 csk + captive-nut blocks. NOTE: open the
+door at neutral-ish tilt; at the stalls the drivetrain reaches into the pod cavity.
+head_back's rebate extends to the pod root footprint), chassis front fascia
+(hex grille field +
 orange surround/fins, HC-SR04 `sensor_us` in a floor recess, amber lamps, white LED bar),
 running gear split into `drivewheels_L/R` (silver; geometry untouched), and PLACEHOLDER
 gripper arms (`arm_L/R`, static tucked pose; actuation + mount decision deferred). All
@@ -82,8 +102,15 @@ Kinematic chain, bottom to top (built at neutral pose pan=0, tilt=0):
 tank chassis        DRIVE base: central body (build_base) + track_L/track_R (build_tracks) +
   │                 drive_L/drive_R (2x TT gearmotor, shaft X into each pod's rear sprocket).
   │                 Body houses the pan motor + driver + wiring; pan-mount on top (z=52).
-  │                 Tracks = 36 modular link pads on a stadium loop, 12T sprocket + idler + road
-  │                 wheels, belt to ground, run along Y (build_tracks / _track_link_poses).
+  │                 Tracks = 36 modular link pads on a RAISED TANK LOOP (2026-07-10, RC-tank
+  │                 refs; was a flat stadium): sprocket + idler axles sit track_raise=9 above
+  │                 the old centerline (z 34.32), ~33 deg ramps at both ends, ~147 deg wraps,
+  │                 flat ground run +-track_ground_hy=50; wheelbase 116.325 SOLVED so the
+  │                 loop closes at exactly 36x10 (asserted in _track_link_poses). 4 dished
+  │                 Ø20 road wheels (y +-10.5/+-31.5), spoked 12T sprocket (6 lightening
+  │                 holes), dished idler. The raise lifts the TT motors too: gearbox top
+  │                 45.5 stays under the z46 deck seam; the rear deck-split screw pair moved
+  │                 to the rear wall (+-34, -71) out of the gearbox zone.
   └─ PAN joint      yaw about vertical Z  (±90° target). motor_pan direct D-hub; rides a captured-BB
       │             lazy-Susan race (build_pan_race: pan_race + pan_balls)   ── the "turret"
       └─ pan_platform + neck_clevis   rotate as one
@@ -234,12 +261,19 @@ design and still unverified (may be plastic rings).
 
 ## Tank chassis (the mobile base)
 
-Two-track tank base. `build_base()` is the central **body** (rounded box; houses the pan motor + ULN
-driver + wiring + ballast; deep pan-race seat + pan-mount on top at z=52). `build_tracks()` builds two
+Two-track tank base. `build_chassis_parts()` splits the central **body** into `chassis_lower`
+(open-top tub: side motor mounts, pod joins, electronics/ballast floor) and `chassis_deck`
+(shallow removable pan deck: pan seat, pan clips, pan motor top register). The old one-piece
+`chassis` trapped deep cavities and side-wall features in an ugly support-heavy print. The split
+is a horizontal seam at z=46, clamped by 4x M3 down from the deck into lower Ø2.5 thread-form
+pilots (front pair on the side ledges, rear pair on the REAR wall at +-34/-71 since 2026-07-10:
+the raised TT gearboxes own the old side spots). `build_tracks()` builds two
 **positive-drive track pods** (geometry from the local `Tank track - 3062624/` reference = Thingiverse
-thing:3062624, CC-BY): a chain of **36 printed link pads** (`_track_link_poses` walks the stadium loop)
-on filament-rod hinge pins, a **12-tooth drive sprocket** (rear) meshing the pins, an **idler** on a
-Ø16 bearing (front) in a tension slot, and **road wheels** supporting the bottom run. Positive tooth
+thing:3062624, CC-BY): a chain of **36 printed link pads** (`_track_link_poses` walks the RAISED
+TANK LOOP -- see the kinematic-chain diagram above for the 2026-07-10 profile numbers)
+on filament-rod hinge pins, a **12-tooth drive sprocket** (rear, RAISED, spoked with 6 lightening
+holes) meshing the pins, a raised **idler** on a Ø16 bearing (front) in a tension slot, and **4
+dished road wheels** supporting the bottom run. Positive tooth
 engagement beats a friction belt that slips when the head pans.
 
 - **Drive:** `drive_L`/`drive_R` = 2× TT gearmotor placeholders (`motor_tt`), one per pod, shaft on X
@@ -257,7 +291,7 @@ engagement beats a friction belt that slips when the head pans.
 
 ## Print notes (first pass, not finalized)
 
-- Printed set (exports via `EXPORT=1`): `chassis`, `belly_plate`, `track_L/R`,
+- Printed set (exports via `EXPORT=1`): `chassis_lower`, `chassis_deck`, `belly_plate`, `track_L/R`,
   `drivewheels_L/R` (as track_wheels_*), `track_keeper_L/R`, `pod_rail_L/R` (as
   track_pod_rail_*), `neck_clevis`, `tilt_carrier`, `pan_platform`, `pan_race`,
   `pan_clips`, `pan_cage`, `head_bezel`, `head_back`, `head_door`, `screen_tray`,
@@ -266,9 +300,10 @@ engagement beats a friction belt that slips when the head pans.
   wheels), track_keeper_* (2 bars) and pan_clips (3 clips) are multi-body by design.
 - **Fastening = M3 into CAPTIVE HEX NUTS on serviced seams, Ø2.5 THREAD-FORM pilots on
   assemble-once joints** (M2 for the camera / master-link keepers). `screw_post`/`hex_prism`.
-  Thread-form (2026-07-08): pod rails (M3×12 from the cavity), tilt_carrier's 4 M3×16,
-  belly tray posts, pan-motor ears, pan clips, belly plate. Captive nuts kept: bezel↔back,
-  head door, TT gearbox ("nut in the gap"), arm shoulders.
+  Thread-form (2026-07-08): chassis deck split (4x M3 from above), pod rails (M3×12 from the
+  cavity), tilt_carrier's 4 M3×16, belly tray posts, pan-motor ears, pan clips, belly plate. Captive nuts kept: bezel↔back,
+  TT gearbox ("nut in the gap"), arm shoulders. Head door is SCREWLESS (2026-07-10):
+  top hooks + per-leg snap tongues, see the head_door note above.
   - bezel↔back: 8 perimeter posts (stage 3a: bottom + top centers each became a ±40 pair), nut
     captive in the back boss, screw from the front. M3×35 ×8.
   - screen+Pi module: `screen_tray` (2 rails + spine, prints plate-face down): 4× M3×10 bench
@@ -282,7 +317,8 @@ engagement beats a friction belt that slips when the head pans.
 - **Tilt bearings:** 695-2RS pressed into the neck cheeks (not the head); head clamps the axle ends.
 - **Electronics fittings:** base has a pan-motor pad + ULN2003 standoffs + a USB-C wall slot +
   8 vent slots; head back cover has a Pi I/O slot + ventilation louvres + the cable port.
-- **Per-part print orientation:** bezel face-down (aperture opens up, best cosmetic face), back
+- **Per-part print orientation:** `chassis_lower` seam-up/open-top, `chassis_deck` top-face-down,
+  bezel face-down (aperture opens up, best cosmetic face), back
   open-side-down, neck on its back, base flange-down.
 - **Still a refinement:** explicit 45° self-supporting chamfers on the largest back openings
   (I/O slot ~64mm), the offset-shaft coupler part, a second ULN mount for the tilt driver, and the
@@ -292,7 +328,22 @@ engagement beats a friction belt that slips when the head pans.
 ## Layout
 
 ```
-src/build.py     source of truth. PARAMS block at top; builds chassis/tracks/pan/neck/head into a GLB.
+src/build.py     ASSEMBLY ENTRY (2026-07-10 split, was a 3.4k-line monolith): build() poses and
+                 collects every part into the GLB, writes the pose sidecar, runs FITS.
+src/params.py    the PARAMS dict `P` (every value carries its reason), TAU/DEG, EXPORT flag.
+src/geo.py       shared geometry utilities: box/cyl/rounded_box, booleans, screw/socket
+                 helpers, dbore, frustum, COLORS + _color.
+src/gears.py     worm-drive helpers: generated-teeth STL loading, placeholder gear/worm, worm_cd.
+src/screen.py    combined touchscreen+Pi reference mesh loading + screen_pose().
+src/head.py      head shell/bezel/back/door(pod), screen tray, camera pod, styling parts, arms.
+src/neck.py      neck clevis + tilt-motor cartridge carrier.
+src/pan.py       pan platform, BB race, clips, _pan_stack.
+src/chassis.py   chassis core/lower/deck split, belly plate, fascia, pod rails.
+src/tracks.py    raised tank loop, links, master link, sprocket, road wheels.
+src/motors.py    TT gearmotor + 28BYJ placeholder meshes.
+src/fitmap.py    the FITS=1 clearance/press report + contact audit.
+                 Import DAG: params <- geo <- gears/screen/motors <- tracks/pan/neck/head/
+                 chassis <- build (fitmap standalone; no cycles -- params imports nothing local).
 src/stlpaths.py  routes stlp("track_L.stl") -> stl/base/... ; subsystems: base / neck / head
 src/serve.py     localhost viewer server (serves web/ at root)
 src/shoot.py     headless multi-angle renders -> .claude/renders/
@@ -310,7 +361,7 @@ docs/ASSEMBLY.md BOM + assembly order
 
 ## Gotchas
 
-- **`TAU` in build.py is `2*np.pi` (a full turn).** It was once wrongly set to `np.pi`, which made
+- **`TAU` (src/params.py) is `2*np.pi` (a full turn).** It was once wrongly set to `np.pi`, which made
   `R(TAU/2)` a 90° rotation, that silently laid the LCD on its back (the "screen position wrong"
   bug) and half-rotated the tilt motor and vents. If you touch `TAU`, keep it `2π` and remember
   `cyl(axis="x"/"y")` relies on `R(TAU/4)` = 90°.

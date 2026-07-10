@@ -1,0 +1,35 @@
+{
+ "pan_deg": 22.0,
+ "tilt_deg": -12.0,
+ "tilt_axis_y": -18.0,
+ "tilt_axis_z": 153.0,
+ "pan_stop_deg": 93.3,
+ "tilt_stop_deg": 33.8,
+ "groups": {
+  "head": [
+   "worm_wheel",
+   "head_bezel",
+   "head_back",
+   "head_door",
+   "screen_tray",
+   "trim_rail_L",
+   "trim_rail_R",
+   "sd_plug",
+   "led_strip",
+   "antenna_stub",
+   "trim_hatch_frame",
+   "camera_pod",
+   "screen_ref",
+   "camera_ref",
+   "cam_cover",
+   "tilt_axle"
+  ],
+  "pan": [
+   "pan_platform",
+   "neck_clevis",
+   "tilt_worm",
+   "motor_tilt",
+   "tilt_carrier"
+  ]
+ }
+}
