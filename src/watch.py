@@ -13,13 +13,15 @@ import os, subprocess, sys, time
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 
-# Files/dirs whose changes should trigger a rebuild. build.py loads the reference STL live,
-# so a swapped reference model should rebuild too.
+# Files/dirs whose changes should trigger a rebuild. The build source is the whole
+# src/ module set since the 2026-07-10 split (params/geo/gears/screen/head/neck/pan/
+# chassis/tracks/motors/fitmap + build); the reference STL loads live, so a swapped
+# reference model should rebuild too. serve/shoot/watch itself are filtered out.
 WATCH = [
-    os.path.join(ROOT, "src", "build.py"),
-    os.path.join(ROOT, "src", "stlpaths.py"),
+    os.path.join(ROOT, "src"),
     os.path.join(ROOT, "reference"),
 ]
+WATCH_EXCLUDE = {"serve.py", "shoot.py", "watch.py", "assembly_check.py"}
 POLL = 0.5           # seconds between mtime scans
 DEBOUNCE = 0.15      # let a burst of saves settle before building
 
@@ -37,7 +39,7 @@ def snapshot():
             for dirpath, dirnames, filenames in os.walk(path):
                 dirnames[:] = [d for d in dirnames if not d.startswith(".")]
                 for fn in filenames:
-                    if fn.startswith("."):
+                    if fn.startswith(".") or fn in WATCH_EXCLUDE or fn.endswith(".pyc"):
                         continue
                     fp = os.path.join(dirpath, fn)
                     try:

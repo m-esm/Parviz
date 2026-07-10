@@ -1,0 +1,120 @@
+"""FIT / PRESSURE MAP report (FITS=1): clearances, contact audit.
+
+Split out of the original monolithic build.py (2026-07-10); see
+build.py for the assembly entry point and the overall design notes.
+"""
+import numpy as np
+import trimesh
+from stlpaths import webpath, stlp
+
+
+def _fit_report(geo):
+    """FIT / PRESSURE MAP (ported from finnish-doors 2026-07-08): for every CLOSE pair of
+    assembled parts, sample the smaller part's surface and take signed distances into the
+    other -> press depth (interference / friction) or minimum clearance, plus a contact
+    PATCH point cloud tracing the shape of each contact area. Written to web/fit_report.json
+    for the viewer's 'Fits' panel.
+
+    OPT-IN: runs only with FITS=1 (the desk-pi watch loop rebuilds in ~2 s; this pass costs
+    minutes). Run at NEUTRAL pose for the canonical report: `make fits` = FITS=1 PAN=0
+    TILT=0. Cross-group numbers (head vs pan vs fixed) are pose-dependent; same-group fits
+    (bores, seats, presses) are not.
+
+    CONTACT AUDIT: every pair that touches (min clearance <= 0.005 or press) must be in
+    _FIT_CONTACT_OK -- designed seats, presses, and face-mounted cosmetics only. Anything
+    else touching prints a loud failure; that is the whole point of the map."""
+    import json as _json
+    SKIP = ("screen_ref",)                # not watertight: signed distance lies (FIXES stage 4)
+    _FIT_DESIGNED = set()                 # intended PRESS pairs (none yet; presses are hardware)
+    _FIT_CONTACT_OK = {
+        # drivetrain seats / meshes (mirrors assembly_check WHITELIST)
+        frozenset(("worm_wheel", "tilt_worm")),      # gear mesh
+        frozenset(("worm_wheel", "neck_clevis")),    # spacer tubes in the bearing seats
+        frozenset(("pan_platform", "pan_balls")),    # captured-BB groove (upper race)
+        frozenset(("pan_race", "pan_balls")),        # captured-BB groove (lower race)
+        frozenset(("pan_platform", "motor_pan")),    # D-shaft in the platform hub
+        # resting / bolted seats
+        frozenset(("pan_race", "chassis_deck")),     # ring sits on the seat floor
+        frozenset(("pan_clips", "chassis_deck")),    # clips screwed into deck pockets
+        frozenset(("motor_pan", "chassis_deck")),    # ear bar clamped on the pedestal pads
+        frozenset(("motor_pan", "chassis_lower")),
+        frozenset(("drive_L", "chassis_lower")), frozenset(("drive_R", "chassis_lower")),
+        frozenset(("motor_tilt", "neck_clevis")),    # gear face on the bracket plate
+        frozenset(("camera_ref", "head_bezel")),     # board front on the M2 boss tips
+        frozenset(("cam_cover", "camera_ref")),      # cover posts clamp the board
+        # face-mounted cosmetics (glue + pins) and service parts on their seats
+        frozenset(("trim_rail_L", "head_bezel")), frozenset(("trim_rail_L", "head_back")),
+        frozenset(("trim_rail_R", "head_bezel")), frozenset(("trim_rail_R", "head_back")),
+        frozenset(("trim_hatch_frame", "head_back")),
+        frozenset(("camera_pod", "head_bezel")), frozenset(("antenna_stub", "head_back")),
+        frozenset(("led_strip", "head_bezel")),
+        frozenset(("trim_fascia", "chassis_lower")), frozenset(("trim_fascia", "chassis_deck")),
+        frozenset(("trim_rear", "chassis_lower")), frozenset(("trim_rear", "chassis_deck")),
+        frozenset(("sensor_us", "chassis_lower")), frozenset(("sensor_us", "chassis_deck")),
+        frozenset(("sensor_rear", "chassis_lower")),
+        frozenset(("lamp_L", "chassis_lower")), frozenset(("lamp_R", "chassis_lower")),
+        frozenset(("led_front", "chassis_lower")),
+        frozenset(("sd_plug", "trim_rail_L")),       # plug face plate rests on the rail
+        frozenset(("pod_rail_L", "chassis_lower")),  # rail sits flush on the wall outer face
+        frozenset(("pod_rail_R", "chassis_lower")),
+        frozenset(("chassis_deck", "chassis_lower")),
+        frozenset(("head_back", "head_bezel")),      # bolted seam at the split plane (y=2)
+        frozenset(("screen_tray", "head_back")),     # pillar ends bolted to the back wall
+    }
+    names = sorted(n for n, m in geo.items() if m is not None and not any(k in n for k in SKIP))
+    rows = []
+    for i in range(len(names)):
+        for j in range(i + 1, len(names)):
+            a, b = geo[names[i]], geo[names[j]]
+            lo = np.maximum(a.bounds[0], b.bounds[0])
+            hi = np.minimum(a.bounds[1], b.bounds[1])
+            if np.any(lo - hi > 2.5):
+                continue                                     # AABBs > 2.5 mm apart: not a fit
+            small, big = (a, b) if a.area <= b.area else (b, a)
+            try:
+                pts, _ = trimesh.sample.sample_surface(small, 2600)
+                d = trimesh.proximity.signed_distance(big, pts)   # >0 = inside big (press)
+                k = int(np.argmax(d))
+                if d[k] < -2.0:
+                    continue                                 # nothing within 2 mm: skip
+                _vol = 0.0
+                if d[k] > 0.005:                             # boolean-confirm presses: the
+                    try:                                     # sampler glitches at corners,
+                        _iv = trimesh.boolean.intersection([a, b], engine="manifold")
+                        _vol = float(_iv.volume) if _iv is not None and len(_iv.faces) else 0.0
+                    except Exception:
+                        _vol = -1.0                          # unknown -- keep the press flag
+                sel = np.where(d > -0.6)[0]                  # contact patch: samples < 0.6 off
+                if len(sel) > 260:
+                    sel = np.random.default_rng(0).choice(sel, 260, replace=False)
+                patch = [[round(float(pts[q][0]), 2), round(float(pts[q][1]), 2),
+                          round(float(pts[q][2]), 2), round(float(-d[q]), 3)] for q in sel]
+                _pair = frozenset((names[i], names[j]))
+                rows.append(dict(a=names[i], b=names[j],
+                                 expected=_pair in _FIT_CONTACT_OK,
+                                 mm=round(float(-d[k]), 3),  # +clearance / -press depth
+                                 press=bool(d[k] > 0.005 and _vol != 0.0),
+                                 vol=round(_vol, 2),
+                                 designed=_pair in _FIT_DESIGNED,
+                                 at=[round(float(x), 2) for x in pts[k]],
+                                 patch=patch))
+            except Exception:
+                continue
+    rows.sort(key=lambda r: (-1e3 - r["mm"]) if r["press"] else r["mm"])
+    _json.dump(rows, open(webpath("fit_report.json"), "w"), indent=1)
+    print("wrote fit_report.json (%d close pairs; %d press fits)"
+          % (len(rows), sum(r["press"] for r in rows)))
+    touching = [r for r in rows if r["mm"] <= 0.005 or r["press"]]
+    bad = [r for r in touching if not r["expected"]]
+    if bad:
+        print("!! CONTACT AUDIT FAILED -- %d unexpected touching/press pair(s):" % len(bad))
+        for r in bad:
+            print("!!   %s <-> %s  %s at %s" % (r["a"], r["b"],
+                  ("PRESS %.2f (vol %.2f mm^3)" % (-r["mm"], r["vol"])) if r["press"]
+                  else "touching (%.3f)" % r["mm"], r["at"]))
+        print("!!   fix the geometry, or add to _FIT_CONTACT_OK only if it is a designed seat")
+    else:
+        print("contact audit: %d touching pair(s), all expected" % len(touching))
+    return not bad
+
+

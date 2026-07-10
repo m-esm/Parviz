@@ -1,0 +1,731 @@
+"""Head parts: shell, bezel/back/door(pod), screen tray, camera pod, styling.
+
+Split out of the original monolithic build.py (2026-07-10); see
+build.py for the assembly entry point and the overall design notes.
+"""
+import numpy as np
+import trimesh
+import shapely.geometry as sg
+from trimesh.creation import extrude_polygon
+from trimesh.transformations import rotation_matrix as R
+from params import DEG, P, TAU
+from geo import (_T, _color, _orient, blind_socket, box,
+    cyl, fix_pin, frustum, hex_prism, inter,
+    rounded_box, screw_post, sub, uni)
+from screen import screen_pose
+
+
+# ---------------------------------------------------------------------------
+# Printed parts (built at neutral pose, in world coords)
+# ---------------------------------------------------------------------------
+def _head_solid(inset=0.0):
+    """Simple rounded box head: rounded vertical edges, flat top/bottom. World coords.
+
+    inset>0 shrinks it inward (for hollowing to a uniform wall).
+    """
+    d = inset
+    w = P["head_w"] - 2 * d
+    fy, by = P["body_front_y"] - d, P["body_back_y"] + d
+    r = max(P["corner_r"] - d, 1.0)
+    poly = sg.box(-w / 2, by, w / 2, fy).buffer(-r, join_style=1).buffer(r, join_style=1)
+    h = (P["body_z_top"] - P["body_z_bot"]) - 2 * d
+    solid = extrude_polygon(poly, h)          # XY footprint (width x depth), extruded +Z
+    solid.apply_translation((0, 0, P["body_z_bot"] + d))
+    return solid
+
+
+def build_head_shell():
+    """Alexa/Echo-Show wedge shell: rounded body, leaned front holding the 7" screen."""
+    zt = P["tilt_axis_z"]
+    yt = P["tilt_axis_y"]
+    shell = _head_solid()
+
+    # hollow it (leave uniform walls), opening kept via the back cavity below
+    inner = _head_solid(inset=P["head_wall"])
+    shell = sub(shell, inner)
+
+    # stepped screen aperture: full-size POCKET behind (module drops in) + a smaller front
+    # WINDOW that pierces the face, leaving a lip that retains the glass edge.
+    ov, cl = P["bezel_overlap"], P["screen_clear"]
+    # the pocket PIERCES the face (front at y=31.1): the glass front sits at 30.99, i.e.
+    # FLUSH with the face, so any lip in front of it interfered 0.49 mm and blocked the
+    # module from seating on its factory-screw bosses. Retention is the 4 M3 factory
+    # screws; the pocket side walls locate the module (flush edge-to-edge glass look).
+    pocket = box(P["screen_w"] + 2 * cl, 40.0, P["screen_h"] + 2 * cl)
+    pocket.apply_transform(screen_pose() @ _T(0, -7.4, 0))
+    shell = sub(shell, pocket)
+    window = box(P["screen_w"] - 2 * ov, 60.0, P["screen_h"] - 2 * ov)
+    window.apply_transform(screen_pose() @ _T(0, 20, 0))     # pierce the front face -> lip
+    shell = sub(shell, window)
+
+    # (the old rear cable port is gone: the deep-head motor BAY below now opens the same
+    # back-wall zone x +-24, z 113..147 and is the cable route out of the head)
+
+    # Pi I/O access, re-aimed for the REAL Pi (combined Pins-Out screen mesh): the Pi rides
+    # the display's own back standoffs, landscape, board plane XZ, stack world x -37.7..48.1,
+    # y -7.0..+5.5, z 151..207.5. The ETH+USB short edge faces +X at x=48 -> slot through the
+    # RIGHT side wall, aligned to the port depth (y -8.5..6.5) and to the upper half of the
+    # port stack (z 191.5..208.5; the band z 165..191 belongs to the pivot boss). USB-C + 2x
+    # HDMI exit the BOTTOM long edge (z~151) into the open interior: cables route down and out
+    # the bottom-rear neck slot / cable port. Nothing exits the top (GPIO pins point -Y).
+    # (Kept separate from the bottom-rear cable port below.)
+    io_side = box(14.0, 15.0, 17.0)
+    io_side.apply_translation((P["head_w"] / 2 - 2, -1.0, P["screen_cz"] + 22.0))
+    shell = sub(shell, io_side)
+    # microSD service slot through the LEFT wall on the card's eject axis (see PARAMS
+    # "sd_slot_*"): the matching cut in trim_rail_L is made in build_head_rails(); the
+    # printed sd_plug fills it. Box overshoots the rail face (-107.5) and pierces the
+    # pocket wall (-97) so the corridor to the card (x -41.6) is open end to end.
+    sy0, sy1 = P["sd_slot_y"]; sz0, sz1 = P["sd_slot_z"]
+    sd = box(14.0, sy1 - sy0, sz1 - sz0)
+    sd.apply_translation((-103.0, (sy0 + sy1) / 2, (sz0 + sz1) / 2))
+    shell = sub(shell, sd)
+    # ventilation louvres high on the back wall (Pi 5 runs hot). 3x 76-wide x 3 at
+    # z 171..187 (was 4-tall/70-wide at 171..189): the rear DOOR (task #26) now carries
+    # them, and its through-void tops out at z 188.2 -- 4-tall louvres reaching 189 cut
+    # the door's 2 mm support lip into slivers. Shrunk to 3 tall / 6.5 pitch (top 187,
+    # 1.2 inside the void) and widened to x +-38 (door plug reaches +-54.5), keeping
+    # the vent area ~= 684 mm^2 and the 3 mm web over the z=168 bay lip.
+    for i in range(3):
+        louvre = box(76, 30.0, 3.0)
+        louvre.apply_translation((0, P["body_back_y"], P["screen_cz"] + 19.5 + i * 6.5))
+        shell = sub(shell, louvre)
+
+    # bottom-rear MOTOR BAY (task #27 deep head): one slot voids the bottom wall (x +-33,
+    # y -78..21) and the lower back wall (z 78..168) so the PAN-FRAME tilt drivetrain --
+    # 28BYJ can+ears (|x| 21.5, y -64.3..-26.8, z 114..147.4), worm, bracket, neck cheeks
+    # (|x| 26) and the column-back ULN standoffs -- clears the head across the FULL +-30
+    # tilt sweep. Probe-derived envelope (sweep_req): the swept group crosses the inner
+    # back-wall face (y -66) over x +-26, z up to 165.05 (deepest head-frame y -80.6, past
+    # the outer face, so the wall MUST stay open here; at neutral the motor is fully
+    # inside, 1.7 clear of the inner face) and crosses the bottom wall right to the rear
+    # face. x +-33 gives 7.0 side clearance; top 168 gives 2.95 over the swept need.
+    # This bay is also the exit route for the Pi's bottom-edge USB-C / HDMI cables and
+    # keeps the neck's left-bay cable window (x -18..-6, y -30..-22, z 117..127) reachable
+    # at every tilt (the nearest head material is the x=-33 bay wall).
+    slot = box(66.0, 99.0, 90.0)
+    slot.apply_translation((0, -28.5, 123.0))     # x +-33, y -78..21, z 78..168 (world)
+    shell = sub(shell, slot)
+
+    # pivot hubs at the side walls, on the tilt axis (fuse through the wall, behind the bezel)
+    bx = P["head_w"] / 2 - 8
+    bosses = []
+    for sx in (-1, 1):
+        b = cyl(P["pivot_boss_r"] + 3, 12.0, axis="x")   # spans past the outer wall to fuse;
+        b.apply_translation((sx * bx, yt, zt))           # short: the r13 body was clipping the
+        bosses.append(b)                                 # relocated Pi (clamp tubes hold the axle)
+    # internal CLAMP BOSSES at x=+-30: the axle is gripped HERE, 8 mm from the bearings (the old
+    # scheme clamped only at the side walls: 75.5 mm cantilevers on a Ø5 tube). Ø7 torque tubes
+    # run from the clamp zone out to the pivot bosses / side walls.
+    for sx in (-1, 1):
+        t = cyl(7.0, 72.0, axis="x")
+        t.apply_translation((sx * 63.0, yt, zt))     # spans |x| 27..99: through the pivot boss
+        bosses.append(t)                             # into the side wall
+    # TILT HARD-STOP FINS (homing pass 2026-07-08): 4 radial fins on the clamp tubes
+    # (x +-27..31, rooted r5.5 into the Ø14 tubes, tips r16.75), clocked +-55 deg off the
+    # straight-down (-Y) direction. They meet the neck's stop posts (build_neck_clevis,
+    # r 12..17 behind the axle) at +-33.8 deg tilt (shapely-computed on the real rotated
+    # rectangles; the +-30 sweep poses keep a 3.8 deg gap): the worm self-locks so the
+    # head HOLDS pose unpowered, but the controller still loses step count at power-off,
+    # so firmware stall-homes tilt against a stop at boot (28BYJ stall through the 12:1
+    # worm is ~0.2 Nm at the axle, fine for PLA flats).
+    # Fins live inside the motor-bay void (|x| < 33) and clear the cheek hoops (x <= 26),
+    # the grub-driver lines at x +-30 (fins never reach the y = yt plane) and the worm.
+    for sx in (-1, 1):
+        for ang in (-55.0, 55.0):
+            fin = box(4.0, 11.25, 4.0)
+            fin.apply_translation((sx * 29.0, -(5.5 + 11.25 / 2), 0))
+            fin.apply_transform(R(ang * DEG, (1, 0, 0)))
+            fin.apply_translation((0, yt, zt))
+            bosses.append(fin)
+    shell = uni([shell] + bosses)
+    # axle bore: SNUG Ø5.1 through the clamp bosses; far-wall bores demoted to LOOSE Ø5.3
+    # supports (they locate, the x=+-30 grubs grip).
+    axle_bore = cyl(2.55, P["head_w"] + 10, axis="x")
+    axle_bore.apply_translation((0, yt, zt))
+    shell = sub(shell, axle_bore)
+    for sx in (-1, 1):
+        loose = cyl(2.65, 70, axis="x")
+        loose.apply_translation((sx * 75.0, yt, zt))  # |x| 40..110: everything outboard is loose
+        shell = sub(shell, loose)
+        grub = cyl(1.25, 14); grub.apply_translation((sx * 30.0, yt, zt - 6))  # M2.5-grub pilot,
+        shell = sub(shell, grub)                     # driven from below through the neck slot
+
+    # camera: CM3 recessed inside the raised forehead behind the plain 4 mm wall (no lens
+    # bump: the countersunk aperture clears the full 75 deg diagonal FoV with the pupil
+    # ~3 mm behind the outer face). The board mounts front-face-in on 4x short M2 bosses on
+    # the ceiling-hung PIER (see PARAMS "cam_pier_*": the wall below the pocket top has
+    # nothing to root on, and the display panel band y>=25.03 forbids long bosses). The AF
+    # housing passes a pier cutout; the barrel crosses over the module's top edge and pokes
+    # ~0.5 into the wall bore. Ribbon drops from the board bottom into the open pocket.
+    fy = P["body_front_y"]
+    lz = P["cam_lens_z"]                                # lens optical axis height (world Z)
+    bz = lz - P["cam_lens_dz"]                          # board center Z (lens is above board center)
+    py1 = P["cam_pier_y1"]; py0 = py1 - P["cam_pier_t"]  # pier front/back faces (Y)
+    # pier plate: from below the bottom boss row up INTO the ceiling (fused 1 mm past the
+    # interior face at body_z_top - 4)
+    pz0 = bz + P["cam_hole_z_bot"] - 3.0
+    pz1 = P["body_z_top"] - 3.0
+    pier = box(P["cam_pier_w"], P["cam_pier_t"], pz1 - pz0)
+    pier.apply_translation((0, (py0 + py1) / 2, (pz0 + pz1) / 2))
+    shell = uni([shell, pier])
+    # AF-housing cutout through the pier (10.8 sq + 0.6/side)
+    hcut = box(P["cam_house_wh"] + 1.2, P["cam_pier_t"] + 2, P["cam_house_wh"] + 1.2)
+    hcut.apply_translation((0, (py0 + py1) / 2, lz))
+    shell = sub(shell, hcut)
+    # Ø6.3 through-bore + 45 deg/side countersink opening to Ø8.0 at the outer face
+    bore = cyl(P["cam_bore_d"] / 2, 12, axis="y"); bore.apply_translation((0, fy - 2, lz))
+    shell = sub(shell, bore)
+    csk_r0, csk_r1 = P["cam_bore_d"] / 2, P["cam_csk_d"] / 2 + 2.0   # overshoot 2 past the face
+    csk = frustum(csk_r1, csk_r0, csk_r1 - csk_r0)      # 45 deg/side, shrinking toward +Z
+    csk.apply_transform(R(TAU / 4, (1, 0, 0)))          # +Z -> -Y: small end faces INTO the wall
+    csk.apply_translation((0, fy + 2.0, lz))            # Ø8.0 lands exactly on the face plane
+    shell = sub(shell, csk)
+    # 4 short M2 boss pads on the pier back face (2 screwed, 2 locating); blind pilots
+    for sx in (-1, 1):
+        for dz in (P["cam_hole_z_top"], P["cam_hole_z_bot"]):
+            bo = cyl(P["cam_boss_od"] / 2, P["cam_boss_len"], axis="y")
+            bo.apply_translation((sx * P["cam_hole_dx"] / 2, py0 - P["cam_boss_len"] / 2,
+                                  bz + dz))
+            shell = uni([shell, bo])
+            pil = cyl(P["cam_boss_pilot_r"], 3.8, axis="y")
+            pil.apply_translation((sx * P["cam_hole_dx"] / 2,
+                                   py0 - P["cam_boss_len"] + 1.9, bz + dz))
+            shell = sub(shell, pil)
+
+    # LED-strip recess in the forehead, left of the camera (design ref): shallow slot cut
+    # into the face wall; the led_strip part (build()) sits in it flush with the face.
+    slot_led = box(P["led_slot_w"], P["led_slot_d"] + 1.0, P["led_slot_h"])
+    slot_led.apply_translation((P["led_cx"], fy - P["led_slot_d"] / 2 + 0.5, P["led_cz"]))
+    shell = sub(shell, slot_led)
+
+    # --- COSMETIC FIXINGS in the shell walls (task #15; cut LAST so no union refills) ---
+    hw2 = P["head_w"] / 2
+    # trim_rail_L/R: 3x Ø3.2 x 2.5 blind pin sockets per side wall, drilled from outside
+    # (the 4-wall keeps a 1.5 skin toward the interior)
+    for sx in (-1, 1):
+        for py, pz in P["rail_pin_pts"]:
+            shell = sub(shell, blind_socket(P["fix_socket_r"], P["fix_socket_deep"],
+                                            (sx, 0, 0), (sx * hw2, py, pz)))
+    # ARM SHOULDER INTERFACE (see the PARAMS block for the full derivation): per side,
+    # 2x M3 captive-nut pockets cut 2.8 into the wall from its interior face (x +-98.5;
+    # 1.2 outer skin under the rail; nut in before the screen module) + Ø3.5 screw
+    # clearance through wall + a Ø6.2 servo-lead pass on the shoulder axis.
+    pocket_face = hw2 - P["head_wall"]       # wall interior face (98.5, probe-verified)
+    for sx in (-1, 1):
+        for sy, sz in P["shoulder_screw_yz"]:
+            # hex void spans local z -deep..+1: after _orient(+z -> inboard) it cuts
+            # `deep` OUTWARD from the interior face with a 1.0 inboard overshoot (open
+            # into the head interior; no coincident face at the opening)
+            nut = hex_prism(P["m3_nut_af"] + 0.3, P["shoulder_nut_deep"] + 1.0)
+            nut.apply_translation((0, 0, (P["shoulder_nut_deep"] + 1.0) / 2
+                                   - P["shoulder_nut_deep"]))
+            _orient(nut, (-sx, 0, 0))
+            nut.apply_translation((sx * pocket_face, sy, sz))
+            shell = sub(shell, nut)
+            mc = cyl(P["m3_clear_r"], 9.0, axis="x")
+            mc.apply_translation((sx * (hw2 - 3.0), sy, sz))   # spans x 95..104
+            shell = sub(shell, mc)
+        wy, wzs = P["shoulder_wire_yz"]
+        wp = cyl(P["shoulder_wire_r"], 8.0, axis="x")
+        wp.apply_translation((sx * (hw2 - 2.75), wy, wzs))     # spans x 95.75..103.75
+        shell = sub(shell, wp)
+    # trim_hatch_frame: 4x Ø3.2 x 2.5 blind sockets in the back wall (1.5 skin)
+    for px, pz in P["hatch_pin_pts"]:
+        shell = sub(shell, blind_socket(P["fix_socket_r"], P["fix_socket_deep"],
+                                        (0, -1, 0), (px, P["body_back_y"], pz)))
+    # camera_pod: 2x Ø2.2 x 2.5 blind sockets in the face wall strip above the pocket
+    for px, pz in P["campod_pin_pts"]:
+        shell = sub(shell, blind_socket(P["fix_socket2_r"], P["fix_socket_deep"],
+                                        (0, 1, 0), (px, fy, pz)))
+    # antenna_stub: Ø6.2 x 3 blind spigot socket in the top wall (1.0 ceiling skin)
+    shell = sub(shell, blind_socket(P["ant_spigot_socket_r"], P["ant_spigot_deep"],
+                                    (0, 0, 1), (P["ant_x"], P["ant_y"], P["body_z_top"])))
+    # led_strip wire pass: Ø2.5 from the recess floor (y 29.5) through the remaining
+    # face wall into the interior, behind the strip's dummy PCB
+    wled = cyl(P["wire_pass_r"], 6.0, axis="y")
+    wled.apply_translation((P["led_cx"], fy - P["led_slot_d"] - 1.5, P["led_cz"]))
+    shell = sub(shell, wled)
+
+    _color(shell, "cradle")
+    shell.metadata["name"] = "head_shell"
+    return shell
+
+
+def _face_normal():
+    n = screen_pose()[:3, :3] @ np.array([0, 1.0, 0])
+    return n / np.linalg.norm(n)
+
+
+def _split_origin():
+    """A point on the split plane: behind the screen back, parallel to the front face."""
+    c = screen_pose()[:3, 3]
+    return c - (P["screen_d"] / 2 + P["bezel_back"]) * _face_normal()
+
+
+def _bezel_boss_points():
+    """Perimeter fixing points, in the screen-local frame, on the split plane."""
+    # side posts pulled in 5 (old +6 put them at x=+-102.5, half-proud of the wall corner)
+    hw, hh = P["screen_w"] / 2 + 1, P["screen_h"] / 2 + 5
+    ys = -(P["screen_d"] / 2 + P["bezel_back"])   # split plane in screen-local Y
+    # bottom fixings are a PAIR at x=+-40 (a bottom-CENTER post swept into the neck column at
+    # forward tilt; nothing on the neck reaches past |x|=26, so +-40 clears at every angle).
+    # TOP fixings are also a PAIR at x=+-40: a top-center post's M3 shank ran through the CM3
+    # camera board (x=0), and the raised ceiling needs the posts at local z=body_z_top-5-178
+    # to stay fused to it. Side posts sit at 0.75*hh, above the right-wall Pi I/O slot.
+    zt_post = P["body_z_top"] - 5.0 - P["screen_cz"]
+    return [(-40, ys, zt_post), (40, ys, zt_post), (-40, ys, -hh), (40, ys, -hh),
+            (-hw, ys, hh * 0.75), (hw, ys, hh * 0.75),
+            (-hw, ys, -hh * 0.55), (hw, ys, -hh * 0.55)]
+
+
+def build_head_parts():
+    """Split the wedge into a FRONT bezel (holds + retains the screen, camera nub) and a
+    BACK cover (pivot hubs, neck slot, Pi bay, cable port). M3 screws from the front thread
+    into captive hex nuts in the back-cover bosses."""
+    from trimesh.intersections import slice_mesh_plane
+    full = build_head_shell()
+    n, o = _face_normal(), _split_origin()
+    bezel = slice_mesh_plane(full, plane_normal=n, plane_origin=o, cap=True)
+    back = slice_mesh_plane(full, plane_normal=-n, plane_origin=o, cap=True)
+
+    # bezel<->back fixing: a boss each side of the split; screw along the face normal; the nut
+    # is captive in the back boss, the bezel boss is just clearance.
+    sp = screen_pose()
+    for lp in _bezel_boss_points():
+        w = (sp @ np.append(lp, 1.0))[:3]
+        back = uni([back, screw_post(w, -n, 15)])
+        bezel = uni([bezel, screw_post(w, n, 11)])
+        clr = _orient(cyl(P["m3_clear_r"], 70), n); clr.apply_translation(w)
+        bezel = sub(bezel, clr.copy()); back = sub(back, clr.copy())
+        nut = hex_prism(P["m3_nut_af"] + 0.3, P["m3_nut_h"])
+        nut.apply_translation((0, 0, -6))                # sunk a little inside the back boss
+        _orient(nut, n); nut.apply_translation(w)
+        back = sub(back, nut)
+
+    # (Pi 5 standoffs removed: the Pi mounts on the display's OWN back standoffs, so it comes
+    # in with the screen module. The back cover only has to CLEAR the combined stack.)
+    zt = P["tilt_axis_z"]
+
+    # screen retention: SCREEN TRAY (2026-07-08, user: "I don't like the 4 long screws").
+    # The old scheme -- 4 rear standoffs with 88.5-long blind Ø7 driver channels through
+    # the back wall (nasty step #1 in both reviews) -- is GONE. The module now bolts to
+    # the separate `screen_tray` on the BENCH (build_screen_tray; the factory bosses still
+    # open backward and a bezel boss still punches the glass, so the boss-rear-plane datum
+    # at y 22.48 is unchanged, stage-4 D1), and the loaded tray drops into head_back from
+    # the open front. head_back keeps only 4 short M3x10 CLEARANCE holes through the back
+    # wall at the tray pillar pilots: (x = boss_x -+ 1.5 inboard, z 134/174), inside the
+    # fixed-wall strip between the door outline (|x| > 56.5) and the hatch-frame opening
+    # (screw heads reach |x| 66.3 max < 67) -- short, visible, normal driver.
+    wall_in = P["body_back_y"] + P["head_wall"]          # inner back wall (-66, deep head)
+    wpts = [(sp @ np.append(lp, 1.0))[:3] for lp in P["scr_mount_pts"]]
+    for bx_ in sorted({round(w[0], 2) for w in wpts}):
+        # pattern is off-center (-64.59 / +61.61): the LEFT pilot shifts 1.5 inboard to
+        # keep its Ø7.2 head inside the frame opening; the RIGHT sits on the pillar axis
+        # (head 58.0..65.2: 1.5 off the door outline, 1.8 off the frame)
+        px_ = bx_ + 1.5 if bx_ < 0 else bx_
+        for bz_ in (134.0, 174.0):
+            hole = cyl(1.75, 6.0, axis="y")
+            hole.apply_translation((px_, P["body_back_y"] + 2.0, bz_))
+            back = sub(back, hole)
+            cb = cyl(3.6, 1.4, axis="y")                 # Ø7.2 head counterbore, outer face
+            cb.apply_translation((px_, P["body_back_y"] + 0.6, bz_))
+            back = sub(back, cb)
+
+    # --- REAR SERVICE DOOR (task #26): the 4-thick wall (y -70..-66) inside the orange
+    # frame becomes a removable U-shaped panel. Through-void = outline inset door_lip
+    # (2 mm fixed-wall lip all around, incl. a 2 mm ring left standing around the x +-33
+    # bay); a 2-deep rebate off the OUTER face takes the door's 1.9 flange (0.1 axial +
+    # 0.15 perimeter clearance), a 2.1 plug fills the void flush with the inner face.
+    # The gusset webs (|x| 59.6..66.6, y -67..-27) and standoff bosses (edge |x| 57.11)
+    # stay entirely on head_back: void reaches |x| 54.5, rebate |x| 56.5.
+    zb0, zb1 = P["door_z"]; dlip = P["door_lip"]; dfit = P["door_fit"]
+    outline = sg.box(-P["door_hx"], zb0, P["door_hx"], zb1).difference(
+        sg.box(-P["door_notch_hx"], zb0 - 5.0, P["door_notch_hx"], P["door_notch_ztop"]))
+    void = outline.buffer(-dlip, join_style=2)
+    wall_out = P["body_back_y"]                          # outer back face (-70)
+
+    def _xz(poly, t, y0):
+        """Extrude an XZ-footprint poly (x, z) to thickness t, spanning y0-t..y0."""
+        m = extrude_polygon(poly, t)
+        m.apply_transform(R(TAU / 4, (1, 0, 0)))         # (x, y, z) -> (x, -z, y)
+        m.apply_translation((0, y0, 0))
+        return m
+
+    back = sub(back, _xz(void, 8.0, wall_out + 7.0))         # through-void, y -71..-63
+    back = sub(back, _xz(outline, 2.5, wall_out + 2.0))      # 2-deep outer rebate + overshoot
+    door = uni([_xz(outline.buffer(-dfit, join_style=2), 2.0 - 0.1, wall_out + 2.0 - 0.1),
+                _xz(void.buffer(-dfit, join_style=2), 2.1, wall_out + 4.0)])
+    # EXTRUDED REAR POD (2026-07-10, user's red-box ref: the back of the head carries a
+    # chunky stepped "backpack" bump). Replaces the old 3.4-proud 2-tier face + latch +
+    # hinge cosmetics + through-relief slot, which read as a plate floating in a recessed
+    # hole (and the detached tilt_shroud + rear_pack slabs, both removed). The pod IS the
+    # door: three stepped tiers (x +-62/51/38, rear faces y -76/-80/-84), flat top at
+    # z 169 so the louvre band above (~171..187) stays open like the ref, 45-deg top-rear
+    # chamfer, 0.3-sloped bottom (helps the tilt-stall floor sweep: bottom-rear corner
+    # bottoms at z~87 at the +33.8 stall, 21 over the deck). HOLLOW: the inner cavity
+    # (x +-17, z 119.5..161, floor y -81.5) swallows the tilt drivetrain's swept
+    # intrusion -- probe-measured x +-13.5 / y to -78.1 / z 122.4..157.8 over +-33.8 deg
+    # -- so the 28BYJ hides INSIDE the pod and no relief hole shows. Roots to the U
+    # flange via a 2.1-thick base slab on the old face footprint.
+    face = sg.box(-P["door_hx"], zb0, P["door_hx"], zb1).buffer(
+        -P["door_face_r"], join_style=1).buffer(P["door_face_r"], join_style=1)
+    face = face.buffer(-dfit, join_style=2)
+    # extend the head_back rebate to the FULL root footprint (the root's 0.1 inner skin
+    # must not sit on un-rebated wall). x reaches 56.8 < the standoff bosses at 57.11.
+    back = sub(back, _xz(face.buffer(0.3, join_style=2), 2.5, wall_out + 2.0))
+    door = uni([door, _xz(face, 2.1 + 0.1, wall_out + 0.1)])     # root slab, y -72..-69.9
+    XPERM = np.array([[0., 0., 1., 0.], [1., 0., 0., 0.],       # (y,z)-profile poly ...
+                      [0., 1., 0., 0.], [0., 0., 0., 1.]])      # ... extruded along +X
+    zpt = P["pod_top_z"]
+    for xw, yr in P["pod_tiers"]:
+        dpt = -(yr + 70.0)                                      # tier proudness off wall
+        prof = sg.Polygon([(-71.5, zb0 + 0.1), (-71.5, zpt), (yr + 5.0, zpt),
+                           (yr, zpt - 5.0), (yr, zb0 + 0.1 + 0.3 * dpt)])
+        tier = extrude_polygon(prof, 2 * xw)                    # front buried 0.5 in root
+        tier.apply_transform(XPERM)
+        tier.apply_translation((-xw, 0, 0))
+        rrc = sg.box(-xw, -115.0, xw, -60.0).buffer(-3.0, join_style=1).buffer(
+            3.0, join_style=1)                                  # round vertical corners
+        rrp = extrude_polygon(rrc, 120.0)
+        rrp.apply_translation((0, 0, 100.0))
+        door = uni([door, inter(tier, rrp)])
+    chx, cfy, cz0, cz1 = P["pod_cavity"]
+    cav = box(2 * chx, -60.0 - cfy, cz1 - cz0)                  # drivetrain sweep cavity,
+    cav.apply_translation((0, (cfy - 60.0) / 2, (cz0 + cz1) / 2))   # open toward the bay
+    door = sub(door, cav)
+    nhx, nzt, nfl = P["pod_notch"]                              # bottom corridor POCKET
+    ntc = box(2 * nhx, -60.0 - nfl, nzt - 100.0)                # (see the PARAMS note)
+    ntc.apply_translation((0, (nfl - 60.0) / 2, (100.0 + nzt) / 2))
+    door = sub(door, ntc)
+    for gx in (-31.5, 31.5):                                    # panel-line grooves on the
+        gr = box(1.6, 1.6, 26.0)                                # core face (design ref)
+        gr.apply_translation((gx, P["pod_tiers"][-1][1], 149.0))
+        door = sub(door, gr)
+    gr = box(2 * P["pod_tiers"][-1][0] - 12.0, 1.6, 1.6)
+    gr.apply_translation((0, P["pod_tiers"][-1][1], 158.0))
+    door = sub(door, gr)
+    # top HOOK tabs (x +-47, 14 wide: outboard of the x +-38 louvres, inboard of the
+    # z-186.8 standoff bosses at |x| 57.11): a root block inside the void + a 1.3 plate
+    # lapping 3 mm up behind the fixed wall above the seam (0.15 off its inner face).
+    hx, hw = P["door_hook_x"], P["door_hook_w"]
+    for sx in (-1, 1):
+        root = box(hw, 2.45, 2.0)
+        root.apply_translation((sx * hx, -65.775, 187.0))    # y -67..-64.55, z 186..188
+        plate = box(hw, 1.3, 3.2 + P["door_hook_lip"])       # z 187..193.2 (1 into the
+        plate.apply_translation((sx * hx, -65.2, 187.0 + (3.2 + P["door_hook_lip"]) / 2))
+        door = uni([door, root, plate])                      # root so the union fuses)
+    # louvres live in the door: same cuts build_head_shell made in the wall
+    for i in range(3):
+        louvre = box(76, 30.0, 3.0)
+        louvre.apply_translation((0, wall_out, P["screen_cz"] + 19.5 + i * 6.5))
+        door = sub(door, louvre)
+    # bottom retention: SNAP TONGUES (2026-07-10, replaced the 2x M3 csk + captive-nut
+    # blocks -- see the PARAMS door_snap_* note). Per leg: a corner notch clears the pod
+    # mass off the tongue zone, then one vertical slit frees the leg's outer strip as
+    # a cantilever tongue (root at door_snap_root_z, free at the door's bottom edge);
+    # a barb at plug level, proud past the void wall (x 54.5), rides over the 2-thick
+    # wall band beside the void as the door swings shut and clicks behind its inner
+    # face (y -66). The barb profile carries its own ramps: 45 deg entry nose, ~50 deg
+    # back ramp so a firm pull on the door bottom cams the tongue inboard and releases.
+    # Tongue X-thickness ~= plug strip + flange strip (~4.8): strain at 1.2 deflection
+    # over the ~29 arm is ~1%, and the flex is in-plane of the face-down print's layers.
+    vo = P["door_hx"] - dlip - dfit                          # plug outer x edge (54.35)
+    bz0, bz1 = P["door_snap_barb_z"]
+    for sxd in (-1, 1):
+        # free the tongue from the POD mass: clip the pod's lower corner over the whole
+        # tongue + slit zone (x 49.9..63, up to just past the root z) so only flange +
+        # plug flex; the 0.2 flange sliver lost at y -70..-69.8 is inside the rebate.
+        notch = box(13.1, 36.4, 34.0)                        # y -106..-69.8: past the
+        notch.apply_translation((sxd * 56.45, -87.9, 130.0)) # deepest tier that reaches
+        door = sub(door, notch)                              # the tongue x-zone
+        slit = box(P["door_snap_slot_w"], 16.0, P["door_snap_root_z"] - 113.0)
+        slit.apply_translation((sxd * (vo - P["door_snap_w"] - P["door_snap_slot_w"] / 2),
+                                wall_out, (113.0 + P["door_snap_root_z"]) / 2))
+        door = sub(door, slit)
+        # barb: (x, y) profile extruded over the z band. Root slab dips to y -66.8 so it
+        # fuses into the plug strip; everything proud of the void wall (x > 54.35) stays
+        # y >= -65.85 (0.15 behind the wall inner face -66 = the catch, nothing to add
+        # on head_back). Entry nose 45 deg, catch/release ramp 1.2 over 1.0 (~50 deg).
+        bt = P["door_snap_barb"]
+        prof = sg.Polygon([(sxd * (vo - 1.2), -66.8), (sxd * vo, -66.8),
+                           (sxd * vo, -65.85), (sxd * (vo + bt), -64.85),
+                           (sxd * (vo + bt), -63.9), (sxd * vo, -62.7),
+                           (sxd * (vo - 1.2), -62.7)])
+        barb = extrude_polygon(prof, bz1 - bz0)              # (x, y) footprint -> +Z
+        barb.apply_translation((0, 0, bz0))
+        door = uni([door, barb])
+
+    _color(bezel, "cradle"); bezel.metadata["name"] = "head_bezel"
+    _color(back, "back"); back.metadata["name"] = "head_back"
+    _color(door, "back"); door.metadata["name"] = "head_door"
+    return bezel, back, door
+
+
+def build_screen_tray():
+    """SCREEN TRAY (2026-07-08, user: "I don't like the 4 long screws"). The screen+Pi
+    module bolts to THIS tray on the bench -- 4x M3x10 pan heads straight into the
+    display's factory bosses with unlimited driver access -- then the loaded tray drops
+    into head_back from the open front and 4x M3x10 drive from OUTSIDE the back wall
+    into the pillar-end pilots. Replaces the 4 rear standoffs and their 88.5 mm blind
+    Ø7 driver channels (nasty step #1 in both reviews); the module also becomes a
+    bench-testable unit (power the Pi on the desk before it enters the head).
+
+    Geometry: per side, a 12 x 4 vertical PLATE whose front face lands on the display
+    boss REAR plane (y 22.48 -- same stage-4 D1 datum as the old standoffs; between
+    bosses the back-pan sits at 25.03, so the plate has 2.5 air except at the boss
+    rims) carrying the two M3 clearance bores on the factory 126.2 x 65.65 pattern,
+    plus one 8 x 8 PILLAR per foot pair at z 134 and 174 running back to the inner
+    wall. The pillars are z-OFFSET from the bore axes (bench driver line stays open)
+    and z-clear of the Ø14 clamp tubes (146..160) so insertion needs no slots. Wall
+    pilots sit 1.5 inboard of the pillar axis so the outside screw heads stay inside
+    the hatch-frame opening (|x| < 67) and outside the door outline (|x| > 56.5).
+    Prints on its side (plate face down), pillars horizontal."""
+    sp = screen_pose()
+    wall_in = P["body_back_y"] + P["head_wall"]          # inner back wall (-66)
+    wpts = [(sp @ np.append(lp, 1.0))[:3] for lp in P["scr_mount_pts"]]
+    face = wpts[0][1] - P["scr_boss_lip"] - P["scr_seat_clear"]   # boss rear plane (22.48)
+    parts, cuts = [], []
+    for bx_ in sorted({round(w[0], 2) for w in wpts}):
+        px_ = bx_ + 1.5 if bx_ < 0 else bx_              # pilot x: MUST match head_back's
+        zs = sorted(w[2] for w in wpts if round(w[0], 2) == bx_)  # holes (121.15, 186.8)
+        plate = box(12.0, 4.0, 83.8)                     # z 112.2..196: reaches the spine
+        plate.apply_translation((bx_, face - 2.0, 154.1))
+        parts.append(plate)
+        for bz_ in zs:                                   # M3 clearance to the factory boss
+            c = cyl(P["scr_m3_clear_r"], 8.0, axis="y")
+            c.apply_translation((bx_, face - 2.0, bz_))
+            cuts.append(c)
+        for bz_ in (134.0, 174.0):                       # pillars to the wall, z-clear of
+            pl = box(8.0, (face - 3.5) - wall_in + 0.05, 8.0)    # the clamp tubes
+            pl.apply_translation((bx_, (face - 3.5 + wall_in + 0.05) / 2, bz_))
+            parts.append(pl)
+            pil = cyl(1.25, 8.0, axis="y")               # wall-screw pilot
+            pil.apply_translation((px_, wall_in + 0.05 + 3.9, bz_))
+            cuts.append(pil)
+    # SPINE tying the two rails into one part (bench handling): z 190.7..195.7, the
+    # 6-mm window between the display's mid back-pan face (y 22.5 plane, tops at z 190
+    # -- the spine face at 22.48 would only have 0.02 air inside its z-range) and the
+    # bezel's camera pier / CM3 envelope (both start at z 196.6).
+    spine = box(131.0, 4.0, 5.0)
+    spine.apply_translation((-1.49, face - 2.0, 193.2))
+    parts.append(spine)
+    tray = uni(parts)
+    for c in cuts:
+        tray = sub(tray, c)
+    _color(tray, "back")
+    tray.metadata["name"] = "screen_tray"
+    return tray
+
+
+def build_head_rails():
+    """Orange side accent rails (design-ref front.jpg): vertical rounded pads standing proud
+    of the head side walls' FLAT band. FIXING: glue + 3x Ø3 locating pins on the inner face
+    into blind wall sockets (PARAMS rail_pin_pts), plus 2x Ø3.5 clearance holes for the arm
+    shoulder M3x10s (they clamp the rail as a bonus; arms off = same screws + a blank).
+    The Ø6.2 shoulder wire pass stops at the wall face BEHIND the rail: v1's visible face
+    stays clean, an option-C arm retrofit reprints the rail with the hole."""
+    rails = []
+    for sx, nm in ((-1, "trim_rail_L"), (1, "trim_rail_R")):
+        r = rounded_box(P["rail_h"], P["rail_d"], P["rail_t"], 8.0)   # X=h, Y=d, extrude Z=t
+        r.apply_transform(R(TAU / 4, (0, 1, 0)))     # footprint height -> Z, thickness -> +X
+        x = P["head_w"] / 2 if sx > 0 else -(P["head_w"] / 2 + P["rail_t"])
+        r.apply_translation((x, 0, P["rail_cz"]))    # thickness spans wall..wall+rail_t
+        face_x = sx * P["head_w"] / 2                # rail inner face = wall outer face
+        pins = [r]
+        for py, pz in P["rail_pin_pts"]:
+            pins.append(fix_pin(P["fix_pin_r"], P["fix_pin_len"], (-sx, 0, 0),
+                                (face_x, py, pz)))
+        r = uni(pins)
+        for sy, sz in P["shoulder_screw_yz"]:        # M3 clearance for the shoulder screws
+            mc = cyl(P["m3_clear_r"], P["rail_t"] + 2.0, axis="x")
+            mc.apply_translation((sx * (P["head_w"] / 2 + P["rail_t"] / 2), sy, sz))
+            r = sub(r, mc)
+        if sx < 0:                                   # microSD service slot continues through
+            sy0, sy1 = P["sd_slot_y"]                # the LEFT rail (same box as the wall cut
+            sz0, sz1 = P["sd_slot_z"]                # in build_head_shell)
+            sd = box(14.0, sy1 - sy0, sz1 - sz0)
+            sd.apply_translation((-103.0, (sy0 + sy1) / 2, (sz0 + sz1) / 2))
+            r = sub(r, sd)
+        _color(r, "accent"); r.metadata["name"] = nm
+        rails.append(r)
+    return rails
+
+
+def build_sd_plug():
+    """Friction plug for the microSD service slot (left wall + trim_rail_L). Body fills the
+    slot at sd_plug_fit per side; a 1.5-proud face plate on the rail face is the grab tab.
+    Pull the plug, sight straight down the eject axis, reach the card with straight forceps.
+    Prints plate-down, no supports."""
+    (y0, y1), (z0, z1) = P["sd_slot_y"], P["sd_slot_z"]
+    fit = P["sd_plug_fit"]
+    rail_out = -(P["head_w"] / 2 + P["rail_t"])          # left rail outer face (-107.5)
+    # body reaches 0.7 INTO the plate so they fuse (printability review: the first cut left
+    # a 0.1 air gap and the STL split into two loose bodies). The y-min face gets +0.4 extra
+    # clearance: printed face-down, the slot's y=7.4 face is a 16 mm unsupported bridge in
+    # the bezel and sags into a 0.15 fit.
+    body = box(9.6, (y1 - y0) - 2 * fit - 0.4, (z1 - z0) - 2 * fit)
+    body.apply_translation((rail_out - 0.7 + 4.8, (y0 + y1) / 2 + 0.2, (z0 + z1) / 2))
+    plate = box(1.5, (y1 - y0) + 1.6, (z1 - z0) + 3.0)   # overlaps the slot 0.8 / 1.5 per side
+    plate.apply_translation((rail_out - 0.75, (y0 + y1) / 2, (z0 + z1) / 2))
+    plug = uni([body, plate])
+    _color(plug, "accent"); plug.metadata["name"] = "sd_plug"
+    return plug
+
+
+def build_led_strip():
+    """WS2812-stick placeholder in the forehead recess (design-ref front.jpg: a row of
+    discrete LEDs left of the camera). Thin base board in the recess + 8 round emitters
+    poking 0.3 proud of the face. Wiring drops behind the wall at the print pass."""
+    fy = P["body_front_y"]
+    base = box(P["led_slot_w"] - 1.0, 1.2, P["led_slot_h"] - 1.0)
+    # base 1.2 (was 0.8 = four fragile layers, PRINTABILITY 6): back stays on the recess
+    # floor (fy - 1.5), so the dots (unmoved) still poke exactly 0.3 proud of the face.
+    base.apply_translation((P["led_cx"], fy - P["led_slot_d"] + 0.6, P["led_cz"]))
+    dots = [base]
+    for i in range(8):
+        d = cyl(1.2, P["led_slot_d"] + 0.3, axis="y", sections=24)
+        d.apply_translation((P["led_cx"] - 16.1 + i * 4.6,
+                             fy - (P["led_slot_d"] - 0.3) / 2, P["led_cz"]))
+        dots.append(d)
+    strip = uni(dots)
+    _color(strip, "led"); strip.metadata["name"] = "led_strip"
+    return strip
+
+
+def build_antenna():
+    """Knurled antenna stub on the head top face, right side (design-ref; cosmetic --
+    the Pi's WiFi is internal). Separate print: collar + shaft + dome, knurl read via
+    shallow ring grooves. FIXING: Ø6 spigot under the collar into a Ø6.2 x 3 blind socket
+    in the top wall (glue or friction; see PARAMS ant_spigot_*)."""
+    zt = P["body_z_top"]
+    collar = cyl(P["ant_collar_d"] / 2, P["ant_collar_h"])
+    collar.apply_translation((0, 0, P["ant_collar_h"] / 2))
+    shaft = cyl(P["ant_d"] / 2, P["ant_h"])
+    shaft.apply_translation((0, 0, P["ant_h"] / 2))
+    dome = trimesh.creation.icosphere(subdivisions=2, radius=P["ant_d"] / 2)
+    dome.apply_translation((0, 0, P["ant_h"]))
+    # spigot: protrudes deep-0.2 (bottoming allowance) below the collar underside; built
+    # by hand, not fix_pin (its direction is exactly -Z, _orient's antiparallel gap)
+    spig_l = P["ant_spigot_deep"] - 0.2 + 1.0        # 1.0 buried up into the collar
+    spig = cyl(P["ant_spigot_r"], spig_l)
+    spig.apply_translation((0, 0, spig_l / 2 - (P["ant_spigot_deep"] - 0.2)))
+    ant = uni([collar, shaft, dome, spig])
+    for gz in (10.0, 16.0, 22.0):                     # knurl-read ring grooves
+        groove = trimesh.creation.torus(major_radius=P["ant_d"] / 2, minor_radius=0.7)
+        groove.apply_translation((0, 0, gz))
+        ant = sub(ant, groove)
+    ant.apply_translation((P["ant_x"], P["ant_y"], zt))
+    _color(ant, "antenna"); ant.metadata["name"] = "antenna_stub"
+    return ant
+
+
+def build_cam_pod():
+    """Cosmetic raised eye-pod over the recessed camera aperture (design-ref front.jpg).
+    Separate charcoal print on the bezel face; 45 deg flared bore clears the CM3 FoV."""
+    fy, lz = P["body_front_y"], P["cam_lens_z"]
+    pod = rounded_box(P["cam_pod_w"], P["cam_pod_h"], P["cam_pod_t"], 7.0)
+    pod.apply_transform(R(-TAU / 4, (1, 0, 0)))      # extrude +Y, footprint XZ
+    pod.apply_translation((0, fy, lz))
+    flare = np.tan(40 * DEG)                         # 40 deg/side (was 45: its Ø19 mouth on the
+                                                     # 18-tall pod cusped to 0.05 at the lip);
+                                                     # 40 > the CM3's 37.5 FoV half-angle, so
+                                                     # still no vignette (PRINTABILITY 1)
+    bore = frustum(P["cam_csk_d"] / 2 + flare * (P["cam_pod_t"] + 0.5), P["cam_csk_d"] / 2,
+                   P["cam_pod_t"] + 0.5)             # flared bore, small end at the face
+    bore.apply_transform(R(TAU / 4, (1, 0, 0)))      # shrink toward -Y (into the wall)
+    bore.apply_translation((0, fy + P["cam_pod_t"] + 0.25, lz))
+    pod = sub(pod, bore)
+    # FIXING: glue + 2x Ø2 locating pins ABOVE the glass line only (the pod's lower band
+    # overlaps the screen-pocket face opening below z 208.9, where M2 bosses / pins are
+    # impossible); sockets sit in the z>209 wall strip (PARAMS campod_pin_pts).
+    pp = [pod]
+    for px, pz in P["campod_pin_pts"]:
+        pp.append(fix_pin(P["fix_pin2_r"], P["fix_pin_len"], (0, -1, 0), (px, fy, pz)))
+    pod = uni(pp)
+    _color(pod, "camera"); pod.metadata["name"] = "camera_pod"   # /camera/ in the viewer PAL
+    return pod
+
+
+def _hatch_ring(grow=0.0):
+    """The positioned hatch-frame ring solid; grow>0 inflates it (pack nest clearance)."""
+    w, h, bd, t = (P["hatch_frame_w"], P["hatch_frame_h"],
+                   P["hatch_frame_band"], P["hatch_frame_t"])
+    outer = rounded_box(w + 2 * grow, h + 2 * grow, t + grow, 12.0)
+    inner = rounded_box(w - 2 * bd - 2 * grow, h - 2 * bd - 2 * grow, t + grow + 2, 8.0)
+    inner.apply_translation((0, 0, -1))
+    ring = sub(outer, inner)
+    ring.apply_transform(R(TAU / 4, (1, 0, 0)))      # footprint XZ, extrusion -Y
+    ring.apply_translation((0, P["body_back_y"], P["hatch_frame_cz"]))
+    return ring
+
+
+def build_hatch_frame():
+    """Orange chamfer-look frame proud of the head back face (design-ref back.jpg).
+    Separate orange print over the service area; the existing louvres + cable port are
+    the 'hatch' inside it. Bottom band notched clear of the neck-slot sweep envelope."""
+    t = P["hatch_frame_t"]
+    ring = _hatch_ring()
+    # notch the bottom band over the deep-head motor BAY (back wall open x +-33 to z=168):
+    # the frame may not reach into the tilt-sweep clearance envelope
+    notch = box(70.0, 2 * t + 2, 74.0)
+    notch.apply_translation((0, P["body_back_y"] - t, P["tilt_axis_z"] - 20.0))
+    ring = sub(ring, notch)
+    # FIXING: glue + 4x Ø3 pins at the band corners into blind back-wall sockets
+    # (PARAMS hatch_pin_pts; they register the frame around the louvres/port)
+    pins = [ring]
+    for px, pz in P["hatch_pin_pts"]:
+        pins.append(fix_pin(P["fix_pin_r"], P["fix_pin_len"], (0, 1, 0),
+                            (px, P["body_back_y"], pz)))
+    ring = uni(pins)
+    _color(ring, "accent"); ring.metadata["name"] = "trim_hatch_frame"
+    return ring
+
+
+def _limb(p0, p1, w=9.0, d=11.0):
+    """Arm segment between two (y,z) points, long axis in the YZ plane, X extent w."""
+    vy, vz = p1[0] - p0[0], p1[1] - p0[1]
+    L = float(np.hypot(vy, vz))
+    seg = box(w, d, L + d * 0.6)
+    seg.apply_transform(R(-np.arctan2(vy, vz), (1, 0, 0)))    # +Z -> segment direction
+    seg.apply_translation((0, (p0[0] + p1[0]) / 2, (p0[1] + p1[1]) / 2))
+    return seg
+
+
+def build_arms():
+    """Two articulated gripper arms (design-ref, PLACEHOLDER): RAISED pose per
+    front-2.jpg -- upper arm up-forward, forearm up, C-claw opening upward. Raised
+    (not tucked) because the 56-wide pods put their tops under the old tucked-claw
+    sweep (claw dug into the pod top at pan ~20 deg + tilt down); raised claws stay
+    above z~140 at every pan x tilt combination. A standoff tube bridges the rail
+    face to the outboard shoulder. Joints stay cosmetic until the arm mechanism pass."""
+    S, E, W = (0.0, 130.0), (20.0, 160.0), (30.0, 195.0)  # shoulder/elbow/wrist (y,z)
+    C = (32.0, 212.0)                                     # claw ring center
+    arms = []
+    for sx, nm in ((-1, "arm_L"), (1, "arm_R")):
+        parts = [_limb(S, E, w=9.0, d=15.0), _limb(E, W, w=9.0, d=15.0)]
+        # shoulder standoff: rail face (107.5) -> arm plane; chunky r8 hub, local -X
+        span = P["arm_x"] - (P["head_w"] / 2 + P["rail_t"])
+        so = cyl(8.0, span + 4.0, axis="x")              # inboard is -sx after the mirror
+        so.apply_translation((-sx * ((span + 4.0) / 2 - 4.0), S[0], S[1]))
+        parts.append(so)
+        for (py, pz), r in ((S, 11.0), (E, 9.5), (W, 8.5)):
+            j = cyl(r, 10.0, axis="x"); j.apply_translation((0, py, pz))
+            parts.append(j)
+        claw = sub(cyl(18.0, 13.0, axis="x", sections=48),
+                   cyl(10.0, 15.0, axis="x", sections=48))
+        notch = box(14.0, 14.0, 22.0); notch.apply_translation((0, 0, 13.0))
+        claw = sub(claw, notch)                          # C opening faces +Z (up, per ref)
+        for syn in (-1, 1):                              # square finger pads at the C tips
+            pad = box(13.0, 6.5, 7.0)
+            pad.apply_translation((0, syn * 10.5, 13.5))
+            claw = uni([claw, pad])
+        claw.apply_translation((0, C[0], C[1]))
+        parts.append(claw)
+        arm = uni(parts)
+        arm.apply_translation((sx * P["arm_x"], 0, 0))
+        _color(arm, "arm"); arm.metadata["name"] = nm
+        arms.append(arm)
+    return arms
+
+

@@ -1,0 +1,296 @@
+"""Neck parts: tilt clevis column + removable tilt-motor cartridge carrier.
+
+Split out of the original monolithic build.py (2026-07-10); see
+build.py for the assembly entry point and the overall design notes.
+"""
+import numpy as np
+import shapely.geometry as sg
+from trimesh.creation import extrude_polygon
+from trimesh.transformations import rotation_matrix as R
+from params import P
+from geo import _color, box, cyl, rounded_box, sub, uni
+from gears import worm_cd
+
+
+def build_neck_clevis():
+    """Neck column rising to a two-cheek clevis that grips the tilt axle under the head."""
+    zt = P["tilt_axis_z"]
+    yt = P["tilt_axis_y"]
+    z0 = P["base_h"]                       # sits on the pan platform / base top (world Z)
+    ny = P["neck_y"]
+    parts = []
+
+    col_h = P["neck_top_z"] - z0
+    col = rounded_box(P["neck_w"], P["neck_d"], col_h, P["neck_round"])
+    col.apply_translation((0, ny, z0))       # extrude_polygon is z=0..h, so lift to z0
+    parts.append(col)
+
+    # cheek-root BLOCK on the column top rear: the stage-5 column sits forward (ny=-17) but
+    # the cheek slant that clears the -30 swept stack must still root around y=-33; this
+    # block bridges column top -> cheek bottoms (and fuses with the cradle arm above it).
+    root = box(52.0, 14.0, 10.0)
+    root.apply_translation((0, -33.0, zt - 23.0))         # y -40..-26; z rides the axle
+                                                          # (bridges column top -> cheeks)
+    parts.append(root)
+
+    # two cheeks rising from the cheek-root block to the axle at (cx, yt, zt). Stage 2R
+    # re-profile: the box stops AT the axle center (the old +10 overshoot past the axle poked
+    # into the display module's back envelope); the bearing land is a Ø19 HOOP centered on
+    # the axle. Stage 5: the bottom anchor is DECOUPLED from neck_y (fixed at y=-33, z=155 on
+    # the root block) -- anchoring at the new ny=-17 made the cheek front face graze the
+    # resting stack (y=-7) and bury 11 mm into the -30 swept stack.
+    for sx in (-1, 1):
+        cx = sx * P["clevis_half"]
+        top = np.array([cx, yt, zt])
+        bot = np.array([cx, -33.0, zt - 23.0])
+        length = np.linalg.norm(top - bot)
+        d = (top - bot) / length
+        cheek = box(P["cheek_t"], 20.0, length + 20)
+        v = np.cross([0, 0, 1.0], d); s = np.linalg.norm(v)
+        if s > 1e-6:
+            cheek.apply_transform(R(np.arctan2(s, np.dot([0, 0, 1.0], d)), v / s))
+        cheek.apply_translation((top + bot) / 2 - d * 10.0)   # top end flush with the axle
+        hoop = cyl(9.5, P["cheek_t"], axis="x")               # bearing-seat land around the axle
+        hoop.apply_translation(top)
+        parts += [cheek, hoop]
+        # TILT-STOP POST (homing pass 2026-07-08): a block r 12..17 straight behind the
+        # axle (y -35..-30, z zt +-2.5), spanning x 20..32 so the head's +-55 deg stop
+        # fins (x 27..31, build_head_shell) land flat on it at +-33.8 deg. It starts at
+        # r12 because boxes near the axis are angularly fat at the root (the first cut
+        # of this feature contacted the fins at 28.8 deg and failed the +-30 sweep).
+        # A leg drops to the cheek-root block / cheek rear flank for fusion; the block
+        # clears the bearing-seat bore (r12 > seat r6.4), the motor can (z 150.5+ vs
+        # can top 147.4) and the head's clamp tubes (r7).
+        post = box(12.0, 5.0, 5.0)
+        post.apply_translation((sx * 26.0, yt - 14.5, zt))
+        leg = box(6.0, 5.0, 22.0)
+        leg.apply_translation((sx * 23.0, yt - 14.5, zt - 9.0))
+        parts += [post, leg]
+
+    # tilt WORM-motor bracket: the motor shaft runs along +Y (perpendicular to the tilt axle) and
+    # carries the worm; the worm meshes the wheel on the axle. center distance = wheel_r + worm_r.
+    wx = P["worm_wheel_x"]
+    cd = worm_cd()
+    wz = zt - cd
+    # Stage 2R: the worm group sits behind the axle (face_y offset 4 -> 8 -> 9.5 in stage 5):
+    # at -30 tilt the stack's rear (GPIO pins) sweeps down-back past the worm tail. The 9.5
+    # offset + worm_len 14 puts the thread span at y -32..-16 (still covering the wheel
+    # contact at yt) with a bare Ø5 stub forward of -16 for the cradle (stage-4 D2 fix).
+    face_y = yt - 0.5 * P["worm_len"] - 9.5              # motor mount face (behind the worm)
+    # plate shortened 46 -> 36 tall (same bottom): the old top (wz+23) clipped the head's back
+    # wall above the neck slot during the +10..+25 deg sweep
+    plate = box(46, 4, 36); plate.apply_translation((wx, face_y, wz - 5))
+    parts.append(plate)
+    # gusset tying the bracket down onto the neck column top (offset +X, clear of the can pocket).
+    # Front held at yt-2: the -30 swept stack digs to y -18.2 in the z 152..156 band.
+    gy0, gy1 = face_y, yt - 4.0
+    gus = box(10, abs(gy1 - gy0) + 4, 22)
+    gus.apply_translation((wx + 19, (gy0 + gy1) / 2, (wz + P["neck_top_z"]) / 2))
+    parts.append(gus)
+    # outboard support for the worm's far end (the 28BYJ shaft only reaches ~6 mm into the worm;
+    # the Ø5 tail stub rides an open-top CRADLE groove; worm separation force presses DOWN into
+    # it, so the open top is load-correct). Stage 2R shape: at -30 tilt the stack's rear sweeps
+    # to y -18.2 in the z 148..160 band but frees everything above z~168. Stage 5 (D2 fix):
+    # the worm's full-radius threads (r 5.34, now ending at y=-16) used to run THROUGH the
+    # cradle band; the groove band now sits at y -15.5..-13 on the bare Ø5 tail stub, and the
+    # cradle material behind it (riser top + pad rear, y<=-15.5) is split into two side PRONGS
+    # by an envelope-relief bore (r 5.9 > thread r 5.34, cut below after the union) about the
+    # worm axis so the worm can rotate. The arm stays under the thread envelope (top z=160
+    # < wz-5.34); the pad keeps its stage-2R-proven front (y=-13) and z band (164..166.5).
+    arm = box(18, 16, 6); arm.apply_translation((wx, yt - 10.0, wz - 9.5))        # y -36..-20
+    riser = box(18, 5, 16.5); riser.apply_translation((wx, yt - 4.5, wz - 8.25))  # z 150..166.5
+    pad = box(18, 12, 2.5); pad.apply_translation((wx, -19.0, wz - 1.25))         # y -25..-13
+    parts += [arm, riser, pad]
+
+    neck = uni(parts)
+    # column front CHIN NOTCH, re-derived for the stage-5 inboard column (front face now
+    # ny+23=+6): at -30 tilt the head's bottom-front wall band, lower front wall/glass AND
+    # the display stack's lower back all arc down-back through the column front zone -- the
+    # measured swept envelope reaches y=-16.7 near z~102 (shell chin) and y=-14 right up to
+    # the column top (display back band at z 140..150), so the WHOLE front of the column
+    # above z=94 steps back to y=-19.5 (2.7+ clear of the sweep; head min sweep z is 97.2).
+    # Below z=94 the column keeps its full section (bolt bosses z 52..64); the cable channel
+    # (front wall y=-22) stays closed behind the notch face.
+    notch = box(64.0, 32.0, 57.0)
+    notch.apply_translation((0, -3.5, zt - 55.5))       # y -19.5..12.5; z rides the axle
+                                                        # (swept-envelope chin clearance)
+    neck = sub(neck, notch)
+    # axle clearance bore (Ø5 axle) through the cheeks
+    bore = cyl(P["axle_d"] / 2 + 0.4, 2 * P["clevis_half"] + 4 * P["cheek_t"], axis="x")
+    bore.apply_translation((0, yt, zt))
+    neck = sub(neck, bore)
+    # 695-2RS bearing seats: OPEN FLUSH to each cheek's INNER face (the old 0.75 mm membrane made
+    # the bearing uninsertable). Bore Ø12.85 = press allowance on the Ø13 OD; the bearing presses
+    # in from inside the clevis gap, 3.5 mm outer wall remains (loose Ø5.8 axle pass-through).
+    seat_r = 12.85 / 2
+    inner_x = P["clevis_half"] - P["cheek_t"] / 2                 # cheek inner face (18)
+    for sx in (-1, 1):
+        seat = cyl(seat_r, P["brg_w"] + 1.5, axis="x")
+        seat.apply_translation((sx * (inner_x - 1.0 + (P["brg_w"] + 1.5) / 2), yt, zt))
+        neck = sub(neck, seat)
+    # worm PASS through the bracket plate: Ø12.2 (cartridge pass 2026-07-08: was Ø10, just
+    # shaft-boss clearance -- now the WORM (OD 10.55) extracts rearward through the plate
+    # with the motor as one cartridge; sliding the worm axially out of mesh only spins the
+    # free wheel, worm-as-rack, so the head gently tilts as the cartridge pulls out).
+    sh = cyl(6.1, 20, axis="y"); sh.apply_translation((wx, face_y, wz)); neck = sub(neck, sh)
+    # (the old in-plate M4 ear holes are GONE: the motor's ears now bolt to the removable
+    # tilt_carrier on the bench -- see build_tilt_carrier. The plate instead takes the
+    # carrier's 4 M3s in thread-form pilots, driven from the open rear bay.)
+    can_z = wz - P["motor_shaft_off"]
+    # Carrier screw landings, re-derived (review 2026-07-08: the first cut gave the upper
+    # M3x16s only 2.0 of thread and jammed the lower ones into a 3.9 hole needing 5.5).
+    # UPPER pair: a Ø8 x 2 raised PAD on the plate rear face moves the landing to -38.5,
+    # so an M3x16 through carrier (4) + boss (8) forms 4.0 of thread in a 6.0 pilot.
+    # LOWER pair: lands on the column rear face (y=-40, the plate region is embedded in
+    # column there); pilot 6.5 deep -> 5.5 of thread, 0.95 tip margin.
+    for cpx, cpz in ((-14.0, wz + 4.1), (14.0, wz + 4.1)):
+        pad = cyl(4.0, 2.5, axis="y")                    # 0.5 buried: face-tangent bodies
+        pad.apply_translation((wx + cpx, -37.25, cpz))   # don't fuse (stage-4 D4)
+        neck = uni([neck, pad])
+        pil = cyl(1.25, 6.0, axis="y")
+        pil.apply_translation((wx + cpx, -35.6, cpz))    # spans -38.6..-32.6
+        neck = sub(neck, pil)
+    for cpx, cpz in ((-13.0, 120.0), (13.0, 120.0)):
+        pil = cyl(1.25, 6.5, axis="y")
+        pil.apply_translation((wx + cpx, -36.85, cpz))   # spans -40.1..-33.6
+        neck = sub(neck, pil)
+    # Ø29 CAN POCKET behind the plate (the motor body was buried in solid neck material):
+    # clears the Ø28.25 can + Ø27.25 gearbox stack; separate relief for the blue wiring box.
+    pocket = cyl(29.0 / 2, 32.5, axis="y")
+    pocket.apply_translation((wx, face_y - 2 - 32.5 / 2 + 0.2, can_z))
+    neck = sub(neck, pocket)
+    wrelief = box(17.0, 19.0, 10.0)
+    wrelief.apply_translation((wx, face_y - 21.4, can_z - 16.1))
+    neck = sub(neck, wrelief)
+    # ear-bar relief: the motor's 43 mm ear bar sits 9.5 behind the gear face and was clipping
+    # the cheek's lower-rear corner; slot it clear (also gives M4 nut access)
+    erelief = box(46.0, 4.0, 10.0)
+    erelief.apply_translation((wx, face_y - 11.5, can_z))
+    neck = sub(neck, erelief)
+    # worm-thread envelope relief: Ø11.8 bore (thread tip r 5.34 + 0.56 running clearance)
+    # about the worm axis over the threaded span (y -34..-15.5) -- splits the riser top / pad
+    # rear into the two side prongs and lets the worm rotate free of the cradle (D2)
+    relief = cyl(5.9, 18.5, axis="y"); relief.apply_translation((wx, -24.75, wz))
+    neck = sub(neck, relief)
+    # Ø5.4 half-groove across the cradle pad top (worm tail stub rides here, open top),
+    # only over the bare-stub band forward of the threads (threads end y=-16)
+    bush = cyl(2.7, 4.5, axis="y"); bush.apply_translation((wx, -14.25, wz)); neck = sub(neck, bush)
+    # vertical cable channel down the column: 16x8 obround (was Ø12 -- a 5-pos JST-XH head
+    # is 14.9 x 5.9 and must pass pre-crimped). Long axis along X, at (0, neck_chan_y):
+    # pushed behind the column center so the chin notch (rear y=-19.5) leaves a full wall
+    # in front of it (channel front y=-22).
+    chan = extrude_polygon(sg.LineString([(-4, 0), (4, 0)]).buffer(4.0), P["neck_top_z"] - z0 + 30)
+    chan.apply_translation((0, P["neck_chan_y"], z0 - 15))
+    neck = sub(neck, chan)
+    # SIDE EXIT window at the column's top-left corner (CABLE-CHECK defect B): the chimney
+    # above the channel is boxed in by riser / cheek-root / cradle arm / worm to a 1.0 mm
+    # escape gap, so the wire could never leave. This 12x8x10 cut (x -18..-6, y -30..-22,
+    # z 117..127) is pure column / riser-bottom-corner material and opens the channel into
+    # the open LEFT bay (x -24..-9, free 20 mm up + left, 1.8 clear of the -30 deg head
+    # sweep). The +x mirror is NOT available: the gusset fills the right bay.
+    exitw = box(12.0, 8.0, 10.0)
+    exitw.apply_translation((-12.0, -26.0, 122.0))
+    neck = sub(neck, exitw)
+    # 3 M3 PILOTS (Ø2.5 x 12 -- the old Ø3.5 was clearance, nothing bit) to bolt the neck down
+    # to the pan platform. Stage 5: circle clocked (270,30,150) -- with the column at
+    # ny=-17 the old (90,210,330)/rad-12 put a hole 2 mm from the PAN AXIS, inside the
+    # platform's D-bore hub. rad 16.5 (was 16.0): the 270-deg bolt's Ø6.5 head counterbore
+    # in the platform grazed the platform cable slot by 0.25 (CABLE-CHECK minor); at 16.5
+    # the cbore edge (y -30.25) clears the slot edge (y -30) by 0.25 and the screw head
+    # keeps its full seat. Keep in sync with build_pan_platform().
+    for a in (270, 30, 150):
+        rad = 16.5
+        hx = rad * np.cos(np.radians(a)); hy = ny + rad * np.sin(np.radians(a))
+        pilot = cyl(1.25, 14); pilot.apply_translation((hx, hy, z0 + 5))   # bites z0..z0+12
+        neck = sub(neck, pilot)
+    # tilt ULN2003 driver standoffs on the column BACK face (same pattern as the base's pan
+    # driver mount; motor + driver both live on the pan group so their leads cross no joint).
+    # Board center DROPPED 110 -> 93 (review 2026-07-08): at 110 the board plane
+    # (y -48..-49.6, z 94..126) ran straight through the tilt_carrier's band
+    # (y -50.55..-46.55, z 113.2..153.2) -- 162 mm^3 of overlap the gate can't see because
+    # the board itself isn't modeled. At 93 the board spans z 77..109, 4.2 under the
+    # carrier, still fully on the column back (z 66..125).
+    uln_y = ny - P["neck_d"] / 2                      # column back face
+    for sx in (-1, 1):
+        for sz in (-1, 1):
+            # 8.5 long, buried 0.5 INTO the column: a face-tangent cylinder does not fuse
+            # in uni() and exported as a disjoint floating body (stage-4 defect D4)
+            b = cyl(3.0, 8.5, axis="y")
+            b.apply_translation((sx * P["uln_w"] / 2, uln_y - 3.75, 93 + sz * P["uln_h"] / 2))
+            neck = uni([neck, b])
+            pil = cyl(1.25, 12, axis="y")
+            pil.apply_translation((sx * P["uln_w"] / 2, uln_y - 3, 93 + sz * P["uln_h"] / 2))
+            neck = sub(neck, pil)
+    _color(neck, "neck")
+    neck.metadata["name"] = "neck_clevis"
+    return neck
+
+
+def build_tilt_carrier():
+    """Removable TILT-MOTOR CARTRIDGE carrier (maintenance pass 2026-07-08). The 28BYJ is
+    the likeliest part to die, and replacing it used to mean un-hanging the head and then
+    reaching ear screws with 2.1 mm of driver room. Now: the motor's M4 ears bolt to THIS
+    plate on the bench (open access), the worm goes on the D-shaft, and the loaded carrier
+    inserts from the open rear bay: the can registers in the neck's Ø29 pocket (the mesh
+    lead-in; worm CD is held by pocket + tail cradle, same registers the WORM.md mesh was
+    verified against), the worm passes the plate's Ø12.2 bore, and 4x M3x16 drive from the
+    rear through Ø7 bosses into the plate's thread-form pilots. Extraction reverses it.
+    CAVEAT (review 2026-07-08): sliding the worm out spins the free wheel (worm-as-rack)
+    only while the head can rotate: clearing the mesh needs ~6.0 mm of axial travel =
+    ~46 deg of head nod, but the fin hard stops allow only ~34 deg down from neutral --
+    with the head hung and grubbed, DRIVE THE HEAD FULLY UP first (extraction nods it
+    down, banking the full ~68 deg range), or loosen the two head-clamp grubs. Before
+    step 12 (head not hung) extraction is unconditional.
+    The flanks keep only their rear wing over the cheek-corner zone (review: the first
+    corner-clip cut severed the part into 3 bodies); the bottom ring is notched for the
+    blue wiring box."""
+    zt, yt = P["tilt_axis_z"], P["tilt_axis_y"]
+    wz = zt - worm_cd()
+    can_z = wz - P["motor_shaft_off"]
+    face_y = yt - 0.5 * P["worm_len"] - 9.5              # neck bracket-plate front face
+    cy = -48.55                                          # carrier mid-plane (front -46.55:
+    plate = box(46.0, 4.0, 40.0)                         # 0.05 off the motor-ear rear face)
+    plate.apply_translation((0, cy, can_z))
+    # cheek relief, TWO-STAGE (review iterations): the cheek slant's reach grows with
+    # depth -- y -48.0 at z ~127, y -49.5 at z ~120, past -50.6 at z 116. So:
+    #  (a) z 112..126.5, x 17..24: FULL clip (the cheek spans the whole carrier depth
+    #      there). Connectivity holds via x 8.8..17 (the bore only reaches x 12.6 at
+    #      z 126.5) -- the first severed-into-3-bodies cut clipped from x 14.
+    #  (b) x 13.5..24, z 112..132: thin to the REAR WING (y -50.55..-48.4, 2.15 thick),
+    #      clearing the shallower cheek reach above the clip by 0.4.
+    for sxs in (-1, 1):
+        cc = box(7.6, 8.0, 14.5)                         # (a) x 17..24.6, z 112..126.5
+        cc.apply_translation((sxs * 20.8, cy, 119.25))
+        plate = sub(plate, cc)
+        fr = box(10.5, 2.4, 20.0)                        # (b) x 13.5..24, y -48.4..-46.0
+        fr.apply_translation((sxs * 18.75, -47.2, 122.0))        # z 112..132
+        plate = sub(plate, fr)
+    # Upper bosses (8 long) land on the neck plate's raised Ø8 pads (-38.5, 0.05 air) at
+    # x +-14 -- x +-19 clipped the cheek rear flanks, which bulge to y -37.2 over x 18..26
+    # at this height, and the 2-thick pads buy the M3x16s 4.0 of thread (review fix).
+    # The LOWER pair (6.5 long) lands on the COLUMN rear face (y=-40): below the column
+    # top the plate region is embedded in column material.
+    for bx, bz, bl in ((-14.0, wz + 4.1, 8.0), (14.0, wz + 4.1, 8.0),
+                       (-13.0, 120.0, 6.5), (13.0, 120.0, 6.5)):
+        b = cyl(3.5, bl, axis="y")
+        b.apply_translation((bx, -46.55 + bl / 2, bz))
+        plate = uni([plate, b])
+    bore = cyl(14.55, 8.0, axis="y")                     # can pass Ø29.1 (can Ø28.25)
+    bore.apply_translation((0, cy, can_z))
+    plate = sub(plate, bore)
+    notch = box(17.6, 8.0, 13.0)                         # wiring-box pass under the bore
+    notch.apply_translation((0, cy, can_z - 14.0))
+    plate = sub(plate, notch)
+    for bx, bz in ((-14.0, wz + 4.1), (14.0, wz + 4.1), (-13.0, 120.0), (13.0, 120.0)):
+        mc = cyl(1.75, 18.0, axis="y")                   # M3 clearance, carrier + boss
+        mc.apply_translation((bx, -43.0, bz))
+        plate = sub(plate, mc)
+    for dxe in (-P["motor_ear_cc"] / 2, P["motor_ear_cc"] / 2):
+        eh = cyl(2.1, 8.0, axis="y")                     # M4 ear holes (bench nuts)
+        eh.apply_translation((dxe, cy, can_z))
+        plate = sub(plate, eh)
+    _color(plate, "neck")
+    plate.metadata["name"] = "tilt_carrier"
+    return plate
+
+

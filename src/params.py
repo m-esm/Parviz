@@ -1,0 +1,515 @@
+"""Shared design parameters: PARAMS dict `P`, angle constants, EXPORT flag.
+
+Split out of the original monolithic build.py (2026-07-10); see
+build.py for the assembly entry point and the overall design notes.
+"""
+import os
+import numpy as np
+
+
+TAU = 2 * np.pi           # full turn (was wrongly set to pi; fixed in the screen-orientation pass)
+DEG = np.pi / 180.0
+
+# ---------------------------------------------------------------------------
+# PARAMETERS (mm). Every value carries the reason it is what it is.
+# ---------------------------------------------------------------------------
+P = {
+    # --- Real 7" touchscreen module, MEASURED from the reference STL bbox ---
+    "screen_w": 193.0,      # width  (X)
+    "screen_d": 25.0,       # depth  (Y) incl. driver board bump on the back
+    "screen_h": 110.8,      # height (Z)
+    "screen_ref_stl": "reference/rpi-7in-touchscreen-model/files/"
+                      "Raspberry_Pi_Touch_Screen_Assembly_-_Pins_Out_v8.stl",
+    # Combined display + Pi (Pi on the display's own 58x49 back standoffs, GPIO pins out).
+    # bbox 192.96 x 38.01 x 110.76: same W/H/glass as the old v12 display-only model, 13.02
+    # deeper on the BACK. load_screen() anchors the GLASS FACE at this local Y (post-flip),
+    # not the bbox centroid (which the deeper back would drag ~6.5 mm).
+    "screen_glass_y": 12.494,
+    "screen_flip": True,    # glass faced -Y (into the head); 180 about X faces it +Y (front)
+
+    # --- Head shell: SIMPLE rounded box (a clean tablet-head; screen upright on the front) ---
+    "head_wall": 4.0,
+    "head_w": 205.0,        # shell outer width (screen 193 + walls + margin)
+    "face_angle": 0.0,      # upright front face (the neck's tilt gives the look-up/down)
+    "body_front_y": 31.0,   # front face plane (glass sits flush here)
+    "body_back_y": -70.0,   # back face plane (task #27 deep head: was -31, which left the whole
+                            # tilt stepper hanging exposed behind the head. The 28BYJ can rear
+                            # sits at y=-64.3 (face_y -34.5 - 2 - 27.8); -70 puts it inside the
+                            # envelope with wall 4 + 1.7 static clearance to the inner face -66)
+    "body_z_bot": 88.0,     # shell bottom height above desk (113-25: design-ref head drop --
+                            # the whole head+tilt stack sits 25 lower over the chassis)
+    "body_z_top": 226.0,    # shell top height (was 251; -25 head drop. 243+8 history: the CM3 bay needs ~14 mm between
+                            # the screen window top (229.9) and the ceiling; 243 gave only 9.1 --
+                            # the board punched the top wall and the barrel crossed the panel)
+    "corner_r": 16.0,       # rounded vertical edges (friendly, clean)
+    "bezel_overlap": 3.5,   # front lip = LOCATOR now (glass is held by the 4 factory screws below)
+    "screen_clear": 0.5,    # clearance around the module in its pocket
+    "bezel_back": 4.0,      # split plane sits this far behind the screen back
+
+    # --- Screen factory mount: 4x M3 into the display's OWN outer case-mount holes ---
+    # Measured from Raspberry_Pi_Touch_Screen_Assembly_v12.stl (outer 126.2 x 65.65 pattern),
+    # confirmed vs the reference case STL + RPi mechanical drawing. Screen-LOCAL frame (post-flip);
+    # apply screen_pose() like _bezel_boss_points. Face plane local Y=+6.53 -> world Y=25.03.
+    "scr_mount_pts": [
+        (61.61, 6.53, -31.85), (61.61, 6.53, 33.80),
+        (-64.59, 6.53, -31.85), (-64.59, 6.53, 33.80),
+    ],
+    "scr_boss_r": 4.5,      # screw-boss OD 9
+    "scr_m3_clear_r": 1.75, # M3 clearance (screw threads into the display's metal back-pan)
+    # The display carries a RAISED boss around each factory hole (annulus r 1.5..8.1, spanning
+    # y 22.534..25.034 in the mesh -- measured, all 4 mounts identical). The rear standoff's
+    # bearing face lands on the boss REAR plane (hole plane - scr_boss_lip), not the hole
+    # plane itself; running to the hole plane buried the standoffs 2.5 mm inside the bosses
+    # and held the screen 2.5 mm proud (stage-4 defect D1).
+    "scr_boss_lip": 2.5,    # display boss height behind its hole plane (measured)
+    "scr_seat_clear": 0.05, # bearing-face clearance (the M3 pulls it tight on assembly)
+
+    # --- Tilt joint: REAR CLEVIS entering the shell underside; axle near the CoM ---
+    #     Self-locking WORM drive (single-start): head holds tilt with the motor de-energized
+    #     (no idle current/heat). Pre-balance the head on the axle so the worm barely works.
+    "tilt_axis_z": 153.0,   # tilt axis height above the desk (178-25 head drop; near CoM)
+    # Stage 2R: axle moved BACK 18 mm (y 0 -> -18). The Pi rides the display back (stack rear
+    # face y=-7, z 151..207.5), so an axle at y=0 ran straight through the board plane. The
+    # whole tilt drivetrain (cheeks, bearings, wheel, worm, clamp tubes) keys off this pair.
+    "tilt_axis_y": -18.0,   # tilt axis Y (behind the screen+Pi stack; was 0 pre-2R)
+    "tilt_cantilever": 18.5,# screen center Y in world (absolute; decoupled from the axle in 2R)
+    "screen_cz": 153.0,     # screen center height (178-25 head drop; decoupled from the axle)
+    "pivot_boss_r": 10.0,   # head-side pivot boss radius (internal side walls)
+    "clevis_half": 22.0,    # neck cheek half-span (cheeks at +-22 in X)
+    "cheek_t": 8.0,         # clevis cheek thickness (X)
+    # Ø5 tilt axle on 695-2RS bearings (5x13x4, owned x30). SOLID rod (review 2026-07-08:
+    # the old hollow Ø2.5 weight relief left a 0.25 wall under the D-key flat; the cable
+    # never used the bore anyway -- it drapes through the bottom-rear slot).
+    "axle_d": 5.0,          # tilt axle outer Ø (rides 695 bores)
+    "brg_od": 13.0,         # 695-2RS outer Ø (press into the head-side hubs)
+    "brg_w": 4.0,
+    # single-start worm + worm wheel (module 1.25). Wheel keyed to the axle; worm on the motor.
+    "worm_module": 1.25,
+    "worm_wheel_teeth": 12, # ratio 12:1 (still self-locks; 24T tilted 60 deg in 16 s -- too slow)
+    "worm_wheel_w": 7.0,    # face width
+    "worm_wheel_x": 0.0,    # wheel centered on the head midplane (spacer tubes reach both bearings)
+    "worm_od": 10.0,        # placeholder-worm visual OD (real generated worm OD is 10.55)
+    "worm_pitch_r": 4.4,    # REAL worm pitch radius (docs/WORM.md): module 1.25 + the Ø7
+                            # solid core force pitch r 4.4 -> CD 11.9 (the old worm_od*0.4
+                            # guess gave 11.5, which left the wheel ~no addendum room)
+    # 14 (was 16): threads (body + 1 mm rib overhang each end) span 16 mm = 4.07 axial
+    # pitches (>= 4 teeth-equivalent on the 12T wheel) and END at y=-16, so a bare Ø5 tail
+    # stub emerges BEFORE the cradle groove band (y -15.5..-13). The old 16 ran full-radius
+    # threads to y=-13.5, through the cradle (stage-4 defect D2).
+    "worm_len": 14.0,
+
+    # --- Neck column (carries the clevis, rides the pan platform) ---
+    "neck_w": 48.0,         # column width (X) -- squarer + rounded reads as a neck, not a plank
+    "neck_d": 46.0,         # column depth (Y)
+    "neck_round": 10.0,     # corner rounding radius
+    "neck_top_z": 125.0,    # where the column stops and the clevis cheeks rise (150-25 drop)
+    # Stage 5: column moved inboard (-38 -> -17) so the whole base footprint rides the
+    # SPINNING platform, not the fixed deck: footprint max radius = sqrt(14^2+(|ny|+13)^2)+10
+    # (rounded-rect corner arcs) = 43.11 <= 44.0, inside the platform's solid top (r45 within
+    # the clip rebate). The tilt axle (y=-18, z=178) and the head did NOT move; the cheeks
+    # re-anchor via the cheek-root block and the column front gets a deep -30 deg chin notch.
+    "neck_y": -17.0,        # column center Y (ON the pan platform)
+    # cable channel center: pushed BEHIND the column center so the deepened front notch
+    # (rear face y=-19.5) never opens the channel; platform slot + deck pass aim at this
+    "neck_chan_y": -26.0,
+
+    # --- Pan joint + platform + captured-BB lazy-Susan race (printed) ---
+    "pan_plate_d": 96.0,    # rotating platform diameter (rides the lazy-Susan race)
+    # plate thickness DERIVED for a flush top: seat depth 15 = plate 7.6 + ball air gap 2.4
+    # + ring 5 (see _pan_stack). Flush-top picked over keeping t=8 (which stood 0.4 proud).
+    "pan_plate_t": 7.6,
+    "pan_race_circle_d": 80.0,  # BB pitch circle (wide stance resists the top-heavy tilt)
+    "pan_race_ball_d": 6.0,     # 6 mm airsoft BBs (owned/cheap; quiet, greased)
+    "pan_race_w": 12.0,     # race ring radial width
+    "pan_race_n": 18,       # balls on the circle
+    "pan_race_ring_t": 5.0, # lower race ring thickness (sits on the chassis seat floor)
+    "pan_groove_engage": 1.8,   # each groove wraps 1.8 mm of ball -> 2.4 mm plate<->ring air gap
+    "pan_groove_clear": 0.2,    # groove minor r = ball_r + 0.2 (0.4 rattled; 0 binds)
+    # cable exit through the deck: INSIDE the race ID (r<34) and clear of the (0,-26) neck
+    # bolt + the pan-axis bore. The platform slot jogs the bundle here from the neck channel.
+    "cable_exit": (12.0, -24.0),
+
+    # --- Tank-tread chassis: central body + two side track pods (mobile base) ---
+    "base_h": 66.0,         # body top = pan-mount plane (52->66: design-ref stance; head:base
+                            # height split. Head z_bot 88 leaves a 22 gap; swept head corner
+                            # min z~72 -> 6 mm over the platform, probe-verified)
+    # solid top DECK (the old cavity reached base_h -> the pan seat cut was a no-op and the
+    # race/balls/platform floated). 20 leaves a 5 mm floor under the race seat (z 32..37);
+    # everything in the cavity tops out below 32 (motor ears 31.25, wiring box 29.2).
+    "deck_t": 20.0,
+    "chassis_w": 140.0,     # body width between the tracks (120->140: track outer faces land
+                            # at +-102 ~= head half-width 102.5, killing the head overhang;
+                            # NOT 148 -- the tucked claws at x 106..119 need 4 mm to the pods)
+    "chassis_l": 156.0,     # body length front-back (Y)
+    "chassis_clear": 7.0,   # ground clearance under the body
+    "track_gap": 4.0,       # body side <-> track inner face
+    # Modular positive-drive track (advancedvb 'Tank track' 3062624 geometry): printed link pads
+    # on filament-rod hinge pins, a 12-tooth sprocket meshing the pins -> no slip on a desk.
+    "track_wheel_r": 19.32,  # pin-circle radius = exact 12T x 10.0-pitch polygon (audit corr. 1)
+    "track_wheelbase": 116.325,  # sprocket-axis <-> idler-axis (Y). SOLVED value: with the
+                            # raised loop (track_raise/track_ground_hy below) the perimeter
+                            # closes at exactly 36 x 10.0 -- _track_link_poses asserts it
+    # RAISED TANK LOOP (2026-07-10, user's RC-tank chassis refs): sprocket + idler axles
+    # sit track_raise ABOVE the old stadium centreline, so the track climbs ~33 deg ramps
+    # at both ends and wraps ~147 deg -- the classic hull profile. Raise is capped at 9:
+    # the sprocket rides the TT shaft, and at zs 34.32 the motor's upper M3 mount hole
+    # (zs+8.75, r1.6 -> 44.7) and the gearbox top (45.5) still stay under the z46 deck
+    # seam, so the deck stays screw-free over the motors.
+    "track_raise": 9.0,     # axle z = _track_zc() + raise (34.32); loop top pin z 53.64
+    "track_ground_hy": 50.0,  # flat ground-run half-span (ramp tangent leaves here)
+    "track_width": 44.8,    # link body width (X): 2x design-ref chunk, then -20% per user
+                            # (28 -> 56 -> 44.8); sprocket engages only the central ~8 mm channel
+    "track_pitch": 10.0,    # link pin-to-pin (our re-model; the 3062624 reference pitch is 9.65)
+    "track_links": 36,      # 36 x 10 = 360 mm loop
+    "track_pad_th": 4.5,    # pin axis -> pad OUTER face (link overall 8: knuckle r3.5 inward)
+    "track_grouser_h": 1.5, # tread lug (print grousers in TPU or add pads)
+    "track_pin_bore_d": 2.0,    # link hinge bore for Ø1.75 filament pins (ref uses ~2.0 drafted)
+    "sprocket_teeth": 12,
+    "sprocket_outer_d": 37.6,   # tip r 18.8 = pin circle 19.32 - 0.5 clearance (OD 42 jammed links)
+    "idler_bore_d": 15.95,  # F688ZZ (8x16x5, flange 18) press seat; flange recess 18.5 x 1.0
+    "roadwheel_d": 20.0,    # dished road wheels riding the bottom-run knuckle crowns
+    "roadwheel_count": 4,   # dense row like the ref; centers = (i - (n-1)/2) * pitch
+    "roadwheel_pitch": 21.0,  # 1 mm gap between Ø20 wheels; outermost at y +-31.5 keeps
+                            # 0.9+ mm lateral gap to the raised sprocket/idler discs
+    "idler_slot": 4.0,      # idler Y-slide for tensioning (M3 set-screw lock)
+    # TT gearmotor drive (own 1x; BUY 1 more -> 2 for skid steer; MX1588 drives both).
+    # Measured dims from reference/tt-motor-1079893/NOTES.md (STEP B-rep). Shaft is
+    # PERPENDICULAR to the 64.5 body, 11.5 behind the gearbox front face, mid-height.
+    "tt_gearbox": (36.80, 22.40, 18.64),    # rect block (len, w, h); +Ø22.4 collar 11.3 long
+    "tt_motor_d": 20.0,     # can Ø20.00, 14.99 across flats, 13.5 exposed
+    "tt_shaft_d": 5.4,      # double-D output shaft, 3.70 flats, 8.8 proud, flat len 8.0
+
+    # --- Chassis mechanical detailing: body<->pod join, pan-motor seat, ballast bay ---
+    # Join stations (2x per side): each carries one M3 + one Ø4 dowel. y=+-24 = centers of
+    # the 11-wide wall windows between the +-16 / +-32 vent slots, clear of the TT wall
+    # zone (y -40..-75) and the idler tension arm (y 52..68). Screws drive from INSIDE the
+    # chassis cavity through the wall into captive nuts in the pod rail: the 4 mm pod gap
+    # holds a nut but no screwdriver, and loose nuts can't be held in a 4 mm slot -- so the
+    # nut is trapped pod-side and the head sits on the cavity wall (same convention as the
+    # TT gearbox screws, "nut in the gap").
+    "pod_join_y": (-24.0, 24.0),
+    "pod_join_screw_z": 34.0,   # M3 axis: mid of the loop's free band, max spread above dowel
+    "pod_join_dowel_z": 20.0,   # Ø4 dowel axis: 14 below the screw -> shear + pitch location
+    "pod_join_dowel_d": 4.0,    # Ø4x12 pin: +0.1 slip in the wall, -0.15 press in the rail
+    "pod_rail_x1": 78.0,        # rail outer face: 4 fills the pod gap (links never enter
+                                # x 70..74) + 4 into the loop interior's link-free mid band
+    "pod_rail_z": (14.0, 40.0), # rail z band: 4.5 above the bottom-run knuckle tops (9.5),
+                                # 1.14 below the top-run knuckle sweep (41.14)
+    "pod_rail_block_w": 9.0,    # per-station block width (Y): 1.0 clear of each vent slot
+    # Chassis print split: the old one-piece tub+deck trapped deep pockets, side-wall holes,
+    # pan-seat features, and internal posts in one support-heavy print. Split at z=46,
+    # right under the solid deck, so the lower tub prints open-top and the pan deck prints
+    # separately; 4x M3 from the top deck into lower thread-form pilots clamp/register it.
+    "chassis_split_z": 46.0,
+    "chassis_split_screws": ((-64.0, 60.0), (64.0, 60.0), (-34.0, -71.0), (34.0, -71.0)),
+                            # rear pair moved off the side walls 2026-07-10: the raised
+                            # TT gearboxes (track_raise, top z 45.5) now own that zone;
+                            # bosses ride the rear wall instead (sensor hole z16, trim
+                            # pins outer-face only, motor tabs x +-55.6 -- all clear)
+    "chassis_split_boss_r": 4.0,
+    # Pan-motor seat detailing (re-derived for base_h 66: can bottom 26.45, ear-bar
+    # underside = pedestal top = 44.25, can top 45.25, gear face 54.25): the 7-wide x
+    # 1-thick ear bar clamps on two DEFINED pads instead of the whole 48x48 top, and the
+    # can's top band registers in a collar ring right under the Ø27.25 gear stack.
+    "ped_pad_wxy": (9.0, 10.0),   # ear seat pads (X x Y) centered on the +-17.5 ear holes
+    "ped_relief": 0.8,            # pedestal top dropped 0.8 outside pads + collar footing
+    "ped_collar_od": 32.0,        # collar OD; ID = the Ø29 can bore (can Ø28.25 registers)
+    "ped_collar_h": 1.5,          # collar top 45.75: wraps the can's last 1.0 + gear root
+    # 2nd ULN2003 standoff set (tilt driver's base-side mount option; it can also take the
+    # MX1588 track driver). The task-suggested mirror (-38,+-20) fails: board 35x32 at
+    # (-38,+-20) spans x -55.5..-20.5 and overlaps the 48x48 pedestal (x -31.9..16.1,
+    # y -24..24). (-38, 45) clears everything: board y 29..61 > pedestal 24, < US board
+    # 71.4; x -55.5..-20.5 clear of ULN#1 (x >= 20.5) and both TT cans (|x| >= 44.4 only
+    # at y < -10).
+    "uln2_c": (-38.0, 45.0),
+    # Ballast bay: rear cavity floor (head+Pi CoM is forward-high -> mass low + rearward).
+    # 3 ribs across X make three ~9.5-wide pockets against the rear wall (inner face y=-73)
+    # for steel bar / coins / shot; the front rib at -40 fences the mass. Ribs end at
+    # |x|=40 (TT gearbox inner faces at |x| 46.26 -> 6.3 clear) and skip a 20-wide center
+    # corridor (the USB-C plug body enters the cavity at x +-7, z 15..23, over the floor).
+    "blst_rib_y": (-63.0, -51.5, -40.0),
+    "blst_rib_w": 2.0, "blst_rib_h": 4.0,   # 2 wide x 4 tall: locates the bottom layer
+    "blst_rib_xmax": 40.0,                  # rib outer end (TT clearance, see above)
+    "blst_usb_hw": 10.0,                    # rib-free USB corridor half-width
+
+    # --- BELLY ACCESS PLATE (task #26): bolt-on floor plate under the cavity ---
+    # Opening 100x110 keeps a >=12 rim inside the 130x146 cavity footprint EXCEPT a
+    # retained floor STRAP (x -34..25, y -26..51): the pan-motor pedestal (x -31.9..
+    # 16.1, y +-24) and the inboard ULN posts ((20.5, 36) on ULN#1, (-20.5, 29) on
+    # ULN#2) root on the floor -- a clean 100x110 cut would set all three afloat. The
+    # strap splits the opening into a full-width rear bay window (ballast, TT rears,
+    # USB) + two front channels (ULN wiring). Plate = 1.45 flange in a 1.5 rebate
+    # (belly face stays flush at z=7: ground clearance is only 7) + a 3-thick plug
+    # filling the opening; the two inboard ballast ribs move ONTO the plug.
+    "belly_open_wl": (100.0, 110.0),        # opening W(X) x L(Y), corners r8
+    "belly_open_c": (0.0, -6.0),            # centre (rear-biased toward the ballast bay)
+    "belly_keep": (-34.0, -26.0, 25.0, 51.0),   # retained strap (x0, y0, x1, y1)
+    "belly_rebate_grow": 8.0,               # rebate ledge past the opening, per side
+    "belly_lip_t": 1.5,                     # rebate depth (up from the belly face z=7)
+    "belly_fit": 0.15,                      # plate<->rebate/opening clearance per side
+    # 6x M3 countersunk from below (heads flush at z=7) into Ø7 self-tap bosses
+    # standing on the interior rim/strap (Ø2.5 pilots). Stations dodge the TT gearboxes
+    # (|x|>=46.26 at y<-40), the ballast ribs (|x|<=40) and both ULN board envelopes.
+    "belly_screws": ((-42.0, -65.5), (42.0, -65.5), (-54.0, -5.0), (54.0, -5.0),
+                     (-30.0, 53.0), (30.0, 53.0)),
+    "belly_boss_r": 3.5, "belly_boss_h": 6.0,
+
+    # --- 28BYJ-48 5V geared stepper (owned x6, + ULN2003 x9). Dims from the beckdac SCARA
+    #     SCAD model, cross-checked vs the Mouser datasheet (real, not eyeballed). ---
+    "motor_can_d": 28.25,   # can (body) diameter
+    "motor_body_h": 18.8,   # can height
+    "motor_gear_h": 9.0,    # gearbox stack proud of the can face (approx)
+    "motor_shaft_off": 7.875,   # output shaft offset from the can axis (the 28BYJ-48 quirk)
+    "motor_shaft_d": 4.93,  # round part of the D-shaft (nominal 5)
+    "motor_shaft_flat": 3.0,    # across-flats of the double-D (torque key)
+    "motor_shaft_len": 9.75,    # shaft protrusion above the can face
+    "motor_flat_len": 6.0,  # the flats run the top 6 mm of the shaft
+    "motor_boss_d": 9.1,    # raised collar around the shaft base
+    "motor_ear_cc": 35.0,   # mounting-ear hole spacing (centered on the can axis)
+    "motor_ear_hole_d": 4.2,    # M4 clearance in the ears
+    "motor_wbox_w": 14.6,   # blue wiring box (protrudes past the can on one side)
+    "motor_wbox_h": 16.7,
+
+    # --- Camera Module 3 (official drawing RP-008153-DS; see reference/rpi-camera-module-3/) ---
+    "cam_board_w": 25.0,    # X  board width
+    "cam_board_h": 23.862,  # Z  board height
+    "cam_hole_dx": 21.0,    # mount holes at X = +-10.5
+    "cam_hole_z_top": 2.565,   # top hole row Z (from board center)
+    "cam_hole_z_bot": -9.935,  # bottom hole row Z
+    "cam_lens_dz": 2.47,    # optical axis above board center (X = 0; official CM3 +2.469)
+    "cam_lens_z": 212.0,    # lens axis height (237-25 head drop; whole camera bay shifts with
+                            # the shell+screen, so the relative clearances below hold): barrel bottom
+                            # 234.1 clears the display module top (233.4) and the pocket (233.9);
+                            # csk bottom 233.0 keeps a 3.1 ligament over the window top (229.9)
+    # CM3 front stack: 10.8 sq AF housing (front 4.0 above board front), Ø5.75 barrel to 6.98;
+    # 1.12 board; keep 3.2 clear behind for the flex connector (overall depth 11.3).
+    "cam_pcb_t": 1.12,
+    "cam_back_d": 3.2,      # connector envelope behind the board back face
+    "cam_house_wh": 10.8,   # AF housing footprint (square, centered on the lens axis)
+    "cam_house_d": 4.0,     # housing front above board front
+    "cam_lens_tip": 6.98,   # lens tip above board front
+    "cam_barrel_d": 5.75,   # lens barrel outer Ø
+    # aperture through the 4 mm forehead wall (pupil Ø2.63 ~3 mm behind the outer face,
+    # 75 deg diagonal FoV): Ø6.3 through-bore + 45 deg/side countersink to Ø8.0 at the face
+    "cam_bore_d": 6.3,
+    "cam_csk_d": 8.0,
+    "cam_boss_od": 4.6,     # M2 self-tap boss OD
+    "cam_boss_len": 1.0,    # short bosses off the pier's back face; TIPS = board front plane
+    # Ceiling-hung camera PIER: the front wall below the pocket top (z 233.9) is all screen
+    # pocket/window (nothing to root bosses on) and the display panel band starts at y=25.03
+    # (measured from the reference mesh in the camera zone), so long wall-rooted bosses punch
+    # the panel. The pier drops from the ceiling BEHIND the panel's top strip and carries the
+    # 4 M2 bosses; the board hangs 4.5 mm behind the panel, the barrel passes over its top edge.
+    "cam_pier_w": 32.0,     # pier width (X); display panel is the limit in Y, not X
+    "cam_pier_t": 3.0,      # pier plate thickness (Y)
+    "cam_pier_y1": 24.5,    # pier FRONT face: 0.53 behind the measured panel front (25.03)
+    "cam_boss_pilot_r": 0.85,  # M2 self-tap pilot Ø1.7
+    "cam_m2_clear_r": 1.15, # M2 clearance (cover)
+    "cam_ribbon_w": 17.0, "cam_ribbon_t": 2.5,   # CSI ribbon exit slot (pod bottom -> Pi bay)
+    "cam_cover_t": 2.0,     # rear board-retaining cover
+    # (pi_* placement params removed: the Pi 5 now rides the display's OWN 58x49 back
+    # standoffs and comes in as part of the combined "Pins Out" screen reference mesh.
+    # NOTE the measured consequence: the combined stack spans world y -7.0..+5.5 over
+    # x -37.7..48.1, z 151..207.5, which OVERLAPS the tilt mechanism at the axis plane
+    # (axle y 0 z 178, clamp tubes x 27..99, centered worm/wheel, neck cheek overshoots).
+    # See docs/FIXES.md Stage 3: unresolvable in head geometry alone.)
+
+    # --- Design-ref styling (reference/design/*.jpg): orange side rails on the head ---
+    "rail_t": 5.0,          # rail stands this proud of the head side wall
+    "rail_d": 26.0,         # rail depth (Y); stays on the wall's FLAT band (|y|<15, corner r16)
+    "rail_h": 90.0,         # rail height (Z)
+    "rail_cz": 160.0,       # rail center height (brackets the screen band, z 115..205)
+    # LED strip in the top bezel, LEFT of the camera (design-ref front.jpg). Recess sized
+    # for a short WS2812 stick segment; sits on FOREHEAD wall material only: the screen
+    # pocket opening tops out at z 233.9, so the slot must stay above it.
+    "led_slot_w": 42.0,     # slot width (X)
+    "led_slot_h": 5.0,      # slot height (Z)
+    "led_slot_d": 1.5,      # recess depth into the 4 mm face wall
+    # image-LEFT of the camera in the reference front view = robot +X (front view looks -Y)
+    "led_cx": 45.0,         # slot center X (clear of the camera pier |x|<16)
+    "led_cz": 214.0,        # slot center Z (lens 212; slot z 211.5..216.5 > pocket top 208.9 ok)
+    # Knurled antenna stub on the head top face (cosmetic; Pi WiFi is internal).
+    # Image-RIGHT in the reference front view = robot -X.
+    "ant_x": -62.0, "ant_y": -8.0,  # on head_back's top (split plane is at y~2)
+    "ant_d": 13.0, "ant_h": 26.0,   # fat, short stub like the reference
+    "ant_collar_d": 16.0, "ant_collar_h": 3.0,
+    # Orange picture-frame around the head-back service area (design-ref back.jpg). The
+    # louvres + motor-bay opening play the reference's inner hatch. Bottom band notched
+    # over the deep-head motor bay (back wall open x +-33 up to z=168 for the tilt sweep;
+    # the frame must not hover in that envelope).
+    "hatch_frame_w": 160.0, "hatch_frame_h": 105.0,  # outer X x Z
+    "hatch_frame_band": 13.0,   # ring width
+    "hatch_frame_t": 3.0,       # proud of the back face
+    "hatch_frame_cz": 151.0,    # outer z 98.5..203.5; inner 111.5..190.5 (louvres
+                                # 171..187 land inside the opening)
+    # (rear_pack + tilt_shroud REMOVED 2026-07-10: the rear_pack slabs and the detached
+    # shroud were superseded by the door's extruded pod, which closes the whole opening
+    # and hides the tilt motor inside its cavity. See the door pod params below.)
+
+    # --- HEAD REAR DOOR (task #26): the wall inside trim_hatch_frame is removable ---
+    # U-SHAPED (the bottom-centre stays OPEN: it is the tilt-sweep motor bay, x +-33 /
+    # z 78..168 -- the pan-frame drivetrain crosses the wall plane there at tilt
+    # extremes, so a head-riding door may not fill it). Outline clears the screen-
+    # standoff roots (bosses reach |x| 57.11, gusset webs |x| 59.6..66.6) and keeps
+    # the seam inside the orange frame opening (x +-67, z 111.5..190.5).
+    "door_hx": 56.5,            # door half-width (0.61 to the Ø9 standoff boss edge)
+    "door_z": (113.5, 190.2),   # outline z span (2 over the frame's inner 111.5;
+                                # 0.3 under its inner 190.5 -> seam reads in-frame)
+    "door_notch_hx": 35.0,      # bay notch half-width (2 past the x +-33 bay edge)
+    "door_notch_ztop": 170.0,   # bay notch top (2 past the z=168 bay lip)
+    "door_lip": 2.0,            # fixed-wall support lip all around (through-void inset)
+    "door_fit": 0.15,           # perimeter fit clearance
+    # Retention (2026-07-10, user: "easy to open and close" -- replaced the 2x M3 csk +
+    # captive nuts): 2x 3mm top HOOK tabs (the pivot) + per-leg SNAP TONGUES at the
+    # bottom. Each tongue is the leg's own outer strip, freed by one vertical slit
+    # (root at the top, the door's bottom edge is the free end), with an outboard barb
+    # at plug level that clicks behind the fixed wall band beside the void. Close =
+    # hook the top, swing in, click. Open = firm pull on the door's bottom edge (the
+    # 3.4-proud face panel is the finger grip): the barb's back ramp cams the tongue
+    # inboard -- no tools. NOT magnets (they walk and chatter under stepper vibration);
+    # the snap preloads the flange into its rebate like the screws did.
+    "door_hook_x": 47.0, "door_hook_w": 14.0, "door_hook_lip": 3.0,
+    "door_snap_w": 2.75,        # tongue strip width in X at plug level
+    "door_snap_slot_w": 1.5,    # freeing slit width (prints as a clean gap)
+    "door_snap_root_z": 146.0,  # slit top = tongue root (L~29 to the barb -> ~1% strain
+                                # at 1.2 engagement, in-plane of the face-down layers)
+    "door_snap_barb": 1.2,      # barb proudness past the void wall (engagement depth)
+    "door_snap_barb_z": (116.0, 119.5),  # barb z band (just above the plug bottom edge)
+    # EXTRUDED REAR POD (2026-07-10, replaced the raised panel + latch/hinge cosmetics +
+    # through-relief): the stepped "backpack" bump from the design ref, hollow so the
+    # tilt drivetrain's swept intrusion lives INSIDE it (no relief hole). See the pod
+    # block in build_head_parts() for the sweep numbers.
+    "door_face_r": 8.0,      # rounded corners on the pod root-slab footprint
+    "pod_top_z": 169.0,      # flat pod top -- below the louvre band (~171..187) so the
+                             # vents stay open above the bump, like the reference
+    "pod_tiers": ((62.0, -85.0), (51.0, -95.0), (38.0, -105.0)),  # (half-width, rear y)
+                             # 15/25/35 proud of the wall (2026-07-10, user: "much more
+                             # depth horizontally" -- was 6/10/15)
+    "pod_cavity": (17.0, -98.0, 130.0, 162.0),   # hx, floor y, z0, z1 -- wraps the
+                             # probe-measured drivetrain sweep (y to -78.1) with margin
+    "pod_notch": (27.0, 134.0, -98.0),  # center-bottom corridor (half-width, top z,
+                             # floor y): at the +-33.8 stall the neck cheeks rake to
+                             # x +-24 / y -86.9 / z <=130.7 in the DOOR frame (probe-
+                             # measured). Now a POCKET, not a through-hole: the deep
+                             # pod's rear wall (7 solid) closes it from behind
+    # Chassis FRONT fascia (design-ref front.jpg). Front wall: y=78 face, x +-60, z 7..52.
+    "grille_cz": 46.0,      # orange surround outer 60x20 -> z 36..56; inner 52x12
+    "grille_w": 60.0, "grille_h": 20.0, "grille_band": 4.0, "grille_t": 2.5,
+    "us_dx": 13.0,          # ultrasonic barrel centers at x=+-13 (HC-SR04 transducer pitch ~26)
+    "us_cz": 26.0,          # barrel Ø16 -> z 18..34 (2 under the surround; board clears the floor)
+    "us_d": 16.0,
+    "lamp_x": 54.0, "lamp_cz": 26.0,    # amber corner lamps 12x7, proud 2 (hug the 140-wide corners)
+    "fled_cz": 9.5,         # white dot strip 36x2.5 at the bottom lip, proud 1
+    # Chassis REAR styling (design-ref back.jpg): orange frame panel (the wall shows
+    # through the opening as the 'hatch') above the USB-C slot (x +-7, z 15..23), and a
+    # silver cylinder pod low-right (speaker/buzzer placeholder).
+    "rear_panel_cz": 35.0,  # panel 72x22 -> z 24..46; opening 44x14 -> z 28..42
+    "rear_cyl_x": 38.0,     # image-RIGHT in the reference back view (verified in-render)
+    "rear_cyl_cz": 16.0, "rear_cyl_d": 14.0,
+    # Raised camera POD on the forehead (design ref: the camera reads as an eye). Pure
+    # cosmetic shell over the recessed CM3: the bore flares 45 deg/side from the existing
+    # countersink, wider than the 75 deg-diagonal FoV cone (half ~37.5 deg), so no vignette.
+    "cam_pod_w": 24.0, "cam_pod_h": 20.0,   # pod footprint on the face (X x Z); h 20 (was 18):
+                                            # the flare mouth needs a real lip top/bottom -- 18
+                                            # left a 0.05 knife edge at the face (PRINTABILITY 1)
+    "cam_pod_t": 5.0,                       # proud of the face
+    # Gripper arms (design ref, PLACEHOLDER pose + shapes): shoulder pivots on the side
+    # rails, tucked pose (claws down-forward beside the chassis front). Actuation, joint
+    # hardware, and the head-vs-platform mount decision are a later mechanism pass.
+    "arm_x": 127.0,         # arm plane center: outboard of the pods (outer face 118.8); a
+                            # standoff tube bridges the rail face (107.5) to the shoulder
+
+    # --- Cosmetic-part FIXINGS (task #15): every styling part gets a real joint ---
+    # Pure cosmetics: blind Ø3 locating pins into Ø3.2 x 2.5 wall sockets + glue (2.5 deep
+    # in a 4-wall leaves 1.5 skin; nothing pierces a visible face or the screen / display /
+    # camera voids). Pin protrudes 2.3 into the 2.5 socket (0.2 bottoming + glue room).
+    "fix_pin_r": 1.5, "fix_socket_r": 1.6, "fix_socket_deep": 2.5, "fix_pin_len": 2.3,
+    "fix_pin2_r": 1.0, "fix_socket2_r": 1.1,   # Ø2 pins (camera_pod, sensor_rear cap)
+    # trim_rail sockets, (y, z) per side wall (mirrored in x). Keep-outs: the shoulder
+    # hardware below (z 125..136), the bezel<->back SIDE POSTS at (x +-97.5, z 119.8 and
+    # 198.3, r 4.3 + their y-axis M3 bores) -- unioned in build_head_parts AFTER the
+    # shell sockets are cut, so a socket in their z bands gets silently REFILLED (a pin
+    # at z 202 shipped 1.17 mm^3 into the upper post before this was caught) -- the
+    # pivot boss / clamp tubes (y -18, z 153; the z-146 sockets shave a <1 mm sliver off
+    # the boss rim at x>100, harmless), and the right wall's Pi I/O slot (y -8.5..6.5,
+    # z 166.5..183.5; the z-188 socket sits 1.9 above it).
+    "rail_pin_pts": ((-8.0, 146.0), (8.0, 146.0), (0.0, 188.0)),
+    # ARM SHOULDER INTERFACE (docs/ARM-MECH.md; arms are ARMS=1-gated but the head prints
+    # the interface NOW so option B/C arms bolt on without a head_back reprint): per side
+    # wall, 2x M3 captive-nut pockets + a Ø6.2 servo-lead pass, all under the rail.
+    # HORIZONTAL pair (y +-8) at z 132, not ARM-MECH's vertical pair: any vertical pair
+    # straddling z 130 runs into the bezel<->back side post at (x 97.5, z 119.8) whose
+    # r4.3 boss + y-axis M3 bore own the wall's z 115.5..124.1 band. The pockets are cut 2.8
+    # deep from the wall's INTERIOR face (x 98.5; probe-verified -- the screen-pocket box
+    # only spans +-97, narrower than the +-98.5 hollow, so the side wall stays 4.0 thick),
+    # leaving a 1.2 outer skin that hides under the screwed-and-glued rail (compression
+    # only). The nut sits flush INSIDE the wall: no inboard boss (ARM-MECH's pad idea is
+    # forbidden -- the display's widest edge |x| 96.48 needs its 2.0 side clearance to
+    # slide in). Nuts drop in from the open pocket mouths BEFORE the screen module
+    # installs; one lands in the bezel wall (y +8), one in head_back (y -8) -- the split
+    # plane is y 2.0. Screws: M3x10 from outside through rail + wall (tip stops at x
+    # 97.5, 1.0 clear of the display edge; an M3x12 tip at 95.5 would hit it). Arms off:
+    # same screws through a printed blank flange.
+    "shoulder_screw_yz": ((-8.0, 132.0), (8.0, 132.0)),
+    "shoulder_wire_yz": (0.0, 130.0), "shoulder_wire_r": 3.1,   # Ø6.2 lead pass (plugged;
+                            # the rail stays uncut -- an option-C retrofit reprints it)
+    "shoulder_nut_deep": 2.8,
+    # trim_hatch_frame pins, (x, z) on the back wall: on the 13-wide ring band's corners,
+    # clear of the louvres (x +-25, z 153..189), cable port (x +-24, z 113..147), neck
+    # slot (x +-31 below z 166) and the bezel<->back top/bottom posts (x +-40, z 221/92.6).
+    # The task-suggested (+-60, 190/112) failed verification: x 60 < inner band edge 67,
+    # both points land in the frame OPENING, not on the band.
+    "hatch_pin_pts": ((-72.0, 196.0), (72.0, 196.0), (-72.0, 106.0), (72.0, 106.0)),
+    # trim_fascia pins, (x, z) on the chassis front wall under the fin backing webs
+    # (x 28..49.5, z 38..54): >6 clear of the hex field (|x| <= 24.8, z 40.3..51.7) and
+    # the Ø16.6 barrel passes (+-13, z 26). The task-suggested (+-38, 15) / (+-20, 52)
+    # failed verification: nothing of trim_fascia touches the wall at z 15 (ring z 36..56,
+    # webs/fins z 38..54), and (+-20, 52) sockets pass within ~0.7 of the hex pockets.
+    "fascia_pin_pts": ((-44.0, 50.0), (44.0, 50.0), (-33.0, 42.0), (33.0, 42.0)),
+    # trim_rear pins, (x, z) on the rear wall band (side bands x 22..36, bottom z 24..28):
+    # clear of the USB slot (x +-7, z 15..23, 1.4 gap) and TT tab pockets (x 43.5..47.7).
+    "rear_pin_pts": ((-29.0, 35.0), (29.0, 35.0), (0.0, 26.0)),
+    # camera_pod Ø2 pins, (x, z) on the bezel face, ABOVE the glass line: the face is
+    # open (pocket) below z 208.9, so the pod's lower band only kisses glass and the pins
+    # carry it on the z>209 wall strip. Clear of the Ø8 aperture flare (r 8.94 > 4).
+    "campod_pin_pts": ((-8.0, 216.0), (8.0, 216.0)),
+    # antenna: Ø6 spigot under the collar -> Ø6.2 x 3 blind socket in the head top wall
+    # (4 thick: 3 deep leaves 1.0 ceiling skin; camera pier |x|<16 and the top bezel
+    # posts x +-40 both clear x -62). Glue or friction fit.
+    "ant_spigot_r": 3.0, "ant_spigot_socket_r": 3.1, "ant_spigot_deep": 3.0,
+    "wire_pass_r": 1.25,    # Ø2.5 wire passes (led_strip, led_front, lamps)
+    # sensor_rear (bought Ø12-14 buzzer/speaker behind a printed grille cap): Ø10 sound/
+    # wire through-hole in the rear wall + 2x Ø2 cap pins. The cap gains a Ø17 x 1.5 base
+    # flange so the pins (x 38 +- 7) land 0.9 outside the Ø10 bore.
+    "rearpod_hole_r": 5.0, "rearpod_flange_r": 8.5, "rearpod_flange_t": 1.5,
+    "rearpod_pin_dx": 7.0,
+    # --- microSD service slot (maintenance pass 2026-07-08): the Pi 5's card is modeled in
+    # the pins-out mesh at x -41.6..-40.0, y 9.4..10.4, z 151.0..162.1 and ejects toward -X
+    # down a probe-verified FREE corridor to the left wall (nothing between the card edge and
+    # the pocket wall at -97 in this y/z band; the display's deep back never reaches x<-90
+    # here). A slot through the left wall + trim_rail_L on the eject axis swaps the card with
+    # straight forceps (~61 mm reach, sight line down the axis) -- before this, a reflash
+    # meant door + 8x M3x35 + screen module out. The slot sits FORWARD of the split plane
+    # (y=2) so it lands in the BEZEL's side-wall band; y max 12.0 keeps a 1.0 web to the
+    # rail edge (y 13), y min 7.4 keeps 1.1 to the pivot boss sweep (boss reaches y -5...
+    # far below). Plugged by sd_plug (friction fit) against desk dust.
+    "sd_slot_y": (7.4, 12.0),       # slot Y band (card faces at 9.4/10.4: 2.0/1.6 jaw room)
+    "sd_slot_z": (148.5, 164.5),    # slot Z band (card 151..162.1 + 2.5/2.4; rail pin at
+                                    # (8,146) keeps a 1.4 ligament to the corner)
+    "sd_plug_fit": 0.15,            # plug body clearance per side
+
+    # --- Fastening: M3 screws into CAPTIVE HEX NUTS (user choice) ---
+    "m3_clear_r": 1.75,     # M3 screw clearance
+    "m3_nut_af": 5.7,       # M3 hex nut across-flats (+ clearance)
+    "m3_nut_h": 2.8,        # nut pocket depth
+    "boss_r": 4.3,          # screw boss outer radius
+    "m25_clear_r": 1.45,    # M2.5 clearance (Pi standoffs)
+    "uln_w": 35.0, "uln_h": 32.0,   # ULN2003 driver board footprint
+
+    # --- Preview pose (view only; does NOT change printed geometry) ---
+    "preview_pan_deg": 22.0,
+    "preview_tilt_deg": -12.0,   # negative = look slightly down at a seated user
+}
+
+EXPORT = os.environ.get("EXPORT") == "1"
+
