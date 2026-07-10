@@ -32,7 +32,7 @@ from motors import motor_28byj, motor_tt
 from pan import build_pan_clips, build_pan_platform, build_pan_race
 from neck import build_neck_clevis, build_tilt_carrier
 from head import (build_ant_drive, build_antennas, build_arms, build_cam_pod, build_hatch_frame,
-                  build_head_parts, build_head_rails, build_led_strip,
+                  build_ear_jacks, build_head_parts, build_head_rails, build_led_strip,
                   build_screen_tray, build_sd_plug)
 from chassis import build_belly_plate, build_chassis_parts, build_fascia, build_pod_rails
 from fitmap import _fit_report
@@ -238,6 +238,8 @@ def build():
     for rail in build_head_rails():                  # orange side accent rails (design ref)
         add(rail, M_head)
     add(build_sd_plug(), M_head, "sd_plug.stl")      # microSD service-slot friction plug
+    for em in build_ear_jacks():                     # 3.5mm jack + gooseneck ear mics
+        add(em, M_head)
     add(build_led_strip(), M_head)                   # forehead light strip (design ref)
     # twin deployable antenna masts + their geared drive (2026-07-10; PARAMS block).
     # ANT=<mm> (0..ant_travel) sets the baked extension; default = preview_ant_mm.

@@ -108,6 +108,17 @@ def build_head_shell():
     slot.apply_translation((0, -28.5, 123.0))     # x +-33, y -78..21, z 78..168 (world)
     shell = sub(shell, slot)
 
+    # EAR-MIC JACK BORES (2026-07-11, see PARAMS ear_y/ear_z): Ø6.2 panel-jack pass
+    # through each side wall + Ø9.5 x 1.0 outer spot-face for the bushing washer.
+    # Above the trim rails, behind the split plane -> both land in head_back.
+    for sxe in (-1, 1):
+        jb = cyl(3.1, 12.0, axis="x")
+        jb.apply_translation((sxe * (P["head_w"] / 2 - 2.0), P["ear_y"], P["ear_z"]))
+        shell = sub(shell, jb)
+        sf = cyl(4.75, 2.0, axis="x")
+        sf.apply_translation((sxe * (P["head_w"] / 2), P["ear_y"], P["ear_z"]))
+        shell = sub(shell, sf)
+
     # pivot hubs at the side walls, on the tilt axis (fuse through the wall, behind the bezel)
     bx = P["head_w"] / 2 - 8
     bosses = []
@@ -820,6 +831,38 @@ def build_ant_drive():
             bracket = sub(bracket, eh)
     _color(bracket, "back"); bracket.metadata["name"] = "ant_bracket"
     out.append(bracket)
+    return out
+
+
+def build_ear_jacks():
+    """EAR MICS (2026-07-11): placeholder per side for the bought 3.5 mm panel-mount
+    TRS jack + the ordered gooseneck "hose" mic plugged into it. Bushing Ø6 through
+    the wall bore (nut inside, washer out, both floated 0.05 so nothing registers as
+    contact), Ø8.5 x 18 jack body inboard over the screen top, then the mic: Ø8 plug
+    barrel, a stub of gooseneck rising vertically, Ø17 foam windscreen. The real
+    gooseneck is flexible -- pose it however; this is the stowed-upright read."""
+    out = []
+    xw = P["head_w"] / 2
+    ey, ez = P["ear_y"], P["ear_z"]
+    for sxe, nm in ((-1, "ear_mic_L"), (1, "ear_mic_R")):
+        ps = []
+        bsh = cyl(3.0, 9.0, axis="x")                    # bushing through the wall,
+        bsh.apply_translation((sxe * (xw - 1.5), ey, ez)); ps.append(bsh)   # into the nut
+        nut = cyl(4.5, 2.0, axis="x")                    # nut on the inner face (0.05 off)
+        nut.apply_translation((sxe * (xw - 4.0 - 1.05), ey, ez)); ps.append(nut)
+        bdy = cyl(4.25, 18.0, axis="x")                  # jack body, inboard, into the nut
+        bdy.apply_translation((sxe * (xw - 5.05 - 8.9), ey, ez)); ps.append(bdy)
+        plg = cyl(4.0, 12.0, axis="x")                   # mic plug barrel, onto the bushing
+        plg.apply_translation((sxe * (xw + 8.0), ey, ez)); ps.append(plg)
+        el = cyl(2.0, 10.0, axis="x")                    # gooseneck root, into the plug
+        el.apply_translation((sxe * (xw + 18.0), ey, ez)); ps.append(el)
+        gn = cyl(2.0, 46.0)                              # gooseneck rising as the ear
+        gn.apply_translation((sxe * (xw + 21.0), ey, ez + 23.0)); ps.append(gn)
+        fm = cyl(8.5, 24.0)                              # foam windscreen
+        fm.apply_translation((sxe * (xw + 21.0), ey, ez + 46.0 + 12.0)); ps.append(fm)
+        m = uni(ps)
+        _color(m, "track"); m.metadata["name"] = nm     # rubber-black, like the mic
+        out.append(m)
     return out
 
 

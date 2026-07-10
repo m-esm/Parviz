@@ -162,17 +162,17 @@ P = {
     # Modular positive-drive track (advancedvb 'Tank track' 3062624 geometry): printed link pads
     # on filament-rod hinge pins, a 12-tooth sprocket meshing the pins -> no slip on a desk.
     "track_wheel_r": 19.32,  # pin-circle radius = exact 12T x 10.0-pitch polygon (audit corr. 1)
-    "track_wheelbase": 196.326,  # sprocket-axis <-> idler-axis (Y). SOLVED value: with the
+    "track_wheelbase": 201.326,  # sprocket-axis <-> idler-axis (Y). SOLVED value: with the
                             # raised loop (track_raise/track_ground_hy below) the perimeter
-                            # closes at exactly 52 x 10.0 -- _track_link_poses asserts it.
-                            # STRETCHED 161.325 -> 196.326 2026-07-11 (user: "the track
-                            # seems too short for this chassis" after the toy-tank hull):
-                            # wb/2 - ground_hy stays 8.163, so ramp/wrap geometry and all
-                            # end clearances carry over; axles land at +-98.16, track ends
-                            # +-123.5 ~= the 240 lower hull. HARD LIMIT: the TT motor rides
-                            # the sprocket axis; its front tab reaches ys-14.15 = -112.3,
-                            # 2.7 clear of the rear inner wall at -115. Do NOT stretch past
-                            # 53 links without relocating the motors.
+                            # closes at exactly 53 x 10.0 -- _track_link_poses asserts it.
+                            # STRETCHED 161.325 -> 196.326 -> 201.326 2026-07-11 (user
+                            # x2: "track too short for this chassis"): wb/2 - ground_hy
+                            # stays 8.163, so ramp/wrap geometry and all end clearances
+                            # carry over; axles land at +-100.66, track ends +-126. THIS
+                            # IS THE HARD LIMIT: the TT motor rides the sprocket axis and
+                            # its front-tab pocket now reaches y -117.6, cut INTO the
+                            # rear wall band (2.4 outer skin left, rib + wall merged).
+                            # Any longer track needs a belt/gear offset drive.
                             # (Stretched with chassis_l 2026-07-10; same wb/2 - ground_hy
                             # = 8.163 end geometry as the first raised loop, so the 33 deg
                             # ramps / 147 deg wraps and all end clearances carry over.)
@@ -183,11 +183,11 @@ P = {
     # (zs+8.75, r1.6 -> 44.7) and the gearbox top (45.5) still stay under the z46 deck
     # seam, so the deck stays screw-free over the motors.
     "track_raise": 9.0,     # axle z = _track_zc() + raise (34.32); loop top pin z 53.64
-    "track_ground_hy": 90.0,  # flat ground-run half-span (ramp tangent leaves here)
+    "track_ground_hy": 92.5,  # flat ground-run half-span (ramp tangent leaves here)
     "track_width": 44.8,    # link body width (X): 2x design-ref chunk, then -20% per user
                             # (28 -> 56 -> 44.8); sprocket engages only the central ~8 mm channel
     "track_pitch": 10.0,    # link pin-to-pin (our re-model; the 3062624 reference pitch is 9.65)
-    "track_links": 52,      # 52 x 10 = 520 mm loop (36 -> 45 -> 52 stretches)
+    "track_links": 53,      # 53 x 10 = 530 mm loop (36 -> 45 -> 52 -> 53 stretches)
     "track_pad_th": 4.5,    # pin axis -> pad OUTER face (link overall 8: knuckle r3.5 inward)
     "track_grouser_h": 1.5, # tread lug (print grousers in TPU or add pads)
     "track_pin_bore_d": 2.0,    # link hinge bore for Ø1.75 filament pins (ref uses ~2.0 drafted)
@@ -256,7 +256,13 @@ P = {
     # exactly as the user reasoned. Sensor construction mirrors sensor_us: Ø16.6
     # barrel bores through the 5-thick slope skin, board against the skin's back
     # (1.2 recess) inside an underside pocket that opens into the tub for wiring.
-    "deck_overhang": 30.0,       # deck slab half-length = chassis_l/2 + this (150)
+    "deck_overhang": 30.0,       # anchors the END-SLOPE geometry: slope runs (|y| 120,
+                                 # z 46) -> (|y| 150, z 66) at 33.7 deg
+    "deck_tip_trunc": 6.0,       # deck tips CUT BACK to |y| 144 with a vertical 4-tall
+                                 # nose face (z 62..66): the raw slope/top intersection
+                                 # was a 33.7 deg acute PLA knife edge (user 2026-07-11:
+                                 # "the chassis angle is too sharp"). Slope angle -- and
+                                 # with it the cliff-sensor geometry -- is unchanged.
     "cliff_v": 9.6,              # barrel-pair center, mm up the slope from its bottom
                                  # edge (slant length 36.06): bore rim keeps 1.3 to
                                  # the wall-top corner, board top keeps 0.7 under the
@@ -527,6 +533,14 @@ P = {
     # the boss rim at x>100, harmless), and the right wall's Pi I/O slot (y -8.5..6.5,
     # z 166.5..183.5; the z-188 socket sits 1.9 above it).
     "rail_pin_pts": ((-8.0, 146.0), (8.0, 146.0), (0.0, 188.0)),
+    # EAR MICS (2026-07-11, ordered: 2x 3.5 mm gooseneck "hose" mics, one per side):
+    # panel-mount TRS jack through each head side wall; the mic plugs in from outside
+    # and its gooseneck rises as the ear. Spot chosen so the Ø8.5 jack body inside
+    # clears the screen top (208.4) and the antenna half-shafts (z 203..207), the
+    # Ø16-ish pod footprint clears the trim rails (top z 205) and the bezel<->back
+    # split plane (y ~2), and wires drop to the Pi USB (CM108 adapters).
+    "ear_y": -10.0,
+    "ear_z": 214.0,
     # ARM SHOULDER INTERFACE (docs/ARM-MECH.md; arms are ARMS=1-gated but the head prints
     # the interface NOW so option B/C arms bolt on without a head_back reprint): per side
     # wall, 2x M3 captive-nut pockets + a Ø6.2 servo-lead pass, all under the rail.

@@ -300,6 +300,30 @@ def build_tracks():
             rw = sub(rw, cyl(2.1, 34.0, axis="x"))
             rw.apply_translation((cx, ry, (zc - R) + kr + rr_ + 0.1))
             wheel_pieces.append(rw)
+        # VISIBLE AXLE HARDWARE (2026-07-11, user: "drive wheels are still not
+        # properly connected" -- the bolts/stubs were unmodeled hardware, so the
+        # wheels floated in the viewer): one silver placeholder node per side, NOT
+        # print-exported. 7x M4x40 bolt-axles (shank through the rail-beam bore and
+        # the wheel, hex head = the hubcap on the wheel face) + the Ø8 idler stub
+        # (lives in the x 83.3..89.3 tension-slot passage, cantilevers out through
+        # the idler; the F688ZZ pair stays unmodeled hardware).
+        hw = []
+        for i in range(P["roadwheel_count"]):
+            ry = (i - (P["roadwheel_count"] - 1) / 2) * P["roadwheel_pitch"]
+            rwz = (zc - R) + kr + rr_ + 0.1
+            sh = cyl(1.95, 37.0, axis="x")
+            sh.apply_translation((sx * 93.0, ry, rwz))         # x 74.5..111.5
+            hd = cyl(3.5, 3.5, axis="x")
+            hd.apply_translation((sx * 113.15, ry, rwz))       # head on the hub face
+            hw += [sh, hd]
+        stub = cyl(4.0, 34.5, axis="x")
+        stub.apply_translation((sx * 100.75, wb / 2, za))      # x 83.5..118
+        hw.append(stub)
+        hwn = trimesh.util.concatenate(hw)
+        _color(hwn, "motor")
+        hwn.metadata["name"] = "axle_hw_%s" % ("L" if sx < 0 else "R")
+        hwn.metadata["export"] = None                  # bought hardware, never printed
+        out.append(hwn)
         side = "L" if sx < 0 else "R"
         pod = trimesh.util.concatenate(pieces)                 # links only (rubber-black)
         _color(pod, "track")

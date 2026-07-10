@@ -19,6 +19,8 @@
    "trim_rail_L",
    "trim_rail_R",
    "sd_plug",
+   "ear_mic_L",
+   "ear_mic_R",
    "led_strip",
    "antenna_L",
    "antenna_R",

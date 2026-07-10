@@ -145,14 +145,15 @@ Kinematic chain, bottom to top (built at neutral pose pan=0, tilt=0):
 tank chassis        DRIVE base: central body (build_base) + track_L/track_R (build_tracks) +
   │                 drive_L/drive_R (2x TT gearmotor, shaft X into each pod's rear sprocket).
   │                 Body houses the pan motor + driver + wiring; pan-mount on top (z=52).
-  │                 Tracks = 52 modular link pads on a RAISED TANK LOOP (2026-07-10, RC-tank
+  │                 Tracks = 53 modular link pads on a RAISED TANK LOOP (2026-07-10, RC-tank
   │                 refs; was a flat stadium): sprocket + idler axles sit track_raise=9 above
   │                 the old centerline (z 34.32), ~33 deg ramps at both ends, ~147 deg wraps,
-  │                 flat ground run +-track_ground_hy=90; wheelbase 196.326 SOLVED so the
-  │                 loop closes at exactly 52x10 (asserted in _track_link_poses;
-  │                 stretched 45->52 links 2026-07-11, user: track too short for the
-  │                 toy-tank hull -- axles +-98.16, the TT front tab lands 2.7 off the
-  │                 rear inner wall = the hard stretch limit). STRETCHED
+  │                 flat ground run +-track_ground_hy=92.5; wheelbase 201.326 SOLVED so the
+  │                 loop closes at exactly 53x10 (asserted in _track_link_poses;
+  │                 stretched 45->52->53 links 2026-07-11, user x2: track too short --
+  │                 axles +-100.66, track ends +-126; the TT front-tab pocket now cuts
+  │                 INTO the rear wall band (2.4 outer skin) = the ABSOLUTE limit,
+  │                 longer needs a belt/gear offset drive). STRETCHED
   │                 same day with chassis_l 156->200->240 (user: "longer, same shape as the
   │                 refs"; the wb/2 - ground_hy = 8.163 end geometry is unchanged, so all
   │                 end clearances carry over). 7 dished Ø20 road wheels (pitch 23, to
@@ -247,7 +248,7 @@ three stages, see docs/FIXES.md Stage 4). Overall assembly bbox ≈ 209 × 170.5
 Still first-guess (validate on a print): tilt axis at y=−18 / z=153 (moved back 18 mm in stage 2R
 to clear the Pi-on-display stack; z was 178 until the 2026-07-06 head drop shifted the whole
 head+tilt stack −25), screen center y 18.5 / z 153, tilt ±30, pan ±90,
-worm module 1.25 / 12T wheel, track pitch 10 / 52 links / 12T sprocket, pan BB circle Ø80. Neck
+worm module 1.25 / 12T wheel, track pitch 10 / 53 links / 12T sprocket, pan BB circle Ø80. Neck
 column at `neck_y=−17` (stage 5: footprint max r 43.1 fits the spinning platform's solid r45; the
 cable channel is decoupled at `neck_chan_y=−26`). Head width 205 vs track outer width 238
 (chassis_w 140, base_h 66, track_width 44.8 (2026-07-07: 2x design-ref chunk then -20%
@@ -326,7 +327,7 @@ is a horizontal seam at z=46, clamped by 4x M3 down from the deck into lower Ø2
 pilots (front pair on the side ledges, rear pair on the REAR wall at +-34/-93 since 2026-07-10:
 the raised TT gearboxes own the old side spots). `build_tracks()` builds two
 **positive-drive track pods** (geometry from the local `Tank track - 3062624/` reference = Thingiverse
-thing:3062624, CC-BY): a chain of **52 printed link pads** (`_track_link_poses` walks the RAISED
+thing:3062624, CC-BY): a chain of **53 printed link pads** (`_track_link_poses` walks the RAISED
 TANK LOOP -- see the kinematic-chain diagram above for the 2026-07-10 profile numbers)
 on filament-rod hinge pins, a **12-tooth drive sprocket** (rear, RAISED, spoked with 6 lightening
 holes) meshing the pins, a raised **idler** on TWO F688ZZ bearings (front, one per face) in a
@@ -480,3 +481,17 @@ bosses, above the belly power tray). TRACK STRETCH same day (user: "track too sh
 6 -> 7 at pitch 23 (stations clear the pod-join dowels at +-40), wheel beams to
 +-74.5. EARS (ordered): 2x 3.5 mm gooseneck mics, one per head side -- panel-mount
 jack pods on the head side walls are a pending head.py pass (see memory ear-mics).
+
+**Round-6 pass (2026-07-11):** (1) DECK TIP TRUNCATION: the slope/top intersection was
+a 33.7 deg acute PLA knife edge (user: "chassis angle too sharp") -- the slab now ends
+at |y| 144 with a vertical 4-tall nose face (`deck_tip_trunc`; slope angle and the
+cliff-sensor geometry unchanged). (2) VISIBLE AXLE HARDWARE `axle_hw_L/R` (user: "drive
+wheels not properly connected" -- the connections were unmodeled hardware): per side,
+7x M4x40 bolt-axle placeholders (shank through beam bore + wheel, hex head on the hub
+face -- head seat whitelisted in the fit audit) + the Ø8 idler stub (x 83.5..118,
+riding the tension-slot passage). Silver, export=None, never printed. (3) EAR MICS
+MODELED (`ear_mic_L/R` + Ø6.2 wall bores + Ø9.5 spot-faces in _head_solid, PARAMS
+ear_y=-10/ear_z=214): 3.5 mm panel jack per side wall above the trim rails, gooseneck +
+foam placeholder rising as the ear; jack bodies clear the screen top (208.4) and the
+antenna half-shafts (207); both land in head_back, 4 off the bezel split. BUY: 2x
+panel-mount 3.5 mm TRS jacks (mics + CM108 adapters already ordered).

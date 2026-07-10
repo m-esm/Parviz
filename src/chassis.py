@@ -186,7 +186,11 @@ def build_chassis_core():
     ovh = P["deck_overhang"]
     lower_ = rounded_box(P["chassis_w"], P["chassis_l"], seam_ - z0, 14.0)
     lower_.apply_translation((0, 0, z0))
-    slab = rounded_box(P["chassis_w"], P["chassis_l"] + 2 * ovh, z1 - seam_, 14.0)
+    # slab tips TRUNCATED by deck_tip_trunc: the raw slope/top intersection was a
+    # 33.7 deg acute PLA knife edge ("angle too sharp", 2026-07-11) -- ending the slab
+    # early leaves a vertical 4-tall nose face where the slope plane exits at z 62
+    slab = rounded_box(P["chassis_w"], P["chassis_l"] + 2 * (ovh - P["deck_tip_trunc"]),
+                       z1 - seam_, 14.0)
     slab.apply_translation((0, 0, seam_))
     sa = np.arctan2(z1 - seam_, ovh)
     for sgn in (1, -1):
