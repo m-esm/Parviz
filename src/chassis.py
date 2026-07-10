@@ -335,11 +335,11 @@ def build_chassis_core():
         us = cyl(P["us_d"] / 2 + 0.3, 12, axis="y")
         us.apply_translation((sx * P["us_dx"], fw - 2.5, P["us_cz"]))
         body = sub(body, us)
-    for i in range(-2, 4):                            # side ventilation slots (i=-3 dropped: the
-        v = box(12, 5, 16); v.apply_translation((0, i * 16, z0 + h / 2))    # TT nub pocket +
-        v2 = v.copy(); v.apply_translation((P["chassis_w"] / 2, 0, 0))      # shaft recess live
-        v2.apply_translation((-P["chassis_w"] / 2, 0, 0))                   # at y -49/-60)
-        body = sub(sub(body, v), v2)
+    for i in range(-3, 5):                            # side ventilation slots (extended
+        v = box(12, 5, 16); v.apply_translation((0, i * 16, z0 + h / 2))    # +-48/64 with the
+        v2 = v.copy(); v.apply_translation((P["chassis_w"] / 2, 0, 0))      # 200 chassis; the
+        v2.apply_translation((-P["chassis_w"] / 2, 0, 0))                   # TT wall zone is
+        body = sub(sub(body, v), v2)                                        # now y -92..-55
 
     # --- TT drive-motor mount (both walls; see motor_tt + reference/tt-motor-1079893/NOTES.md).
     # Shaft axis at (y=-wb/2, z=_track_zc()+track_raise): the raised tank loop lifts the

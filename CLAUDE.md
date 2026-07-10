@@ -102,15 +102,18 @@ Kinematic chain, bottom to top (built at neutral pose pan=0, tilt=0):
 tank chassis        DRIVE base: central body (build_base) + track_L/track_R (build_tracks) +
   │                 drive_L/drive_R (2x TT gearmotor, shaft X into each pod's rear sprocket).
   │                 Body houses the pan motor + driver + wiring; pan-mount on top (z=52).
-  │                 Tracks = 36 modular link pads on a RAISED TANK LOOP (2026-07-10, RC-tank
+  │                 Tracks = 45 modular link pads on a RAISED TANK LOOP (2026-07-10, RC-tank
   │                 refs; was a flat stadium): sprocket + idler axles sit track_raise=9 above
   │                 the old centerline (z 34.32), ~33 deg ramps at both ends, ~147 deg wraps,
-  │                 flat ground run +-track_ground_hy=50; wheelbase 116.325 SOLVED so the
-  │                 loop closes at exactly 36x10 (asserted in _track_link_poses). 4 dished
-  │                 Ø20 road wheels (y +-10.5/+-31.5), spoked 12T sprocket (6 lightening
-  │                 holes), dished idler. The raise lifts the TT motors too: gearbox top
-  │                 45.5 stays under the z46 deck seam; the rear deck-split screw pair moved
-  │                 to the rear wall (+-34, -71) out of the gearbox zone.
+  │                 flat ground run +-track_ground_hy=72.5; wheelbase 161.325 SOLVED so the
+  │                 loop closes at exactly 45x10 (asserted in _track_link_poses). STRETCHED
+  │                 same day with chassis_l 156->200 (user: "longer, same shape as the
+  │                 refs"; the wb/2 - ground_hy = 8.163 end geometry is unchanged, so all
+  │                 end clearances carry over). 6 dished Ø20 road wheels (pitch 21, to
+  │                 +-52.5), spoked 12T sprocket (6 lightening holes), dished idler. The
+  │                 raise lifts the TT motors too: gearbox top 45.5 stays under the z46
+  │                 deck seam; the rear deck-split screw pair rides the rear wall (+-34,
+  │                 -93); pod joins spread to y +-40; vents extended to +-48/64.
   └─ PAN joint      yaw about vertical Z  (±90° target). motor_pan direct D-hub; rides a captured-BB
       │             lazy-Susan race (build_pan_race: pan_race + pan_balls)   ── the "turret"
       └─ pan_platform + neck_clevis   rotate as one
@@ -198,7 +201,7 @@ three stages, see docs/FIXES.md Stage 4). Overall assembly bbox ≈ 209 × 170.5
 Still first-guess (validate on a print): tilt axis at y=−18 / z=153 (moved back 18 mm in stage 2R
 to clear the Pi-on-display stack; z was 178 until the 2026-07-06 head drop shifted the whole
 head+tilt stack −25), screen center y 18.5 / z 153, tilt ±30, pan ±90,
-worm module 1.25 / 12T wheel, track pitch 10 / 36 links / 12T sprocket, pan BB circle Ø80. Neck
+worm module 1.25 / 12T wheel, track pitch 10 / 45 links / 12T sprocket, pan BB circle Ø80. Neck
 column at `neck_y=−17` (stage 5: footprint max r 43.1 fits the spinning platform's solid r45; the
 cable channel is decoupled at `neck_chan_y=−26`). Head width 205 vs track outer width 238
 (chassis_w 140, base_h 66, track_width 44.8 (2026-07-07: 2x design-ref chunk then -20%
@@ -266,13 +269,13 @@ Two-track tank base. `build_chassis_parts()` splits the central **body** into `c
 (shallow removable pan deck: pan seat, pan clips, pan motor top register). The old one-piece
 `chassis` trapped deep cavities and side-wall features in an ugly support-heavy print. The split
 is a horizontal seam at z=46, clamped by 4x M3 down from the deck into lower Ø2.5 thread-form
-pilots (front pair on the side ledges, rear pair on the REAR wall at +-34/-71 since 2026-07-10:
+pilots (front pair on the side ledges, rear pair on the REAR wall at +-34/-93 since 2026-07-10:
 the raised TT gearboxes own the old side spots). `build_tracks()` builds two
 **positive-drive track pods** (geometry from the local `Tank track - 3062624/` reference = Thingiverse
-thing:3062624, CC-BY): a chain of **36 printed link pads** (`_track_link_poses` walks the RAISED
+thing:3062624, CC-BY): a chain of **45 printed link pads** (`_track_link_poses` walks the RAISED
 TANK LOOP -- see the kinematic-chain diagram above for the 2026-07-10 profile numbers)
 on filament-rod hinge pins, a **12-tooth drive sprocket** (rear, RAISED, spoked with 6 lightening
-holes) meshing the pins, a raised **idler** on a Ø16 bearing (front) in a tension slot, and **4
+holes) meshing the pins, a raised **idler** on a Ø16 bearing (front) in a tension slot, and **6
 dished road wheels** supporting the bottom run. Positive tooth
 engagement beats a friction belt that slips when the head pans.
 

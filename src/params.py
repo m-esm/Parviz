@@ -140,15 +140,21 @@ P = {
     "chassis_w": 140.0,     # body width between the tracks (120->140: track outer faces land
                             # at +-102 ~= head half-width 102.5, killing the head overhang;
                             # NOT 148 -- the tucked claws at x 106..119 need 4 mm to the pods)
-    "chassis_l": 156.0,     # body length front-back (Y)
+    "chassis_l": 200.0,     # body length front-back (Y). Stretched 156 -> 200 2026-07-10
+                            # (user: "longer, same shape as the RC-tank refs"), paired with
+                            # track_wheelbase so the TT front tabs still pocket the rear
+                            # wall (inner face 95 ~= |ys| 80.66 + tab reach ~14.5)
     "chassis_clear": 7.0,   # ground clearance under the body
     "track_gap": 4.0,       # body side <-> track inner face
     # Modular positive-drive track (advancedvb 'Tank track' 3062624 geometry): printed link pads
     # on filament-rod hinge pins, a 12-tooth sprocket meshing the pins -> no slip on a desk.
     "track_wheel_r": 19.32,  # pin-circle radius = exact 12T x 10.0-pitch polygon (audit corr. 1)
-    "track_wheelbase": 116.325,  # sprocket-axis <-> idler-axis (Y). SOLVED value: with the
+    "track_wheelbase": 161.325,  # sprocket-axis <-> idler-axis (Y). SOLVED value: with the
                             # raised loop (track_raise/track_ground_hy below) the perimeter
-                            # closes at exactly 36 x 10.0 -- _track_link_poses asserts it
+                            # closes at exactly 45 x 10.0 -- _track_link_poses asserts it.
+                            # (Stretched with chassis_l 2026-07-10; same wb/2 - ground_hy
+                            # = 8.163 end geometry as the first raised loop, so the 33 deg
+                            # ramps / 147 deg wraps and all end clearances carry over.)
     # RAISED TANK LOOP (2026-07-10, user's RC-tank chassis refs): sprocket + idler axles
     # sit track_raise ABOVE the old stadium centreline, so the track climbs ~33 deg ramps
     # at both ends and wraps ~147 deg -- the classic hull profile. Raise is capped at 9:
@@ -156,11 +162,11 @@ P = {
     # (zs+8.75, r1.6 -> 44.7) and the gearbox top (45.5) still stay under the z46 deck
     # seam, so the deck stays screw-free over the motors.
     "track_raise": 9.0,     # axle z = _track_zc() + raise (34.32); loop top pin z 53.64
-    "track_ground_hy": 50.0,  # flat ground-run half-span (ramp tangent leaves here)
+    "track_ground_hy": 72.5,  # flat ground-run half-span (ramp tangent leaves here)
     "track_width": 44.8,    # link body width (X): 2x design-ref chunk, then -20% per user
                             # (28 -> 56 -> 44.8); sprocket engages only the central ~8 mm channel
     "track_pitch": 10.0,    # link pin-to-pin (our re-model; the 3062624 reference pitch is 9.65)
-    "track_links": 36,      # 36 x 10 = 360 mm loop
+    "track_links": 45,      # 45 x 10 = 450 mm loop (36 before the stretch)
     "track_pad_th": 4.5,    # pin axis -> pad OUTER face (link overall 8: knuckle r3.5 inward)
     "track_grouser_h": 1.5, # tread lug (print grousers in TPU or add pads)
     "track_pin_bore_d": 2.0,    # link hinge bore for Ø1.75 filament pins (ref uses ~2.0 drafted)
@@ -168,9 +174,9 @@ P = {
     "sprocket_outer_d": 37.6,   # tip r 18.8 = pin circle 19.32 - 0.5 clearance (OD 42 jammed links)
     "idler_bore_d": 15.95,  # F688ZZ (8x16x5, flange 18) press seat; flange recess 18.5 x 1.0
     "roadwheel_d": 20.0,    # dished road wheels riding the bottom-run knuckle crowns
-    "roadwheel_count": 4,   # dense row like the ref; centers = (i - (n-1)/2) * pitch
-    "roadwheel_pitch": 21.0,  # 1 mm gap between Ø20 wheels; outermost at y +-31.5 keeps
-                            # 0.9+ mm lateral gap to the raised sprocket/idler discs
+    "roadwheel_count": 6,   # dense row like the ref; centers = (i - (n-1)/2) * pitch
+    "roadwheel_pitch": 21.0,  # 1 mm gap between Ø20 wheels; outermost at y +-52.5 keeps
+                            # 3.5+ mm lateral gap to the raised sprocket/idler discs
     "idler_slot": 4.0,      # idler Y-slide for tensioning (M3 set-screw lock)
     # TT gearmotor drive (own 1x; BUY 1 more -> 2 for skid steer; MX1588 drives both).
     # Measured dims from reference/tt-motor-1079893/NOTES.md (STEP B-rep). Shaft is
@@ -180,14 +186,15 @@ P = {
     "tt_shaft_d": 5.4,      # double-D output shaft, 3.70 flats, 8.8 proud, flat len 8.0
 
     # --- Chassis mechanical detailing: body<->pod join, pan-motor seat, ballast bay ---
-    # Join stations (2x per side): each carries one M3 + one Ø4 dowel. y=+-24 = centers of
-    # the 11-wide wall windows between the +-16 / +-32 vent slots, clear of the TT wall
-    # zone (y -40..-75) and the idler tension arm (y 52..68). Screws drive from INSIDE the
+    # Join stations (2x per side): each carries one M3 + one Ø4 dowel. y=+-40 = centers of
+    # the 11-wide wall windows between the +-32 / +-48 vent slots (spread with the 200
+    # chassis 2026-07-10), clear of the TT wall zone (y -92..-55) and the idler tension
+    # arm (y 73..89). Screws drive from INSIDE the
     # chassis cavity through the wall into captive nuts in the pod rail: the 4 mm pod gap
     # holds a nut but no screwdriver, and loose nuts can't be held in a 4 mm slot -- so the
     # nut is trapped pod-side and the head sits on the cavity wall (same convention as the
     # TT gearbox screws, "nut in the gap").
-    "pod_join_y": (-24.0, 24.0),
+    "pod_join_y": (-40.0, 40.0),
     "pod_join_screw_z": 34.0,   # M3 axis: mid of the loop's free band, max spread above dowel
     "pod_join_dowel_z": 20.0,   # Ø4 dowel axis: 14 below the screw -> shear + pitch location
     "pod_join_dowel_d": 4.0,    # Ø4x12 pin: +0.1 slip in the wall, -0.15 press in the rail
@@ -201,7 +208,7 @@ P = {
     # right under the solid deck, so the lower tub prints open-top and the pan deck prints
     # separately; 4x M3 from the top deck into lower thread-form pilots clamp/register it.
     "chassis_split_z": 46.0,
-    "chassis_split_screws": ((-64.0, 60.0), (64.0, 60.0), (-34.0, -71.0), (34.0, -71.0)),
+    "chassis_split_screws": ((-64.0, 60.0), (64.0, 60.0), (-34.0, -93.0), (34.0, -93.0)),
                             # rear pair moved off the side walls 2026-07-10: the raised
                             # TT gearboxes (track_raise, top z 45.5) now own that zone;
                             # bosses ride the rear wall instead (sensor hole z16, trim
