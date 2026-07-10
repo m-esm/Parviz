@@ -51,6 +51,7 @@
   .part .nm{font:12px/1 var(--mono);color:var(--ink);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .part input{margin:0}
   .part.off{opacity:.4}
+  .part.sel{background:rgba(232,116,34,.16);box-shadow:inset 0 0 0 1px rgba(232,116,34,.4)}
   .part.off .nm{text-decoration:line-through}
 
   /* control rows */
@@ -149,6 +150,7 @@
   <div class="eyebrow">desk-pi · pan/tilt head</div>
   <div class="title" id="title">assembly.glb</div>
   <div class="dims" id="bbox"><span class="ax">-</span></div>
+  <div class="dims" id="selinfo" style="display:none;flex-wrap:wrap"></div>
 
   <div class="sec">Parts</div>
   <div id="parts"></div>
@@ -323,6 +325,7 @@ new GLTFLoader().load(MODEL, (gltf)=>{
       color:s.c, metalness:s.m, roughness:s.r,
       emissive:s.e||0x000000, emissiveIntensity:s.ei||0,
       envMapIntensity:(s.env!==undefined?s.env:0.85), side:THREE.DoubleSide});
+    o.userData.pname = name;
     (groups[name] = groups[name] || {meshes:[]}).meshes.push(o);
   });
   scene.add(gltf.scene);
@@ -368,6 +371,7 @@ new GLTFLoader().load(MODEL, (gltf)=>{
       applyDims();
     });
     host.appendChild(row);
+    g.row = row;
   }
 
   overallDim = dimBox(bbox, Math.max(12, diag*0.03));
@@ -633,6 +637,51 @@ addEventListener('resize',()=>{
   camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix();
   renderer.setSize(innerWidth,innerHeight); labelRnd.setSize(innerWidth,innerHeight);
 });
+
+// ---- click-to-select: raycast on click (not drag): glow the part, mark its row,
+// show its name + world-space L/W/H (posed). Click empty space / same part / Esc clears.
+let selName=null, selDown=null;
+const selRay=new THREE.Raycaster(), selNdc=new THREE.Vector2();
+function selectPart(name){
+  if(selName && groups[selName]){
+    const g=groups[selName];
+    g.meshes.forEach(o=>{ if(o.userData._selEm!==undefined){
+      o.material.emissive.setHex(o.userData._selEm);
+      o.material.emissiveIntensity=o.userData._selEi;
+      delete o.userData._selEm; }});
+    if(g.row) g.row.classList.remove('sel');
+  }
+  $('selinfo').style.display='none';
+  if(name===selName){ selName=null; return; }
+  selName=name||null;
+  if(!selName) return;
+  const g=groups[selName];
+  g.meshes.forEach(o=>{
+    o.userData._selEm=o.material.emissive.getHex();
+    o.userData._selEi=o.material.emissiveIntensity;
+    o.material.emissive.setHex(0xE87422); o.material.emissiveIntensity=.5; });
+  if(g.row){ g.row.classList.add('sel'); g.row.scrollIntoView({block:'nearest'}); }
+  const gb=new THREE.Box3(); g.meshes.forEach(o=>gb.expandByObject(o));
+  const s=gb.getSize(new THREE.Vector3());
+  $('selinfo').innerHTML='<span class="ax" style="color:#E87422">▶</span><b>'+selName+'</b>'+
+    '<span class="ax" style="color:'+TXT.x+'">L</span><b>'+s.x.toFixed(1)+'</b>'+
+    '<span class="ax" style="color:'+TXT.y+'">W</span><b>'+s.y.toFixed(1)+'</b>'+
+    '<span class="ax" style="color:'+TXT.z+'">H</span><b>'+s.z.toFixed(1)+'</b>';
+  $('selinfo').style.display='flex';
+}
+renderer.domElement.addEventListener('pointerdown',e=>{ selDown=[e.clientX,e.clientY]; });
+renderer.domElement.addEventListener('pointerup',e=>{
+  if(!selDown) return;
+  const moved=Math.hypot(e.clientX-selDown[0], e.clientY-selDown[1]); selDown=null;
+  if(moved>6 || !window.__ready) return;             // it was an orbit drag, not a click
+  selNdc.x=(e.clientX/innerWidth)*2-1; selNdc.y=-(e.clientY/innerHeight)*2+1;
+  selRay.setFromCamera(selNdc,camera);
+  const meshes=[];
+  for(const g of Object.values(groups)) for(const o of g.meshes) if(o.visible) meshes.push(o);
+  const hit=selRay.intersectObjects(meshes,false)[0];
+  selectPart(hit ? hit.object.userData.pname : null);
+});
+addEventListener('keydown',e=>{ if(e.key==='Escape' && selName) selectPart(selName); });
 
 // mobile bottom sheet: ☰ toggles the HUD; starting an orbit gesture tucks it away
 const mobile = matchMedia('(max-width: 700px)');
