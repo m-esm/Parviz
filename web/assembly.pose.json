@@ -1,6 +1,6 @@
 {
- "pan_deg": 22.0,
- "tilt_deg": -12.0,
+ "pan_deg": 0.0,
+ "tilt_deg": 0.0,
  "tilt_axis_y": -18.0,
  "tilt_axis_z": 153.0,
  "pan_stop_deg": 93.3,
@@ -47,5 +47,5 @@
   "antenna_R"
  ],
  "ant_travel": 50.0,
- "ant_baked_mm": 15.0
+ "ant_baked_mm": 0.0
 }

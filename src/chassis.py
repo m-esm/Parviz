@@ -737,11 +737,27 @@ def build_pod_rails():
     M3x12 from the cavity wall face (x 65) lands its tip at 77 -> 7 mm of formed thread.
     The spine sits outboard of the vent cutters (x >= 76.2 vs 76) so the three vents it
     crosses stay open into the gap. Print on the outer (+X) face: dowel sockets and the
-    pilot become vertical blind holes."""
+    pilot become vertical blind holes.
+
+    WHEEL BEAM (2026-07-10 fix, review: the 6 road wheels were mounted to NOTHING, so
+    the robot's weight went to ground through the TT gearbox shaft + the idler stub):
+    each rail carries a beam at x 74..80.4 / z 14..26 / y +-58, fused to both join
+    blocks, living in the loop's link-free band (bottom-run knuckle tops 9.5, top-run
+    sweep 41.14, ramp links start |y| 72.5, sprocket hub tube crosses above at z 28.3).
+    Per wheel: an M4 x 40 bolt-axle from outboard (head = hubcap on the wheel face,
+    prefer partially threaded so the Ø4.2 wheel bore rides shank, not thread) through
+    a Ø4.4 beam bore into an M4 nut in a slide-up slot from the beam's bottom face --
+    the nut is captive sideways/axially, inserted before the rail mounts. Beam outer
+    face 80.4 leaves 1.0 running gap to the wheel inner face (81.4); the join-dowel
+    socket just gains web depth (blind end 77.0 -> 3.4 web). BUY 12x M4x40 + nuts.
+    Print orientation update: the beam's outer face is the new bed plane (proud 2.4 of
+    the blocks); shim/support the two 9-wide block bands above z 26, nut slots print
+    as side openings, all bores stay vertical."""
     x0 = P["chassis_w"] / 2                            # wall outer face (70): rail sits flush
     x1 = P["pod_rail_x1"]                              # 78
     z_lo, z_hi = P["pod_rail_z"]
     bw = P["pod_rail_block_w"]
+    rr_z = (_track_zc() - P["track_wheel_r"]) + 3.5 + P["roadwheel_d"] / 2 + 0.1
     rails = []
     for s, nm in ((-1, "pod_rail_L"), (1, "pod_rail_R")):
         parts = []
@@ -753,7 +769,18 @@ def build_pod_rails():
         # clear of the vent cutters (they reach x 76) so the vents still breathe
         spine = box(1.8, P["pod_join_y"][1] - P["pod_join_y"][0] + bw, 10.0)
         spine.apply_translation((s * (76.2 + 78.0) / 2, 0, 35.0))
-        rail = uni(parts + [spine])
+        beam = box(6.4, 116.0, 12.0)                   # wheel beam x 74..80.4, y +-58
+        beam.apply_translation((s * 77.2, 0, 20.0))
+        rail = uni(parts + [spine, beam])
+        for i in range(P["roadwheel_count"]):
+            ry = (i - (P["roadwheel_count"] - 1) / 2) * P["roadwheel_pitch"]
+            ab = cyl(2.2, 9.0, axis="x")               # Ø4.4 M4 clearance bore
+            ab.apply_translation((s * 77.2, ry, rr_z))
+            rail = sub(rail, ab)
+            slot = box(3.6, 7.3, 10.15)                # M4 nut slide-up slot (AF 7.0 +
+            slot.apply_translation((s * 75.7, ry, 18.575))  # 0.3, corners up/down):
+            rail = sub(rail, slot)                     # z 13.5..23.65 -- the top stop
+            # parks the nut's upper corner so screwing pulls it centred on the bore
         for jy in P["pod_join_y"]:
             # blind Ø2.5 thread-form pilot from the inner face (x 69.4 overshoot) to
             # x 77.4 -> 0.6 web to the outer face, 7 mm of engagement for an M3x12

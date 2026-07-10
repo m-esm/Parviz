@@ -276,7 +276,9 @@ the target axis, don't fight the offset with an eccentric coupler.**
   motor's Ø29 can pocket doubles as the cartridge's mesh lead-in.
 
 **Buy list (gaps; full inventory-checked BOM in docs/ASSEMBLY.md, 2026-07-08):** a 2nd track
-drive motor (see below), 2× F688ZZ flanged bearings 8×16×5 (idlers), 6 mm airsoft BBs (pan
+drive motor (see below), 4× F688ZZ flanged bearings 8×16×5 (2 per idler since the 2026-07-10
+fix; one bearing let the 30-wide wheel tilt), 12× M4×40 + nuts (road-wheel bolt-axles,
+partially threaded preferred; 40 mm exceeds the owned kits), 6 mm airsoft BBs (pan
 race), Ø5 SOLID rod for the tilt axle (gets a filed D-flat; no tube), the power set from firmware/WIRING.md
 (30W+ PD brick, 12V PD trigger, XL4015 5A buck, MP1584 mini buck, JST-XH kit + crimper,
 18 AWG pair, 5A fuse), Ø4×12 dowels ×4, 1 m of NARROW (4–5 mm) addressable strip
@@ -302,9 +304,20 @@ the raised TT gearboxes own the old side spots). `build_tracks()` builds two
 thing:3062624, CC-BY): a chain of **45 printed link pads** (`_track_link_poses` walks the RAISED
 TANK LOOP -- see the kinematic-chain diagram above for the 2026-07-10 profile numbers)
 on filament-rod hinge pins, a **12-tooth drive sprocket** (rear, RAISED, spoked with 6 lightening
-holes) meshing the pins, a raised **idler** on a Ø16 bearing (front) in a tension slot, and **6
-dished road wheels** supporting the bottom run. Positive tooth
+holes) meshing the pins, a raised **idler** on TWO F688ZZ bearings (front, one per face) in a
+tension slot, and **6 dished road wheels** supporting the bottom run. Positive tooth
 engagement beats a friction belt that slips when the head pans.
+TRACK-DRIVE FIX PASS (2026-07-10, review): (1) the sprocket got REAL PIN POCKETS
+(`_sprocket_disc`: 12 circular seats r 1.15 on the 19.32 pin circle, 0.63 radial bite,
+mouth 2.05 > the Ø1.75 pin -- the placeholder gear_disc trapezoids engaged only ~0.36 and
+invited tooth-skip at stall); (2) the 6 road wheels/side, previously mounted to NOTHING
+(weight went to ground through the TT gearbox shaft + idler stub), now run on **M4×40
+bolt-axles** off a WHEEL BEAM grown into each pod rail (x 74..80.4 / z 14..26 / y ±58,
+fused to both join blocks in the loop's link-free band; Ø4.4 bores, M4 nuts in slide-up
+slots from the beam bottom, head = the outer hubcap, 1.0 running gap beam→wheel face);
+(3) the idler got a second F688ZZ (flange recess at BOTH faces -- one 5-wide bearing at
+one edge of a 30-wide wheel was a wobble hinge). Rail print orientation: bed plane is now
+the beam's outer face; support the two block bands above z 26.
 
 - **Drive:** `drive_L`/`drive_R` = 2× TT gearmotor placeholders (`motor_tt`), one per pod, shaft on X
   into the sprocket. **You own only 1 TT + bare 130-size cans (no gearbox); BUY 1 more TT 1:120 (or

@@ -4,11 +4,12 @@ Split out of the original monolithic build.py (2026-07-10); see
 build.py for the assembly entry point and the overall design notes.
 """
 import numpy as np
+import shapely.geometry as sg
 import trimesh
+from trimesh.creation import extrude_polygon
 from trimesh.transformations import rotation_matrix as R
 from params import P, TAU
 from geo import R_x, _color, box, cyl, inter, sub, uni
-from gears import gear_disc
 
 
 def _track_link_poses(wb, R, zc, n):
@@ -170,19 +171,41 @@ def _track_master_link():
     return body, keepers
 
 
+def _sprocket_disc(width):
+    """Pin-pocket sprocket disc (2026-07-10 fix): sprocket_teeth circular pin seats on
+    the track_wheel_r pin circle cut into a sprocket_outer_d/2 blank. Replaces the
+    placeholder gear_disc trapezoid teeth, whose radial engagement with the pins was
+    only ~0.36 (tip 18.8 vs pin underside 18.445 at pin circle 19.32) on top of the
+    2.0-bore/1.75-pin slop -- a recipe for tooth-skip under stall torque. Seat r 1.15 =
+    pin 0.875 + 0.275 running clearance; the seat floor sits at r 18.17 so the seat
+    WRAPS the pin (0.63 radial bite), and the seat mouth at the rim opens 2.05 > the
+    Ø1.75 pin, so pins drop in/out freely as the links articulate onto the polygon.
+    Phase on the TT shaft is free (D-socket clocks 2 ways, pins self-seat on tension)."""
+    blank = sg.Point(0, 0).buffer(P["sprocket_outer_d"] / 2, resolution=64)
+    rp = P["track_wheel_r"]
+    for k in range(P["sprocket_teeth"]):
+        a = TAU * k / P["sprocket_teeth"]
+        blank = blank.difference(
+            sg.Point(rp * np.cos(a), rp * np.sin(a)).buffer(1.15, resolution=32))
+    disc = extrude_polygon(blank, width)
+    disc.apply_translation((0, 0, -width / 2))
+    disc.apply_transform(R(TAU / 4, (0, 1, 0)))        # extrusion z -> the X axle axis
+    return disc
+
+
 def _sprocket(sx):
     """Drive sprocket + inboard hub tube reaching the TT shaft through the chassis-wall web.
-    Disc (tip r 18.8) at the pod centre (96.4 at chassis_w 140 / tw 44.8; hub local -28.1 --
+    Disc (tip r 18.8, real pin pockets -- see _sprocket_disc) at the pod centre (96.4 at
+    chassis_w 140 / tw 44.8; hub local -28.1 --
     values are chassis_w/track_width-derived); hub OD12 runs inboard to where the D-socket
     (bore Ø5.65, flat gap 3.85 print clearance, 8.0 deep = TT flat length) grips the shaft flats.
     Outer face: Ø9 x 1.5 counterbore for the M2 retaining screw + washer into the shaft tip's
     Ø2 axial hole. Built for the +X pod, spun 180deg about Z for -X."""
     tw = P["track_width"]
-    cx = P["chassis_w"] / 2 + P["track_gap"] + tw / 2              # pod centre (78)
-    hub_in = (P["chassis_w"] / 2 - 2.0 + 0.3) - cx                 # world 58.3 -> local -19.7
+    cx = P["chassis_w"] / 2 + P["track_gap"] + tw / 2              # pod centre (96.4)
+    hub_in = (P["chassis_w"] / 2 - 2.0 + 0.3) - cx                 # world 68.3 -> local -28.1
     # band pinned to 8 (the links' open +-4.9 sprocket channel), NOT tw-derived
-    spr = gear_disc(P["sprocket_outer_d"] / 2 - 1.5, P["sprocket_teeth"], 8.0, 3.0, axis="x")
-    spr = inter(spr, cyl(P["sprocket_outer_d"] / 2, 9.0, axis="x"))        # truncate tooth-box
+    spr = _sprocket_disc(8.0)
     hub = cyl(6.0, -hub_in - 3.5, axis="x")                        # corners to the 18.8 tip circle
     hub.apply_translation(((hub_in - 3.5) / 2, 0, 0))
     spr = uni([spr, hub])
@@ -205,9 +228,10 @@ def _sprocket(sx):
 
 
 def build_tracks():
-    """Two positive-drive track pods: 36 articulated links (Ø1.75 filament hinge pins) wrapping a
-    12T sprocket (rear, TT double-D hub) + idler on an F688ZZ flanged bearing (front, tensioned
-    via the chassis-arm slot) + road wheels riding the knuckle crowns. Bottom-run grouser face =
+    """Two positive-drive track pods: 45 articulated links (Ø1.75 filament hinge pins) wrapping a
+    12T pin-pocket sprocket (rear, TT double-D hub) + idler on TWO F688ZZ flanged bearings
+    (front, tensioned via the chassis-arm slot) + road wheels riding the knuckle crowns on
+    M4 bolt-axles off the pod-rail wheel beam (build_pod_rails). Bottom-run grouser face =
     ground (z=0). Each pod is a concatenation of separate printed pieces, not one solid."""
     R, tw, wb = P["track_wheel_r"], P["track_width"], P["track_wheelbase"]
     zc = _track_zc()
@@ -234,13 +258,17 @@ def build_tracks():
         wheel_pieces = []
         spr = _sprocket(sx)
         spr.apply_translation((cx, -wb / 2, za)); wheel_pieces.append(spr)
-        # idler (front): rides the knuckle crowns (r 15.82) with 0.12 running clearance; F688ZZ
-        # press seat Ø15.95 through + Ø18.5 x 1.0 flange recess on the inboard face; the Ø8 stub
-        # axle (hardware) cantilevers from the chassis tension-slot plate.
-        ir, iw = R - kr - 0.12, 30.0                   # widened with the 56 links
+        # idler (front): rides the knuckle crowns (r 15.82) with 0.12 running clearance; TWO
+        # F688ZZ bearings (2026-07-10 fix: one 5-wide bearing at the inboard face let the
+        # 30-wide wheel tilt/wander on its Ø8 stub) in the Ø15.95 through-bore, one pressed
+        # at EACH face with its Ø18 flange in a Ø18.5 x 1.0 recess; the Ø8 stub axle
+        # (hardware) cantilevers from the chassis tension-slot plate. BUY 4x F688ZZ (was 2).
+        ir, iw = R - kr - 0.12, 30.0                   # widened with the 45-link stretch
         idl = sub(cyl(ir, iw, axis="x"), cyl(P["idler_bore_d"] / 2, iw + 2, axis="x"))
-        fr = cyl(18.5 / 2, 1.05, axis="x"); fr.apply_translation((-sx * (iw / 2 - 0.5), 0, 0))
-        idl = sub(idl, fr)
+        for bs_ in (-1, 1):
+            fr = cyl(18.5 / 2, 1.05, axis="x")
+            fr.apply_translation((bs_ * (iw / 2 - 0.5), 0, 0))
+            idl = sub(idl, fr)
         # dished faces (tank-ref look): shallow annulus recess between the bore boss and rim
         for fs in (-1, 1):
             dsh = sub(cyl(ir - 2.6, 2.0, axis="x"), cyl(11.0, 3.0, axis="x"))
@@ -251,7 +279,10 @@ def build_tracks():
         idl.apply_translation((cx + sx * 6.0, wb / 2, za)); wheel_pieces.append(idl)
         # road wheels (tank-ref style): dense dished row riding the bottom-run knuckle
         # crowns (0.1 running clearance). Rim ring + recessed dish + raised hub with a
-        # 5-hole bolt circle on each face; Ø4.2 center bore for a future Ø4 stub axle.
+        # 5-hole bolt circle on each face; Ø4.2 center bore = slip fit on the M4 x 40
+        # bolt-axle (2026-07-10 fix: the wheels were mounted to NOTHING -- weight went
+        # to ground through the TT gearbox shaft + idler stub only; they now bolt to
+        # the pod-rail wheel beam, captive M4 nut inboard, head = the outer hubcap).
         rr_ = P["roadwheel_d"] / 2
         for i in range(P["roadwheel_count"]):
             ry = (i - (P["roadwheel_count"] - 1) / 2) * P["roadwheel_pitch"]
