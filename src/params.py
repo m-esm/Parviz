@@ -162,9 +162,17 @@ P = {
     # Modular positive-drive track (advancedvb 'Tank track' 3062624 geometry): printed link pads
     # on filament-rod hinge pins, a 12-tooth sprocket meshing the pins -> no slip on a desk.
     "track_wheel_r": 19.32,  # pin-circle radius = exact 12T x 10.0-pitch polygon (audit corr. 1)
-    "track_wheelbase": 161.325,  # sprocket-axis <-> idler-axis (Y). SOLVED value: with the
+    "track_wheelbase": 196.326,  # sprocket-axis <-> idler-axis (Y). SOLVED value: with the
                             # raised loop (track_raise/track_ground_hy below) the perimeter
-                            # closes at exactly 45 x 10.0 -- _track_link_poses asserts it.
+                            # closes at exactly 52 x 10.0 -- _track_link_poses asserts it.
+                            # STRETCHED 161.325 -> 196.326 2026-07-11 (user: "the track
+                            # seems too short for this chassis" after the toy-tank hull):
+                            # wb/2 - ground_hy stays 8.163, so ramp/wrap geometry and all
+                            # end clearances carry over; axles land at +-98.16, track ends
+                            # +-123.5 ~= the 240 lower hull. HARD LIMIT: the TT motor rides
+                            # the sprocket axis; its front tab reaches ys-14.15 = -112.3,
+                            # 2.7 clear of the rear inner wall at -115. Do NOT stretch past
+                            # 53 links without relocating the motors.
                             # (Stretched with chassis_l 2026-07-10; same wb/2 - ground_hy
                             # = 8.163 end geometry as the first raised loop, so the 33 deg
                             # ramps / 147 deg wraps and all end clearances carry over.)
@@ -175,11 +183,11 @@ P = {
     # (zs+8.75, r1.6 -> 44.7) and the gearbox top (45.5) still stay under the z46 deck
     # seam, so the deck stays screw-free over the motors.
     "track_raise": 9.0,     # axle z = _track_zc() + raise (34.32); loop top pin z 53.64
-    "track_ground_hy": 72.5,  # flat ground-run half-span (ramp tangent leaves here)
+    "track_ground_hy": 90.0,  # flat ground-run half-span (ramp tangent leaves here)
     "track_width": 44.8,    # link body width (X): 2x design-ref chunk, then -20% per user
                             # (28 -> 56 -> 44.8); sprocket engages only the central ~8 mm channel
     "track_pitch": 10.0,    # link pin-to-pin (our re-model; the 3062624 reference pitch is 9.65)
-    "track_links": 45,      # 45 x 10 = 450 mm loop (36 before the stretch)
+    "track_links": 52,      # 52 x 10 = 520 mm loop (36 -> 45 -> 52 stretches)
     "track_pad_th": 4.5,    # pin axis -> pad OUTER face (link overall 8: knuckle r3.5 inward)
     "track_grouser_h": 1.5, # tread lug (print grousers in TPU or add pads)
     "track_pin_bore_d": 2.0,    # link hinge bore for Ø1.75 filament pins (ref uses ~2.0 drafted)
@@ -187,9 +195,11 @@ P = {
     "sprocket_outer_d": 37.6,   # tip r 18.8 = pin circle 19.32 - 0.5 clearance (OD 42 jammed links)
     "idler_bore_d": 15.95,  # F688ZZ (8x16x5, flange 18) press seat; flange recess 18.5 x 1.0
     "roadwheel_d": 20.0,    # dished road wheels riding the bottom-run knuckle crowns
-    "roadwheel_count": 6,   # dense row like the ref; centers = (i - (n-1)/2) * pitch
-    "roadwheel_pitch": 21.0,  # 1 mm gap between Ø20 wheels; outermost at y +-52.5 keeps
-                            # 3.5+ mm lateral gap to the raised sprocket/idler discs
+    "roadwheel_count": 7,   # dense row like the ref; centers = (i - (n-1)/2) * pitch
+    "roadwheel_pitch": 23.0,  # 3 mm gap between Ø20 wheels (2026-07-11 stretch: 7 @ 23
+                            # spans +-69, keeping 3.9 axle-gap to the raised sprocket
+                            # discs at +-98.16 AND clocking the beam nut slots at +-46
+                            # clear of the pod-join dowels at y +-40, z 20)
     "idler_slot": 4.0,      # idler Y-slide for tensioning (M3 set-screw lock)
     # TT gearmotor drive (own 1x; BUY 1 more -> 2 for skid steer; MX1588 drives both).
     # Measured dims from reference/tt-motor-1079893/NOTES.md (STEP B-rep). Shaft is
@@ -485,9 +495,8 @@ P = {
     # Chassis REAR styling (design-ref back.jpg): orange frame panel (the wall shows
     # through the opening as the 'hatch') above the USB-C slot (x +-7, z 15..23), and a
     # silver cylinder pod low-right (speaker/buzzer placeholder).
-    "rear_panel_cz": 28.5,  # panel 72x18 -> z 19.5..37.5; opening 44x10 -> z 23.5..33.5
-                            # (dropped + squashed 2026-07-10: the rear cliff barrels
-                            # sweep down past the wall plane to ~z 39 at x +-5..21)
+    # rear_panel_* retired 2026-07-11: trim_rear is now a TWIN of the front grille ring
+                            # (grille_* params) framing the rear obstacle HC-SR04
     "rear_cyl_x": 47.0,     # image-RIGHT in the ref back view; 2.5 clear of the trim panel
     "rear_cyl_cz": 30.5, "rear_cyl_d": 14.0,    # raised over the rear glacis (was 16)
     # Raised camera POD on the forehead (design ref: the camera reads as an eye). Pure
@@ -549,11 +558,13 @@ P = {
     # the Ø16.6 barrel passes (+-13, z 26). The task-suggested (+-38, 15) / (+-20, 52)
     # failed verification: nothing of trim_fascia touches the wall at z 15 (ring z 36..56,
     # webs/fins z 38..54), and (+-20, 52) sockets pass within ~0.7 of the hex pockets.
-    "fascia_pin_pts": ((-44.0, 36.0), (44.0, 36.0), (-33.0, 27.0), (33.0, 27.0)),   # re-clocked
-                            # into the dropped fin-web footprint (z 24..40, toy-tank hull)
+    "fascia_pin_pts": ((-28.0, 32.0), (28.0, 32.0), (0.0, 21.0), (0.0, 43.0)),   # ring-band
+                            # pins (trim pass 2026-07-11: the fins/webs were deleted --
+                            # vestigial stubs once the toy-tank band shrank to 28 tall;
+                            # the slope hex field carries the vent look now)
     # trim_rear pins, (x, z) on the rear wall band (side bands x 22..36, bottom z 24..28):
     # clear of the USB slot (x +-7, z 15..23, 1.4 gap) and TT tab pockets (x 43.5..47.7).
-    "rear_pin_pts": ((-29.0, 28.5), (29.0, 28.5), (0.0, 21.5)),   # re-clocked with the panel
+    "rear_pin_pts": ((-28.0, 32.0), (28.0, 32.0), (0.0, 21.0)),   # ring-band pins (twin ring)
     # camera_pod Ø2 pins, (x, z) on the bezel face, ABOVE the glass line: the face is
     # open (pocket) below z 208.9, so the pod's lower band only kisses glass and the pins
     # carry it on the z>209 wall strip. Clear of the Ø8 aperture flare (r 8.94 > 4).

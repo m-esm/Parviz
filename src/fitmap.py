@@ -70,6 +70,8 @@ def _fit_report(geo):
         frozenset(("trim_fascia", "chassis_lower")), frozenset(("trim_fascia", "chassis_deck")),
         frozenset(("trim_rear", "chassis_lower")), frozenset(("trim_rear", "chassis_deck")),
         frozenset(("sensor_us", "chassis_lower")), frozenset(("sensor_us", "chassis_deck")),
+        frozenset(("sensor_us_rear", "chassis_lower")),   # rear twin: board on the inner
+        frozenset(("sensor_us_rear", "chassis_deck")),    # wall face, barrels in the bores
         frozenset(("sensor_rear", "chassis_lower")),
         frozenset(("lamp_L", "chassis_lower")), frozenset(("lamp_R", "chassis_lower")),
         frozenset(("led_front", "chassis_lower")),

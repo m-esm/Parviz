@@ -26,23 +26,10 @@ def build_fascia():
                rounded_box(gw - 2 * bd, gh - 2 * bd, t + 2, 4.0).apply_translation((0, 0, -1)))
     ring.apply_transform(R(-TAU / 4, (1, 0, 0)))     # extrude +Y (proud of the front face)
     ring.apply_translation((0, fw, P["grille_cz"]))
-    fins = [ring]
-    for sx in (-1, 1):
-        # backing web per side, tying the fin bases to the ring: the fins
-        # never touched the +-30 ring band -> trim_fascia split into 7 loose bodies
-        # (PRINTABILITY 2). 1.2 thick against the wall, hidden behind the 2-proud fins;
-        # spans x 28..47 so it overlaps the ring band. Toy-tank hull 2026-07-10: the
-        # ring/fins dropped into the lamps' z band, so the fin row pulled inboard to
-        # x <= 47.5 (lamps start at 48; the outer fin's last 1 mm sits web-less on the
-        # wall face, fine -- it still fuses to the web at x <= 47).
-        web = box(19.0, 1.2, 16.0)
-        web.apply_translation((sx * 37.5, fw + 0.6, P["grille_cz"]))
-        fins.append(web)
-        for fx in (34.0, 40.0, 46.0):
-            f = box(3.0, 2.0, 16.0)
-            f.apply_translation((sx * fx, fw + 1.0, P["grille_cz"]))
-            fins.append(f)
-    fascia = uni(fins)
+    # (fins + backing webs deleted in the 2026-07-11 trim pass: on the 28-tall toy-tank
+    # wall band they read as crammed stubs between the ring and the lamps; the slope
+    # hex field owns the vent look now, the ring alone frames the sensor eyes)
+    fascia = ring
     # FIXING: glue + 4x Ø3 pins on the fin-web backs into blind front-wall sockets
     # (PARAMS fascia_pin_pts; sockets cut in build_base)
     pf = [fascia]
@@ -60,6 +47,18 @@ def build_fascia():
     uspod = uni(us)
     _color(uspod, "sensor"); uspod.metadata["name"] = "sensor_us"
     parts.append(uspod)
+    # rear obstacle ultrasonic (2026-07-11): the same board + barrels mirrored onto the
+    # rear wall inside the twin ring -- reversing obstacle detection to pair with the
+    # rear cliff sensor. Board sits against the inner wall face; the deck-split bosses
+    # at (+-34, -113) start outboard of its +-22.85 edge.
+    usr = [box(45.7, 1.6, 20.9).apply_translation((0, -(fw - 5.0 - 0.8), P["us_cz"]))]
+    for sx in (-1, 1):
+        b = cyl(P["us_d"] / 2, 13.0, axis="y", sections=48)
+        b.apply_translation((sx * P["us_dx"], -(fw - 5.0 + 6.5 - 0.75), P["us_cz"]))
+        usr.append(b)
+    usrpod = uni(usr)
+    _color(usrpod, "sensor"); usrpod.metadata["name"] = "sensor_us_rear"
+    parts.append(usrpod)
     # cliff sensors: HC-SR04 boards against the deck slope skins' backs (pockets +
     # bores in build_chassis_parts), barrels through the skin, ~8 proud like
     # sensor_us. Front looks down-forward (driving), rear down-backward (reversing).
@@ -107,11 +106,14 @@ def build_fascia():
     led = uni(fl)
     _color(led, "led"); led.metadata["name"] = "led_front"
     parts.append(led)
-    # REAR: orange frame panel (wall shows through as the hatch) + silver cylinder pod
-    rp = sub(rounded_box(72.0, 18.0, 2.5, 6.0),
-             box(44.0, 10.0, 8.0))
+    # REAR (trim pass 2026-07-11): a TWIN of the front grille ring, framing the rear
+    # obstacle HC-SR04 (user: "the rear has also two proximity sensors" -- obstacle +
+    # cliff each end now). Replaces the squashed 72x18 hatch frame. Silver buzzer pod
+    # stays at +47; the USB-C entry moved to x -38 so the barrels own the center.
+    rp = sub(rounded_box(gw, gh, t, 6.0),
+             rounded_box(gw - 2 * bd, gh - 2 * bd, t + 2, 4.0).apply_translation((0, 0, -1)))
     rp.apply_transform(R(TAU / 4, (1, 0, 0)))        # extrude -Y (proud of the REAR face)
-    rp.apply_translation((0, -fw, P["rear_panel_cz"]))
+    rp.apply_translation((0, -fw, P["grille_cz"]))
     # FIXING: glue + 3x Ø3 pins into blind rear-wall sockets (PARAMS rear_pin_pts)
     pr = [rp]
     for px, pz in P["rear_pin_pts"]:
@@ -334,7 +336,10 @@ def build_chassis_core():
         pil.apply_transform(R((a - 90) * DEG, (0, 0, 1)))
         body = sub(body, pil)
     usb = box(14, 12, 8)                              # USB-C power entry in the rear wall
-    usb.apply_translation((0, -P["chassis_l"] / 2, z0 + 24)); body = sub(body, usb)
+    # moved x 0 -> -38 (2026-07-11): the rear obstacle HC-SR04 + its twin ring own the
+    # wall center now; -38 keeps the slot 1.0 off the ring band (ends -30), below the
+    # deck-split boss zone (z 37+ at x -38..-30), and right above the belly power tray
+    usb.apply_translation((-38.0, -P["chassis_l"] / 2, z0 + 24)); body = sub(body, usb)
     # PD-trigger mount (wiring pass 2026-07-08): 2x Ø1.7 M2 self-tap pilots in the rear
     # wall's interior face flanking the USB slot -- the trigger/breakout board hangs on
     # the wall with its jack aligned to the slot. Plus 2x Ø3.2 zip anchors through the
@@ -343,7 +348,7 @@ def build_chassis_core():
     # own tether eventually).
     for sxp in (-1, 1):
         pd = cyl(0.85, 4.0, axis="y")
-        pd.apply_translation((sxp * 9.0, -P["chassis_l"] / 2 + 5 - 1.9, z0 + 24))
+        pd.apply_translation((-38.0 + sxp * 9.0, -P["chassis_l"] / 2 + 5 - 1.9, z0 + 24))
         body = sub(body, pd)
     for sxp in (-1, 1):
         zh = cyl(1.6, 7.0)
@@ -390,6 +395,9 @@ def build_chassis_core():
         us = cyl(P["us_d"] / 2 + 0.3, 12, axis="y")
         us.apply_translation((sx * P["us_dx"], fw - 2.5, P["us_cz"]))
         body = sub(body, us)
+        usr = cyl(P["us_d"] / 2 + 0.3, 12, axis="y")  # rear obstacle HC-SR04 barrel
+        usr.apply_translation((sx * P["us_dx"], -(fw - 2.5), P["us_cz"]))
+        body = sub(body, usr)                         # passes (2026-07-11, twin ring)
     for i in range(-3, 5):                            # side ventilation slots (extended
         v = box(12, 5, 16); v.apply_translation((0, i * 16, z0 + h / 2))    # +-48/64 with the
         v2 = v.copy(); v.apply_translation((P["chassis_w"] / 2, 0, 0))      # 200 chassis; the
@@ -785,7 +793,7 @@ def build_pod_rails():
 
     WHEEL BEAM (2026-07-10 fix, review: the 6 road wheels were mounted to NOTHING, so
     the robot's weight went to ground through the TT gearbox shaft + the idler stub):
-    each rail carries a beam at x 74..80.4 / z 14..26 / y +-58, fused to both join
+    each rail carries a beam at x 74..80.4 / z 14..26 / y +-74.5, fused to both join
     blocks, living in the loop's link-free band (bottom-run knuckle tops 9.5, top-run
     sweep 41.14, ramp links start |y| 72.5, sprocket hub tube crosses above at z 28.3).
     Per wheel: an M4 x 40 bolt-axle from outboard (head = hubcap on the wheel face,
@@ -813,8 +821,9 @@ def build_pod_rails():
         # clear of the vent cutters (they reach x 76) so the vents still breathe
         spine = box(1.8, P["pod_join_y"][1] - P["pod_join_y"][0] + bw, 10.0)
         spine.apply_translation((s * (76.2 + 78.0) / 2, 0, 35.0))
-        beam = box(6.4, 116.0, 12.0)                   # wheel beam x 74..80.4, y +-58
-        beam.apply_translation((s * 77.2, 0, 20.0))
+        beam = box(6.4, 149.0, 12.0)                   # wheel beam x 74..80.4, y +-74.5
+        beam.apply_translation((s * 77.2, 0, 20.0))    # (2026-07-11 stretch: outermost
+        # wheel station +-69 + nut-slot margin; ramp links leave the ground at +-90)
         rail = uni(parts + [spine, beam])
         for i in range(P["roadwheel_count"]):
             ry = (i - (P["roadwheel_count"] - 1) / 2) * P["roadwheel_pitch"]

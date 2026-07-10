@@ -56,10 +56,10 @@ Owned quantities cross-checked against a personal parts inventory (2026-07-07).
 | M3 screws + hex nuts | captive-nut joints everywhere; incl. M3x35 x8 bezel↔back | lots | 540pc M3 stainless kit + 175pc M3 30–50 mm kit + 600pc M2-M5 kit + 1263pc M2-M4 kit (all Tray 1) |, |
 | M2 screws | camera board (2 screwed + 2 locating pads) + cam_cover (2) + track master-link keepers (2/pod, **M2×8 pan head**, sunk in the tab counterbores) + PD-trigger mount (2) | 8+ | in the 600pc M2-M5 and 1263pc M2-M4 kits |, (CLAUDE.md's "buy M2" is stale) |
 | M3 nylon standoffs | ULN2003 / driver mounts | few | 380pc kit (Tray 1) |, |
-| Track hinge pins | Ø1.75 filament, bore 2.0. 45 links x 2 pods = **90 pins x ~46 mm** (track_width 44.8 + trim) ≈ 4.2 m, cut from an owned spool (the black CR-PETG is tougher than PLA for pins) | 90 | spooled (Tray 1) |, |
+| Track hinge pins | Ø1.75 filament, bore 2.0. 52 links x 2 pods = **104 pins x ~46 mm** (track_width 44.8 + trim) ≈ 4.8 m, cut from an owned spool (the black CR-PETG is tougher than PLA for pins) | 104 | spooled (Tray 1) |, |
 | Ø4 dowel pins | body-to-pod join (2 per side), Ø4x12: modeled (wall slip holes + rail press sockets) | 4 | 0 | **4** |
-| HC-SR04 ultrasonic | x3: forward obstacle (front wall, in the grille opening) + front/rear cliff (flush in the deck slopes, boards behind the 5-thick skin). **Inventory has ZERO** (checked 2026-07-10) | 3 | 0 | **3** |
-| M4x40 + nuts | road-wheel bolt-axles (2026-07-10 fix: wheels were mounted to nothing): head = outer hubcap, shank in the Ø4.2 wheel bore, nut captive in the rail wheel-beam slot. Prefer partially threaded (shank bearing surface); 40 mm exceeds the owned kits | 12+12 | nuts maybe in the 1263pc M2-M4 kit (verify) | **12x M4x40 (+nuts if absent)** |
+| HC-SR04 ultrasonic | x4: forward + REAR obstacle (front/rear walls, inside the twin grille rings) + front/rear cliff (flush in the deck slopes, boards behind the 5-thick skin). **Inventory has ZERO** (checked 2026-07-10) | 4 | 0 | **4** |
+| M4x40 + nuts | road-wheel bolt-axles (2026-07-10 fix: wheels were mounted to nothing): head = outer hubcap, shank in the Ø4.2 wheel bore, nut captive in the rail wheel-beam slot. Prefer partially threaded (shank bearing surface); 40 mm exceeds the owned kits | 14+14 | nuts maybe in the 1263pc M2-M4 kit (verify) | **14x M4x40 (+nuts if absent)** |
 
 ### Printed parts (watertight; tank base + split head)
 - `chassis_lower_front` / `chassis_lower_rear`: the open-top tub, split at y=+26 for
@@ -69,9 +69,9 @@ Owned quantities cross-checked against a personal parts inventory (2026-07-07).
   three plates (seams y 66/-52, half-laps + 2x M3 down through each strip into shelf
   pilots); the center carries the whole pan seat + its own 4 hold-downs; the corner
   hold-downs live in the strips
-- `track_L` / `track_R`: tank track pods: 45 links/side on Ø1.75 filament pins, 12T
+- `track_L` / `track_R`: tank track pods: 52 links/side on Ø1.75 filament pins, 12T
   pin-pocket sprocket (real circular pin seats since 2026-07-10, r 1.15 on the 19.32
-  pin circle), idler on 2x F688ZZ (30 wide, tension slot), 6 dished road wheels/side
+  pin circle), idler on 2x F688ZZ (30 wide, tension slot), 7 dished road wheels/side
   (30 wide) on M4x40 bolt-axles off the pod-rail wheel beams
 - `pan_platform`: disc that yaws on the base (central shaft bore + off-axis cable pass)
 - `pan_race` / `pan_balls` / `pan_clips` / `pan_cage`: captured-BB lazy-Susan race, retaining
@@ -146,10 +146,10 @@ tray killed the 88.5 mm blind channels, 2026-07-08.)
    the TT shafts. Drop an M4 nut up each wheel-beam slot (do this BEFORE mounting the
    rails if access is tight), then bolt each road wheel with its M4x40 from outboard --
    snug, then back off 1/8 turn so the wheel spins free.
-5. **Thread the tracks (master-link close).** On the bench, chain all 45 links per pod
+5. **Thread the tracks (master-link close).** On the bench, chain all 52 links per pod
    (link 0 is the master: its pitch-end pins to link 1 normally NOW) and drive the Ø1.75
    filament hinge pins along X. Wrap the open chain around the pod with the idler retracted.
-   Seat the final pin in link 44's inner knuckles, swing the master's open jaws down onto it,
+   Seat the final pin in link 51's inner knuckles, swing the master's open jaws down onto it,
    slide the two `track_keeper` bars into the jaw slot from the side faces, and lock each
    with its M2 into the side-face pilot. Tension the idler. Track removal forever after:
    2 M2s out, slide the keepers, lift the master off its pin.
@@ -292,7 +292,7 @@ bundle; DSI and CSI ribbons never leave the head.
 
 1. **4x F688ZZ flanged bearings** (8x16x5, flange Ø18): most specific part, slowest to source;
    the idler seats are modeled around them (2 per idler since 2026-07-10).
-1b. **12x M4x40 + 12 M4 nuts** (road-wheel bolt-axles; partially threaded preferred).
+1b. **14x M4x40 + 14 M4 nuts** (road-wheel bolt-axles; partially threaded preferred).
 2. **1x TT gearmotor 1:120** matching the owned one (or decide now on 2x N20 metal-gear and
    re-model the motor pocket): blocks the drive train.
 3. **Power electronics** (firmware/WIRING.md): a 30W+ USB-C PD brick (the official 27W
