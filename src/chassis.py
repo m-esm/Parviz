@@ -402,17 +402,24 @@ def build_chassis_core():
         usr = cyl(P["us_d"] / 2 + 0.3, 12, axis="y")  # rear obstacle HC-SR04 barrel
         usr.apply_translation((sx * P["us_dx"], -(fw - 2.5), P["us_cz"]))
         body = sub(body, usr)                         # passes (2026-07-11, twin ring)
-    for i in range(-3, 5):                            # side ventilation slots (extended
-        v = box(12, 5, 16); v.apply_translation((0, i * 16, z0 + h / 2))    # +-48/64 with the
-        v2 = v.copy(); v.apply_translation((P["chassis_w"] / 2, 0, 0))      # 200 chassis; the
-        v2.apply_translation((-P["chassis_w"] / 2, 0, 0))                   # TT wall zone is
-        body = sub(sub(body, v), v2)                                        # now y -92..-55
+    for vy in (-112.0, -96.0, 16.0, 32.0, 48.0, 64.0, 80.0, 96.0):
+        # side ventilation slots, RE-CLOCKED 2026-07-11 (mid-drive): the TT feature
+        # zone moved to y ~ -87..-15 (motor at spr_y -68), so the old row shifted
+        # out of it into the now feature-free bands of the 240 tub
+        v = box(12, 5, 16); v.apply_translation((0, vy, z0 + h / 2))
+        v2 = v.copy(); v.apply_translation((P["chassis_w"] / 2, 0, 0))
+        v2.apply_translation((-P["chassis_w"] / 2, 0, 0))
+        body = sub(sub(body, v), v2)
 
     # --- TT drive-motor mount (both walls; see motor_tt + reference/tt-motor-1079893/NOTES.md).
     # Shaft axis at (y=-wb/2, z=_track_zc()+track_raise): the raised tank loop lifts the
     # sprocket (and so the motor) by track_raise; gearbox face 0.1 inside the wall inner face.
-    zs, ys = _track_zc() + P["track_raise"], -P["track_wheelbase"] / 2   # 34.32, -58.16
-    xw = P["chassis_w"] / 2                           # wall outer face (60); inner face 55
+    # MID-DRIVE (2026-07-11, tracks past the deck tips): the sprocket sits ON the
+    # ground run at spr_y, center z = the pin line + pin circle = _track_zc() = 25.32;
+    # the TT rides its shaft there directly (dropped ~9 and moved to the vent-free
+    # band -- the side vents were re-clocked around the new motor zone).
+    zs, ys = _track_zc(), P["spr_y"]                  # 25.32, -41
+    xw = P["chassis_w"] / 2                           # wall outer face (70); inner face 65
     axm = xw - 5.0 - P["tt_gearbox"][2] / 2 - 0.1     # motor axis x (45.58)
     for s in (-1, 1):
         ph = cyl(4.0, 12, axis="x"); ph.apply_translation((s * (xw - 2.5), ys, zs))
@@ -444,28 +451,9 @@ def build_chassis_core():
         body = sub(body, tabp)                        # front-tab pocket in the rib (1+ skin)
         tabh = cyl(1.4, 14, axis="x"); tabh.apply_translation((s * axm, ys - 14.0, zs))
         body = sub(body, tabh)                        # Ø2.8 tab-hole continuation (M2.5 self-tap)
-        # idler tension arm: wall -> slotted plate inside the front loop arc (radial < 15.7 so
-        # the wrapping links clear it); Ø8 stub axle (hardware) slides +-idler_slot/2 in the
-        # obround, M3 set-screw lock. Plate stops 0.1 inboard of the idler face.
-        cxp = xw + P["track_gap"] + P["track_width"] / 2          # pod centre (96.4)
-        # arm runs wall (x 69, 1.0 buried) -> 1.1 INTO the plate front face at 85.3: the
-        # chassis_w 140 widening left the old 7.9-long arm ending at x 76.9, 8.4 short of
-        # its plate, so the two plates floated as loose bodies (PRINTABILITY 8 / fix 5).
-        # Y-Z section unchanged: radial max 10.8 from the idler axis < 15.7, wrapping
-        # links still clear; the tension slot below cuts the arm's outer end too (fine --
-        # the Ø8 stub axle needs the passage).
-        arm = box(17.4, 16, 14.6); arm.apply_translation((s * (69.0 + 17.4 / 2), -ys, zs - 0.36))
-        plate = cyl(14.0, 2.0, axis="x"); plate.apply_translation((s * (cxp - 9.0 - 0.1 - 1.0), -ys, zs))
-        # cap the plate 0.2 under the z 46 deck seam: the full r14 disc topped out at
-        # 48.3, and the split sliced its crown into chassis_deck_front as two LOOSE
-        # bodies (pre-existing, found in the 2026-07-10 toy-tank-hull probe pass)
-        pcap = box(36.0, 36.0, 8.0)
-        pcap.apply_translation((s * (cxp - 10.1), -ys, 49.8))
-        plate = sub(plate, pcap)
-        body = uni([body, arm, plate])
-        slot = uni([cyl(4.1, 6, axis="x"), box(6, P["idler_slot"], 8.2)])
-        slot.apply_translation((s * (cxp - 9.0 - 0.1 - 1.0), -ys, zs))
-        body = sub(body, slot)
+        # (the old wall-mounted idler tension arm/plate/slot was DELETED 2026-07-11:
+        # both loop ends now ride Ø8 stubs in DECK-OVERHANG PYLONS -- see
+        # build_chassis_parts -- and the front pylons carry the tension slots)
     # --- BODY<->POD JOIN, wall side (rail side is build_pod_rails): per station one M3
     # clearance (M3x12 from inside the cavity, thread-forming into the rail's blind Ø2.5
     # pilot -- no nut, no ordering constraint vs the links) + one Ø4.1 dowel slip hole
@@ -716,6 +704,39 @@ def build_chassis_parts():
         decks[sgn] = d_
     deck_f, deck_r = decks[1], decks[-1]
 
+    # ---- END-IDLER PYLONS (2026-07-11 mid-drive): with the loop ends at |y| 128.16
+    # (past the lower tub), each end idler hangs on a Ø8 stub from a PYLON dropping
+    # out of the deck overhang's solid wedge at x 62..70 (4 clear of the link plane
+    # 74; flush with the deck side). FRONT pylons carry the tension slot (idler
+    # slides +-idler_slot/2, M3 set-screw from the nose face); REAR pylons take a
+    # blind Ø7.85 press socket. Stub cantilevers 41 to the wheel's outboard face.
+    ey_ = P["track_wheelbase"] / 2
+    za_ = 34.32                                       # end-axle line (zc + track_raise)
+    for sgn2, dpc in ((1, "f"), (-1, "r")):
+        dtgt = deck_f if sgn2 > 0 else deck_r
+        for sx_ in (-1, 1):
+            py = box(8.0, 18.7, 32.7)                  # clipped at |y| 120.5: the tub
+            py.apply_translation((sx_ * 66.0, sgn2 * (120.5 + 18.7 / 2),      # wall corner
+                                  27.3 + 32.7 / 2))    # z 27.3..60   owns |y| < 120.5
+            hb = cyl(7.0, 8.0, axis="x")               # hub boss around the socket
+            hb.apply_translation((sx_ * 66.0, sgn2 * ey_, za_))
+            dtgt = uni([dtgt, py, hb])
+            if sgn2 > 0:                               # front: tension slot + set screw
+                sl = uni([cyl(4.1, 9.0, axis="x"), box(9.0, P["idler_slot"], 8.2)])
+                sl.apply_translation((sx_ * 65.5, sgn2 * ey_, za_))
+                dtgt = sub(dtgt, sl)
+                ss = cyl(1.25, 14.0, axis="y")
+                ss.apply_translation((sx_ * 65.5, sgn2 * ey_ + 8.0, za_))
+                dtgt = sub(dtgt, ss)
+            else:                                      # rear: blind Ø7.85 press socket
+                sk = cyl(3.925, 7.0, axis="x")
+                sk.apply_translation((sx_ * 66.6, sgn2 * ey_, za_))
+                dtgt = sub(dtgt, sk)
+        if sgn2 > 0:
+            deck_f = dtgt
+        else:
+            deck_r = dtgt
+
     out = []
     for m_, nm in ((lower_f, "chassis_lower_front"), (lower_r, "chassis_lower_rear"),
                    (deck_f, "chassis_deck_front"), (deck_c, "chassis_deck_center"),
@@ -825,12 +846,14 @@ def build_pod_rails():
         # clear of the vent cutters (they reach x 76) so the vents still breathe
         spine = box(1.8, P["pod_join_y"][1] - P["pod_join_y"][0] + bw, 10.0)
         spine.apply_translation((s * (76.2 + 78.0) / 2, 0, 35.0))
-        beam = box(6.4, 149.0, 12.0)                   # wheel beam x 74..80.4, y +-74.5
-        beam.apply_translation((s * 77.2, 0, 20.0))    # (2026-07-11 stretch: outermost
-        # wheel station +-69 + nut-slot margin; ramp links leave the ground at +-90)
+        beam = box(6.4, 172.0, 12.0)                   # wheel beam x 74..80.4, y +-86
+        beam.apply_translation((s * 77.2, 0, 20.0))    # (mid-drive 2026-07-11: stations
+        # to +-80.5 + nut-slot margin; ramp links leave the ground at +-120)
         rail = uni(parts + [spine, beam])
-        for i in range(P["roadwheel_count"]):
-            ry = (i - (P["roadwheel_count"] - 1) / 2) * P["roadwheel_pitch"]
+        hn = cyl(6.75, 10.0, axis="x")                 # Ø13.5 notch: the mid-drive
+        hn.apply_translation((s * 77.2, P["spr_y"], _track_zc()))   # sprocket hub tube
+        rail = sub(rail, hn)                           # (Ø12) crosses the beam here
+        for ry in P["roadwheel_ys"]:
             ab = cyl(2.2, 9.0, axis="x")               # Ø4.4 M4 clearance bore
             ab.apply_translation((s * 77.2, ry, rr_z))
             rail = sub(rail, ab)

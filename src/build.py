@@ -88,15 +88,15 @@ def build():
     # track drive: 2x TT gearmotor (own 1, BUY 1 more) INSIDE the chassis, gearbox face 0.1 off
     # the side-wall inner face; the shaft crosses the wall (Ø8 pass, wall thinned to a 3 mm web)
     # and the sprocket's inboard hub grips the flats just outside. Shaft axis = sprocket axis
-    # (y=-wb/2, z=_track_zc()). Tab registers in a rear-wall pocket; nub in a wall pocket;
+    # (y=spr_y, z=_track_zc()). Tab registers in a rib pocket; nub in a wall pocket;
     # 2x M3 through gearbox + wall, nuts in the pod gap. Skid steer.
-    wbd = P["track_wheelbase"]
     ax = P["chassis_w"] / 2 - 5.0 - P["tt_gearbox"][2] / 2 - 0.1
     for sx in (-1, 1):
         dm = motor_tt("drive_L" if sx < 0 else "drive_R")
         if sx < 0:
             dm.apply_transform(R(TAU / 2, (0, 1, 0)))   # mirror about Y: shaft -X, tab stays rear
-        dm.apply_translation((sx * ax, -wbd / 2, _track_zc() + P["track_raise"]))
+        dm.apply_translation((sx * ax, P["spr_y"], _track_zc()))   # mid-drive: shaft on
+        # the ground-run sprocket axis (pin line + pin circle = 25.32), see PARAMS spr_y
         add(dm, np.eye(4))
 
     # --- PAN GROUP ---

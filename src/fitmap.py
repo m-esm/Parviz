@@ -72,6 +72,8 @@ def _fit_report(geo):
         frozenset(("sensor_us", "chassis_lower")), frozenset(("sensor_us", "chassis_deck")),
         frozenset(("axle_hw_L", "drivewheels_L")),        # M4 heads seat on the wheel
         frozenset(("axle_hw_R", "drivewheels_R")),        # hub faces (bolt-axles)
+        frozenset(("axle_hw_L", "chassis_deck")),         # Ø8 end stubs pressed into
+        frozenset(("axle_hw_R", "chassis_deck")),         # the deck-pylon sockets
         frozenset(("sensor_us_rear", "chassis_lower")),   # rear twin: board on the inner
         frozenset(("sensor_us_rear", "chassis_deck")),    # wall face, barrels in the bores
         frozenset(("sensor_rear", "chassis_lower")),

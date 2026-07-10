@@ -78,6 +78,8 @@ WHITELIST = {
     frozenset(("ant_gears_R", "antenna_R")),     #  real generated pass later, cf WORM.md)
     frozenset(("ant_gears_L", "motor_ant_L")),   # G1 bored onto each 28BYJ D-shaft
     frozenset(("ant_gears_R", "motor_ant_R")),
+    frozenset(("axle_hw_L", "chassis_deck")),    # Ø8 end stubs PRESSED into the deck
+    frozenset(("axle_hw_R", "chassis_deck")),    # pylons' Ø7.85 sockets (designed press)
 }
 
 # Sweep pose grid: (pan_deg, tilt_deg)

@@ -256,9 +256,16 @@ def build_tracks():
                     keeper_pieces.append(kk)
         za = zc + P["track_raise"]                     # raised axle line (tank-ref loop)
         wheel_pieces = []
+        # DRIVE SPROCKET on the GROUND RUN (2026-07-11 mid-drive, see PARAMS spr_y /
+        # track_wheelbase): center on the pin line + pin circle, meshing the straight
+        # bottom run rack-style -- the robot's weight presses the run into the teeth,
+        # so ground reaction guarantees the 2-3-pin bite. TT stays direct on the
+        # double-D shaft, dropped with it to z 25.32.
         spr = _sprocket(sx)
-        spr.apply_translation((cx, -wb / 2, za)); wheel_pieces.append(spr)
-        # idler (front): rides the knuckle crowns (r 15.82) with 0.12 running clearance; TWO
+        spr.apply_translation((cx, P["spr_y"], (zc - R) + R)); wheel_pieces.append(spr)
+        # END WHEELS (both ends are now FREE IDLERS on Ø8 stubs in the deck-overhang
+        # pylons; the front pair tensions): rides the knuckle crowns with 0.12 running
+        # clearance; TWO
         # F688ZZ bearings (2026-07-10 fix: one 5-wide bearing at the inboard face let the
         # 30-wide wheel tilt/wander on its Ø8 stub) in the Ø15.95 through-bore, one pressed
         # at EACH face with its Ø18 flange in a Ø18.5 x 1.0 recess; the Ø8 stub axle
@@ -275,8 +282,10 @@ def build_tracks():
             dsh.apply_translation((fs * (iw / 2 - 0.9), 0, 0))
             idl = sub(idl, dsh)
         # 30-wide idler grows OUTBOARD only: inner face stays at |cx|-9, 0.1 clear of
-        # the chassis tension plate (symmetric growth swallowed the plate, 830 mm3)
-        idl.apply_translation((cx + sx * 6.0, wb / 2, za)); wheel_pieces.append(idl)
+        # the deck pylon face (symmetric growth once swallowed the old tension plate)
+        for ey_ in (wb / 2, -wb / 2):
+            idl2 = idl.copy()
+            idl2.apply_translation((cx + sx * 6.0, ey_, za)); wheel_pieces.append(idl2)
         # road wheels (tank-ref style): dense dished row riding the bottom-run knuckle
         # crowns (0.1 running clearance). Rim ring + recessed dish + raised hub with a
         # 5-hole bolt circle on each face; Ø4.2 center bore = slip fit on the M4 x 40
@@ -284,8 +293,7 @@ def build_tracks():
         # to ground through the TT gearbox shaft + idler stub only; they now bolt to
         # the pod-rail wheel beam, captive M4 nut inboard, head = the outer hubcap).
         rr_ = P["roadwheel_d"] / 2
-        for i in range(P["roadwheel_count"]):
-            ry = (i - (P["roadwheel_count"] - 1) / 2) * P["roadwheel_pitch"]
+        for ry in P["roadwheel_ys"]:
             rw = cyl(rr_, 30.0, axis="x")
             for fs in (-1, 1):
                 dsh = sub(cyl(rr_ - 2.2, 2.4, axis="x"), cyl(5.2, 3.4, axis="x"))
@@ -300,25 +308,24 @@ def build_tracks():
             rw = sub(rw, cyl(2.1, 34.0, axis="x"))
             rw.apply_translation((cx, ry, (zc - R) + kr + rr_ + 0.1))
             wheel_pieces.append(rw)
-        # VISIBLE AXLE HARDWARE (2026-07-11, user: "drive wheels are still not
-        # properly connected" -- the bolts/stubs were unmodeled hardware, so the
-        # wheels floated in the viewer): one silver placeholder node per side, NOT
-        # print-exported. 7x M4x40 bolt-axles (shank through the rail-beam bore and
-        # the wheel, hex head = the hubcap on the wheel face) + the Ø8 idler stub
-        # (lives in the x 83.3..89.3 tension-slot passage, cantilevers out through
-        # the idler; the F688ZZ pair stays unmodeled hardware).
+        # VISIBLE AXLE HARDWARE (2026-07-11): silver placeholder node per side, NOT
+        # print-exported. 6x M4x40 bolt-axles (shank through the rail-beam bore and
+        # the wheel, hex head = the hubcap) + TWO Ø8 end stubs (mid-drive pass:
+        # each cantilevers from its deck pylon through an end idler's F688ZZ pair;
+        # the front pylon's slot tensions).
         hw = []
-        for i in range(P["roadwheel_count"]):
-            ry = (i - (P["roadwheel_count"] - 1) / 2) * P["roadwheel_pitch"]
+        for ry in P["roadwheel_ys"]:
             rwz = (zc - R) + kr + rr_ + 0.1
             sh = cyl(1.95, 37.0, axis="x")
             sh.apply_translation((sx * 93.0, ry, rwz))         # x 74.5..111.5
             hd = cyl(3.5, 3.5, axis="x")
             hd.apply_translation((sx * 113.15, ry, rwz))       # head on the hub face
             hw += [sh, hd]
-        stub = cyl(4.0, 34.5, axis="x")
-        stub.apply_translation((sx * 100.75, wb / 2, za))      # x 83.5..118
-        hw.append(stub)
+        for ey_ in (wb / 2, -wb / 2):                  # Ø8 end stubs INTO the pylons
+            stub = cyl(4.0, 49.0, axis="x")            # x 64..113: rear presses its
+            stub.apply_translation((sx * 88.5, ey_, za))   # Ø7.85 socket (designed,
+            hw.append(stub)                            # whitelisted), front slides in
+            # its Ø8.2 tension slot; outboard end reaches the wheel's outer face +2
         hwn = trimesh.util.concatenate(hw)
         _color(hwn, "motor")
         hwn.metadata["name"] = "axle_hw_%s" % ("L" if sx < 0 else "R")

@@ -145,15 +145,23 @@ Kinematic chain, bottom to top (built at neutral pose pan=0, tilt=0):
 tank chassis        DRIVE base: central body (build_base) + track_L/track_R (build_tracks) +
   │                 drive_L/drive_R (2x TT gearmotor, shaft X into each pod's rear sprocket).
   │                 Body houses the pan motor + driver + wiring; pan-mount on top (z=52).
-  │                 Tracks = 53 modular link pads on a RAISED TANK LOOP (2026-07-10, RC-tank
+  │                 Tracks = 64 modular link pads on a RAISED TANK LOOP (2026-07-10, RC-tank
   │                 refs; was a flat stadium): sprocket + idler axles sit track_raise=9 above
   │                 the old centerline (z 34.32), ~33 deg ramps at both ends, ~147 deg wraps,
-  │                 flat ground run +-track_ground_hy=92.5; wheelbase 201.326 SOLVED so the
-  │                 loop closes at exactly 53x10 (asserted in _track_link_poses;
-  │                 stretched 45->52->53 links 2026-07-11, user x2: track too short --
-  │                 axles +-100.66, track ends +-126; the TT front-tab pocket now cuts
-  │                 INTO the rear wall band (2.4 outer skin) = the ABSOLUTE limit,
-  │                 longer needs a belt/gear offset drive). STRETCHED
+  │                 flat ground run +-track_ground_hy=120; wheelbase 256.326 SOLVED so the
+  │                 loop closes at exactly 64x10 (asserted in _track_link_poses).
+  │                 MID-DRIVE ARCHITECTURE (2026-07-11, user chose "tracks 1 cm past
+  │                 the deck tips"): end axles +-128.16, track ends +-153.5 -- past
+  │                 the coaxial-TT limit, so BOTH loop ends are now FREE IDLERS on
+  │                 Ø8 stubs in DECK-OVERHANG PYLONS (x 62..70, clipped at |y| 120.5;
+  │                 front pair carries the tension slots + M3 set screws, rear pair
+  │                 blind Ø7.85 press sockets), and the DRIVE SPROCKET sits INSIDE
+  │                 the loop ON THE GROUND RUN at spr_y=-68 (center z = zc = 25.32):
+  │                 the robot's weight presses the straight run into the pin pockets
+  │                 (rack-style 2-3 pin bite, ground reaction guarantees mesh). The
+  │                 TT stays DIRECT on the sprocket shaft, dropped ~9 with it; spr_y
+  │                 -68 is the derived slot that misses the ULN posts, the pod-join
+  │                 nut band and the (re-clocked) side vents -- see PARAMS spr_y. STRETCHED
   │                 same day with chassis_l 156->200->240 (user: "longer, same shape as the
   │                 refs"; the wb/2 - ground_hy = 8.163 end geometry is unchanged, so all
   │                 end clearances carry over). 7 dished Ø20 road wheels (pitch 23, to
@@ -248,7 +256,7 @@ three stages, see docs/FIXES.md Stage 4). Overall assembly bbox ≈ 209 × 170.5
 Still first-guess (validate on a print): tilt axis at y=−18 / z=153 (moved back 18 mm in stage 2R
 to clear the Pi-on-display stack; z was 178 until the 2026-07-06 head drop shifted the whole
 head+tilt stack −25), screen center y 18.5 / z 153, tilt ±30, pan ±90,
-worm module 1.25 / 12T wheel, track pitch 10 / 53 links / 12T sprocket, pan BB circle Ø80. Neck
+worm module 1.25 / 12T wheel, track pitch 10 / 64 links / 12T sprocket, pan BB circle Ø80. Neck
 column at `neck_y=−17` (stage 5: footprint max r 43.1 fits the spinning platform's solid r45; the
 cable channel is decoupled at `neck_chan_y=−26`). Head width 205 vs track outer width 238
 (chassis_w 140, base_h 66, track_width 44.8 (2026-07-07: 2x design-ref chunk then -20%
@@ -327,7 +335,7 @@ is a horizontal seam at z=46, clamped by 4x M3 down from the deck into lower Ø2
 pilots (front pair on the side ledges, rear pair on the REAR wall at +-34/-93 since 2026-07-10:
 the raised TT gearboxes own the old side spots). `build_tracks()` builds two
 **positive-drive track pods** (geometry from the local `Tank track - 3062624/` reference = Thingiverse
-thing:3062624, CC-BY): a chain of **53 printed link pads** (`_track_link_poses` walks the RAISED
+thing:3062624, CC-BY): a chain of **64 printed link pads** (`_track_link_poses` walks the RAISED
 TANK LOOP -- see the kinematic-chain diagram above for the 2026-07-10 profile numbers)
 on filament-rod hinge pins, a **12-tooth drive sprocket** (rear, RAISED, spoked with 6 lightening
 holes) meshing the pins, a raised **idler** on TWO F688ZZ bearings (front, one per face) in a
@@ -498,3 +506,16 @@ the ear). PARAMS ear_y=-10/ear_z=214, above the trim rails, both in head_back, c
 of the screen top (208.4) and antenna half-shafts (207). `ear_mic_L/R` placeholders =
 foam tip (12 proud) + inboard neck stub. NO panel jacks needed (v1's wall-jack design
 retired before printing); mics + CM108 adapters already ordered.
+
+**Mid-drive + centered ears (2026-07-11, user rounds 7-8):** tracks now end +-153.5
+(~1 cm past the 144 deck tips, chosen over the 130 option) via the MID-DRIVE rework
+described in the kinematic notes above; the wheel row is an explicit station list
+(roadwheel_ys, 6 wheels + the sprocket at -68 doubling as the 7th support), the
+side vents re-clocked to (-112,-96,16..96), the old wall-mounted idler tensioner is
+DELETED (deck pylons own tension), and the end stubs press their pylon sockets
+(whitelisted). The pod-rail wheel beam grew to +-86 with a Ø13.5 notch where the
+sprocket hub crosses it. EARS moved to the head sides' vertical center: (y -40,
+z 157) -- y -40 is the derived clear column (trim rails y +-13, Ø26 tilt clamp
+tubes to y -31, Ø20 pivot bosses, wall flat ends y -54). BOM: F688ZZ 4 -> 8 (two
+per end idler x4), M4x40 12, hinge pins 128, Ø8 stubs x4 ~50 mm (M8 bolts work).
+PRINT NOTE: 128 track links total -- budget the print time.

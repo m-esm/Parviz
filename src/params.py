@@ -162,17 +162,21 @@ P = {
     # Modular positive-drive track (advancedvb 'Tank track' 3062624 geometry): printed link pads
     # on filament-rod hinge pins, a 12-tooth sprocket meshing the pins -> no slip on a desk.
     "track_wheel_r": 19.32,  # pin-circle radius = exact 12T x 10.0-pitch polygon (audit corr. 1)
-    "track_wheelbase": 201.326,  # sprocket-axis <-> idler-axis (Y). SOLVED value: with the
+    "track_wheelbase": 256.326,  # sprocket-axis <-> idler-axis (Y). SOLVED value: with the
                             # raised loop (track_raise/track_ground_hy below) the perimeter
-                            # closes at exactly 53 x 10.0 -- _track_link_poses asserts it.
-                            # STRETCHED 161.325 -> 196.326 -> 201.326 2026-07-11 (user
-                            # x2: "track too short for this chassis"): wb/2 - ground_hy
-                            # stays 8.163, so ramp/wrap geometry and all end clearances
-                            # carry over; axles land at +-100.66, track ends +-126. THIS
-                            # IS THE HARD LIMIT: the TT motor rides the sprocket axis and
-                            # its front-tab pocket now reaches y -117.6, cut INTO the
-                            # rear wall band (2.4 outer skin left, rib + wall merged).
-                            # Any longer track needs a belt/gear offset drive.
+                            # closes at exactly 64 x 10.0 -- _track_link_poses asserts it.
+                            # STRETCHED 161.325 -> ... -> 256.326 2026-07-11 (user chose
+                            # "tracks 1 cm past the DECK TIPS"): wb/2 - ground_hy stays
+                            # 8.163 (end geometry carries over); END AXLES at +-128.16,
+                            # track ends +-153.5 ~= deck tips 144 + 1 cm. This exceeds
+                            # the coaxial-TT limit, so the DRIVE ARCHITECTURE CHANGED:
+                            # both loop ends are now FREE IDLER WHEELS on Ø8 stubs in
+                            # deck-overhang PYLONS (front pair tensions), and the drive
+                            # sprocket moved INSIDE the loop onto the GROUND RUN at
+                            # spr_y -- the robot's weight presses the straight run into
+                            # mesh (rack-style engagement of 2-3 pins; ground reaction
+                            # guarantees bite). TT stays direct on the sprocket shaft,
+                            # dropped to the ground-run pin line (z 25.32) at spr_y.
                             # (Stretched with chassis_l 2026-07-10; same wb/2 - ground_hy
                             # = 8.163 end geometry as the first raised loop, so the 33 deg
                             # ramps / 147 deg wraps and all end clearances carry over.)
@@ -183,11 +187,11 @@ P = {
     # (zs+8.75, r1.6 -> 44.7) and the gearbox top (45.5) still stay under the z46 deck
     # seam, so the deck stays screw-free over the motors.
     "track_raise": 9.0,     # axle z = _track_zc() + raise (34.32); loop top pin z 53.64
-    "track_ground_hy": 92.5,  # flat ground-run half-span (ramp tangent leaves here)
+    "track_ground_hy": 120.0,  # flat ground-run half-span (ramp tangent leaves here)
     "track_width": 44.8,    # link body width (X): 2x design-ref chunk, then -20% per user
                             # (28 -> 56 -> 44.8); sprocket engages only the central ~8 mm channel
     "track_pitch": 10.0,    # link pin-to-pin (our re-model; the 3062624 reference pitch is 9.65)
-    "track_links": 53,      # 53 x 10 = 530 mm loop (36 -> 45 -> 52 -> 53 stretches)
+    "track_links": 64,      # 64 x 10 = 640 mm loop (36->45->52->53->64 stretches)
     "track_pad_th": 4.5,    # pin axis -> pad OUTER face (link overall 8: knuckle r3.5 inward)
     "track_grouser_h": 1.5, # tread lug (print grousers in TPU or add pads)
     "track_pin_bore_d": 2.0,    # link hinge bore for Ø1.75 filament pins (ref uses ~2.0 drafted)
@@ -195,11 +199,20 @@ P = {
     "sprocket_outer_d": 37.6,   # tip r 18.8 = pin circle 19.32 - 0.5 clearance (OD 42 jammed links)
     "idler_bore_d": 15.95,  # F688ZZ (8x16x5, flange 18) press seat; flange recess 18.5 x 1.0
     "roadwheel_d": 20.0,    # dished road wheels riding the bottom-run knuckle crowns
-    "roadwheel_count": 7,   # dense row like the ref; centers = (i - (n-1)/2) * pitch
-    "roadwheel_pitch": 23.0,  # 3 mm gap between Ø20 wheels (2026-07-11 stretch: 7 @ 23
-                            # spans +-69, keeping 3.9 axle-gap to the raised sprocket
-                            # discs at +-98.16 AND clocking the beam nut slots at +-46
-                            # clear of the pod-join dowels at y +-40, z 20)
+    "roadwheel_ys": (80.5, 57.5, 34.5, 11.5, -11.5, -34.5),   # EXPLICIT stations
+                            # (2026-07-11 mid-drive): the ground-run sprocket at spr_y
+                            # -68 needs 28.8+ axle gaps (18.8 + 10): nearest wheel
+                            # -34.5 sits 33.5 away; -68..-120 is carried by the
+                            # sprocket + rear end idler. Nut slots at +-34.5 clear the
+                            # pod-join dowels (+-40, z 20) by 1.85
+    "spr_y": -68.0,         # drive sprocket station on the ground run (center z = pin
+                            # line + pin circle = 25.32). THE derivation (all failed
+                            # spots documented 2026-07-11): the TT envelope ys-12..
+                            # ys+52.6 x 39.5..67.8 must miss the ULN posts (y 4..36)
+                            # -> ys <= -48.6; the M3 wall pair at ys+20.3 must miss
+                            # the pod-join rail block band y -44.5..-35.5 (the nuts
+                            # float in the pod gap there) -> ys <= -68; the tab/rib
+                            # at ys-14.15 pushed the -80 vent out of the row
     "idler_slot": 4.0,      # idler Y-slide for tensioning (M3 set-screw lock)
     # TT gearmotor drive (own 1x; BUY 1 more -> 2 for skid steer; MX1588 drives both).
     # Measured dims from reference/tt-motor-1079893/NOTES.md (STEP B-rep). Shaft is
@@ -533,14 +546,15 @@ P = {
     # the boss rim at x>100, harmless), and the right wall's Pi I/O slot (y -8.5..6.5,
     # z 166.5..183.5; the z-188 socket sits 1.9 above it).
     "rail_pin_pts": ((-8.0, 146.0), (8.0, 146.0), (0.0, 188.0)),
-    # EAR MICS (2026-07-11, ordered: 2x 3.5 mm gooseneck "hose" mics, one per side):
-    # panel-mount TRS jack through each head side wall; the mic plugs in from outside
-    # and its gooseneck rises as the ear. Spot chosen so the Ø8.5 jack body inside
-    # clears the screen top (208.4) and the antenna half-shafts (z 203..207), the
-    # Ø16-ish pod footprint clears the trim rails (top z 205) and the bezel<->back
-    # split plane (y ~2), and wires drop to the Pi USB (CM108 adapters).
-    "ear_y": -10.0,
-    "ear_z": 214.0,
+    # EAR MICS (2026-07-11, ordered: 2x 3.5 mm gooseneck "hose" mics, one per side;
+    # v3 same day, user: "vertically in the center of the head sides"): Ø15 grommet
+    # bore per side wall, only the foam tip out. z 157 ~= the head's vertical center
+    # (shell 88..226); y -36 is the only clear column there: rear of the trim rails
+    # (y +-13, z 115..205), 0.5 off the Ø20 tilt pivot-hub bosses (y -18, z 153),
+    # 1.7 off the Ø26 tilt clamp tubes (edge y -31, reach x 99; the first -36 try
+    # clipped them by 100 mm3), behind the screen stack (y 6..31).
+    "ear_y": -40.0,
+    "ear_z": 157.0,
     # ARM SHOULDER INTERFACE (docs/ARM-MECH.md; arms are ARMS=1-gated but the head prints
     # the interface NOW so option B/C arms bolt on without a head_back reprint): per side
     # wall, 2x M3 captive-nut pockets + a Ø6.2 servo-lead pass, all under the rail.

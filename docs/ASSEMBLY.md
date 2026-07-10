@@ -43,10 +43,10 @@ Owned quantities cross-checked against a personal parts inventory (2026-07-07).
 | Part | Spec | Need | Owned | Buy |
 |---|---|---|---|---|
 | 695-2RS | 5x13x4, tilt-axle cheeks | 2 | 30 (Bag 13) |, |
-| F688ZZ flanged | 8x16x5, flange Ø18; front idlers, **2 per idler** (2026-07-10 fix: one bearing let the 30-wide wheel tilt on its stub; now one pressed at each face, Ø15.95 through-seat + Ø18.5x1.0 flange recess both sides) | 4 | 0 | **4** |
+| F688ZZ flanged | 8x16x5, flange Ø18; END idlers (both loop ends are free idlers since the 2026-07-11 mid-drive), **2 per wheel x 4 wheels** (one pressed at each face, Ø15.95 through-seat + Ø18.5x1.0 flange recess both sides) | 8 | 0 | **8** |
 | 6 mm airsoft BBs | pan race, Ø80 circle, `pan_race_n`=18 | 18 | 0 | **smallest bag (100+)** |
 | Ø5 SOLID rod | tilt axle, ~100 mm silver steel (**NOT tube**: a 1.0 flat on a Ø5/Ø2.5 tube leaves a 0.25 wall). **File a 1.0-deep flat** from the insertion end to ~15 past center (D-key for the worm wheel's hub ledge); only the ~6 mm under the hub needs a clean 1.0 ±0.1 depth. The flat crosses the +X 695 seat, so that inner race rides a D-profile (fine, the spacer tubes clamp it). Print a D-bore coupon first, starting at **+0.05** clearance (+0.15 measured as ±4.4° of head backlash) | 1 | 0 | **1** |
-| Ø8 stub axle | idler tension axle, ~20 mm, M3 set-screw lock; a short M8 bolt works | 2 | unknown, the Bag 13 "Machine Bolts" bag may have M8; verify | 2x M8x20 if not |
+| Ø8 stub axle | end-idler axles from the deck pylons, ~50 mm, x4 (front pair slides in the tension slots, M3 set-screw lock; rear pair pressed); M8x50 bolts work with the heads cut | 4 | unknown, the Bag 13 "Machine Bolts" bag may have M8; verify | 4 |
 | 608zz | **not used** in the current design. The "608zz x30" Bag 13 entry is still flagged: photos look like white plastic rings/spacers, NEEDS ID. Don't design around them | 0 | 30? (unverified) |, |
 
 ### Fasteners and pins
@@ -56,10 +56,10 @@ Owned quantities cross-checked against a personal parts inventory (2026-07-07).
 | M3 screws + hex nuts | captive-nut joints everywhere; incl. M3x35 x8 bezel↔back | lots | 540pc M3 stainless kit + 175pc M3 30–50 mm kit + 600pc M2-M5 kit + 1263pc M2-M4 kit (all Tray 1) |, |
 | M2 screws | camera board (2 screwed + 2 locating pads) + cam_cover (2) + track master-link keepers (2/pod, **M2×8 pan head**, sunk in the tab counterbores) + PD-trigger mount (2) | 8+ | in the 600pc M2-M5 and 1263pc M2-M4 kits |, (CLAUDE.md's "buy M2" is stale) |
 | M3 nylon standoffs | ULN2003 / driver mounts | few | 380pc kit (Tray 1) |, |
-| Track hinge pins | Ø1.75 filament, bore 2.0. 53 links x 2 pods = **106 pins x ~46 mm** (track_width 44.8 + trim) ≈ 4.9 m, cut from an owned spool (the black CR-PETG is tougher than PLA for pins) | 106 | spooled (Tray 1) |, |
+| Track hinge pins | Ø1.75 filament, bore 2.0. 64 links x 2 pods = **128 pins x ~46 mm** (track_width 44.8 + trim) ≈ 5.9 m, cut from an owned spool (the black CR-PETG is tougher than PLA for pins) | 128 | spooled (Tray 1) |, |
 | Ø4 dowel pins | body-to-pod join (2 per side), Ø4x12: modeled (wall slip holes + rail press sockets) | 4 | 0 | **4** |
 | HC-SR04 ultrasonic | x4: forward + REAR obstacle (front/rear walls, inside the twin grille rings) + front/rear cliff (flush in the deck slopes, boards behind the 5-thick skin). **Inventory has ZERO** (checked 2026-07-10) | 4 | 0 | **4** |
-| M4x40 + nuts | road-wheel bolt-axles (2026-07-10 fix: wheels were mounted to nothing): head = outer hubcap, shank in the Ø4.2 wheel bore, nut captive in the rail wheel-beam slot. Prefer partially threaded (shank bearing surface); 40 mm exceeds the owned kits | 14+14 | nuts maybe in the 1263pc M2-M4 kit (verify) | **14x M4x40 (+nuts if absent)** |
+| M4x40 + nuts | road-wheel bolt-axles (2026-07-10 fix: wheels were mounted to nothing): head = outer hubcap, shank in the Ø4.2 wheel bore, nut captive in the rail wheel-beam slot. Prefer partially threaded (shank bearing surface); 40 mm exceeds the owned kits | 12+12 | nuts maybe in the 1263pc M2-M4 kit (verify) | **12x M4x40 (+nuts if absent)** |
 
 ### Printed parts (watertight; tank base + split head)
 - `chassis_lower_front` / `chassis_lower_rear`: the open-top tub, split at y=+26 for
@@ -69,9 +69,10 @@ Owned quantities cross-checked against a personal parts inventory (2026-07-07).
   three plates (seams y 66/-52, half-laps + 2x M3 down through each strip into shelf
   pilots); the center carries the whole pan seat + its own 4 hold-downs; the corner
   hold-downs live in the strips
-- `track_L` / `track_R`: tank track pods: 53 links/side on Ø1.75 filament pins, 12T
+- `track_L` / `track_R`: tank track pods: 64 links/side on Ø1.75 filament pins, 12T
   pin-pocket sprocket (real circular pin seats since 2026-07-10, r 1.15 on the 19.32
-  pin circle), idler on 2x F688ZZ (30 wide, tension slot), 7 dished road wheels/side
+  pin circle), 2 end idlers on 2x F688ZZ each (30 wide; front tensions in its deck pylon), a ground-run
+  mid-drive sprocket at spr_y, 6 dished road wheels/side
   (30 wide) on M4x40 bolt-axles off the pod-rail wheel beams
 - `pan_platform`: disc that yaws on the base (central shaft bore + off-axis cable pass)
 - `pan_race` / `pan_balls` / `pan_clips` / `pan_cage`: captured-BB lazy-Susan race, retaining
@@ -140,16 +141,17 @@ tray killed the 88.5 mm blind channels, 2026-07-08.)
 3. **TT motors.** Set each TT gearmotor: shaft +X into the sprocket hub's double-D socket,
    front tab into the rear-wall pocket, nub into the wall pocket, 2× M3 through the
    gearbox + wall with the nut floating in the pod gap.
-4. **Track running gear.** Press an F688ZZ into EACH face of each idler (Ø15.95 seat +
-   Ø18.5 flange recess both sides); slide the idler on its Ø8 stub axle into the chassis
-   tension slot FROM OUTBOARD, set tension, lock the M3 set-screw. Fit the sprockets on
-   the TT shafts. Drop an M4 nut up each wheel-beam slot (do this BEFORE mounting the
+4. **Track running gear.** Press an F688ZZ into EACH face of all four end idlers (Ø15.95
+   seat + Ø18.5 flange recess both sides). Rear pair: press the Ø8 stubs into the rear
+   pylon sockets, wheels on. Front pair: slide the stubs into the front-pylon tension
+   slots, set tension AFTER threading, lock the M3 set-screws. Fit the sprockets on the
+   TT shafts (they mesh the ground run under the hull; the robot's weight seats them). Drop an M4 nut up each wheel-beam slot (do this BEFORE mounting the
    rails if access is tight), then bolt each road wheel with its M4x40 from outboard --
    snug, then back off 1/8 turn so the wheel spins free.
-5. **Thread the tracks (master-link close).** On the bench, chain all 53 links per pod
+5. **Thread the tracks (master-link close).** On the bench, chain all 64 links per pod
    (link 0 is the master: its pitch-end pins to link 1 normally NOW) and drive the Ø1.75
    filament hinge pins along X. Wrap the open chain around the pod with the idler retracted.
-   Seat the final pin in link 52's inner knuckles, swing the master's open jaws down onto it,
+   Seat the final pin in link 63's inner knuckles, swing the master's open jaws down onto it,
    slide the two `track_keeper` bars into the jaw slot from the side faces, and lock each
    with its M2 into the side-face pilot. Tension the idler. Track removal forever after:
    2 M2s out, slide the keepers, lift the master off its pin.
@@ -290,9 +292,9 @@ bundle; DSI and CSI ribbons never leave the head.
 
 ## Order now (by lead-time importance)
 
-1. **4x F688ZZ flanged bearings** (8x16x5, flange Ø18): most specific part, slowest to source;
-   the idler seats are modeled around them (2 per idler since 2026-07-10).
-1b. **14x M4x40 + 14 M4 nuts** (road-wheel bolt-axles; partially threaded preferred).
+1. **8x F688ZZ flanged bearings** (8x16x5, flange Ø18): most specific part, slowest to source;
+   the end-idler seats are modeled around them (2 per wheel x 4 since the mid-drive).
+1b. **12x M4x40 + 12 M4 nuts** (road-wheel bolt-axles; partially threaded preferred).
 2. **1x TT gearmotor 1:120** matching the owned one (or decide now on 2x N20 metal-gear and
    re-model the motor pocket): blocks the drive train.
 3. **Power electronics** (firmware/WIRING.md): a 30W+ USB-C PD brick (the official 27W
