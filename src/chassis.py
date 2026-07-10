@@ -69,10 +69,19 @@ def build_fascia():
     # white LED dot strip at the bottom lip: slim base + 7 round emitters. Base 1.2 (was
     # 1.0, handling-fragile -- PRINTABILITY 6/7); the dots ride +0.2 with the base front
     # so their 1.2 proud height over it is unchanged.
-    fl = [box(36.0, 1.2, 3.0).apply_translation((0, fw + 0.6, P["fled_cz"]))]
+    # white bar rides the GLACIS: tilt with the 33 deg face, proud 0.6 along its normal
+    gy0, gz1 = P["glacis_y0"], P["glacis_z1"]
+    ga = np.arctan2(gz1 - P["chassis_clear"], fw - gy0)
+    gn = np.array([0.0, np.sin(ga), np.cos(ga)])     # outward glacis normal
+    gface_y = gy0 + (P["fled_cz"] - P["chassis_clear"]) / np.tan(ga)
+    fl_bar = box(36.0, 1.2, 3.0)
+    fl_bar.apply_transform(R(TAU / 4 - ga, (1, 0, 0)))   # y-face normal -> glacis normal
+    fl_bar.apply_translation(np.array([0.0, gface_y, P["fled_cz"]]) + 0.6 * gn)
+    fl = [fl_bar]
     for i in range(7):
         d = cyl(1.3, 1.6, axis="y", sections=24)
-        d.apply_translation((-15.0 + i * 5.0, fw + 1.6, P["fled_cz"]))
+        d.apply_transform(R(TAU / 4 - ga, (1, 0, 0)))
+        d.apply_translation(np.array([-15.0 + i * 5.0, gface_y, P["fled_cz"]]) + 1.6 * gn)
         fl.append(d)
     led = uni(fl)
     _color(led, "led"); led.metadata["name"] = "led_front"
@@ -284,7 +293,7 @@ def build_chassis_core():
         pil.apply_transform(R((a - 90) * DEG, (0, 0, 1)))
         body = sub(body, pil)
     usb = box(14, 12, 8)                              # USB-C power entry in the rear wall
-    usb.apply_translation((0, -P["chassis_l"] / 2, z0 + 12)); body = sub(body, usb)
+    usb.apply_translation((0, -P["chassis_l"] / 2, z0 + 24)); body = sub(body, usb)
     # PD-trigger mount (wiring pass 2026-07-08): 2x Ø1.7 M2 self-tap pilots in the rear
     # wall's interior face flanking the USB slot -- the trigger/breakout board hangs on
     # the wall with its jack aligned to the slot. Plus 2x Ø3.2 zip anchors through the
@@ -293,7 +302,7 @@ def build_chassis_core():
     # own tether eventually).
     for sxp in (-1, 1):
         pd = cyl(0.85, 4.0, axis="y")
-        pd.apply_translation((sxp * 9.0, -P["chassis_l"] / 2 + 5 - 1.9, z0 + 12))
+        pd.apply_translation((sxp * 9.0, -P["chassis_l"] / 2 + 5 - 1.9, z0 + 24))
         body = sub(body, pd)
     for sxp in (-1, 1):
         zh = cyl(1.6, 7.0)
@@ -419,9 +428,13 @@ def build_chassis_core():
     # wire pass would dead-end in the floor slab -- angle it up-inward from behind the
     # strip base into the cavity (axis (10, 79, 9) -> (10, 70, 14.5); exit z 12.7+ at the
     # inner face y 73, staying 0.65+ under the HC-SR04 board bottom at z 15.55)
-    wf = cyl(P["wire_pass_r"], 11.5)
-    _orient(wf, (0, -9.0, 5.5))
-    wf.apply_translation((10.0, fw - 3.5, 11.75))
+    gy0w, gz1w = P["glacis_y0"], P["glacis_z1"]
+    gaw = np.arctan2(gz1w - z0, fw - gy0w)
+    gnw = np.array([0.0, np.sin(gaw), np.cos(gaw)])
+    wf = cyl(P["wire_pass_r"], 10.0)                 # strip rides the glacis: pass drills
+    _orient(wf, tuple(-gnw))                         # along the inward face normal into
+    gfy = gy0w + (P["fled_cz"] - z0) / np.tan(gaw)   # the cavity right behind it
+    wf.apply_translation(np.array([10.0, gfy, P["fled_cz"]]) - 3.0 * gnw)
     body = sub(body, wf)
     # sensor_rear: Ø10 sound/wire through-hole + 2x Ø2.2 x 2.5 blind cap-pin sockets
     # (0.9 web between the bore and each socket; see PARAMS rearpod_*)
@@ -432,6 +445,21 @@ def build_chassis_core():
         body = sub(body, blind_socket(P["fix_socket2_r"], P["fix_socket_deep"], (0, -1, 0),
                                       (P["rear_cyl_x"] + sxp * P["rearpod_pin_dx"], -fw,
                                        P["rear_cyl_cz"])))
+    # --- GLACIS (2026-07-10, see PARAMS): slice the hull's front/rear lower corners
+    # at the track-ramp angle so the side profile follows the tracks. The cut plane
+    # runs (|y| glacis_y0, z 7) -> (wall, glacis_z1); a rotated box under that plane
+    # removes the wedge. Wall features were re-homed above glacis_z1 (PARAMS note).
+    gy0, gz1 = P["glacis_y0"], P["glacis_z1"]
+    z0g = P["chassis_clear"]
+    ga = np.arctan2(gz1 - z0g, P["chassis_l"] / 2 - gy0)     # 33 deg for 200/18
+    for sgn in (1, -1):
+        wedge = box(170.0, 100.0, 60.0)
+        wedge.apply_transform(R(sgn * ga, (1, 0, 0)))
+        n_ = np.array([0.0, -sgn * np.sin(ga), np.cos(ga)])  # cut-plane normal (up-ish)
+        c_ = np.array([0.0, sgn * gy0, z0g]) - 30.0 * n_     # top face ON the plane
+        wedge.apply_translation(c_)
+        body = sub(body, wedge)
+
     # --- BELLY ACCESS PLATE opening (task #26; the plate itself is build_belly_plate).
     # Cut LAST so no later union refills it. Opening through the 5-floor (z 7..12) +
     # a 1.5-deep rebate off the belly face; 6x Ø7 self-tap bosses on the rim/strap

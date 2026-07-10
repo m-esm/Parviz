@@ -145,6 +145,16 @@ P = {
                             # track_wheelbase so the TT front tabs still pocket the rear
                             # wall (inner face 95 ~= |ys| 80.66 + tab reach ~14.5)
     "chassis_clear": 7.0,   # ground clearance under the body
+    # GLACIS (2026-07-10, user: "the chassis shouldn't be a box -- from the side it
+    # should have the same form as the tracks"): the hull's front/rear lower corners
+    # are cut at the SAME 33 deg as the track ramps, from (|y| 83.1, z 7) up to the
+    # walls at z 18. Everything that lived below z 18 on those walls moved up: front
+    # LED bar rides the glacis face itself (tilted 33), US barrels 26->28.5 (grille
+    # +1), rear pod 16->30.5 (x 47),
+    # USB slot + PD pilots z0+12 -> z0+24. The belly opening (|y|<=69) and all side
+    # features (motor mounts z>=31 at the glacis x) clear the cut.
+    "glacis_y0": 83.1,      # glacis starts on the belly plane here
+    "glacis_z1": 18.0,      # meets the front/rear walls here (slope = the ramp 33 deg)
     "track_gap": 4.0,       # body side <-> track inner face
     # Modular positive-drive track (advancedvb 'Tank track' 3062624 geometry): printed link pads
     # on filament-rod hinge pins, a 12-tooth sprocket meshing the pins -> no slip on a desk.
@@ -434,19 +444,19 @@ P = {
                              # measured). Now a POCKET, not a through-hole: the deep
                              # pod's rear wall (7 solid) closes it from behind
     # Chassis FRONT fascia (design-ref front.jpg). Front wall: y=78 face, x +-60, z 7..52.
-    "grille_cz": 46.0,      # orange surround outer 60x20 -> z 36..56; inner 52x12
+    "grille_cz": 47.0,      # orange surround outer 60x20 -> z 37..57 (+1: US barrels below)
     "grille_w": 60.0, "grille_h": 20.0, "grille_band": 4.0, "grille_t": 2.5,
     "us_dx": 13.0,          # ultrasonic barrel centers at x=+-13 (HC-SR04 transducer pitch ~26)
-    "us_cz": 26.0,          # barrel Ø16 -> z 18..34 (2 under the surround; board clears the floor)
+    "us_cz": 28.5,          # barrel Ø16 -> z 20.5..36.5 (raised over the glacis 2026-07-10)
     "us_d": 16.0,
-    "lamp_x": 54.0, "lamp_cz": 26.0,    # amber corner lamps 12x7, proud 2 (hug the 140-wide corners)
-    "fled_cz": 9.5,         # white dot strip 36x2.5 at the bottom lip, proud 1
+    "lamp_x": 54.0, "lamp_cz": 26.0,   # above the z18 glacis top    # amber corner lamps 12x7, proud 2 (hug the 140-wide corners)
+    "fled_cz": 12.0,        # white dot strip now ON the glacis face, tilted 33 deg with it
     # Chassis REAR styling (design-ref back.jpg): orange frame panel (the wall shows
     # through the opening as the 'hatch') above the USB-C slot (x +-7, z 15..23), and a
     # silver cylinder pod low-right (speaker/buzzer placeholder).
     "rear_panel_cz": 35.0,  # panel 72x22 -> z 24..46; opening 44x14 -> z 28..42
-    "rear_cyl_x": 38.0,     # image-RIGHT in the reference back view (verified in-render)
-    "rear_cyl_cz": 16.0, "rear_cyl_d": 14.0,
+    "rear_cyl_x": 47.0,     # image-RIGHT in the ref back view; 2.5 clear of the trim panel
+    "rear_cyl_cz": 30.5, "rear_cyl_d": 14.0,    # raised over the rear glacis (was 16)
     # Raised camera POD on the forehead (design ref: the camera reads as an eye). Pure
     # cosmetic shell over the recessed CM3: the bore flares 45 deg/side from the existing
     # countersink, wider than the 75 deg-diagonal FoV cone (half ~37.5 deg), so no vignette.

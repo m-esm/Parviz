@@ -272,7 +272,12 @@ design and still unverified (may be plastic rings).
 
 ## Tank chassis (the mobile base)
 
-Two-track tank base. `build_chassis_parts()` splits the central **body** into `chassis_lower`
+Two-track tank base. GLACIS 2026-07-10 (user: "the chassis shouldn't be a box"): the hull's
+front/rear lower corners are cut at the track-ramp 33 deg, from (|y| 83.1, z 7) to the walls
+at z 18, so the side profile follows the tracks; the front white LED bar rides the slanted
+face (tilted with it), US barrels sit at z 28.5 under the +1-raised grille, the rear pod
+moved to (47, 30.5), USB slot + PD pilots to z0+24. `build_chassis_parts()` splits the
+central **body** into `chassis_lower`
 (open-top tub: side motor mounts, pod joins, electronics/ballast floor) and `chassis_deck`
 (shallow removable pan deck: pan seat, pan clips, pan motor top register). The old one-piece
 `chassis` trapped deep cavities and side-wall features in an ugly support-heavy print. The split
