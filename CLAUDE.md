@@ -81,7 +81,12 @@ the HC-SR04 flush in the FRONT slope looks down-forward exactly as the user reas
 (`sensor_cliff`; construction mirrors sensor_us: Ø16.6 bores through the 5-thick slope
 skin, board in a 1.2 skin-back recess + 4x Ø1.6 M2 pilots, inside an underside pocket
 x +-30 / top skin 3.5 whose inboard end opens over the tub -- wires just drop in,
-service = lift the deck; ping lands ~y 163, cliff = no-echo). KNOCK-ONS, all re-homed:
+service = lift the deck; ping lands ~y 163, cliff = no-echo). MIRRORED on the REAR
+slope (`sensor_cliff_rear`, user round 3, reversing cliff detection): same sgn-flipped
+construction, pocket narrowed to x +-28 (the rear deck-split bosses at +-34 pass within
+2), and the rear hatch frame dropped + squashed to 72x18 at cz 28.5 (the rear barrels
+sweep past the wall plane to ~z 39). THREE HC-SR04 total now (forward obstacle + 2
+cliff) -- NONE in the inventory, all on the buy list. KNOCK-ONS, all re-homed:
 grille ring dropped + grew (cz 32, 60x26) to swallow the sensor_us barrels inside its
 opening (us_cz 32); fin row pulled inboard to x<=47.5 (lamps start 48); fascia pins
 re-clocked (z 36/27); hex field moved onto the front slope flanking the cliff barrels
@@ -91,7 +96,13 @@ pair -> (+-34, -113). Probe-pass fixes bundled in: the idler tension plate is ca
 0.2 under the z 46 seam (its crown used to slice into chassis_deck_front as two LOOSE
 bodies) and a 14-wide floor TIE (z 8.5..12, x -26..-12) re-anchors the belly strap's
 pedestal island inside chassis_lower_rear (loose since the y 26 sub-split; the belly
-plate passes under the tie on its flange, with a matching relief cut).
+plate passes under the tie on its flange, with a matching relief cut). Connectivity
+audit (user todo, same day): every part checked for loose internal bodies + assembly
+contact -- the only real find was the ant_bracket motor face plates SEVERED by their
+own Ø28.7 can-pass bores (bottom halves + lower ear pilots printed loose); plates
+deepened to 36 with a wiring-box notch in the rear ligament. ant_gears_L/R being 7
+bodies each is by design (4 placeholder gears + idler shaft + half-shaft + pinion,
+separate physical parts pending the real generated-teeth pass).
 
 Latest render review (2026-07-06): `make build` wrote a 20-part `web/assembly.glb`; fresh
 transparent and solid shots were inspected from iso/front/side/top plus two section cuts. The

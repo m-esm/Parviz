@@ -60,24 +60,26 @@ def build_fascia():
     uspod = uni(us)
     _color(uspod, "sensor"); uspod.metadata["name"] = "sensor_us"
     parts.append(uspod)
-    # cliff sensor: HC-SR04 board against the front slope skin's back (pocket + bores
-    # in build_chassis_parts), barrels through the skin, ~8 proud like sensor_us
+    # cliff sensors: HC-SR04 boards against the deck slope skins' backs (pockets +
+    # bores in build_chassis_parts), barrels through the skin, ~8 proud like
+    # sensor_us. Front looks down-forward (driving), rear down-backward (reversing).
     sa_ = np.arctan2(P["base_h"] - P["chassis_split_z"], P["deck_overhang"])
-    sn_ = np.array([0.0, np.cos(sa_), np.sin(sa_)])
-    nnf = np.array([0.0, np.sin(sa_), -np.cos(sa_)])
-    pb_ = np.array([0.0, fw, P["chassis_split_z"]]) + P["cliff_v"] * sn_
-    brd = box(45.7, 20.9, 1.6)
-    brd.apply_transform(R(np.pi + sa_, (1, 0, 0)))
-    brd.apply_translation(pb_ - 4.8 * nnf)           # in the skin-back recess, 0.2 gaps
-    cliff = [brd]
-    for sx in (-1, 1):
-        b = cyl(P["us_d"] / 2, 12.0, sections=48)
-        b.apply_transform(R(np.pi + sa_, (1, 0, 0)))
-        b.apply_translation(pb_ + np.array([sx * P["us_dx"], 0.0, 0.0]) + 2.0 * nnf)
-        cliff.append(b)
-    cliff = uni(cliff)
-    _color(cliff, "sensor"); cliff.metadata["name"] = "sensor_cliff"
-    parts.append(cliff)
+    for sgn, cnm in ((1, "sensor_cliff"), (-1, "sensor_cliff_rear")):
+        sn_ = np.array([0.0, sgn * np.cos(sa_), np.sin(sa_)])
+        nnf = np.array([0.0, sgn * np.sin(sa_), -np.cos(sa_)])
+        pb_ = np.array([0.0, sgn * fw, P["chassis_split_z"]]) + P["cliff_v"] * sn_
+        brd = box(45.7, 20.9, 1.6)
+        brd.apply_transform(R(np.pi + sgn * sa_, (1, 0, 0)))
+        brd.apply_translation(pb_ - 4.8 * nnf)       # in the skin-back recess, 0.2 gaps
+        cliff = [brd]
+        for sx in (-1, 1):
+            b = cyl(P["us_d"] / 2, 12.0, sections=48)
+            b.apply_transform(R(np.pi + sgn * sa_, (1, 0, 0)))
+            b.apply_translation(pb_ + np.array([sx * P["us_dx"], 0.0, 0.0]) + 2.0 * nnf)
+            cliff.append(b)
+        cliff = uni(cliff)
+        _color(cliff, "sensor"); cliff.metadata["name"] = cnm
+        parts.append(cliff)
     # amber indicator lamps at the fascia corners
     for sx, nm in ((-1, "lamp_L"), (1, "lamp_R")):
         l = rounded_box(12.0, 7.0, 2.0, 2.5)
@@ -106,8 +108,8 @@ def build_fascia():
     _color(led, "led"); led.metadata["name"] = "led_front"
     parts.append(led)
     # REAR: orange frame panel (wall shows through as the hatch) + silver cylinder pod
-    rp = sub(rounded_box(72.0, 22.0, 2.5, 6.0),
-             box(44.0, 14.0, 8.0))
+    rp = sub(rounded_box(72.0, 18.0, 2.5, 6.0),
+             box(44.0, 10.0, 8.0))
     rp.apply_transform(R(TAU / 4, (1, 0, 0)))        # extrude -Y (proud of the REAR face)
     rp.apply_translation((0, -fw, P["rear_panel_cz"]))
     # FIXING: glue + 3x Ø3 pins into blind rear-wall sockets (PARAMS rear_pin_pts)
@@ -665,33 +667,42 @@ def build_chassis_parts():
     # tub's front rim at |x| > 30; top skin 3.5). The pocket's inboard end hangs over
     # the open tub, so the wires just drop in -- service = lift the deck. Prints
     # top-face-down: the pocket opens upward, the slope skin is self-supporting.
+    # Mirrored on the REAR slope (2026-07-10, user round 3: "same proximity sensors
+    # also on the back") for reversing cliff detection. The rear pocket narrows to
+    # x +-28: the deck-split rear screw bosses (r 4 at +-34, y -113) come within 2 of
+    # its wall; everything else is the sgn-mirrored front construction.
     fw = P["chassis_l"] / 2
     sa_ = np.arctan2(z1 - seam, P["deck_overhang"])
-    sn_ = np.array([0.0, np.cos(sa_), np.sin(sa_)])   # up-slope unit
-    nnf = np.array([0.0, np.sin(sa_), -np.cos(sa_)])  # outward slope normal
-    se0 = np.array([0.0, fw, seam])                   # slope bottom edge
-    pkt = box(60.0, 34.0, 23.5)
-    pkt.apply_translation((0.0, fw + 1.0, 39.0 + 23.5 / 2))     # y 104..138, z 39..62.5
-    pbnd = box(70.0, 80.0, 60.0)                      # trim the pocket at the 5-offset
-    pbnd.apply_transform(R(sa_, (1, 0, 0)))           # slope plane (leaves the skin)
-    pbnd.apply_translation(se0 - 5.0 * nnf + 15.0 * sn_ + 30.0 * nnf)
-    deck_f = sub(deck_f, sub(pkt, pbnd))
-    pb_ = se0 + P["cliff_v"] * sn_                    # barrel-pair face center
-    rec = box(46.2, 21.4, 1.4)                        # board recess into the skin back
-    rec.apply_transform(R(np.pi + sa_, (1, 0, 0)))
-    rec.apply_translation(pb_ - 4.5 * nnf)            # spans -3.8..-5.2 along the normal
-    deck_f = sub(deck_f, rec)
-    for bx_ in (-1, 1):
-        bb = cyl(8.3, 12.0, sections=48)              # Ø16.6 barrel pass, like sensor_us
-        bb.apply_transform(R(np.pi + sa_, (1, 0, 0)))
-        bb.apply_translation(pb_ + np.array([bx_ * P["us_dx"], 0.0, 0.0]) - 2.5 * nnf)
-        deck_f = sub(deck_f, bb)
-    for px_ in (-20.5, 20.5):                         # HC-SR04 corner holes 41 x 16.7:
-        for py_ in (-8.35, 8.35):                     # Ø1.6 self-tap pilots through-ish
-            pil = cyl(0.8, 4.0)                       # the 3.8 remaining skin
-            pil.apply_transform(R(np.pi + sa_, (1, 0, 0)))
-            pil.apply_translation(pb_ + np.array([px_, 0.0, 0.0]) + py_ * sn_ - 5.5 * nnf)
-            deck_f = sub(deck_f, pil)
+    decks = {1: deck_f, -1: deck_r}
+    for sgn in (1, -1):
+        sn_ = np.array([0.0, sgn * np.cos(sa_), np.sin(sa_)])    # up-slope unit
+        nnf = np.array([0.0, sgn * np.sin(sa_), -np.cos(sa_)])   # outward slope normal
+        se0 = np.array([0.0, sgn * fw, seam])                    # slope bottom edge
+        d_ = decks[sgn]
+        pkt = box(60.0 if sgn > 0 else 56.0, 34.0, 23.5)
+        pkt.apply_translation((0.0, sgn * (fw + 1.0), 39.0 + 23.5 / 2))  # |y| 104..138
+        pbnd = box(70.0, 80.0, 60.0)                  # trim the pocket at the 5-offset
+        pbnd.apply_transform(R(sgn * sa_, (1, 0, 0))) # slope plane (leaves the skin)
+        pbnd.apply_translation(se0 - 5.0 * nnf + 15.0 * sn_ + 30.0 * nnf)
+        d_ = sub(d_, sub(pkt, pbnd))
+        pb_ = se0 + P["cliff_v"] * sn_                # barrel-pair face center
+        rec = box(46.2, 21.4, 1.4)                    # board recess into the skin back
+        rec.apply_transform(R(np.pi + sgn * sa_, (1, 0, 0)))
+        rec.apply_translation(pb_ - 4.5 * nnf)        # spans -3.8..-5.2 along the normal
+        d_ = sub(d_, rec)
+        for bx_ in (-1, 1):
+            bb = cyl(8.3, 12.0, sections=48)          # Ø16.6 barrel pass, like sensor_us
+            bb.apply_transform(R(np.pi + sgn * sa_, (1, 0, 0)))
+            bb.apply_translation(pb_ + np.array([bx_ * P["us_dx"], 0.0, 0.0]) - 2.5 * nnf)
+            d_ = sub(d_, bb)
+        for px_ in (-20.5, 20.5):                     # HC-SR04 corner holes 41 x 16.7:
+            for py_ in (-8.35, 8.35):                 # Ø1.6 self-tap pilots through-ish
+                pil = cyl(0.8, 4.0)                   # the 3.8 remaining skin
+                pil.apply_transform(R(np.pi + sgn * sa_, (1, 0, 0)))
+                pil.apply_translation(pb_ + np.array([px_, 0.0, 0.0]) + py_ * sn_ - 5.5 * nnf)
+                d_ = sub(d_, pil)
+        decks[sgn] = d_
+    deck_f, deck_r = decks[1], decks[-1]
 
     out = []
     for m_, nm in ((lower_f, "chassis_lower_front"), (lower_r, "chassis_lower_rear"),

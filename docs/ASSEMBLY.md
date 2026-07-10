@@ -58,6 +58,7 @@ Owned quantities cross-checked against a personal parts inventory (2026-07-07).
 | M3 nylon standoffs | ULN2003 / driver mounts | few | 380pc kit (Tray 1) |, |
 | Track hinge pins | Ø1.75 filament, bore 2.0. 45 links x 2 pods = **90 pins x ~46 mm** (track_width 44.8 + trim) ≈ 4.2 m, cut from an owned spool (the black CR-PETG is tougher than PLA for pins) | 90 | spooled (Tray 1) |, |
 | Ø4 dowel pins | body-to-pod join (2 per side), Ø4x12: modeled (wall slip holes + rail press sockets) | 4 | 0 | **4** |
+| HC-SR04 ultrasonic | x3: forward obstacle (front wall, in the grille opening) + front/rear cliff (flush in the deck slopes, boards behind the 5-thick skin). **Inventory has ZERO** (checked 2026-07-10) | 3 | 0 | **3** |
 | M4x40 + nuts | road-wheel bolt-axles (2026-07-10 fix: wheels were mounted to nothing): head = outer hubcap, shank in the Ø4.2 wheel bore, nut captive in the rail wheel-beam slot. Prefer partially threaded (shank bearing surface); 40 mm exceeds the owned kits | 12+12 | nuts maybe in the 1263pc M2-M4 kit (verify) | **12x M4x40 (+nuts if absent)** |
 
 ### Printed parts (watertight; tank base + split head)

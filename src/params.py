@@ -485,7 +485,9 @@ P = {
     # Chassis REAR styling (design-ref back.jpg): orange frame panel (the wall shows
     # through the opening as the 'hatch') above the USB-C slot (x +-7, z 15..23), and a
     # silver cylinder pod low-right (speaker/buzzer placeholder).
-    "rear_panel_cz": 35.0,  # panel 72x22 -> z 24..46; opening 44x14 -> z 28..42
+    "rear_panel_cz": 28.5,  # panel 72x18 -> z 19.5..37.5; opening 44x10 -> z 23.5..33.5
+                            # (dropped + squashed 2026-07-10: the rear cliff barrels
+                            # sweep down past the wall plane to ~z 39 at x +-5..21)
     "rear_cyl_x": 47.0,     # image-RIGHT in the ref back view; 2.5 clear of the trim panel
     "rear_cyl_cz": 30.5, "rear_cyl_d": 14.0,    # raised over the rear glacis (was 16)
     # Raised camera POD on the forehead (design ref: the camera reads as an eye). Pure
@@ -551,7 +553,7 @@ P = {
                             # into the dropped fin-web footprint (z 24..40, toy-tank hull)
     # trim_rear pins, (x, z) on the rear wall band (side bands x 22..36, bottom z 24..28):
     # clear of the USB slot (x +-7, z 15..23, 1.4 gap) and TT tab pockets (x 43.5..47.7).
-    "rear_pin_pts": ((-29.0, 35.0), (29.0, 35.0), (0.0, 26.0)),
+    "rear_pin_pts": ((-29.0, 28.5), (29.0, 28.5), (0.0, 21.5)),   # re-clocked with the panel
     # camera_pod Ø2 pins, (x, z) on the bezel face, ABOVE the glass line: the face is
     # open (pocket) below z 208.9, so the pod's lower band only kisses glass and the pins
     # carry it on the z>209 wall strip. Clear of the Ø8 aperture flare (r 8.94 > 4).

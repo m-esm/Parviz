@@ -782,8 +782,13 @@ def build_ant_drive():
         # (plate stops 1.5 off the wall plane: the REMOVABLE door's plug face is y -66
         #  below z 190.2 there -- the plate hangs from the spine, which roots on the
         #  fixed wall above the door outline)
-        ep = box(1.2, 24.0, 52.0)                    # motor face plate |x| 35.9..37.1
+        ep = box(1.2, 36.0, 52.0)                    # motor face plate |x| 35.9..37.1;
         ep.apply_translation((sxa * 36.5, -31.0, 189.6)); br.append(ep)
+        # 36 deep (was 24, connectivity audit 2026-07-10): the Ø28.7 can-pass bore
+        # spans y -44.4..-15.7, WIDER than the old y -43..-19 plate, so the bore
+        # severed the plate and its bottom half (with the lower ear pilot) printed
+        # as a LOOSE body; y -49..-13 keeps 4.6/2.7 ligaments either side of the
+        # bore (front edge still 6 clear of the screen+Pi stack rear at y -7)
         rib = box(1.2, 38.0, 6.0)                    # face-plate root rib to the spine
         rib.apply_translation((sxa * 36.5, wall_in + 19.0, 212.0)); br.append(rib)
         oa = box(3.5, 35.0, 22.0)                    # outer arm: half-shaft bushing
@@ -800,6 +805,10 @@ def build_ant_drive():
         epb = cyl(14.35, 3.0, axis="x")              # Ø28.7 motor-nose clearance bore
         epb.apply_translation((sxa * 36.5, -30.0, 189.6))
         bracket = sub(bracket, epb)
+        wbx = box(2.4, 7.4, 16.2)                    # wiring-box notch in the rear
+        wbx.apply_translation((sxa * 36.5, -46.3, 189.7))    # ligament (28BYJ box
+        bracket = sub(bracket, wbx)                  # crosses it at z 182..197 only;
+        # the ligament stubs above/below + the front ligament keep the plate one body
         bore = cyl(2.1, 200.0, axis="x")             # half-shaft bushings Ø4.2
         bore.apply_translation((0, cy_, cz_)); bracket = sub(bracket, bore)
         bore = cyl(2.1, 44.0, axis="x")              # idler bushings Ø4.2
