@@ -60,10 +60,13 @@ Owned quantities cross-checked against a personal parts inventory (2026-07-07).
 | Ø4 dowel pins | body-to-pod join (2 per side), Ø4x12: modeled (wall slip holes + rail press sockets) | 4 | 0 | **4** |
 
 ### Printed parts (watertight; tank base + split head)
-- `chassis_lower`: open-top tank tub between the tracks; TT motor wall mounts, pod joins,
-  electronics/ballast floor, and belly-plate opening
-- `chassis_deck`: removable pan deck; pan race seat, pan clips, and pan-motor top register.
-  4x M3 drive down from the deck into lower Ø2.5 thread-form pilots on front/side ledges
+- `chassis_lower_front` / `chassis_lower_rear`: the open-top tub, split at y=+26 for
+  print speed; join with 2x M3x12 (axis Y, heads in the front pads, thread-form rear)
+  + 2x Ø4 dowels in the floor pads at x +-61, then the deck + pod rails bridge it
+- `chassis_deck_front` / `chassis_deck_center` / `chassis_deck_rear`: the pan deck in
+  three plates (seams y 66/-52, half-laps + 2x M3 down through each strip into shelf
+  pilots); the center carries the whole pan seat + its own 4 hold-downs; the corner
+  hold-downs live in the strips
 - `track_L` / `track_R`: tank track pods: 36 links/side on Ø1.75 filament pins, 12T sprocket,
   F688ZZ idler (30 wide, tension slot), plain printed road wheels (2/side, 30 wide)
 - `pan_platform`: disc that yaws on the base (central shaft bore + off-axis cable pass)
@@ -72,9 +75,10 @@ Owned quantities cross-checked against a personal parts inventory (2026-07-07).
   BBs; the cage keeps them spaced so a turret lift doesn't scatter them)
 - `neck_clevis`: rounded column + two cheeks that rise into the head and drive the tilt axle;
   vertical cable channel
-- `head_bezel`: front of the rounded tablet head: screen locator lip, camera aperture,
-  forehead LED recess (42x5)
-- `head_back`: rear cover: pivot hubs, screen-tray wall holes, Pi bay, cable port, vents
+- `head_bezel_L` / `head_bezel_R`: front frame split at x=+22 (M3 + Ø4 dowel in pads
+  behind the forehead/chin strips); seam staggered off the back's for interlock
+- `head_back_L` / `head_back_R`: rear cover split at x=0 (top-wall flange 2x M3 +
+  rear-strip tongue/groove): pivot hubs, screen-tray wall holes, Pi bay, vents
 - `screen_tray`: bench-mounted module carrier (2 rails + spine): the screen+Pi bolts to it
   on the bench (4x M3x10 into the factory bosses, open access), the loaded tray drops into
   head_back, 4x M3x10 drive from OUTSIDE the back wall (visible, between door and frame)

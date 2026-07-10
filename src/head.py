@@ -407,6 +407,10 @@ def build_head_parts():
     cav = box(2 * chx, -60.0 - cfy, cz1 - cz0)                  # drivetrain sweep cavity,
     cav.apply_translation((0, (cfy - 60.0) / 2, (cz0 + cz1) / 2))   # open toward the bay
     door = sub(door, cav)
+    for sxp in (-1, 1):                              # PRINT-SPEED lightening pockets
+        lk = box(15.0, 19.0, 40.0)                   # (2026-07-10): the tier legs were
+        lk.apply_translation((sxp * 27.0, -84.5, 142.0))   # solid; keep >=2 mm walls to
+        door = sub(door, lk)                         # the cavity/notch/tier faces
     nhx, nzt, nfl = P["pod_notch"]                              # bottom corridor POCKET
     ntc = box(2 * nhx, -60.0 - nfl, nzt - 100.0)                # (see the PARAMS note)
     ntc.apply_translation((0, (nfl - 60.0) / 2, (100.0 + nzt) / 2))
@@ -469,10 +473,63 @@ def build_head_parts():
         barb.apply_translation((0, 0, bz0))
         door = uni([door, barb])
 
-    _color(bezel, "cradle"); bezel.metadata["name"] = "head_bezel"
-    _color(back, "back"); back.metadata["name"] = "head_back"
+    # ---- PRINT-SPEED SPLITS (2026-07-10, user: break the biggest prints apart). Both
+    # 205-wide shell halves split L/R -- two parallel plates, and they now fit a
+    # 180x180 bed. Seams are STAGGERED (back at x=0, bezel at x=+22) so the assembled
+    # shell interlocks like brickwork; the hatch frame (pinned both sides), the door
+    # (hooked + snapped across), and the bezel<->back perimeter screws all bridge.
+    from trimesh.intersections import slice_mesh_plane
+
+    # head_back at x=0: the only solid crossings are the TOP WALL and the rear strip
+    # above the door (z 190..226; the motor bay opens everything below). Joint: an
+    # under-the-top-wall flange pair (2x M3 axis X: clearance+counterbore in R,
+    # thread-form pilot in L) + a vertical tongue/groove on the rear-strip seam face.
+    fl1 = box(28.0, 21.0, 7.0)
+    fl1.apply_translation((0, -2.5, 218.5))          # y -13..8, z 215..222 (fuses up):
+                                                     # antenna G3 tips reach y -15.3 /
+                                                     # z 218, the cam_cover starts y~11
+    back = uni([back, fl1])
+    for fy_ in (-9.0, 4.5):
+        scr = cyl(P["m3_clear_r"], 15.0, axis="x")
+        scr.apply_translation((7.0, fy_, 218.5)); back = sub(back, scr)
+        cbx = cyl(3.4, 4.0, axis="x")
+        cbx.apply_translation((12.5, fy_, 218.5)); back = sub(back, cbx)
+        pil = cyl(1.25, 9.0, axis="x")
+        pil.apply_translation((-4.5, fy_, 218.5)); back = sub(back, pil)
+    back_l = slice_mesh_plane(back, plane_normal=(-1, 0, 0), plane_origin=(0, 0, 0), cap=True)
+    back_r = slice_mesh_plane(back, plane_normal=(1, 0, 0), plane_origin=(0, 0, 0), cap=True)
+    tng = box(4.0, 2.0, 24.0)
+    tng.apply_translation((0, -68.0, 206.0))         # rear-strip tongue on R ...
+    back_r = uni([back_r, inter(tng, _head_solid())])
+    tngf = box(4.3, 2.3, 24.3)
+    tngf.apply_translation((-0.075, -68.0, 206.0))   # ... 0.15-fit groove in L
+    back_l = sub(back_l, tngf)
+
+    # head_bezel at x=+22 (clear of the camera bosses |x|<=14, the +-40 perimeter
+    # posts, and the led_slot starting at x 24): flange pads behind the forehead and
+    # chin face strips, 1x M3 (axis X) + 1x Ø4 dowel each.
+    for pz_, pdz in ((215.0, 8.0), (92.0, 5.0)):
+        pad = box(21.0, 8.0, 2 * pdz)
+        pad.apply_translation((25.0, 22.0, pz_))     # x 14.5..35.5 (0.5 off the camera
+        bezel = uni([bezel, pad])                    # bosses), y 18..26 behind the face
+        scr = cyl(P["m3_clear_r"], 14.0, axis="x")
+        scr.apply_translation((28.0, 22.0, pz_)); bezel = sub(bezel, scr)
+        cbx = cyl(3.4, 4.0, axis="x")
+        cbx.apply_translation((33.6, 22.0, pz_)); bezel = sub(bezel, cbx)
+        pil = cyl(1.25, 7.0, axis="x")
+        pil.apply_translation((18.5, 22.0, pz_)); bezel = sub(bezel, pil)
+        dwl = cyl(2.05, 15.0, axis="x")              # Ø4 dowel across the seam
+        dwl.apply_translation((22.0, 22.0, pz_ + (pdz - 2.6) * (1 if pz_ > 100 else -1)))
+        bezel = sub(bezel, dwl)
+    bez_l = slice_mesh_plane(bezel, plane_normal=(-1, 0, 0), plane_origin=(22.0, 0, 0), cap=True)
+    bez_r = slice_mesh_plane(bezel, plane_normal=(1, 0, 0), plane_origin=(22.0, 0, 0), cap=True)
+
+    _color(bez_l, "cradle"); bez_l.metadata["name"] = "head_bezel_L"
+    _color(bez_r, "cradle"); bez_r.metadata["name"] = "head_bezel_R"
+    _color(back_l, "back"); back_l.metadata["name"] = "head_back_L"
+    _color(back_r, "back"); back_r.metadata["name"] = "head_back_R"
     _color(door, "back"); door.metadata["name"] = "head_door"
-    return bezel, back, door
+    return bez_l, bez_r, back_l, back_r, door
 
 
 def build_screen_tray():

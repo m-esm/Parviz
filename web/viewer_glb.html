@@ -51,6 +51,17 @@
   .part .nm{font:12px/1 var(--mono);color:var(--ink);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .part input{margin:0}
   .part.off{opacity:.4}
+  .cgrp{margin:2px 0}
+  .chead{display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:8px;
+    cursor:pointer;user-select:none;font:600 11px/1 var(--mono);letter-spacing:.08em;
+    text-transform:uppercase;color:var(--ink-dim)}
+  .chead:hover{background:rgba(255,255,255,.05)}
+  .chead .carrow{width:10px;color:var(--ink-faint);transition:transform .15s}
+  .cgrp.closed .carrow{transform:rotate(-90deg)}
+  .chead .cname{flex:1}
+  .chead input{margin:0}
+  .cgrp .cbody{margin-left:10px;border-left:1px solid var(--hair);padding-left:4px}
+  .cgrp.closed .cbody{display:none}
   .part.sel{background:rgba(232,116,34,.16);box-shadow:inset 0 0 0 1px rgba(232,116,34,.4)}
   .part.off .nm{text-decoration:line-through}
 
@@ -350,7 +361,47 @@ new GLTFLoader().load(MODEL, (gltf)=>{
     `<span class="ax" style="color:${TXT.z}">H</span><b>${sz.z.toFixed(0)}</b>`+
     `<span class="ax">mm</span>`;
 
+  // parts panel grouped BY OBJECT (2026-07-10: the big prints are split into pieces;
+  // each object gets a collapsible group with a toggle-all checkbox)
+  const CATS = [
+    ['Head shell',      /^(head_|sd_plug|led_strip|camera_pod)/],
+    ['Screen & camera', /^(screen_|cam_cover|camera_ref)/],
+    ['Antennas',        /^(antenna_|ant_|motor_ant)/],
+    ['Neck & tilt',     /^(neck_|tilt_|worm_|motor_tilt)/],
+    ['Pan stage',       /^(pan_|motor_pan)/],
+    ['Chassis',         /^(chassis_|belly_plate)/],
+    ['Fascia & trim',   /^(trim_|sensor_|lamp_|led_front)/],
+    ['Track pod L',     /^(track_L|drivewheels_L|track_keeper_L|pod_rail_L|drive_L)/],
+    ['Track pod R',     /^(track_R|drivewheels_R|track_keeper_R|pod_rail_R|drive_R)/],
+  ];
   const host = document.getElementById('parts');
+  const catBodies = new Map();
+  function catFor(n){ for(const [t,re] of CATS) if(re.test(n)) return t; return 'Other'; }
+  function catUI(title){
+    if(catBodies.has(title)) return catBodies.get(title);
+    const grp=document.createElement('div'); grp.className='cgrp';
+    const head=document.createElement('div'); head.className='chead';
+    head.innerHTML=`<span class="carrow">▾</span><span class="cname">${title}</span>`;
+    const cb=document.createElement('input'); cb.type='checkbox'; cb.checked=true;
+    cb.addEventListener('click',e=>e.stopPropagation());
+    head.appendChild(cb);
+    const body=document.createElement('div'); body.className='cbody';
+    head.addEventListener('click',()=>grp.classList.toggle('closed'));
+    cb.addEventListener('change',()=>{
+      body.querySelectorAll('.part input').forEach(pc=>{
+        if(pc.checked!==cb.checked){ pc.checked=cb.checked; pc.dispatchEvent(new Event('change')); }
+      });
+    });
+    grp.appendChild(head); grp.appendChild(body); host.appendChild(grp);
+    const rec={body, cb}; catBodies.set(title, rec); return rec;
+  }
+  function syncCat(title){
+    const rec=catBodies.get(title); if(!rec) return;
+    const boxes=[...rec.body.querySelectorAll('.part input')];
+    const on=boxes.filter(b=>b.checked).length;
+    rec.cb.checked = on===boxes.length;
+    rec.cb.indeterminate = on>0 && on<boxes.length;
+  }
   for(const [name,g] of Object.entries(groups)){
     g.home = g.meshes.map(o=>o.position.clone());
 
@@ -362,15 +413,18 @@ new GLTFLoader().load(MODEL, (gltf)=>{
     const D = dimBox(gb, Math.max(6, diag*0.02));
     D.visible=false; g.dim=D; g.dimHome=D.position.clone(); g.labels=D.labels; dimsRoot.add(D);
 
+    const cat = catFor(name);
+    const rec = catUI(cat);
     const row = document.createElement('label'); row.className='part';
     row.innerHTML = `<span class="sw" style="background:${hex(name)}"></span>`+
                     `<span class="nm">${name}</span><input type="checkbox" checked>`;
     row.querySelector('input').addEventListener('change',e=>{
       g.meshes.forEach(o=>o.visible=e.target.checked);
       row.classList.toggle('off', !e.target.checked);
+      syncCat(cat);
       applyDims();
     });
-    host.appendChild(row);
+    rec.body.appendChild(row);
     g.row = row;
   }
 
@@ -660,7 +714,10 @@ function selectPart(name){
     o.userData._selEm=o.material.emissive.getHex();
     o.userData._selEi=o.material.emissiveIntensity;
     o.material.emissive.setHex(0xE87422); o.material.emissiveIntensity=.5; });
-  if(g.row){ g.row.classList.add('sel'); g.row.scrollIntoView({block:'nearest'}); }
+  if(g.row){
+    const grp=g.row.closest('.cgrp'); if(grp) grp.classList.remove('closed');
+    g.row.classList.add('sel'); g.row.scrollIntoView({block:'nearest'});
+  }
   const gb=new THREE.Box3(); g.meshes.forEach(o=>gb.expandByObject(o));
   const s=gb.getSize(new THREE.Vector3());
   $('selinfo').innerHTML='<span class="ax" style="color:#E87422">▶</span><b>'+selName+'</b>'+

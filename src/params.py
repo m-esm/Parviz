@@ -224,6 +224,14 @@ P = {
                             # bosses ride the rear wall instead (sensor hole z16, trim
                             # pins outer-face only, motor tabs x +-55.6 -- all clear)
     "chassis_split_boss_r": 4.0,
+    # PRINT-SPEED SUB-SPLITS (2026-07-10, user: break the biggest prints apart). See
+    # build_chassis_parts' docstring for the joint scheme per seam.
+    "lower_seam_y": 26.0,        # lower tub front/rear seam (vent-free wall band
+                                 # 18.5..29.5, pan pedestal <=|24|, pod joins +-40)
+    "deck_seam_y": (66.0, -52.0),  # deck strip seams (front clip reaches y 58; the
+                                 # y-60 corner bosses reach 64 -> strips own them)
+    "deck_center_screws": ((-64.0, 8.0), (64.0, 8.0), (-64.0, -26.0), (64.0, -26.0)),
+                                 # the center piece's OWN hold-downs (vent-free bands)
     # Pan-motor seat detailing (re-derived for base_h 66: can bottom 26.45, ear-bar
     # underside = pedestal top = 44.25, can top 45.25, gear face 54.25): the 7-wide x
     # 1-thick ear bar clamps on two DEFINED pads instead of the whole 48x48 top, and the

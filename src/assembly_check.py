@@ -57,6 +57,16 @@ HEAD_NODES = {
 PAN_NODES = {"pan_platform", "neck_clevis", "tilt_worm", "motor_tilt", "tilt_carrier"}
 
 # Intended (designed-contact) couplings, order-independent.
+# print-speed sub-splits (2026-07-10): pieces of one object alias to the parent for
+# whitelist lookups, and pieces of the SAME parent may touch (their designed seam).
+SPLIT_ALIAS = {
+    "head_back_L": "head_back", "head_back_R": "head_back",
+    "head_bezel_L": "head_bezel", "head_bezel_R": "head_bezel",
+    "chassis_lower_front": "chassis_lower", "chassis_lower_rear": "chassis_lower",
+    "chassis_deck_front": "chassis_deck", "chassis_deck_center": "chassis_deck",
+    "chassis_deck_rear": "chassis_deck",
+}
+
 WHITELIST = {
     frozenset(("worm_wheel", "tilt_worm")),      # gear mesh
     frozenset(("worm_wheel", "neck_clevis")),    # spacer tube in bearing seats
@@ -113,7 +123,8 @@ def overlap_volume(a, b):
 def check_pairs(meshes, pairs, context, violations):
     """Run the boolean gate over (name_a, name_b) pairs; append violations."""
     for na, nb in pairs:
-        if frozenset((na, nb)) in WHITELIST:
+        na_ = SPLIT_ALIAS.get(na, na); nb_ = SPLIT_ALIAS.get(nb, nb)
+        if na_ == nb_ or frozenset((na_, nb_)) in WHITELIST:
             continue
         try:
             vol = overlap_volume(meshes[na], meshes[nb])

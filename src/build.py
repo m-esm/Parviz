@@ -231,10 +231,8 @@ def build():
     add(build_pan_clips(), np.eye(4), "pan_clips.stl")
 
     # --- HEAD (tilt + pan): split into front bezel + back cover + rear service door ---
-    bezel, back, door = build_head_parts()
-    add(bezel, M_head, "head_bezel.stl")
-    add(back, M_head, "head_back.stl")
-    add(door, M_head, "head_door.stl")
+    for hp in build_head_parts():                    # bezel_L/R + back_L/R + door
+        add(hp, M_head, f"{hp.metadata['name']}.stl")
     add(build_screen_tray(), M_head, "screen_tray.stl")  # bench-mounted module carrier
 
     for rail in build_head_rails():                  # orange side accent rails (design ref)

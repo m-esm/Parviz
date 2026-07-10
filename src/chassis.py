@@ -9,9 +9,7 @@ import shapely.geometry as sg
 from trimesh.creation import extrude_polygon
 from trimesh.transformations import rotation_matrix as R
 from params import DEG, P, TAU
-from geo import (_color, _orient, blind_socket, box, cyl,
-    fix_pin, frustum, hex_prism, rounded_box, sub,
-    uni)
+from geo import (_color, _orient, blind_socket, box, cyl, fix_pin, frustum, hex_prism, inter, rounded_box, sub, uni)
 from tracks import _track_zc
 from pan import _pan_stack
 
@@ -485,13 +483,22 @@ def build_chassis_core():
 
 
 def build_chassis_parts():
-    """Printable chassis split: lower open tub + removable upper pan deck.
+    """Printable chassis split: lower open tub + removable upper pan deck -- BOTH now
+    sub-split for print speed (2026-07-10, user: break the biggest prints apart):
 
-    The old `chassis.stl` combined deep internal posts, side motor mounts, idler arms,
-    front/rear cosmetics sockets, the pan seat, and the underside access opening into one
-    awkward print. This keeps the same assembled geometry but inserts a horizontal service
-    seam at `chassis_split_z`: lower tub prints open-top, upper deck prints as a shallow
-    removable plate. M3 screws come down from the deck into lower thread-form pilots."""
+    - lower tub -> chassis_lower_front / chassis_lower_rear at y = +26 (the only
+      vent-free wall band clear of the pan pedestal <=|24| and the pod-join stations
+      +-40). Joined by two FLOOR PADS at x +-61 (M3x12 axis Y from the front face into
+      rear thread-form pilots + a Ø4 press/slip dowel each) -- plus, in the assembly,
+      the one-piece pod RAILS (stations y +-40 land one per half) and the deck screws
+      bridge the halves.
+    - pan deck -> chassis_deck_front (y 66..) / chassis_deck_center / chassis_deck_rear
+      (y ..-52). Seams clear the pan clips (front clip reaches y 58) and keep the pan
+      seat MONOLITHIC in the center piece. Each seam is a half-lap (center's lower-half
+      shelf under the strip, 0.15 fit) + 2x vertical M3 through the strip into shelf
+      pilots; the center piece gets its OWN 4 hold-downs to the lower at (+-64, 8) and
+      (+-64, -26) (vent-free bands), since the original 4 corner screws land in the
+      strips."""
     from trimesh.intersections import slice_mesh_plane
 
     z0 = P["chassis_clear"]
@@ -500,17 +507,25 @@ def build_chassis_parts():
     core = build_chassis_core()
 
     # Screw bosses span the seam before slicing, so both halves get matching local pads.
+    all_downs = tuple(P["chassis_split_screws"]) + tuple(P["deck_center_screws"])
     boss_bot = seam - 9.0
     boss_top = seam + 12.0
-    for sx_, sy_ in P["chassis_split_screws"]:
+    for sx_, sy_ in all_downs:
         boss = cyl(P["chassis_split_boss_r"], boss_top - boss_bot)
         boss.apply_translation((sx_, sy_, (boss_bot + boss_top) / 2))
         core = uni([core, boss])
 
+    # lower-tub seam FLOOR PADS (span y across the seam; drilled after slicing)
+    ysl = P["lower_seam_y"]
+    for sx_ in (-1, 1):
+        pad = box(18.0, 26.0, 8.0)
+        pad.apply_translation((sx_ * 61.0, ysl, 15.0))       # x 52..70, y 13..39, z 11..19
+        core = uni([core, pad])
+
     lower = slice_mesh_plane(core, plane_normal=(0, 0, -1), plane_origin=(0, 0, seam), cap=True)
     deck = slice_mesh_plane(core, plane_normal=(0, 0, 1), plane_origin=(0, 0, seam), cap=True)
 
-    for sx_, sy_ in P["chassis_split_screws"]:
+    for sx_, sy_ in all_downs:
         # Top deck: M3 clearance plus a sub-flush pan/cheese head counterbore from above.
         clr = cyl(P["m3_clear_r"], z1 - seam + 8.0)
         clr.apply_translation((sx_, sy_, seam + (z1 - seam + 8.0) / 2 - 2.0))
@@ -524,9 +539,60 @@ def build_chassis_parts():
         pil.apply_translation((sx_, sy_, seam - 8.5 / 2))
         lower = sub(lower, pil)
 
-    _color(lower, "base"); lower.metadata["name"] = "chassis_lower"
-    _color(deck, "base"); deck.metadata["name"] = "chassis_deck"
-    return lower, deck
+    # ---- lower tub -> front / rear at y = lower_seam_y ----
+    for sx_ in (-1, 1):
+        scr = cyl(P["m3_clear_r"], 14.0, axis="y")           # M3x12 through the front pad
+        scr.apply_translation((sx_ * 57.0, ysl + 6.0, 15.0))
+        lower = sub(lower, scr)
+        cbf = cyl(3.4, 4.5, axis="y")                        # head counterbore, front face
+        cbf.apply_translation((sx_ * 57.0, ysl + 11.2, 15.0))
+        lower = sub(lower, cbf)
+        pilr = cyl(1.25, 10.0, axis="y")                     # rear thread-form pilot
+        pilr.apply_translation((sx_ * 57.0, ysl - 6.0, 15.0))
+        lower = sub(lower, pilr)
+        dwl = cyl(2.05, 16.0, axis="y")                      # Ø4 dowel across the seam
+        dwl.apply_translation((sx_ * 66.0, ysl, 15.0))       # (+0.1 slip; press the rear
+        lower = sub(lower, dwl)                              #  side on assembly with glue)
+    lower_f = slice_mesh_plane(lower, plane_normal=(0, 1, 0), plane_origin=(0, ysl, 0), cap=True)
+    lower_r = slice_mesh_plane(lower, plane_normal=(0, -1, 0), plane_origin=(0, ysl, 0), cap=True)
+
+    # ---- deck -> front strip / center / rear strip with half-laps ----
+    yf, yr = P["deck_seam_y"]                                # (66.0, -52.0)
+    lap_f = box(120.0, 16.0, 6.0)
+    lap_f.apply_translation((0, yf + 4.0, 49.0))             # center shelf under the strip,
+    lap_r = box(120.0, 16.0, 6.0)                            # z 46..52
+    lap_r.apply_translation((0, yr - 4.0, 49.0))
+    lap_f_fit = box(120.6, 16.3, 6.3); lap_f_fit.apply_translation((0, yf + 4.0, 49.05))
+    lap_r_fit = box(120.6, 16.3, 6.3); lap_r_fit.apply_translation((0, yr - 4.0, 49.05))
+    deck_c = slice_mesh_plane(slice_mesh_plane(deck, plane_normal=(0, -1, 0),
+                              plane_origin=(0, yf, 0), cap=True),
+                              plane_normal=(0, 1, 0), plane_origin=(0, yr, 0), cap=True)
+    deck_f = slice_mesh_plane(deck, plane_normal=(0, 1, 0), plane_origin=(0, yf, 0), cap=True)
+    deck_r = slice_mesh_plane(deck, plane_normal=(0, -1, 0), plane_origin=(0, yr, 0), cap=True)
+    deck_c = uni([deck_c, inter(lap_f, deck_f), inter(lap_r, deck_r)])   # shelf = the lap
+    deck_f = sub(deck_f, lap_f_fit)                          # 0.15-ish lap fit
+    deck_r = sub(deck_r, lap_r_fit)
+    for strip_y, shelf_y in ((yf + 4.0, yf), (yr - 4.0, yr)):
+        for sx_ in (-1, 1):
+            scr = cyl(P["m3_clear_r"], 16.0)                 # vertical M3 through the strip
+            scr.apply_translation((sx_ * 40.0, strip_y, z1 - 7.0))
+            cbv = cyl(3.4, 3.0)
+            cbv.apply_translation((sx_ * 40.0, strip_y, z1 - 1.5))
+            pilv = cyl(1.25, 6.5)                            # pilot in the center's shelf
+            pilv.apply_translation((sx_ * 40.0, strip_y, 49.0))
+            deck_c = sub(deck_c, pilv)
+            if strip_y > 0:
+                deck_f = sub(sub(deck_f, scr), cbv)
+            else:
+                deck_r = sub(sub(deck_r, scr), cbv)
+
+    out = []
+    for m_, nm in ((lower_f, "chassis_lower_front"), (lower_r, "chassis_lower_rear"),
+                   (deck_f, "chassis_deck_front"), (deck_c, "chassis_deck_center"),
+                   (deck_r, "chassis_deck_rear")):
+        _color(m_, "base"); m_.metadata["name"] = nm
+        out.append(m_)
+    return out
 
 
 def build_belly_plate():

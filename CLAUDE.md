@@ -307,6 +307,21 @@ engagement beats a friction belt that slips when the head pans.
 
 ## Print notes (first pass, not finalized)
 
+**PRINT-SPEED SPLITS (2026-07-10, user):** the four biggest prints are sub-split so no
+piece exceeds ~225 cm3 solid and EVERYTHING fits a 180x180 bed: `head_back` -> `_L/_R`
+at x=0 (top-wall flange, 2x M3 axis-X + counterbores in R / thread-form pilots in L,
+plus a 0.15-fit tongue/groove on the rear strip), `head_bezel` -> `_L/_R` at x=+22
+(staggered vs the back seam = brickwork interlock; per face strip one M3 + one Ø4
+dowel in pads behind the face, clear of the camera bosses), `chassis_lower` ->
+`_front/_rear` at y=+26 (floor pads x +-61: M3x12 axis-Y + Ø4 dowel each; the deck
+screws and the one-piece pod rails also bridge), `chassis_deck` -> `_front/_center/
+_rear` at y 66 / -52 (half-laps + 2x vertical M3 per seam; the pan seat stays
+monolithic in the center, which gets its OWN 4 hold-downs at (+-64, 8)/(+-64, -26)).
+`head_door` kept whole but the solid tier legs got lightening pockets (-19 cm3). Gate
+whitelists alias split pieces to their parent (SPLIT_ALIAS in assembly_check/fitmap);
+sibling seam contact is designed. The viewer parts panel is grouped BY OBJECT with
+collapsible per-group toggle-alls.
+
 - Printed set (exports via `EXPORT=1`): `chassis_lower`, `chassis_deck`, `belly_plate`, `track_L/R`,
   `drivewheels_L/R` (as track_wheels_*), `track_keeper_L/R`, `pod_rail_L/R` (as
   track_pod_rail_*), `neck_clevis`, `tilt_carrier`, `pan_platform`, `pan_race`,

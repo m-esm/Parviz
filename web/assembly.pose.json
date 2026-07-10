@@ -8,8 +8,10 @@
  "groups": {
   "head": [
    "worm_wheel",
-   "head_bezel",
-   "head_back",
+   "head_bezel_L",
+   "head_bezel_R",
+   "head_back_L",
+   "head_back_R",
    "head_door",
    "screen_tray",
    "trim_rail_L",

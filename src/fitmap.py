@@ -26,7 +26,20 @@ def _fit_report(geo):
     import json as _json
     SKIP = ("screen_ref",)                # not watertight: signed distance lies (FIXES stage 4)
     _FIT_DESIGNED = set()                 # intended PRESS pairs (none yet; presses are hardware)
+    # print-speed sub-splits: pieces alias to their parent; a single-name frozenset
+    # (piece touching its sibling at the designed seam) is whitelisted below.
+    _SPLIT_ALIAS = {
+        "head_back_L": "head_back", "head_back_R": "head_back",
+        "head_bezel_L": "head_bezel", "head_bezel_R": "head_bezel",
+        "chassis_lower_front": "chassis_lower", "chassis_lower_rear": "chassis_lower",
+        "chassis_deck_front": "chassis_deck", "chassis_deck_center": "chassis_deck",
+        "chassis_deck_rear": "chassis_deck",
+    }
     _FIT_CONTACT_OK = {
+        frozenset(("head_back",)),                   # split-seam sibling contacts
+        frozenset(("head_bezel",)),
+        frozenset(("chassis_lower",)),
+        frozenset(("chassis_deck",)),
         # drivetrain seats / meshes (mirrors assembly_check WHITELIST)
         frozenset(("ant_bracket", "head_back")),     # bracket spine on the back wall
         frozenset(("ant_gears_L", "antenna_L")),     # rack/pinion placeholder mesh
@@ -94,7 +107,8 @@ def _fit_report(geo):
                     sel = np.random.default_rng(0).choice(sel, 260, replace=False)
                 patch = [[round(float(pts[q][0]), 2), round(float(pts[q][1]), 2),
                           round(float(pts[q][2]), 2), round(float(-d[q]), 3)] for q in sel]
-                _pair = frozenset((names[i], names[j]))
+                _pair = frozenset((_SPLIT_ALIAS.get(names[i], names[i]),
+                                   _SPLIT_ALIAS.get(names[j], names[j])))
                 rows.append(dict(a=names[i], b=names[j],
                                  expected=_pair in _FIT_CONTACT_OK,
                                  mm=round(float(-d[k]), 3),  # +clearance / -press depth
