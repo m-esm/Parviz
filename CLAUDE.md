@@ -308,9 +308,14 @@ engagement beats a friction belt that slips when the head pans.
 ## Print notes (first pass, not finalized)
 
 **PRINT-SPEED SPLITS (2026-07-10, user):** the four biggest prints are sub-split so no
-piece exceeds ~225 cm3 solid and EVERYTHING fits a 180x180 bed: `head_back` -> `_L/_R`
-at x=0 (top-wall flange, 2x M3 axis-X + counterbores in R / thread-form pilots in L,
-plus a 0.15-fit tongue/groove on the rear strip), `head_bezel` -> `_L/_R` at x=+22
+piece exceeds ~225 cm3 solid and EVERYTHING fits a 180x180 bed: `head_back` -> FOUR pieces
+(2026-07-10 second pass, user: the halves still ceiling-printed the whole back wall):
+per side a flat BACK PANEL (the 4mm wall slab: door rebate/void, snap catch band, tray
+screw holes -- prints lying flat, outer face up, ~zero support) + a WALL FRAME (walls,
+pivot hubs, antenna guide bosses -- prints front-down with NO ceiling). Panel-to-frame
+= 6x M3 axis-Y from the back into frame rim tabs (side tabs clip into the corner mass
+via inter() -- at y -66 the side walls are all corner_r curve); halves still join via
+the top-wall flange (frames, 2x M3 axis-X) + tongue/groove (panels), `head_bezel` -> `_L/_R` at x=+22
 (staggered vs the back seam = brickwork interlock; per face strip one M3 + one Ø4
 dowel in pads behind the face, clear of the camera bosses), `chassis_lower` ->
 `_front/_rear` at y=+26 (floor pads x +-61: M3x12 axis-Y + Ø4 dowel each; the deck

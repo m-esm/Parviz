@@ -8,7 +8,8 @@ Output: exports/parviz_plates.3mf (gitignored, regenerable) with these plates:
 
   Chassis            lower front/rear + deck front/center/rear + belly plate (2026-07-10
                      print-speed splits; every piece <= 180x180)
-  Head               bezel L/R + back L/R + door + screen tray + cam cover + sd plug
+  Head               bezel L/R + back frames L/R + flat back panels L/R + door +
+                     screen tray + cam cover + sd plug
   Antennas           2 masts (racks up) + the drive bracket
   Neck and pan       neck clevis, tilt carrier, pan platform/race/cage/clips
   Worm drive         worm wheel + worm (real generated teeth)
@@ -68,8 +69,10 @@ PARTS = {  # name: (subsystem, [rotations], obj_settings)
     "chassis_deck_center": ("base", [(X, 180)], STRUCT),
     "chassis_deck_rear":   ("base", [(X, 180)], STRUCT),
     "belly_plate":     ("base", [],          TREE),     # flat plate (H 9)
-    "head_back_L":     ("head", [(X, 90)],   STRUCT),   # open front face -> bed (H 72)
-    "head_back_R":     ("head", [(X, 90)],   STRUCT),
+    "head_back_frame_L": ("head", [(X, 90)], STRUCT),   # wall ring, front face -> bed:
+    "head_back_frame_R": ("head", [(X, 90)], STRUCT),   #  NO back-wall ceiling anymore
+    "head_back_panel_L": ("head", [(X, -90)], TREE),    # flat 4mm wall slab, outer
+    "head_back_panel_R": ("head", [(X, -90)], TREE),    #  face (rebate) up
     "head_bezel_L":    ("head", [(X, -90)],  STRUCT),   # glass face -> bed, aperture up
     "head_bezel_R":    ("head", [(X, -90)],  STRUCT),
     "antenna_L":       ("head", [(X, -90)],  TREE),     # mast flat, rack teeth UP
@@ -97,7 +100,8 @@ PARTS = {  # name: (subsystem, [rotations], obj_settings)
 CATEGORIES = [
     ("Chassis",      ["chassis_lower_front", "chassis_lower_rear", "chassis_deck_front",
                       "chassis_deck_center", "chassis_deck_rear", "belly_plate"]),
-    ("Head",         ["head_back_L", "head_back_R", "head_bezel_L", "head_bezel_R",
+    ("Head",         ["head_back_frame_L", "head_back_frame_R", "head_back_panel_L",
+                      "head_back_panel_R", "head_bezel_L", "head_bezel_R",
                       "head_door", "screen_tray", "cam_cover", "sd_plug"]),
     ("Antennas",     ["antenna_L", "antenna_R", "ant_bracket"]),
     ("Neck and pan", ["neck_clevis", "tilt_carrier", "pan_platform", "pan_race", "pan_cage", "pan_clips"]),

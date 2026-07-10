@@ -473,17 +473,41 @@ def build_head_parts():
         barb.apply_translation((0, 0, bz0))
         door = uni([door, barb])
 
-    # ---- PRINT-SPEED SPLITS (2026-07-10, user: break the biggest prints apart). Both
-    # 205-wide shell halves split L/R -- two parallel plates, and they now fit a
-    # 180x180 bed. Seams are STAGGERED (back at x=0, bezel at x=+22) so the assembled
-    # shell interlocks like brickwork; the hatch frame (pinned both sides), the door
-    # (hooked + snapped across), and the bezel<->back perimeter screws all bridge.
+    # ---- PRINT-SPEED SPLITS (2026-07-10, user: break the biggest prints apart; the
+    # L/R halves alone still printed open-front-down with the WHOLE back wall as a
+    # supported ceiling, so head_back is now FOUR pieces): per side a flat BACK PANEL
+    # (the 4 mm wall slab, y < -66: door rebate/void, snap catch band, tray screw
+    # holes -- prints lying flat, outer face up, near-zero support; the gusset webs
+    # that hang off the wall ride it as upstanding fins) + a WALL FRAME (side/top/
+    # bottom walls, pivot hubs, antenna guide bosses -- prints front-face-down with
+    # NO ceiling). Panel-to-frame: 6x M3 axis-Y from the back (counterbored in the
+    # panel, thread-form pilots in frame rim tabs: side walls z 120/190, bottom wall
+    # x +-45). Seams are STAGGERED (back pieces at x=0, bezel at x=+22) so the
+    # assembled shell interlocks like brickwork; the hatch frame, door, and bezel
+    # screws all bridge.
     from trimesh.intersections import slice_mesh_plane
 
-    # head_back at x=0: the only solid crossings are the TOP WALL and the rear strip
-    # above the door (z 190..226; the motor bay opens everything below). Joint: an
-    # under-the-top-wall flange pair (2x M3 axis X: clearance+counterbore in R,
-    # thread-form pilot in L) + a vertical tongue/groove on the rear-strip seam face.
+    # frame rim tabs + the panel screw drills (cut before slicing: each piece keeps
+    # its share -- clearance + counterbore land in the wall slab, pilots in the tabs)
+    wall_if = P["body_back_y"] + P["head_wall"]      # -66
+    tab_pts = [(-91.0, 120.0), (91.0, 120.0), (-91.0, 190.0), (91.0, 190.0)]
+    for tx, tz in tab_pts:
+        tab = box(9.0, 10.0, 13.0)
+        tab.apply_translation((tx + (2.0 if tx > 0 else -2.0), wall_if + 5.0, tz))
+        back = uni([back, inter(tab, _head_solid())])    # clipped: at y -66 the side
+    for tx, tz in [(-45.0, 96.0), (45.0, 96.0)]:         # walls are corner curve, so
+        tab = box(12.0, 10.0, 10.0)                      # the pilots bite the thick
+        tab.apply_translation((tx, wall_if + 5.0, tz))   # corner mass itself
+        back = uni([back, inter(tab, _head_solid())])
+    for tx, tz in tab_pts + [(-45.0, 96.0), (45.0, 96.0)]:
+        clr = cyl(1.6, 5.0, axis="y")
+        clr.apply_translation((tx, -68.0, tz)); back = sub(back, clr)
+        cbp = cyl(3.2, 1.8, axis="y")
+        cbp.apply_translation((tx, P["body_back_y"] + 0.8, tz)); back = sub(back, cbp)
+        pil = cyl(1.25, 8.0, axis="y")
+        pil.apply_translation((tx, wall_if + 4.0, tz)); back = sub(back, pil)
+
+    # head_back halves join (frame side): under-the-top-wall flange, 2x M3 axis X
     fl1 = box(28.0, 21.0, 7.0)
     fl1.apply_translation((0, -2.5, 218.5))          # y -13..8, z 215..222 (fuses up):
                                                      # antenna G3 tips reach y -15.3 /
@@ -496,14 +520,30 @@ def build_head_parts():
         cbx.apply_translation((12.5, fy_, 218.5)); back = sub(back, cbx)
         pil = cyl(1.25, 9.0, axis="x")
         pil.apply_translation((-4.5, fy_, 218.5)); back = sub(back, pil)
-    back_l = slice_mesh_plane(back, plane_normal=(-1, 0, 0), plane_origin=(0, 0, 0), cap=True)
-    back_r = slice_mesh_plane(back, plane_normal=(1, 0, 0), plane_origin=(0, 0, 0), cap=True)
+
+    # panel / frame split at the wall inner face; recover wall-hung floaters (the
+    # gusset webs) into the panel so nothing is left floating in the frame
+    panel = slice_mesh_plane(back, plane_normal=(0, -1, 0),
+                             plane_origin=(0, wall_if, 0), cap=True)
+    frame_raw = slice_mesh_plane(back, plane_normal=(0, 1, 0),
+                                 plane_origin=(0, wall_if, 0), cap=True)
+    bodies = sorted(frame_raw.split(only_watertight=False), key=lambda b: -b.volume)
+    frame = bodies[0]
+    floaters = [b for b in bodies[1:] if b.volume > 1.0]
+    assert len(floaters) <= 6, "unexpected floating bodies in head_back frame"
+    if floaters:
+        panel = uni([panel] + floaters)
+
+    frame_l = slice_mesh_plane(frame, plane_normal=(-1, 0, 0), plane_origin=(0, 0, 0), cap=True)
+    frame_r = slice_mesh_plane(frame, plane_normal=(1, 0, 0), plane_origin=(0, 0, 0), cap=True)
+    panel_l = slice_mesh_plane(panel, plane_normal=(-1, 0, 0), plane_origin=(0, 0, 0), cap=True)
+    panel_r = slice_mesh_plane(panel, plane_normal=(1, 0, 0), plane_origin=(0, 0, 0), cap=True)
     tng = box(4.0, 2.0, 24.0)
-    tng.apply_translation((0, -68.0, 206.0))         # rear-strip tongue on R ...
-    back_r = uni([back_r, inter(tng, _head_solid())])
+    tng.apply_translation((0, -68.0, 206.0))         # panel seam tongue on R ...
+    panel_r = uni([panel_r, inter(tng, _head_solid())])
     tngf = box(4.3, 2.3, 24.3)
     tngf.apply_translation((-0.075, -68.0, 206.0))   # ... 0.15-fit groove in L
-    back_l = sub(back_l, tngf)
+    panel_l = sub(panel_l, tngf)
 
     # head_bezel at x=+22 (clear of the camera bosses |x|<=14, the +-40 perimeter
     # posts, and the led_slot starting at x 24): flange pads behind the forehead and
@@ -526,10 +566,11 @@ def build_head_parts():
 
     _color(bez_l, "cradle"); bez_l.metadata["name"] = "head_bezel_L"
     _color(bez_r, "cradle"); bez_r.metadata["name"] = "head_bezel_R"
-    _color(back_l, "back"); back_l.metadata["name"] = "head_back_L"
-    _color(back_r, "back"); back_r.metadata["name"] = "head_back_R"
+    for m_, nm in ((frame_l, "head_back_frame_L"), (frame_r, "head_back_frame_R"),
+                   (panel_l, "head_back_panel_L"), (panel_r, "head_back_panel_R")):
+        _color(m_, "back"); m_.metadata["name"] = nm
     _color(door, "back"); door.metadata["name"] = "head_door"
-    return bez_l, bez_r, back_l, back_r, door
+    return bez_l, bez_r, frame_l, frame_r, panel_l, panel_r, door
 
 
 def build_screen_tray():

@@ -77,8 +77,10 @@ Owned quantities cross-checked against a personal parts inventory (2026-07-07).
   vertical cable channel
 - `head_bezel_L` / `head_bezel_R`: front frame split at x=+22 (M3 + Ø4 dowel in pads
   behind the forehead/chin strips); seam staggered off the back's for interlock
-- `head_back_L` / `head_back_R`: rear cover split at x=0 (top-wall flange 2x M3 +
-  rear-strip tongue/groove): pivot hubs, screen-tray wall holes, Pi bay, vents
+- `head_back_frame_L/R` + `head_back_panel_L/R`: rear cover in four (frames = walls +
+  pivot hubs, print front-down, no ceiling support; panels = the flat 4mm back wall,
+  print lying flat). 6x M3 from the back join panel to frame rim tabs; the frame
+  halves share the top-wall flange (2x M3) and the panel halves a tongue/groove
 - `screen_tray`: bench-mounted module carrier (2 rails + spine): the screen+Pi bolts to it
   on the bench (4x M3x10 into the factory bosses, open access), the loaded tray drops into
   head_back, 4x M3x10 drive from OUTSIDE the back wall (visible, between door and frame)
