@@ -69,6 +69,20 @@ gripper arms (`arm_L/R`, static tucked pose; actuation + mount decision deferred
 styling parts probed against all parts: 0.000 mm³ overlaps. `TRANS=0 make shot` renders
 solid (styling review); default stays 50% ghost.
 
+**Cliff-sensor prow (2026-07-10, user "upper deck 10 cm longer, lower the same, angled
+so the proximity sensor looks down"):** `chassis_deck_front` grew a full-width 100 mm
+plate past the hull front at z 58..66 (NOT the full deck band -- the proud grille ring
+tops out at z 57, 1.0 clearance), with an HC-SR04 bay under the tip whose face is 12 deg
+nose-down (`sensor_cliff` placeholder; board recess + 4x M2 pilots + wire slot; barrel
+tips z 36.4; ping lands ~110 mm ahead of track contact, a cliff reads as no-echo). A
+raked wedge was rejected (grille collision + non-planar print faces); the flat plate
+prints top-face-down with the strip, bay boss + gussets rising, the 12 deg face
+self-supporting. Two 8-wide root gussets at x +-54 (the only trim-free front-wall strips
+between the fin webs at 49.5 and the corner rounds at 56); the +X one carries the Ø6
+wire path, an L through the SOLID deck plate: gusset bore (y 86..128, z 51.5) + a
+vertical drop at (54, 89) through the z 46 seam into the tub cavity (the cavity ceiling
+IS the seam, so a straight wall bore dead-ends -- probed). Params `deck_snout_*`.
+
 Latest render review (2026-07-06): `make build` wrote a 20-part `web/assembly.glb`; fresh
 transparent and solid shots were inspected from iso/front/side/top plus two section cuts. The
 assembly reads correctly as a tablet-head tracked robot, but the print-final fixes are:

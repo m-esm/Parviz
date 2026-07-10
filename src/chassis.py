@@ -57,6 +57,24 @@ def build_fascia():
     uspod = uni(us)
     _color(uspod, "sensor"); uspod.metadata["name"] = "sensor_us"
     parts.append(uspod)
+    # cliff sensor: HC-SR04 board in the deck prow's nose-down bay (bay geometry in
+    # build_chassis_parts), barrels out the open recess face, 0.2/0.25 assembly gaps
+    ta = P["deck_snout_bay_deg"] * DEG
+    s_, c_ = np.sin(ta), np.cos(ta)
+    n_dn = np.array([0.0, s_, -c_])
+    F = np.array([0.0, P["deck_snout_bay_y"], P["deck_snout_bay_face_z"]])
+    brd = box(45.7, 20.9, 1.6)
+    brd.apply_transform(R(ta, (1, 0, 0)))
+    brd.apply_translation(F - 2.0 * n_dn)
+    cliff = [brd]
+    for sx in (-1, 1):
+        b = cyl(P["us_d"] / 2, 12.0, sections=48)
+        b.apply_transform(R(ta, (1, 0, 0)))
+        b.apply_translation(F + np.array([sx * P["us_dx"], 0.0, 0.0]) + 4.8 * n_dn)
+        cliff.append(b)
+    cliff = uni(cliff)
+    _color(cliff, "sensor"); cliff.metadata["name"] = "sensor_cliff"
+    parts.append(cliff)
     # amber indicator lamps at the fascia corners
     for sx, nm in ((-1, "lamp_L"), (1, "lamp_R")):
         l = rounded_box(12.0, 7.0, 2.0, 2.5)
@@ -585,6 +603,69 @@ def build_chassis_parts():
                 deck_f = sub(sub(deck_f, scr), cbv)
             else:
                 deck_r = sub(sub(deck_r, scr), cbv)
+
+    # ---- CLIFF-SENSOR PROW (2026-07-10, user): the deck runs deck_snout_len past the
+    # hull front at full width while the lower tub stays untouched; the HC-SR04 hangs
+    # under the plate tip in a bay_deg nose-down bay watching the desk ~110 mm ahead
+    # of the track contact (floor ping ~36 mm; a cliff reads as no-echo). The plate
+    # rides z 58..66, NOT the full deck band: the proud grille ring tops out at z 57,
+    # so the underside clears the fascia by 1.0. Two root gussets stiffen the
+    # cantilever in the only trim-free wall strips; the +X one carries the Ø6 wire
+    # bore through the front wall into the tub cavity (everywhere else the face is
+    # blind-hex field, ring band or fin webs). Prints top-face-down flat with the
+    # strip: boss + gussets rise upward and the bay face is self-supporting.
+    fw = P["chassis_l"] / 2
+    st = P["deck_snout_t"]
+    ta = P["deck_snout_bay_deg"] * DEG
+    by, fz = P["deck_snout_bay_y"], P["deck_snout_bay_face_z"]
+    s_, c_ = np.sin(ta), np.cos(ta)
+    n_dn = np.array([0.0, s_, -c_])                  # sensor axis: bay_deg ahead of down
+    d_up = np.array([0.0, c_, s_])                   # in-face direction, +y-ish
+    plate = box(P["chassis_w"], P["deck_snout_len"] + 6.0, st)   # 6 root overlap fuses
+    plate.apply_translation((0, (fw - 6.0 + fw + P["deck_snout_len"]) / 2, z1 - st / 2))
+    snout = [plate]
+    boss = box(52.0, 30.0, 18.0)                     # bay boss under the tip, face-cut below
+    boss.apply_translation((0, by, z1 - st - 9.0))
+    fcut = box(56.0, 40.0, 20.0)                     # keep above the tilted face plane
+    fcut.apply_transform(R(ta, (1, 0, 0)))
+    fcut.apply_translation(np.array([0.0, by, fz]) + 10.0 * n_dn)
+    snout.append(sub(boss, fcut))
+    gx = P["deck_snout_gusset_x"]
+    for sx_ in (-1, 1):
+        g = box(8.0, 30.0, 12.0)                     # root gusset: full 12 tall to y 104,
+        g.apply_translation((sx_ * gx, 111.0, 52.0))  # then tapers to the plate at y 126
+        gcut = box(12.0, 60.0, 30.0)
+        gcut.apply_transform(R(np.arctan2(12.0, 22.0), (1, 0, 0)))
+        ph_ = np.arctan2(12.0, 22.0)
+        gcut.apply_translation((sx_ * gx, 104.0 + 15.0 * np.cos(ph_) + 20.0 * np.sin(ph_),
+                                46.0 + 15.0 * np.sin(ph_) - 20.0 * np.cos(ph_)))
+        snout.append(sub(g, gcut))
+    deck_f = uni([deck_f] + snout)
+    rec = box(46.2, 21.4, 3.4)                       # board recess into the bay face
+    rec.apply_transform(R(ta, (1, 0, 0)))
+    rec.apply_translation(np.array([0.0, by, fz]) - 1.5 * n_dn)
+    deck_f = sub(deck_f, rec)
+    wsl = box(12.0, 34.0, 3.4)                       # wire slot: recess -> out the boss rear
+    wsl.apply_transform(R(ta, (1, 0, 0)))
+    wsl.apply_translation(np.array([0.0, by, fz]) - 20.0 * d_up - 1.5 * n_dn)
+    deck_f = sub(deck_f, wsl)
+    for px_ in (-20.5, 20.5):                        # 4x Ø1.6 M2 self-tap pilots, recess
+        for py_ in (-8.35, 8.35):                    # ceiling up into the boss (HC-SR04
+            pil = cyl(0.8, 8.0)                      # corner-hole pattern 41 x 16.7)
+            pil.apply_transform(R(ta, (1, 0, 0)))
+            pil.apply_translation(np.array([px_, by, fz]) + py_ * d_up - 7.2 * n_dn)
+            deck_f = sub(deck_f, pil)
+    # Ø6 wire path, an L through SOLID deck (the tub cavity ceiling is the z 46 seam,
+    # so a straight wall bore dead-ends -- probed 2026-07-10): horizontal bore along
+    # the +X gusset (opens where the taper line crosses it, y ~112..128, wire lays in
+    # the groove) through the front wall into the deck plate, then a vertical drop
+    # just inboard of the wall punching the seam floor into the open tub below.
+    wb_ = cyl(3.0, 42.0, axis="y")
+    wb_.apply_translation((gx, 107.0, 51.5))         # y 86..128
+    deck_f = sub(deck_f, wb_)
+    wdrop = cyl(3.0, 12.0)
+    wdrop.apply_translation((gx, 89.0, 48.0))        # z 42..54: bore floor -> tub cavity
+    deck_f = sub(deck_f, wdrop)
 
     out = []
     for m_, nm in ((lower_f, "chassis_lower_front"), (lower_r, "chassis_lower_rear"),

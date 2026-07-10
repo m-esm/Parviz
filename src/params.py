@@ -232,6 +232,27 @@ P = {
                                  # y-60 corner bosses reach 64 -> strips own them)
     "deck_center_screws": ((-64.0, 8.0), (64.0, 8.0), (-64.0, -26.0), (64.0, -26.0)),
                                  # the center piece's OWN hold-downs (vent-free bands)
+    # CLIFF-SENSOR PROW (2026-07-10, user: "upper deck 10 cm longer, lower deck the
+    # same, angled so the proximity sensor looks down"): a full-width plate off the
+    # deck top, part of chassis_deck_front. The plate is FLAT (prints top-face-down
+    # with the strip) and the ANGLE lives in the sensor bay under the tip; a raked
+    # wedge was rejected because the proud grille ring tops out at z 57.
+    "deck_snout_len": 100.0,     # past the hull front face (the user's 10 cm)
+    "deck_snout_t": 8.0,         # plate z 58..66: underside clears the grille ring
+                                 # (z 37..57 proud of the wall) by 1.0
+    "deck_snout_bay_y": 183.0,   # HC-SR04 bay center under the tip: board 45.7 x 20.9
+                                 # spans y 174.5..195.5, 4.5 short of the y 200 tip
+    "deck_snout_bay_deg": 12.0,  # sensor axis 12 deg AHEAD of straight down: still a
+                                 # near-normal desk echo (ultrasound specular-misses
+                                 # much past ~15 deg on smooth desks) and the nose-down
+                                 # face reads as the angled look the user asked for
+    "deck_snout_bay_face_z": 47.0,  # bay face plane height at bay_y (slope = bay_deg);
+                                 # barrel tips end z 36.4 -- inside HC-SR04's happy
+                                 # range and 36 mm of ground clearance at the tip
+    "deck_snout_gusset_x": 54.0, # root gussets (8 wide, reach y 126): the only trim-
+                                 # free front-wall strips (fin webs end x 49.5, corner
+                                 # rounds start x 56); the +X one carries the Ø6 wire
+                                 # bore (z 51.5) through the wall into the tub cavity
     # Pan-motor seat detailing (re-derived for base_h 66: can bottom 26.45, ear-bar
     # underside = pedestal top = 44.25, can top 45.25, gear face 54.25): the 7-wide x
     # 1-thick ear bar clamps on two DEFINED pads instead of the whole 48x48 top, and the
