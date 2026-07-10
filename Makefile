@@ -43,7 +43,5 @@ all:                 ## Full pipeline: build GLB, interference gate, then export
 	python3 src/assembly_check.py web/assembly.glb
 	$(MAKE) export
 
-pages:               ## Publish web/ to GitHub Pages (gh-pages branch)
-	git subtree split --prefix web -b _pages
-	git push -f origin _pages:gh-pages
-	git branch -D _pages
+pages:               ## Force a Pages deploy now (normally AUTOMATIC: pushing web/ to main triggers .github/workflows/pages.yml)
+	gh workflow run pages.yml
