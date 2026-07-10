@@ -6,12 +6,14 @@ real Bambu project, not "load geometry data only").
 Run `EXPORT=1 python3 src/build.py` first so stl/ is current, then `python3 tools/export_bambu.py`.
 Output: exports/parviz_plates.3mf (gitignored, regenerable) with these plates:
 
-  Chassis            chassis, belly_plate
-  Head               head shells + screen tray + cam cover + sd plug
+  Chassis            lower front/rear + deck front/center/rear + belly plate (2026-07-10
+                     print-speed splits; every piece <= 180x180)
+  Head               bezel L/R + back L/R + door + screen tray + cam cover + sd plug
+  Antennas           2 masts (racks up) + the drive bracket
   Neck and pan       neck clevis, tilt carrier, pan platform/race/cage/clips
   Worm drive         worm wheel + worm (real generated teeth)
-  Track gear         2 sprockets, 4 road wheels, 2 pod rails, 2 keeper bars
-  Track links        72 articulated links (70 plain + 2 master)
+  Track gear         2 sprockets, 12 dished road wheels, 2 pod rails, 2 keeper bars
+  Track links        90 articulated links (88 plain + 2 master)
 
 A category that overflows the 256x256 bed spills to "Cat 1 of N", "Cat 2 of N".
 ONE file, many plates: swap the spool / pick per-plate settings in Studio per plate.
@@ -38,7 +40,8 @@ if not os.path.isdir(SKILL):
     sys.exit("bambu-3mf-export skill scripts not found at " + SKILL)
 sys.path.insert(0, SKILL)
 
-import build                                       # noqa: E402  (import-safe: main guard)
+import tracks                                      # noqa: E402  (split modules,
+from params import P                               # noqa: E402   2026-07-10 refactor)
 from bambu3mf import write_bambu_3mf               # noqa: E402
 
 BED = 256.0
@@ -59,11 +62,19 @@ STRUCT = {**TREE, "wall_loops": "4", "sparse_infill_density": "20%"}   # big she
 # print orientation per STL-loaded part (rotations applied to the as-built mesh) + its overrides
 # Goal: best print face on the bed, shortest sensible height, cavities/detail up.
 PARTS = {  # name: (subsystem, [rotations], obj_settings)
-    "chassis_lower":   ("base", [],          STRUCT),   # open-top lower tub, seam up
-    "chassis_deck":    ("base", [(X, 180)],  STRUCT),   # shallow removable deck, top face down
+    "chassis_lower_front": ("base", [],         STRUCT),   # open-top tub halves, seam up
+    "chassis_lower_rear":  ("base", [],         STRUCT),
+    "chassis_deck_front":  ("base", [(X, 180)], STRUCT),   # deck pieces, top face down
+    "chassis_deck_center": ("base", [(X, 180)], STRUCT),
+    "chassis_deck_rear":   ("base", [(X, 180)], STRUCT),
     "belly_plate":     ("base", [],          TREE),     # flat plate (H 9)
-    "head_back":       ("head", [(X, 90)],   STRUCT),   # open front face -> bed (H 72)
-    "head_bezel":      ("head", [(X, -90)],  STRUCT),   # glass face -> bed, aperture up (H 29)
+    "head_back_L":     ("head", [(X, 90)],   STRUCT),   # open front face -> bed (H 72)
+    "head_back_R":     ("head", [(X, 90)],   STRUCT),
+    "head_bezel_L":    ("head", [(X, -90)],  STRUCT),   # glass face -> bed, aperture up
+    "head_bezel_R":    ("head", [(X, -90)],  STRUCT),
+    "antenna_L":       ("head", [(X, -90)],  TREE),     # mast flat, rack teeth UP
+    "antenna_R":       ("head", [(X, -90)],  TREE),
+    "ant_bracket":     ("head", [(X, 90)],   TREE),     # wall-spine face -> bed
     "head_door":       ("head", [(X, 90)],   TREE),     # flat back on bed, panel up (H 10)
     "screen_tray":     ("head", [(X, -90)],  STRUCT),   # mount plate -> bed, pillars up (H 88)
     "cam_cover":       ("head", [(X, 90)],   TREE),     # flat (H 5.5)
@@ -84,8 +95,11 @@ PARTS = {  # name: (subsystem, [rotations], obj_settings)
 
 # category -> ordered part names (or generated-unit tokens); each becomes 1+ named plates
 CATEGORIES = [
-    ("Chassis",      ["chassis_lower", "chassis_deck", "belly_plate"]),
-    ("Head",         ["head_back", "head_bezel", "head_door", "screen_tray", "cam_cover", "sd_plug"]),
+    ("Chassis",      ["chassis_lower_front", "chassis_lower_rear", "chassis_deck_front",
+                      "chassis_deck_center", "chassis_deck_rear", "belly_plate"]),
+    ("Head",         ["head_back_L", "head_back_R", "head_bezel_L", "head_bezel_R",
+                      "head_door", "screen_tray", "cam_cover", "sd_plug"]),
+    ("Antennas",     ["antenna_L", "antenna_R", "ant_bracket"]),
     ("Neck and pan", ["neck_clevis", "tilt_carrier", "pan_platform", "pan_race", "pan_cage", "pan_clips"]),
     ("Worm drive",   ["worm_wheel_real", "tilt_worm_real"]),
     ("Track gear",   ["@drivegear"]),
@@ -125,11 +139,24 @@ def drivegear_units():
     out = [load_part(n) for n in ("track_pod_rail_L", "track_pod_rail_R",
                                   "track_keeper_L", "track_keeper_R")]
     for sx in (-1, 1):
-        spr = build._sprocket(sx); spr.apply_transform(R(Y, 90))
+        spr = tracks._sprocket(sx); spr.apply_transform(R(Y, 90))
         out.append((f"sprocket_{'L' if sx < 0 else 'R'}", spr, TREE))
-    rd = build.P["roadwheel_d"]
-    for i in range(build.P["roadwheel_count"] * 2):
-        rw = build.sub(build.cyl(rd / 2, 30.0, axis="x"), build.cyl(2.1, 34.0, axis="x"))
+    # dished road wheels, same recipe as tracks.build_tracks (rim + dish + hub bolt ring)
+    import tracks as trk
+    from geo import box as gbox, cyl as gcyl, sub as gsub
+    rr_ = P["roadwheel_d"] / 2
+    for i in range(P["roadwheel_count"] * 2):
+        rw = gcyl(rr_, 30.0, axis="x")
+        for fs in (-1, 1):
+            dsh = gsub(gcyl(rr_ - 2.2, 2.4, axis="x"), gcyl(5.2, 3.4, axis="x"))
+            dsh.apply_translation((fs * (30.0 / 2 - 1.1), 0, 0))
+            rw = gsub(rw, dsh)
+            for k in range(5):
+                aa = 2 * np.pi * k / 5
+                bh = gcyl(0.9, 2.0, axis="x")
+                bh.apply_translation((fs * (30.0 / 2 - 0.9), 3.6 * np.cos(aa), 3.6 * np.sin(aa)))
+                rw = gsub(rw, bh)
+        rw = gsub(rw, gcyl(2.1, 34.0, axis="x"))
         rw.apply_transform(R(Y, 90))
         out.append((f"road_wheel_{i+1}", rw, NOSUP))
     for _, m, _ in out:
@@ -138,10 +165,10 @@ def drivegear_units():
 
 
 def link_units():
-    """35 plain links/side + 1 master/side, grouser-up (self-supporting -> support off)."""
-    plain = build._track_link(); plain.apply_transform(R(X, 180))
-    master = build._track_master_link()[0]; master.apply_transform(R(X, 180))
-    n = build.P["track_links"]
+    """44 plain links/side + 1 master/side, grouser-up (self-supporting -> support off)."""
+    plain = tracks._track_link(); plain.apply_transform(R(X, 180))
+    master = tracks._track_master_link()[0]; master.apply_transform(R(X, 180))
+    n = P["track_links"]
     out = [("track_link", plain.copy(), NOSUP) for _ in range((n - 1) * 2)]
     out += [("track_master_link", master.copy(), NOSUP) for _ in range(2)]
     for _, m, _ in out:
@@ -210,8 +237,10 @@ def main():
         total += n
         print(f"  {name:18s} {n:5d}  {contents}")
     print(f"  {'':18s} {total:5d}  total printed bodies")
-    print("\n  EXCLUDED (bought): 28BYJ x2 / TT x2 / ULN2003, 695-2RS + F688ZZ bearings, pan-race")
-    print("  6mm BBs, F688ZZ idler bodies (proxy, ride a bought bearing), M2/M3 hardware, PD+bucks.")
+    print("\n  EXCLUDED (bought): 28BYJ x4 / TT x2 / ULN2003 x4, 695-2RS + F688ZZ bearings,")
+    print("  pan-race 6mm BBs, antenna m0.8 spur set + Ø4 shafts (buy, or print later with")
+    print("  generated teeth like docs/WORM.md; the placeholder discs are NOT printable teeth),")
+    print("  F688ZZ idler bodies (proxy, ride a bought bearing), M2/M3 hardware, PD+bucks.")
     print("  Design wants PETG for Worm drive + Track plates + load-bearing parts: print those in")
     print("  PETG and set 250C / 80C textured-PEI in Studio. Large-shell orientations set for")
     print("  support-free faces but not visually verified per-part; Auto-orient shells in Studio.")

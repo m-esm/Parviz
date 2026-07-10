@@ -27,6 +27,7 @@ SUBSYSTEMS = [
     ("pan", "neck"),
     ("tilt", "neck"),
     ("head", "head"),          # screen shell (face), camera mount, ears/back
+    ("ant", "head"),           # deployable antenna masts + drive bracket
     ("face", "head"),
     ("shell", "head"),
     ("cam", "head"),
