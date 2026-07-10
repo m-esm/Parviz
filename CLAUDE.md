@@ -490,8 +490,11 @@ wheels not properly connected" -- the connections were unmodeled hardware): per 
 7x M4x40 bolt-axle placeholders (shank through beam bore + wheel, hex head on the hub
 face -- head seat whitelisted in the fit audit) + the Ø8 idler stub (x 83.5..118,
 riding the tension-slot passage). Silver, export=None, never printed. (3) EAR MICS
-MODELED (`ear_mic_L/R` + Ø6.2 wall bores + Ø9.5 spot-faces in _head_solid, PARAMS
-ear_y=-10/ear_z=214): 3.5 mm panel jack per side wall above the trim rails, gooseneck +
-foam placeholder rising as the ear; jack bodies clear the screen top (208.4) and the
-antenna half-shafts (207); both land in head_back, 4 off the bezel split. BUY: 2x
-panel-mount 3.5 mm TRS jacks (mics + CM108 adapters already ordered).
+MODELED, v2 same day (user: "only the tip of the microphone is supposed to be out"):
+the gooseneck mic lives INSIDE the head -- plug into the CM108 adapter at the Pi, the
+flexible neck up the rear bay -- and just the Ø17 foam windscreen pokes through a Ø15
+grommet bore in each side wall (compress-fit; a Ø19/Ø15 x 3 proud ring dresses it as
+the ear). PARAMS ear_y=-10/ear_z=214, above the trim rails, both in head_back, clear
+of the screen top (208.4) and antenna half-shafts (207). `ear_mic_L/R` placeholders =
+foam tip (12 proud) + inboard neck stub. NO panel jacks needed (v1's wall-jack design
+retired before printing); mics + CM108 adapters already ordered.

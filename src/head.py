@@ -108,16 +108,19 @@ def build_head_shell():
     slot.apply_translation((0, -28.5, 123.0))     # x +-33, y -78..21, z 78..168 (world)
     shell = sub(shell, slot)
 
-    # EAR-MIC JACK BORES (2026-07-11, see PARAMS ear_y/ear_z): Ø6.2 panel-jack pass
-    # through each side wall + Ø9.5 x 1.0 outer spot-face for the bushing washer.
+    # EAR APERTURES (2026-07-11 v2, user: "only the tip of the microphone is supposed
+    # to be out"): the gooseneck mic lives INSIDE the head (plugged into the CM108
+    # adapter at the Pi; the flexible neck snakes up the rear bay), and just its foam
+    # windscreen pokes through a Ø15 grommet bore in each side wall -- the Ø17 foam
+    # compresses in and grips. A Ø19/Ø15 x 3 proud ring dresses the hole as the ear.
     # Above the trim rails, behind the split plane -> both land in head_back.
     for sxe in (-1, 1):
-        jb = cyl(3.1, 12.0, axis="x")
+        er = sub(cyl(9.5, 3.0, axis="x"), cyl(7.5, 5.0, axis="x"))
+        er.apply_translation((sxe * (P["head_w"] / 2 + 1.5), P["ear_y"], P["ear_z"]))
+        shell = uni([shell, er])
+        jb = cyl(7.5, 14.0, axis="x")
         jb.apply_translation((sxe * (P["head_w"] / 2 - 2.0), P["ear_y"], P["ear_z"]))
         shell = sub(shell, jb)
-        sf = cyl(4.75, 2.0, axis="x")
-        sf.apply_translation((sxe * (P["head_w"] / 2), P["ear_y"], P["ear_z"]))
-        shell = sub(shell, sf)
 
     # pivot hubs at the side walls, on the tilt axis (fuse through the wall, behind the bezel)
     bx = P["head_w"] / 2 - 8
@@ -835,31 +838,20 @@ def build_ant_drive():
 
 
 def build_ear_jacks():
-    """EAR MICS (2026-07-11): placeholder per side for the bought 3.5 mm panel-mount
-    TRS jack + the ordered gooseneck "hose" mic plugged into it. Bushing Ø6 through
-    the wall bore (nut inside, washer out, both floated 0.05 so nothing registers as
-    contact), Ø8.5 x 18 jack body inboard over the screen top, then the mic: Ø8 plug
-    barrel, a stub of gooseneck rising vertically, Ø17 foam windscreen. The real
-    gooseneck is flexible -- pose it however; this is the stowed-upright read."""
+    """EAR MICS (2026-07-11 v2, user: only the TIP sticks out): the gooseneck mic
+    mounts INSIDE the head (plug into the CM108 adapter at the Pi, flexible neck up
+    the rear bay -- not modeled); the placeholder shows the Ø14.6 foam windscreen
+    (compressed in the Ø15 grommet, 0.2 gap) with 12 proud of the wall, and the neck
+    stub heading inboard over the screen top."""
     out = []
     xw = P["head_w"] / 2
     ey, ez = P["ear_y"], P["ear_z"]
     for sxe, nm in ((-1, "ear_mic_L"), (1, "ear_mic_R")):
         ps = []
-        bsh = cyl(3.0, 9.0, axis="x")                    # bushing through the wall,
-        bsh.apply_translation((sxe * (xw - 1.5), ey, ez)); ps.append(bsh)   # into the nut
-        nut = cyl(4.5, 2.0, axis="x")                    # nut on the inner face (0.05 off)
-        nut.apply_translation((sxe * (xw - 4.0 - 1.05), ey, ez)); ps.append(nut)
-        bdy = cyl(4.25, 18.0, axis="x")                  # jack body, inboard, into the nut
-        bdy.apply_translation((sxe * (xw - 5.05 - 8.9), ey, ez)); ps.append(bdy)
-        plg = cyl(4.0, 12.0, axis="x")                   # mic plug barrel, onto the bushing
-        plg.apply_translation((sxe * (xw + 8.0), ey, ez)); ps.append(plg)
-        el = cyl(2.0, 10.0, axis="x")                    # gooseneck root, into the plug
-        el.apply_translation((sxe * (xw + 18.0), ey, ez)); ps.append(el)
-        gn = cyl(2.0, 46.0)                              # gooseneck rising as the ear
-        gn.apply_translation((sxe * (xw + 21.0), ey, ez + 23.0)); ps.append(gn)
-        fm = cyl(8.5, 24.0)                              # foam windscreen
-        fm.apply_translation((sxe * (xw + 21.0), ey, ez + 46.0 + 12.0)); ps.append(fm)
+        fm = cyl(7.3, 24.0, axis="x")                    # foam tip: 12 out, 12 in
+        fm.apply_translation((sxe * xw, ey, ez)); ps.append(fm)
+        gn = cyl(2.0, 32.0, axis="x")                    # gooseneck stub, inboard
+        gn.apply_translation((sxe * (xw - 12.0 - 15.0), ey, ez)); ps.append(gn)
         m = uni(ps)
         _color(m, "track"); m.metadata["name"] = nm     # rubber-black, like the mic
         out.append(m)

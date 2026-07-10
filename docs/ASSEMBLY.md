@@ -59,7 +59,6 @@ Owned quantities cross-checked against a personal parts inventory (2026-07-07).
 | Track hinge pins | Ø1.75 filament, bore 2.0. 53 links x 2 pods = **106 pins x ~46 mm** (track_width 44.8 + trim) ≈ 4.9 m, cut from an owned spool (the black CR-PETG is tougher than PLA for pins) | 106 | spooled (Tray 1) |, |
 | Ø4 dowel pins | body-to-pod join (2 per side), Ø4x12: modeled (wall slip holes + rail press sockets) | 4 | 0 | **4** |
 | HC-SR04 ultrasonic | x4: forward + REAR obstacle (front/rear walls, inside the twin grille rings) + front/rear cliff (flush in the deck slopes, boards behind the 5-thick skin). **Inventory has ZERO** (checked 2026-07-10) | 4 | 0 | **4** |
-| 3.5mm TRS panel jacks | x2, ear-mic sockets in the head side walls (Ø6 threaded bushing through the Ø6.2 bores at ear_y/ear_z; gooseneck mics + CM108 USB adapters already ordered 2026-07-11) | 2 | 0 | **2** |
 | M4x40 + nuts | road-wheel bolt-axles (2026-07-10 fix: wheels were mounted to nothing): head = outer hubcap, shank in the Ø4.2 wheel bore, nut captive in the rail wheel-beam slot. Prefer partially threaded (shank bearing surface); 40 mm exceeds the owned kits | 14+14 | nuts maybe in the 1263pc M2-M4 kit (verify) | **14x M4x40 (+nuts if absent)** |
 
 ### Printed parts (watertight; tank base + split head)
