@@ -28,14 +28,17 @@ def build_fascia():
     ring.apply_translation((0, fw, P["grille_cz"]))
     fins = [ring]
     for sx in (-1, 1):
-        # backing web per side, tying the fin bases to the ring: the fins (x 33.5..48.5)
+        # backing web per side, tying the fin bases to the ring: the fins
         # never touched the +-30 ring band -> trim_fascia split into 7 loose bodies
         # (PRINTABILITY 2). 1.2 thick against the wall, hidden behind the 2-proud fins;
-        # spans x 28..49.5 so it overlaps the ring band.
-        web = box(21.5, 1.2, 16.0)
-        web.apply_translation((sx * 38.75, fw + 0.6, P["grille_cz"]))
+        # spans x 28..47 so it overlaps the ring band. Toy-tank hull 2026-07-10: the
+        # ring/fins dropped into the lamps' z band, so the fin row pulled inboard to
+        # x <= 47.5 (lamps start at 48; the outer fin's last 1 mm sits web-less on the
+        # wall face, fine -- it still fuses to the web at x <= 47).
+        web = box(19.0, 1.2, 16.0)
+        web.apply_translation((sx * 37.5, fw + 0.6, P["grille_cz"]))
         fins.append(web)
-        for fx in (35.0, 41.0, 47.0):
+        for fx in (34.0, 40.0, 46.0):
             f = box(3.0, 2.0, 16.0)
             f.apply_translation((sx * fx, fw + 1.0, P["grille_cz"]))
             fins.append(f)
@@ -57,20 +60,20 @@ def build_fascia():
     uspod = uni(us)
     _color(uspod, "sensor"); uspod.metadata["name"] = "sensor_us"
     parts.append(uspod)
-    # cliff sensor: HC-SR04 board in the deck prow's nose-down bay (bay geometry in
-    # build_chassis_parts), barrels out the open recess face, 0.2/0.25 assembly gaps
-    ta = P["deck_snout_bay_deg"] * DEG
-    s_, c_ = np.sin(ta), np.cos(ta)
-    n_dn = np.array([0.0, s_, -c_])
-    F = np.array([0.0, P["deck_snout_bay_y"], P["deck_snout_bay_face_z"]])
+    # cliff sensor: HC-SR04 board against the front slope skin's back (pocket + bores
+    # in build_chassis_parts), barrels through the skin, ~8 proud like sensor_us
+    sa_ = np.arctan2(P["base_h"] - P["chassis_split_z"], P["deck_overhang"])
+    sn_ = np.array([0.0, np.cos(sa_), np.sin(sa_)])
+    nnf = np.array([0.0, np.sin(sa_), -np.cos(sa_)])
+    pb_ = np.array([0.0, fw, P["chassis_split_z"]]) + P["cliff_v"] * sn_
     brd = box(45.7, 20.9, 1.6)
-    brd.apply_transform(R(ta, (1, 0, 0)))
-    brd.apply_translation(F - 2.0 * n_dn)
+    brd.apply_transform(R(np.pi + sa_, (1, 0, 0)))
+    brd.apply_translation(pb_ - 4.8 * nnf)           # in the skin-back recess, 0.2 gaps
     cliff = [brd]
     for sx in (-1, 1):
         b = cyl(P["us_d"] / 2, 12.0, sections=48)
-        b.apply_transform(R(ta, (1, 0, 0)))
-        b.apply_translation(F + np.array([sx * P["us_dx"], 0.0, 0.0]) + 4.8 * n_dn)
+        b.apply_transform(R(np.pi + sa_, (1, 0, 0)))
+        b.apply_translation(pb_ + np.array([sx * P["us_dx"], 0.0, 0.0]) + 2.0 * nnf)
         cliff.append(b)
     cliff = uni(cliff)
     _color(cliff, "sensor"); cliff.metadata["name"] = "sensor_cliff"
@@ -169,8 +172,28 @@ def build_chassis_core():
     z0, z1 = P["chassis_clear"], P["base_h"]          # body spans clearance..pan-mount
     h = z1 - z0
     plate_bot, ring_top, seat_floor, zball = _pan_stack()
-    body = rounded_box(P["chassis_w"], P["chassis_l"], h, 14.0)
-    body.apply_translation((0, 0, z0))
+    # TOY-TANK HULL (2026-07-10, user round 2): lower tub (chassis_l long) + a deck
+    # slab overrunning it by deck_overhang at each end; the end faces slope from the
+    # wall top (|y| chassis_l/2, z split) to the deck top edge at atan(20/30) = 33.7
+    # deg from horizontal (print-safe; same ~33 family as the track ramps + glacis).
+    # The slope wedges cut the SLAB ONLY -- cutting the union would shave the tub
+    # wall tops (the plane extended crosses them below the seam).
+    seam_ = P["chassis_split_z"]
+    ovh = P["deck_overhang"]
+    lower_ = rounded_box(P["chassis_w"], P["chassis_l"], seam_ - z0, 14.0)
+    lower_.apply_translation((0, 0, z0))
+    slab = rounded_box(P["chassis_w"], P["chassis_l"] + 2 * ovh, z1 - seam_, 14.0)
+    slab.apply_translation((0, 0, seam_))
+    sa = np.arctan2(z1 - seam_, ovh)
+    for sgn in (1, -1):
+        wg = box(P["chassis_w"] + 20, 80.0, 60.0)
+        wg.apply_transform(R(sgn * sa, (1, 0, 0)))
+        nn_ = np.array([0.0, sgn * np.sin(sa), -np.cos(sa)])   # outward slope normal
+        c_ = (np.array([0.0, sgn * P["chassis_l"] / 2, seam_])
+              + 25.0 * np.array([0.0, sgn * np.cos(sa), np.sin(sa)]) + 30.0 * nn_)
+        wg.apply_translation(c_)
+        slab = sub(slab, wg)
+    body = uni([lower_, slab])
     # cavity stops deck_t below the top -> a solid DECK spans z1-deck_t..z1. (The old cavity
     # reached z1: the seat cut was a no-op and the race/balls/platform floated in air.)
     cav = rounded_box(P["chassis_w"] - 2 * wall, P["chassis_l"] - 2 * wall,
@@ -336,24 +359,29 @@ def build_chassis_core():
             rib.apply_translation((sx * (P["blst_usb_hw"] + rib_l / 2), ry,
                                    z0 + floor + P["blst_rib_h"] / 2))
             body = uni([body, rib])
-    # front-fascia cuts (design ref): hex grille field (blind 2.5, cosmetic-vent; decide
-    # through-vent at the print pass) + Ø16.6 ultrasonic barrel passes through the wall
+    # front-fascia cuts (design ref; re-homed 2026-07-10 toy-tank hull): the hex vent
+    # field moved off the shortened vertical wall onto the FRONT SLOPE, in two lateral
+    # bands (|x| 26..52) flanking the cliff-sensor barrels; blind 2.5 along the slope
+    # normal into the solid overhang wedge. Ø16.6 ultrasonic barrel passes stay in the
+    # vertical wall (now inside the relocated grille ring's opening).
     fw = P["chassis_l"] / 2
+    sa_ = np.arctan2(P["base_h"] - P["chassis_split_z"], P["deck_overhang"])
+    sn_ = np.array([0.0, np.cos(sa_), np.sin(sa_)])    # up-slope unit
+    nnf = np.array([0.0, np.sin(sa_), -np.cos(sa_)])   # outward slope normal
+    se0 = np.array([0.0, fw, P["chassis_split_z"]])    # slope bottom edge, front
     hexes = []
-    for r_i, zr in enumerate((42.0, 46.0, 50.0)):
+    for r_i, vr in enumerate((6.0, 10.0, 14.0)):
         off = 2.1 if r_i % 2 else 0.0
-        for k in range(-6, 7):
+        for k in range(-13, 14):
             hx_x = k * 4.2 + off
-            if abs(hx_x) > 24.0:
+            if not (26.0 <= abs(hx_x) <= 52.0):
                 continue
             hx = hex_prism(3.0, 4.0)
-            hx.apply_transform(R(TAU / 4, (1, 0, 0)))          # axis Z -> Y
-            # 30 deg about the hex's own axis (now Y): FLAT-top hexes. Vertex-facing-X
-            # hexes narrowed the web at the 4.2 pitch to 0.74 slivers between vertex
-            # tips; flats +-X give a uniform 4.2-3.0 = 1.2 web AND a 60 deg self-
-            # supporting pocket roof instead of a 3.0 flat bridge (PRINTABILITY 5).
-            hx.apply_transform(R(TAU / 12, (0, 1, 0)))
-            hx.apply_translation((hx_x, fw - 0.5, zr))         # cuts 2.5 into the 5 wall
+            # FLAT-top hexes in the slope frame (the old wall-field printability note
+            # carries over: flats give a 1.2 web + self-supporting pocket roofs)
+            hx.apply_transform(R(TAU / 12, (0, 0, 1)))
+            hx.apply_transform(R(np.pi + sa_, (1, 0, 0)))      # axis Z -> slope normal
+            hx.apply_translation(se0 + vr * sn_ - 0.5 * nnf + np.array([hx_x, 0.0, 0.0]))
             hexes.append(hx)
     body = sub(body, uni(hexes))
     for sx in (-1, 1):
@@ -392,8 +420,14 @@ def build_chassis_core():
         # rectangular gearbox rear corner sits -- square it off locally (spans old + raised z)
         crn = box(7.0, 14.2, 33.9); crn.apply_translation((s * (xw - 8.4), ys - 5.1, 28.85))
         body = sub(body, crn)
+        # TT front-tab RIB (2026-07-10 toy-tank hull: the rear wall receded -100 ->
+        # -120, so the tab/hole pockets that used to be cut into it get a floor-to-
+        # z40 rib bridged to the side wall at the old station; the cuts land in it)
+        rib = box(69.1 - (axm - 4.0), 6.9, 28.0)       # front face y -92.3: 0.3 shy of
+        rib.apply_translation((s * ((axm - 4.0 + 69.1) / 2), ys - 15.1, 26.0))
+        body = uni([body, rib])                        # the gearbox face plane (~-92)
         tabp = box(4.2, 5.7, 6.4); tabp.apply_translation((s * axm, ys - 14.15, zs))
-        body = sub(body, tabp)                        # front-tab pocket in the rear wall (1 skin)
+        body = sub(body, tabp)                        # front-tab pocket in the rib (1+ skin)
         tabh = cyl(1.4, 14, axis="x"); tabh.apply_translation((s * axm, ys - 14.0, zs))
         body = sub(body, tabh)                        # Ø2.8 tab-hole continuation (M2.5 self-tap)
         # idler tension arm: wall -> slotted plate inside the front loop arc (radial < 15.7 so
@@ -408,6 +442,12 @@ def build_chassis_core():
         # the Ø8 stub axle needs the passage).
         arm = box(17.4, 16, 14.6); arm.apply_translation((s * (69.0 + 17.4 / 2), -ys, zs - 0.36))
         plate = cyl(14.0, 2.0, axis="x"); plate.apply_translation((s * (cxp - 9.0 - 0.1 - 1.0), -ys, zs))
+        # cap the plate 0.2 under the z 46 deck seam: the full r14 disc topped out at
+        # 48.3, and the split sliced its crown into chassis_deck_front as two LOOSE
+        # bodies (pre-existing, found in the 2026-07-10 toy-tank-hull probe pass)
+        pcap = box(36.0, 36.0, 8.0)
+        pcap.apply_translation((s * (cxp - 10.1), -ys, 49.8))
+        plate = sub(plate, pcap)
         body = uni([body, arm, plate])
         slot = uni([cyl(4.1, 6, axis="x"), box(6, P["idler_slot"], 8.2)])
         slot.apply_translation((s * (cxp - 9.0 - 0.1 - 1.0), -ys, zs))
@@ -495,6 +535,17 @@ def build_chassis_core():
         body = sub(body, _belly_csk_neg(bx_, by_))
         pil = cyl(1.25, 8.3); pil.apply_translation((bx_, by_, 9.2 + 8.3 / 2))
         body = sub(body, pil)                                # pilot z 9.2..17.5
+    # REAR TIE for the pedestal island (2026-07-10 probe pass): the y 26 sub-split put
+    # the belly strap's only anchor in the FRONT tub piece, leaving the pedestal +
+    # strap a LOOSE 55 cm3 body inside chassis_lower_rear (pre-existing since the
+    # split). A 14-wide bar in the strap's thinned z 8.5..12 band runs from the strap
+    # across the belly opening onto the solid floor rim behind it (y -63); the belly
+    # PLATE passes beneath in the z 7..8.5 rebate band, so the plate outline is
+    # untouched and stays one piece. x -26..-12 clears the tray posts (-38.8..-32.8),
+    # the +X zip anchors and the belly screws.
+    tie = box(14.0, 39.0, 3.5)
+    tie.apply_translation((-19.0, -43.5, 10.25))
+    body = uni([body, tie])
     _color(body, "base")
     body.metadata["name"] = "chassis"
     return body
@@ -604,68 +655,43 @@ def build_chassis_parts():
             else:
                 deck_r = sub(sub(deck_r, scr), cbv)
 
-    # ---- CLIFF-SENSOR PROW (2026-07-10, user): the deck runs deck_snout_len past the
-    # hull front at full width while the lower tub stays untouched; the HC-SR04 hangs
-    # under the plate tip in a bay_deg nose-down bay watching the desk ~110 mm ahead
-    # of the track contact (floor ping ~36 mm; a cliff reads as no-echo). The plate
-    # rides z 58..66, NOT the full deck band: the proud grille ring tops out at z 57,
-    # so the underside clears the fascia by 1.0. Two root gussets stiffen the
-    # cantilever in the only trim-free wall strips; the +X one carries the Ø6 wire
-    # bore through the front wall into the tub cavity (everywhere else the face is
-    # blind-hex field, ring band or fin webs). Prints top-face-down flat with the
-    # strip: boss + gussets rise upward and the bay face is self-supporting.
+    # ---- TOY-TANK front-slope CLIFF SENSOR (2026-07-10, user round 2; replaced the
+    # same-day full-width prow): the deck overhang's front face slopes 33.7 deg from
+    # horizontal, so an HC-SR04 flush in it fires ~34 deg ahead of straight down --
+    # the ping lands ~y 163 (about 90 ahead of ground contact), a cliff reads as
+    # no-echo. Construction mirrors sensor_us: Ø16.6 barrel bores through the 5-thick
+    # slope skin, board against the skin's back in a 1.2 recess, 4x Ø1.6 M2 pilots,
+    # all inside an UNDERSIDE POCKET (x +-30 window, so the deck still seats on the
+    # tub's front rim at |x| > 30; top skin 3.5). The pocket's inboard end hangs over
+    # the open tub, so the wires just drop in -- service = lift the deck. Prints
+    # top-face-down: the pocket opens upward, the slope skin is self-supporting.
     fw = P["chassis_l"] / 2
-    st = P["deck_snout_t"]
-    ta = P["deck_snout_bay_deg"] * DEG
-    by, fz = P["deck_snout_bay_y"], P["deck_snout_bay_face_z"]
-    s_, c_ = np.sin(ta), np.cos(ta)
-    n_dn = np.array([0.0, s_, -c_])                  # sensor axis: bay_deg ahead of down
-    d_up = np.array([0.0, c_, s_])                   # in-face direction, +y-ish
-    plate = box(P["chassis_w"], P["deck_snout_len"] + 6.0, st)   # 6 root overlap fuses
-    plate.apply_translation((0, (fw - 6.0 + fw + P["deck_snout_len"]) / 2, z1 - st / 2))
-    snout = [plate]
-    boss = box(52.0, 30.0, 18.0)                     # bay boss under the tip, face-cut below
-    boss.apply_translation((0, by, z1 - st - 9.0))
-    fcut = box(56.0, 40.0, 20.0)                     # keep above the tilted face plane
-    fcut.apply_transform(R(ta, (1, 0, 0)))
-    fcut.apply_translation(np.array([0.0, by, fz]) + 10.0 * n_dn)
-    snout.append(sub(boss, fcut))
-    gx = P["deck_snout_gusset_x"]
-    for sx_ in (-1, 1):
-        g = box(8.0, 30.0, 12.0)                     # root gusset: full 12 tall to y 104,
-        g.apply_translation((sx_ * gx, 111.0, 52.0))  # then tapers to the plate at y 126
-        gcut = box(12.0, 60.0, 30.0)
-        gcut.apply_transform(R(np.arctan2(12.0, 22.0), (1, 0, 0)))
-        ph_ = np.arctan2(12.0, 22.0)
-        gcut.apply_translation((sx_ * gx, 104.0 + 15.0 * np.cos(ph_) + 20.0 * np.sin(ph_),
-                                46.0 + 15.0 * np.sin(ph_) - 20.0 * np.cos(ph_)))
-        snout.append(sub(g, gcut))
-    deck_f = uni([deck_f] + snout)
-    rec = box(46.2, 21.4, 3.4)                       # board recess into the bay face
-    rec.apply_transform(R(ta, (1, 0, 0)))
-    rec.apply_translation(np.array([0.0, by, fz]) - 1.5 * n_dn)
+    sa_ = np.arctan2(z1 - seam, P["deck_overhang"])
+    sn_ = np.array([0.0, np.cos(sa_), np.sin(sa_)])   # up-slope unit
+    nnf = np.array([0.0, np.sin(sa_), -np.cos(sa_)])  # outward slope normal
+    se0 = np.array([0.0, fw, seam])                   # slope bottom edge
+    pkt = box(60.0, 34.0, 23.5)
+    pkt.apply_translation((0.0, fw + 1.0, 39.0 + 23.5 / 2))     # y 104..138, z 39..62.5
+    pbnd = box(70.0, 80.0, 60.0)                      # trim the pocket at the 5-offset
+    pbnd.apply_transform(R(sa_, (1, 0, 0)))           # slope plane (leaves the skin)
+    pbnd.apply_translation(se0 - 5.0 * nnf + 15.0 * sn_ + 30.0 * nnf)
+    deck_f = sub(deck_f, sub(pkt, pbnd))
+    pb_ = se0 + P["cliff_v"] * sn_                    # barrel-pair face center
+    rec = box(46.2, 21.4, 1.4)                        # board recess into the skin back
+    rec.apply_transform(R(np.pi + sa_, (1, 0, 0)))
+    rec.apply_translation(pb_ - 4.5 * nnf)            # spans -3.8..-5.2 along the normal
     deck_f = sub(deck_f, rec)
-    wsl = box(12.0, 34.0, 3.4)                       # wire slot: recess -> out the boss rear
-    wsl.apply_transform(R(ta, (1, 0, 0)))
-    wsl.apply_translation(np.array([0.0, by, fz]) - 20.0 * d_up - 1.5 * n_dn)
-    deck_f = sub(deck_f, wsl)
-    for px_ in (-20.5, 20.5):                        # 4x Ø1.6 M2 self-tap pilots, recess
-        for py_ in (-8.35, 8.35):                    # ceiling up into the boss (HC-SR04
-            pil = cyl(0.8, 8.0)                      # corner-hole pattern 41 x 16.7)
-            pil.apply_transform(R(ta, (1, 0, 0)))
-            pil.apply_translation(np.array([px_, by, fz]) + py_ * d_up - 7.2 * n_dn)
+    for bx_ in (-1, 1):
+        bb = cyl(8.3, 12.0, sections=48)              # Ø16.6 barrel pass, like sensor_us
+        bb.apply_transform(R(np.pi + sa_, (1, 0, 0)))
+        bb.apply_translation(pb_ + np.array([bx_ * P["us_dx"], 0.0, 0.0]) - 2.5 * nnf)
+        deck_f = sub(deck_f, bb)
+    for px_ in (-20.5, 20.5):                         # HC-SR04 corner holes 41 x 16.7:
+        for py_ in (-8.35, 8.35):                     # Ø1.6 self-tap pilots through-ish
+            pil = cyl(0.8, 4.0)                       # the 3.8 remaining skin
+            pil.apply_transform(R(np.pi + sa_, (1, 0, 0)))
+            pil.apply_translation(pb_ + np.array([px_, 0.0, 0.0]) + py_ * sn_ - 5.5 * nnf)
             deck_f = sub(deck_f, pil)
-    # Ø6 wire path, an L through SOLID deck (the tub cavity ceiling is the z 46 seam,
-    # so a straight wall bore dead-ends -- probed 2026-07-10): horizontal bore along
-    # the +X gusset (opens where the taper line crosses it, y ~112..128, wire lays in
-    # the groove) through the front wall into the deck plate, then a vertical drop
-    # just inboard of the wall punching the seam floor into the open tub below.
-    wb_ = cyl(3.0, 42.0, axis="y")
-    wb_.apply_translation((gx, 107.0, 51.5))         # y 86..128
-    deck_f = sub(deck_f, wb_)
-    wdrop = cyl(3.0, 12.0)
-    wdrop.apply_translation((gx, 89.0, 48.0))        # z 42..54: bore floor -> tub cavity
-    deck_f = sub(deck_f, wdrop)
 
     out = []
     for m_, nm in ((lower_f, "chassis_lower_front"), (lower_r, "chassis_lower_rear"),
@@ -697,6 +723,13 @@ def build_belly_plate():
             rib.apply_translation((sx * (P["blst_usb_hw"] + rib_l / 2), ry,
                                    z0 + 3.0 + P["blst_rib_h"] / 2))   # z 10..14
             plate = uni([plate, rib])
+    # relief for the chassis' rear pedestal TIE (see build_chassis_core, 2026-07-10):
+    # the tie bar crosses the plug and the -X plate-rib runs in the z 8.5..12 band;
+    # the plate passes under it on the 1.45 flange alone (0.05 vertical + 0.15
+    # lateral clearance; the severed rib segments stay rooted in the plug)
+    trel = box(14.3, 39.3, 6.0)
+    trel.apply_translation((-19.0, -43.5, 8.45 + 3.0))
+    plate = sub(plate, trel)
     # POWER TRAY (wiring pass 2026-07-08, see firmware/WIRING.md): the main 5.1 V buck
     # mounts on the plug's rear bay, so dropping the belly plate drops the power stage
     # as a service tray (leave harness slack). Posts Ø6 x 6 with Ø2.5 M3 self-tap

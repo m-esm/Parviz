@@ -140,7 +140,9 @@ P = {
     "chassis_w": 140.0,     # body width between the tracks (120->140: track outer faces land
                             # at +-102 ~= head half-width 102.5, killing the head overhang;
                             # NOT 148 -- the tucked claws at x 106..119 need 4 mm to the pods)
-    "chassis_l": 200.0,     # body length front-back (Y). Stretched 156 -> 200 2026-07-10
+    "chassis_l": 240.0,     # LOWER-TUB length front-back (Y). 156 -> 200 2026-07-10, then
+                            # 200 -> 240 same day (toy-tank hull: +2 cm each side; the
+                            # deck slab additionally runs deck_overhang past each end)
                             # (user: "longer, same shape as the RC-tank refs"), paired with
                             # track_wheelbase so the TT front tabs still pocket the rear
                             # wall (inner face 95 ~= |ys| 80.66 + tab reach ~14.5)
@@ -153,7 +155,8 @@ P = {
     # +1), rear pod 16->30.5 (x 47),
     # USB slot + PD pilots z0+12 -> z0+24. The belly opening (|y|<=69) and all side
     # features (motor mounts z>=31 at the glacis x) clear the cut.
-    "glacis_y0": 83.1,      # glacis starts on the belly plane here
+    "glacis_y0": 103.1,     # glacis starts on the belly plane here (83.1 + the 20 tub
+                            # stretch: keeps the 33 deg slope to z 18 at the y 120 wall)
     "glacis_z1": 18.0,      # meets the front/rear walls here (slope = the ramp 33 deg)
     "track_gap": 4.0,       # body side <-> track inner face
     # Modular positive-drive track (advancedvb 'Tank track' 3062624 geometry): printed link pads
@@ -218,7 +221,7 @@ P = {
     # right under the solid deck, so the lower tub prints open-top and the pan deck prints
     # separately; 4x M3 from the top deck into lower thread-form pilots clamp/register it.
     "chassis_split_z": 46.0,
-    "chassis_split_screws": ((-64.0, 60.0), (64.0, 60.0), (-34.0, -93.0), (34.0, -93.0)),
+    "chassis_split_screws": ((-64.0, 60.0), (64.0, 60.0), (-34.0, -113.0), (34.0, -113.0)),
                             # rear pair moved off the side walls 2026-07-10: the raised
                             # TT gearboxes (track_raise, top z 45.5) now own that zone;
                             # bosses ride the rear wall instead (sensor hole z16, trim
@@ -232,27 +235,22 @@ P = {
                                  # y-60 corner bosses reach 64 -> strips own them)
     "deck_center_screws": ((-64.0, 8.0), (64.0, 8.0), (-64.0, -26.0), (64.0, -26.0)),
                                  # the center piece's OWN hold-downs (vent-free bands)
-    # CLIFF-SENSOR PROW (2026-07-10, user: "upper deck 10 cm longer, lower deck the
-    # same, angled so the proximity sensor looks down"): a full-width plate off the
-    # deck top, part of chassis_deck_front. The plate is FLAT (prints top-face-down
-    # with the strip) and the ANGLE lives in the sensor bay under the tip; a raked
-    # wedge was rejected because the proud grille ring tops out at z 57.
-    "deck_snout_len": 100.0,     # past the hull front face (the user's 10 cm)
-    "deck_snout_t": 8.0,         # plate z 58..66: underside clears the grille ring
-                                 # (z 37..57 proud of the wall) by 1.0
-    "deck_snout_bay_y": 183.0,   # HC-SR04 bay center under the tip: board 45.7 x 20.9
-                                 # spans y 174.5..195.5, 4.5 short of the y 200 tip
-    "deck_snout_bay_deg": 12.0,  # sensor axis 12 deg AHEAD of straight down: still a
-                                 # near-normal desk echo (ultrasound specular-misses
-                                 # much past ~15 deg on smooth desks) and the nose-down
-                                 # face reads as the angled look the user asked for
-    "deck_snout_bay_face_z": 47.0,  # bay face plane height at bay_y (slope = bay_deg);
-                                 # barrel tips end z 36.4 -- inside HC-SR04's happy
-                                 # range and 36 mm of ground clearance at the tip
-    "deck_snout_gusset_x": 54.0, # root gussets (8 wide, reach y 126): the only trim-
-                                 # free front-wall strips (fin webs end x 49.5, corner
-                                 # rounds start x 56); the +X one carries the Ø6 wire
-                                 # bore (z 51.5) through the wall into the tub cavity
+    # TOY-TANK HULL (2026-07-10, user round 2: "upper part 10 cm longer = 5 cm each
+    # side, lower part 2 cm longer each side, angled so the proximity sensor looks
+    # down, like a toy tank chassis" -- REPLACED the same-day front-only prow): the
+    # deck slab runs deck_overhang past the lower tub at BOTH ends; the end faces
+    # slope from the tub wall top (|y| 120, z 46) to the deck top edge (|y| 150,
+    # z 66) at atan(20/30) = 33.7 deg from horizontal (the same ~33 family as the
+    # track ramps + lower glacis). The slope's outward normal points 33.7 deg ahead
+    # of straight down, so the HC-SR04 flush in the FRONT slope looks down-forward
+    # exactly as the user reasoned. Sensor construction mirrors sensor_us: Ø16.6
+    # barrel bores through the 5-thick slope skin, board against the skin's back
+    # (1.2 recess) inside an underside pocket that opens into the tub for wiring.
+    "deck_overhang": 30.0,       # deck slab half-length = chassis_l/2 + this (150)
+    "cliff_v": 9.6,              # barrel-pair center, mm up the slope from its bottom
+                                 # edge (slant length 36.06): bore rim keeps 1.3 to
+                                 # the wall-top corner, board top keeps 0.7 under the
+                                 # pocket ceiling (z 62.5, top skin 3.5)
     # Pan-motor seat detailing (re-derived for base_h 66: can bottom 26.45, ear-bar
     # underside = pedestal top = 44.25, can top 45.25, gear face 54.25): the 7-wide x
     # 1-thick ear bar clamps on two DEFINED pads instead of the whole 48x48 top, and the
@@ -473,10 +471,14 @@ P = {
                              # measured). Now a POCKET, not a through-hole: the deep
                              # pod's rear wall (7 solid) closes it from behind
     # Chassis FRONT fascia (design-ref front.jpg). Front wall: y=78 face, x +-60, z 7..52.
-    "grille_cz": 47.0,      # orange surround outer 60x20 -> z 37..57 (+1: US barrels below)
-    "grille_w": 60.0, "grille_h": 20.0, "grille_band": 4.0, "grille_t": 2.5,
+    "grille_cz": 32.0,      # orange surround outer 60x26 -> z 19..45: the toy-tank deck
+                            # overhang owns z > 46, so the ring dropped onto the (now
+                            # 18..46) vertical wall band and GREW to swallow the US
+                            # barrels inside its 52x18 opening (z 23..41)
+    "grille_w": 60.0, "grille_h": 26.0, "grille_band": 4.0, "grille_t": 2.5,
     "us_dx": 13.0,          # ultrasonic barrel centers at x=+-13 (HC-SR04 transducer pitch ~26)
-    "us_cz": 28.5,          # barrel Ø16 -> z 20.5..36.5 (raised over the glacis 2026-07-10)
+    "us_cz": 32.0,          # barrel Ø16 -> z 24..40, centred in the grille opening (the
+                            # 28.5 spot collided with the relocated ring's lower band)
     "us_d": 16.0,
     "lamp_x": 54.0, "lamp_cz": 26.0,   # above the z18 glacis top    # amber corner lamps 12x7, proud 2 (hug the 140-wide corners)
     "fled_cz": 12.0,        # white dot strip now ON the glacis face, tilted 33 deg with it
@@ -545,7 +547,8 @@ P = {
     # the Ø16.6 barrel passes (+-13, z 26). The task-suggested (+-38, 15) / (+-20, 52)
     # failed verification: nothing of trim_fascia touches the wall at z 15 (ring z 36..56,
     # webs/fins z 38..54), and (+-20, 52) sockets pass within ~0.7 of the hex pockets.
-    "fascia_pin_pts": ((-44.0, 50.0), (44.0, 50.0), (-33.0, 42.0), (33.0, 42.0)),
+    "fascia_pin_pts": ((-44.0, 36.0), (44.0, 36.0), (-33.0, 27.0), (33.0, 27.0)),   # re-clocked
+                            # into the dropped fin-web footprint (z 24..40, toy-tank hull)
     # trim_rear pins, (x, z) on the rear wall band (side bands x 22..36, bottom z 24..28):
     # clear of the USB slot (x +-7, z 15..23, 1.4 gap) and TT tab pockets (x 43.5..47.7).
     "rear_pin_pts": ((-29.0, 35.0), (29.0, 35.0), (0.0, 26.0)),

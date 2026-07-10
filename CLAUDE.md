@@ -69,19 +69,29 @@ gripper arms (`arm_L/R`, static tucked pose; actuation + mount decision deferred
 styling parts probed against all parts: 0.000 mm³ overlaps. `TRANS=0 make shot` renders
 solid (styling review); default stays 50% ghost.
 
-**Cliff-sensor prow (2026-07-10, user "upper deck 10 cm longer, lower the same, angled
-so the proximity sensor looks down"):** `chassis_deck_front` grew a full-width 100 mm
-plate past the hull front at z 58..66 (NOT the full deck band -- the proud grille ring
-tops out at z 57, 1.0 clearance), with an HC-SR04 bay under the tip whose face is 12 deg
-nose-down (`sensor_cliff` placeholder; board recess + 4x M2 pilots + wire slot; barrel
-tips z 36.4; ping lands ~110 mm ahead of track contact, a cliff reads as no-echo). A
-raked wedge was rejected (grille collision + non-planar print faces); the flat plate
-prints top-face-down with the strip, bay boss + gussets rising, the 12 deg face
-self-supporting. Two 8-wide root gussets at x +-54 (the only trim-free front-wall strips
-between the fin webs at 49.5 and the corner rounds at 56); the +X one carries the Ø6
-wire path, an L through the SOLID deck plate: gusset bore (y 86..128, z 51.5) + a
-vertical drop at (54, 89) through the z 46 seam into the tub cavity (the cavity ceiling
-IS the seam, so a straight wall bore dead-ends -- probed). Params `deck_snout_*`.
+**TOY-TANK HULL + front-slope cliff sensor (2026-07-10, user round 2: "upper part 10 cm
+longer = 5 cm each side, lower 2 cm each side, angled so the proximity sensor looks
+down, like a toy tank chassis" -- REPLACED the same-day front-only prow):** the lower
+tub stretched 200 -> 240 (`chassis_l`; glacis_y0 103.1 keeps the 33 deg bevel) and the
+deck slab runs `deck_overhang`=30 past BOTH tub ends (top plate 300 = the user's 10 cm),
+the end faces sloping (|y| 120, z 46) -> (|y| 150, z 66) at atan(20/30)=33.7 deg from
+horizontal -- undercut overhangs like an RC-tank hull, print-safe, same ~33 family as
+the ramps/glacis. The slope's outward normal points 33.7 deg AHEAD of straight down, so
+the HC-SR04 flush in the FRONT slope looks down-forward exactly as the user reasoned
+(`sensor_cliff`; construction mirrors sensor_us: Ø16.6 bores through the 5-thick slope
+skin, board in a 1.2 skin-back recess + 4x Ø1.6 M2 pilots, inside an underside pocket
+x +-30 / top skin 3.5 whose inboard end opens over the tub -- wires just drop in,
+service = lift the deck; ping lands ~y 163, cliff = no-echo). KNOCK-ONS, all re-homed:
+grille ring dropped + grew (cz 32, 60x26) to swallow the sensor_us barrels inside its
+opening (us_cz 32); fin row pulled inboard to x<=47.5 (lamps start 48); fascia pins
+re-clocked (z 36/27); hex field moved onto the front slope flanking the cliff barrels
+(|x| 26..52, blind 2.5 along the slope normal); TT front-tab pockets got floor-to-z40
+RIBS at the old y -94.8 station (the rear wall receded to -120); deck-split rear screw
+pair -> (+-34, -113). Probe-pass fixes bundled in: the idler tension plate is capped
+0.2 under the z 46 seam (its crown used to slice into chassis_deck_front as two LOOSE
+bodies) and a 14-wide floor TIE (z 8.5..12, x -26..-12) re-anchors the belly strap's
+pedestal island inside chassis_lower_rear (loose since the y 26 sub-split; the belly
+plate passes under the tie on its flange, with a matching relief cut).
 
 Latest render review (2026-07-06): `make build` wrote a 20-part `web/assembly.glb`; fresh
 transparent and solid shots were inspected from iso/front/side/top plus two section cuts. The
@@ -129,7 +139,7 @@ tank chassis        DRIVE base: central body (build_base) + track_L/track_R (bui
   │                 the old centerline (z 34.32), ~33 deg ramps at both ends, ~147 deg wraps,
   │                 flat ground run +-track_ground_hy=72.5; wheelbase 161.325 SOLVED so the
   │                 loop closes at exactly 45x10 (asserted in _track_link_poses). STRETCHED
-  │                 same day with chassis_l 156->200 (user: "longer, same shape as the
+  │                 same day with chassis_l 156->200->240 (user: "longer, same shape as the
   │                 refs"; the wb/2 - ground_hy = 8.163 end geometry is unchanged, so all
   │                 end clearances carry over). 6 dished Ø20 road wheels (pitch 21, to
   │                 +-52.5), spoked 12T sprocket (6 lightening holes), dished idler. The
