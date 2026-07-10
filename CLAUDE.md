@@ -78,12 +78,12 @@ make shot           # headless render -> .claude/renders/chk_*.png  (serve must 
 make check          # interference gate (run after every geometry change)
 make fits           # fit/pressure map (ported from finnish-doors 2026-07-08): neutral-pose
                     #   clearance/press report for every close pair -> web/fit_report.json,
-                    #   rendered by the viewer's "Fit map" toggle (contact patches, click a
-                    #   pair to isolate). Its CONTACT AUDIT fails loudly on any touching
-                    #   pair not whitelisted in _FIT_CONTACT_OK (build.py). Costs minutes,
-                    #   so it is opt-in, not part of the watch loop. It leaves assembly.glb
-                    #   at NEUTRAL pose (patches are neutral-pose coords; a preview-pose GLB
-                    #   would misplace them) -- `make build` restores the preview pose.
+                    #   rendered by the viewer's "Fit map" (ON by default; click a pair to
+                    #   isolate). Its CONTACT AUDIT fails loudly on any touching pair not
+                    #   whitelisted in _FIT_CONTACT_OK (fitmap.py). Costs minutes, so it is
+                    #   opt-in, not part of the watch loop. Patches are NEUTRAL-pose coords
+                    #   but the viewer re-poses them per kinematic group (2026-07-10), so
+                    #   they track the pan/tilt sliders and sit right on ANY baked GLB pose.
 ```
 
 Then **downscale and actually Read every PNG** before claiming a change works:

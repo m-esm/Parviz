@@ -140,7 +140,7 @@
   </div>
 
   <div class="sec">Fits</div>
-  <label class="chk"><input type="checkbox" id="t_fits"> Fit map
+  <label class="chk"><input type="checkbox" id="t_fits" checked> Fit map
     <span id="fits_sum" style="margin-left:auto;font:10px var(--mono);color:var(--ink-faint)"></span></label>
   <div id="fits"></div>
 
@@ -338,6 +338,7 @@ new GLTFLoader().load(MODEL, (gltf)=>{
   $('opacity').dispatchEvent(new Event('input'));
   window.__ready = true;
   applyPose();                                       // pose.json may have loaded first
+  if($('t_fits').checked) $('t_fits').dispatchEvent(new Event('change'));   // default-on
 }, undefined, err=>{ document.getElementById('bbox').textContent='LOAD ERROR: '+err; });
 
 const $=id=>document.getElementById(id);
@@ -382,6 +383,9 @@ $('t_bbox').addEventListener('change',e=>{
 // tilt axis swings with the pan, exactly like build.py's M_head = pan @ tilt.
 let pose=null;
 const poseM={head:new THREE.Matrix4(), pan:new THREE.Matrix4()};   // current group deltas
+const poseF={head:new THREE.Matrix4(), pan:new THREE.Matrix4()};   // FULL pose (for the
+// fit-map patch clouds: fit_report.json stores NEUTRAL-pose coords, so unlike the baked
+// meshes they need the absolute slider pose, not the delta from the baked pose)
 const DEG=Math.PI/180;
 fetch(MODEL.replace(/\.glb$/,'')+'.pose.json?'+Date.now()).then(r=>r.ok?r.json():null).then(p=>{
   if(!p||!p.groups) return;
@@ -402,7 +406,10 @@ function applyPose(){
   const rxt=a=>T.clone().multiply(new THREE.Matrix4().makeRotationX(a*DEG)).multiply(Ti);
   poseM.pan  = rz(pn - pose.pan_deg);            // same axis, so the deltas collapse
   poseM.head = rz(pn).multiply(rxt(tn - pose.tilt_deg)).multiply(rz(-pose.pan_deg));
+  poseF.pan  = rz(pn);
+  poseF.head = rz(pn).multiply(rxt(tn));
   applyTransforms();
+  applyFitPose();
 }
 $('pan').addEventListener('input',applyPose);
 $('tilt').addEventListener('input',applyPose);
@@ -480,9 +487,22 @@ function showFitDots(){
     g.setAttribute('color',new THREE.BufferAttribute(col,3));
     const m=new THREE.Points(g,new THREE.PointsMaterial({size:1.5,vertexColors:true,
       transparent:true,opacity:.9,depthTest:false,sizeAttenuation:true}));
-    m.renderOrder=999; fitDots.add(m); fitDots.userData.byPair[idx]=m;
+    m.renderOrder=999; m.userData.pair=[r.a, r.b]; m.matrixAutoUpdate=false;
+    fitDots.add(m); fitDots.userData.byPair[idx]=m;
   });
   scene.add(fitDots);
+  applyFitPose();                      // patches are neutral-pose coords: pose them now
+}
+// pose the fit patches with the head/pan sliders. A patch belongs to the MORE moving of
+// its two parts (head > pan > fixed): same-group pairs ride exactly; a moving-vs-fixed
+// pair only truly exists at neutral, so its patch stays glued to the moving surface.
+function applyFitPose(){
+  if(!fitDots||!pose) return;
+  for(const m of fitDots.children){
+    const g = m.userData.pair.some(n=>pose.groups.head.includes(n)) ? 'head'
+            : m.userData.pair.some(n=>pose.groups.pan.includes(n))  ? 'pan' : null;
+    if(g) m.matrix.copy(poseF[g]); else m.matrix.identity();
+  }
 }
 function hideFitDots(){ if(fitDots){ scene.remove(fitDots); fitDots=null; } }
 function focusFitPair(idx){ if(!fitDots) return;
