@@ -13,6 +13,7 @@ from geo import (_T, _color, _orient, blind_socket, box,
     cyl, fix_pin, frustum, hex_prism, inter,
     rounded_box, screw_post, sub, uni)
 from screen import screen_pose
+from gears import gear_disc
 
 
 # ---------------------------------------------------------------------------
@@ -238,9 +239,21 @@ def build_head_shell():
     for px, pz in P["campod_pin_pts"]:
         shell = sub(shell, blind_socket(P["fix_socket2_r"], P["fix_socket_deep"],
                                         (0, 1, 0), (px, fy, pz)))
-    # antenna_stub: Ø6.2 x 3 blind spigot socket in the top wall (1.0 ceiling skin)
-    shell = sub(shell, blind_socket(P["ant_spigot_socket_r"], P["ant_spigot_deep"],
-                                    (0, 0, 1), (P["ant_x"], P["ant_y"], P["body_z_top"])))
+    # antenna mast exits (2026-07-10, twin deployable masts -- see PARAMS TWIN DEPLOYABLE
+    # ANTENNAS): per side a Ø7.0 through-bore in the top wall (mast Ø6.5 slides, 0.25/side)
+    # + a Ø13 interior guide boss extending the bore to 10 long (z 216..226). A friction
+    # O-ring seated in the bore mouth parks the mast against back-drive (docs/ASSEMBLY.md).
+    zt_ = P["body_z_top"]
+    for sxa in (-1, 1):
+        gb = cyl(6.5, 7.0)
+        gb.apply_translation((sxa * P["ant_x"], P["ant_y"], zt_ - P["head_wall"] - 3.0))
+        shell = uni([shell, gb])
+        bore = cyl(P["ant_mast_d"] / 2 + 0.25, 16.0)
+        bore.apply_translation((sxa * P["ant_x"], P["ant_y"], zt_ - 6.0))
+        shell = sub(shell, bore)
+        slot = box(3.8, 3.2, 18.0)                   # rack corridor: the molded teeth
+        slot.apply_translation((sxa * P["ant_x"], P["ant_y"] - 4.15, zt_ - 7.0))
+        shell = sub(shell, slot)                     # cannot pass a round bore
     # led_strip wire pass: Ø2.5 from the recess floor (y 29.5) through the remaining
     # face wall into the interior, behind the strip's dummy PCB
     wled = cyl(P["wire_pass_r"], 6.0, axis="y")
@@ -593,31 +606,114 @@ def build_led_strip():
     return strip
 
 
-def build_antenna():
-    """Knurled antenna stub on the head top face, right side (design-ref; cosmetic --
-    the Pi's WiFi is internal). Separate print: collar + shaft + dome, knurl read via
-    shallow ring grooves. FIXING: Ø6 spigot under the collar into a Ø6.2 x 3 blind socket
-    in the top wall (glue or friction; see PARAMS ant_spigot_*)."""
-    zt = P["body_z_top"]
-    collar = cyl(P["ant_collar_d"] / 2, P["ant_collar_h"])
-    collar.apply_translation((0, 0, P["ant_collar_h"] / 2))
-    shaft = cyl(P["ant_d"] / 2, P["ant_h"])
-    shaft.apply_translation((0, 0, P["ant_h"] / 2))
-    dome = trimesh.creation.icosphere(subdivisions=2, radius=P["ant_d"] / 2)
-    dome.apply_translation((0, 0, P["ant_h"]))
-    # spigot: protrudes deep-0.2 (bottoming allowance) below the collar underside; built
-    # by hand, not fix_pin (its direction is exactly -Z, _orient's antiparallel gap)
-    spig_l = P["ant_spigot_deep"] - 0.2 + 1.0        # 1.0 buried up into the collar
-    spig = cyl(P["ant_spigot_r"], spig_l)
-    spig.apply_translation((0, 0, spig_l / 2 - (P["ant_spigot_deep"] - 0.2)))
-    ant = uni([collar, shaft, dome, spig])
-    for gz in (10.0, 16.0, 22.0):                     # knurl-read ring grooves
-        groove = trimesh.creation.torus(major_radius=P["ant_d"] / 2, minor_radius=0.7)
-        groove.apply_translation((0, 0, gz))
-        ant = sub(ant, groove)
-    ant.apply_translation((P["ant_x"], P["ant_y"], zt))
-    _color(ant, "antenna"); ant.metadata["name"] = "antenna_stub"
-    return ant
+def build_antennas():
+    """TWIN DEPLOYABLE MASTS (2026-07-10; see the PARAMS block for the mechanism math).
+    Per side: a Ø6.5 shaft with an m0.8 rack molded along its inboard face (-Y, toward
+    the pinion), a knurled Ø11 tip cap outside the head. Built RETRACTED; build() lifts
+    both by the ANT preview extension. Print mast-vertical, rack toward the camera."""
+    out = []
+    z0, z1 = P["ant_mast_z"]
+    pitch = np.pi * P["ant_gear_m"]                  # rack tooth pitch (2.513)
+    for sxa, side in ((-1, "L"), (1, "R")):
+        ax_ = sxa * P["ant_x"]
+        shaft = cyl(P["ant_mast_d"] / 2, z1 - z0)
+        shaft.apply_translation((0, 0, (z0 + z1) / 2))
+        teeth = []
+        zt_ = z0 + 3.0
+        while zt_ < P["ant_rack_top"]:               # rack teeth on the -Y face: world
+            t = box(3.0, 1.95, 1.25)                 # y -26.95..-28.9 (root buried 0.3
+            t.apply_translation((0, -3.925, zt_))    # into the shaft, tips at the
+            teeth.append(t)                          # pinion root circle -28.8 + 0.1)
+            zt_ += pitch
+        cap = cyl(P["ant_tip_d"] / 2, P["ant_tip_h"])
+        cap.apply_translation((0, 0, z1 + P["ant_tip_h"] / 2))
+        dome = trimesh.creation.icosphere(subdivisions=2, radius=P["ant_tip_d"] / 2)
+        dome.apply_translation((0, 0, z1 + P["ant_tip_h"]))
+        mast = uni([shaft, cap, dome] + teeth)
+        for gz in (z1 + 3.5, z1 + 7.0, z1 + 10.5):   # knurl-read ring grooves on the cap
+            gr = trimesh.creation.torus(major_radius=P["ant_tip_d"] / 2, minor_radius=0.6)
+            gr.apply_translation((0, 0, gz))
+            mast = sub(mast, gr)
+        mast.apply_translation((ax_, P["ant_y"], 0))
+        _color(mast, "antenna"); mast.metadata["name"] = f"antenna_{side}"
+        out.append(mast)
+    return out
+
+
+def build_ant_drive():
+    """Antenna drive trains, one INDEPENDENT mirrored set per side (see PARAMS): each
+    28BYJ (body |x| 25.7..53.5) gears up 30T:12T twice (planes |x| 22/14) to a Ø4
+    half-shaft (|x| 6..88) whose 27T pinion meshes its mast's rack. Returns
+    [ant_gears_L/R (placeholder discs+shafts, silver), ant_bracket (one print, both
+    sides + shared wall spine)]. Real generated rack/pinion teeth are a later pass like
+    docs/WORM.md (the placeholder mesh pairs are whitelisted)."""
+    m_ = P["ant_gear_m"]
+    big_r = m_ * P["ant_gear_big_t"] / 2             # 12.0
+    sml_r = m_ * P["ant_gear_small_t"] / 2           # 4.8
+    pin_r = m_ * P["ant_pinion_t"] / 2               # 10.8
+    my_, mz_ = P["ant_motor_y"], P["ant_motor_z"]
+    iy_, iz_ = P["ant_idler_y"], P["ant_idler_z"]
+    cy_, cz_ = P["ant_cross_y"], P["ant_cross_z"]
+    x1_, x2_ = P["ant_gear_x"]
+    out = []
+    wall_in = P["body_back_y"] + P["head_wall"]      # -66
+    br = [box(164.0, 2.0, 12.0)]                     # shared wall spine x -82..82
+    br[0].apply_translation((0, wall_in + 1.0, 212.0))
+    for sxa, side in ((-1, "L"), (1, "R")):
+        gears = []
+        g = gear_disc(big_r, P["ant_gear_big_t"], 5.0, 2.0, axis="x")   # G1, motor
+        g.apply_translation((sxa * x1_, my_, mz_)); gears.append(g)
+        g = gear_disc(sml_r, P["ant_gear_small_t"], 5.0, 2.0, axis="x") # G2, idler
+        g.apply_translation((sxa * x1_, iy_, iz_)); gears.append(g)
+        g = gear_disc(big_r, P["ant_gear_big_t"], 5.0, 2.0, axis="x")   # G3, idler
+        g.apply_translation((sxa * x2_, iy_, iz_)); gears.append(g)
+        g = gear_disc(sml_r, P["ant_gear_small_t"], 5.0, 2.0, axis="x") # G4, half-shaft
+        g.apply_translation((sxa * x2_, cy_, cz_)); gears.append(g)
+        idl = cyl(2.0, 17.0, axis="x"); idl.apply_translation((sxa * 16.5, iy_, iz_))
+        gears.append(idl)                                               # idler |x| 8..25
+        crs = cyl(2.0, 82.0, axis="x"); crs.apply_translation((sxa * 47.0, cy_, cz_))
+        gears.append(crs)                                               # half-shaft 6..88
+        g = gear_disc(pin_r, P["ant_pinion_t"], 6.0, 2.0, axis="x")     # rack pinion
+        g.apply_translation((sxa * 84.0, cy_, cz_)); gears.append(g)
+        gearset = trimesh.util.concatenate(gears)
+        _color(gearset, "motor"); gearset.metadata["name"] = f"ant_gears_{side}"
+        out.append(gearset)
+
+        pl = box(2.0, 34.0, 32.0)                    # bushing plate |x| 8.5..10.5:
+        pl.apply_translation((sxa * 9.5, wall_in + 18.5, 196.0)); br.append(pl)
+        # (plate stops 1.5 off the wall plane: the REMOVABLE door's plug face is y -66
+        #  below z 190.2 there -- the plate hangs from the spine, which roots on the
+        #  fixed wall above the door outline)
+        ep = box(1.2, 24.0, 52.0)                    # motor face plate |x| 35.9..37.1
+        ep.apply_translation((sxa * 36.5, -31.0, 189.6)); br.append(ep)
+        rib = box(1.2, 38.0, 6.0)                    # face-plate root rib to the spine
+        rib.apply_translation((sxa * 36.5, wall_in + 19.0, 212.0)); br.append(rib)
+        oa = box(3.5, 35.0, 22.0)                    # outer arm: half-shaft bushing
+        oa.apply_translation((sxa * 78.5, wall_in + 17.5, 203.0)); br.append(oa)
+        web = box(3.5, 14.0, 18.0)                   # web forward to the shoe
+        web.apply_translation((sxa * 78.5, P["ant_y"] + 6.95, 205.0)); br.append(web)
+        shoe = box(10.5, 3.4, 18.0)                  # rack backing shoe, 0.3 off the
+        shoe.apply_translation((sxa * 84.0, P["ant_y"] + 12.25, 205.0)); br.append(shoe)
+    bracket = uni(br)
+    for sxa in (-1, 1):
+        rel = cyl(P["ant_mast_d"] / 2 + 0.3, 44.0)   # shoe face rides the mast front
+        rel.apply_translation((sxa * P["ant_x"], P["ant_y"], 205.0))
+        bracket = sub(bracket, rel)
+        epb = cyl(14.35, 3.0, axis="x")              # Ø28.7 motor-nose clearance bore
+        epb.apply_translation((sxa * 36.5, -30.0, 189.6))
+        bracket = sub(bracket, epb)
+        bore = cyl(2.1, 200.0, axis="x")             # half-shaft bushings Ø4.2
+        bore.apply_translation((0, cy_, cz_)); bracket = sub(bracket, bore)
+        bore = cyl(2.1, 44.0, axis="x")              # idler bushings Ø4.2
+        bore.apply_translation((sxa * 16.5, iy_, iz_)); bracket = sub(bracket, bore)
+        for sz_ in (-1, 1):                          # motor ear self-tap pilots Ø2.5
+            eh = cyl(1.25, 8.0, axis="x")            # (ears stand VERTICAL, +-Z)
+            eh.apply_translation((sxa * 36.5, my_ + P["motor_shaft_off"],
+                                  mz_ + sz_ * 17.5))
+            bracket = sub(bracket, eh)
+    _color(bracket, "back"); bracket.metadata["name"] = "ant_bracket"
+    out.append(bracket)
+    return out
 
 
 def build_cam_pod():

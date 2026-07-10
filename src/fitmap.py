@@ -28,6 +28,11 @@ def _fit_report(geo):
     _FIT_DESIGNED = set()                 # intended PRESS pairs (none yet; presses are hardware)
     _FIT_CONTACT_OK = {
         # drivetrain seats / meshes (mirrors assembly_check WHITELIST)
+        frozenset(("ant_bracket", "head_back")),     # bracket spine on the back wall
+        frozenset(("ant_gears_L", "antenna_L")),     # rack/pinion placeholder mesh
+        frozenset(("ant_gears_R", "antenna_R")),
+        frozenset(("ant_gears_L", "motor_ant_L")),   # G1 on each 28BYJ D-shaft
+        frozenset(("ant_gears_R", "motor_ant_R")),
         frozenset(("worm_wheel", "tilt_worm")),      # gear mesh
         frozenset(("worm_wheel", "neck_clevis")),    # spacer tubes in the bearing seats
         frozenset(("pan_platform", "pan_balls")),    # captured-BB groove (upper race)

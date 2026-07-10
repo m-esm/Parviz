@@ -32,8 +32,16 @@ order. (Track gauge widened 2026-07-06: chassis_w
 `reference/design/` (black+orange rugged two-tone) are now integrated as a 34-part GLB:
 COLORS/PAL colorway (keep `src/build.py` COLORS and the viewer PAL in sync, the VIEWER
 re-colors by node name and wins on render), orange head side rails (`trim_rail_L/R`, the
-arm shoulders land on them), forehead LED strip + slot, knurled `antenna_stub` (robot -X =
-image-right in the reference front view), rear orange `trim_hatch_frame` (bottom band
+arm shoulders land on them), forehead LED strip + slot, TWIN DEPLOYABLE ANTENNAS
+(2026-07-10, replaced the static stub: two knurled-cap masts at x +-85 / y -31, each with
+a molded m0.8 rack, INDEPENDENTLY driven by its own 28BYJ through a mirrored two-stage
+30:12 gear-up (6.25:1) and a Ø4 half-shaft pinion -- ~104 mm/s, 50 mm max past the head
+top, ~0.5 s full deploy; masts sit behind the tilt clamp tubes, gear tips stay above the
+z 174 drivetrain-sweep ceiling, motor bodies fill the x 25.7..53.5 band between the sweep
+and the screen-tray rails, half-shafts pass over the rails at z 205; the top-wall guide
+bores carry friction O-rings against gear-up back-drive, and ANT=<mm> bakes a preview
+extension while the viewer gets one slider per mast; parts: antenna_L/R + ant_gears_L/R +
+ant_bracket + motor_ant_L/R, gates run at ANT=0/15/50), rear orange `trim_hatch_frame` (bottom band
 notched clear of the neck-slot tilt sweep), the EXTRUDED REAR POD on `head_door`
 (2026-07-10, the user's red-box ref: the back of the head carries a chunky stepped
 "backpack" bump; deepened same day per user "much more depth horizontally". The pod IS

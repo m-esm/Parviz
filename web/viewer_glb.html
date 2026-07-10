@@ -160,6 +160,10 @@
   <label class="ctl">Tilt <span class="val" id="tilt_v">–</span>
     <input type="range" id="tilt" min="-34" max="34" step="0.1" value="0" disabled
            title="rebuild (make build) to write pose.json"></label>
+  <label class="ctl">Antenna L <span class="val" id="antL_v">–</span>
+    <input type="range" id="antL" min="0" max="50" step="0.5" value="0" disabled></label>
+  <label class="ctl">Antenna R <span class="val" id="antR_v">–</span>
+    <input type="range" id="antR" min="0" max="50" step="0.5" value="0" disabled></label>
   <label class="chk"><input type="checkbox" id="t_sweep"> Sweep (animate head)</label>
 
   <div class="sec">Appearance</div>
@@ -432,6 +436,12 @@ fetch(MODEL.replace(/\.glb$/,'')+'.pose.json?'+Date.now()).then(r=>r.ok?r.json()
   pan.min=-p.pan_stop_deg;  pan.max=p.pan_stop_deg;  pan.value=p.pan_deg;
   tilt.min=-p.tilt_stop_deg; tilt.max=p.tilt_stop_deg; tilt.value=p.tilt_deg;
   pan.disabled=tilt.disabled=false; pan.title=tilt.title='';
+  if(p.ant_nodes && p.ant_nodes.length){
+    for(const id of ['antL','antR']){
+      const el=$(id); el.max=p.ant_travel; el.value=p.ant_baked_mm; el.disabled=false;
+      el.addEventListener('input',applyPose);
+    }
+  }
   applyPose();
 }).catch(()=>{});
 function applyPose(){
@@ -446,6 +456,20 @@ function applyPose(){
   poseM.head = rz(pn).multiply(rxt(tn - pose.tilt_deg)).multiply(rz(-pose.pan_deg));
   poseF.pan  = rz(pn);
   poseF.head = rz(pn).multiply(rxt(tn));
+  // antenna masts: baked GLB has them lifted ant_baked_mm along head-local Z, so their
+  // delta = headPose . T(0,0,slider-baked) . inv(bakedHeadPose) -- the lift composes in
+  // HEAD-local frame (a tilted head deploys along its own up)
+  if(pose.ant_nodes && pose.ant_nodes.length){
+    const inv = rxt(-pose.tilt_deg).multiply(rz(-pose.pan_deg));
+    poseM.antenna_L = poseF.head.clone()
+      .multiply(new THREE.Matrix4().makeTranslation(0,0,parseFloat($('antL').value)-pose.ant_baked_mm))
+      .multiply(inv);
+    poseM.antenna_R = poseF.head.clone()
+      .multiply(new THREE.Matrix4().makeTranslation(0,0,parseFloat($('antR').value)-pose.ant_baked_mm))
+      .multiply(inv);
+    $('antL_v').textContent=parseFloat($('antL').value).toFixed(0)+'mm';
+    $('antR_v').textContent=parseFloat($('antR').value).toFixed(0)+'mm';
+  }
   applyTransforms();
   applyFitPose();
 }
@@ -458,7 +482,8 @@ function applyTransforms(){
   const t=parseFloat($('explode').value), spread=diag*0.6;
   for(const [name,g] of Object.entries(groups)){
     const off=g.explodeDir.clone().multiplyScalar(t*spread);
-    const k=pose ? (pose.groups.head.includes(name)?'head'
+    const k=pose ? (pose.ant_nodes && pose.ant_nodes.includes(name)?name
+                   :pose.groups.head.includes(name)?'head'
                    :pose.groups.pan.includes(name)?'pan':null) : null;
     g.meshes.forEach((o,i)=>{
       const p=g.home[i].clone().add(off);

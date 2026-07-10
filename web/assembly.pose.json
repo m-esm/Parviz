@@ -16,7 +16,13 @@
    "trim_rail_R",
    "sd_plug",
    "led_strip",
-   "antenna_stub",
+   "antenna_L",
+   "antenna_R",
+   "ant_gears_L",
+   "ant_gears_R",
+   "ant_bracket",
+   "motor_ant_L",
+   "motor_ant_R",
    "trim_hatch_frame",
    "camera_pod",
    "screen_ref",
@@ -31,5 +37,11 @@
    "motor_tilt",
    "tilt_carrier"
   ]
- }
+ },
+ "ant_nodes": [
+  "antenna_L",
+  "antenna_R"
+ ],
+ "ant_travel": 50.0,
+ "ant_baked_mm": 15.0
 }

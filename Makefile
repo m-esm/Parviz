@@ -31,7 +31,7 @@ check-sweep:         ## Interference gate across the pan x tilt pose grid (rebui
 	python3 src/assembly_check.py --sweep
 
 fits:                ## Fit/pressure map -> web/fit_report.json + NEUTRAL-pose assembly.glb
-	FITS=1 PAN=0 TILT=0 python3 src/build.py
+	FITS=1 PAN=0 TILT=0 ANT=0 python3 src/build.py
 	@echo "viewer now shows the neutral pose matching the fit patches; 'make build' restores the preview pose"
 
 export:              ## Regenerate STLs + sliceable Bambu .3mf plates -> exports/ (settings baked in)

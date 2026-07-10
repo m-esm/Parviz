@@ -337,9 +337,43 @@ P = {
     "led_cz": 214.0,        # slot center Z (lens 212; slot z 211.5..216.5 > pocket top 208.9 ok)
     # Knurled antenna stub on the head top face (cosmetic; Pi WiFi is internal).
     # Image-RIGHT in the reference front view = robot -X.
-    "ant_x": -62.0, "ant_y": -8.0,  # on head_back's top (split plane is at y~2)
-    "ant_d": 13.0, "ant_h": 26.0,   # fat, short stub like the reference
-    "ant_collar_d": 16.0, "ant_collar_h": 3.0,
+    # --- TWIN DEPLOYABLE ANTENNAS (2026-07-10, user: two masts, one per head side,
+    # INDEPENDENTLY stepper-driven in/out, 50 max past the head top, geared ~10 cm/s).
+    # Mechanism, PER SIDE (mirrored in x): one 28BYJ (body |x| 25.7..53.5, can axis
+    # y -30 / z 189.6, ears vertical) -> two-stage 30T:12T spur up-gearing (6.25:1,
+    # planes |x| 22 / 14) -> a Ø4 HALF-shaft (|x| 6..88) -> a 27T m0.8 pinion (pitch
+    # Ø21.6) at |x| 84 meshing the rack molded on its mast's -Y face. Two motors =
+    # each antenna individually controllable (user); two more ULN2003s (own 9, now
+    # 4 used). Speed: ~15 RPM usable x 6.25 x 67.9 mm/rev ~= 104 mm/s -> 50 in ~0.5 s;
+    # force ~0.3 N per rack (20 mN.m / 6.25 / r10.8) -- masts stay light (<10 g) and
+    # slide free. Back-drive: gear-up means masts sag de-energized; a friction O-ring
+    # in each top guide bore parks them (docs/ASSEMBLY.md).
+    # PLACEMENT (probe-driven): masts sit at y -31 BEHIND the tilt clamp tubes (Ø14 at
+    # y -18/z 153, spanning to |x| 99 -- a y -24 mast ran through them at full
+    # retract); the screen tray's rail+pillar bands own |x| 56..68 z<196 and the tilt
+    # drivetrain sweeps |x|<24 z<174, so every gear at |x|<24 keeps its tips above
+    # z 176 and the motor bodies span the free 25.7..53.5 band. The half-shafts pass
+    # OVER the rail band (z 205 > 196) and behind the screen (rear face -7).
+    # Homing: stall the masts down (tip caps bottom on the top-wall bosses).
+    "ant_x": 85.0, "ant_y": -31.0,  # mast axes (mirrored +-)
+    "ant_mast_d": 6.5,      # mast shaft Ø (slides in Ø7 top-wall bore, 0.25/side)
+    "ant_travel": 50.0,     # max extension past the head top surface
+    "ant_mast_z": (147.0, 226.5),   # retracted shaft span (rack keeps pinion mesh at +50)
+    "ant_rack_top": 214.0,  # rack teeth stop here (mast-local): above is never meshed
+    "ant_tip_d": 11.0, "ant_tip_h": 14.0,   # knurled cap, rests 0.5 over the boss
+    "ant_gear_m": 0.8,      # module for all antenna spur gears + racks
+    "ant_pinion_t": 27,     # rack pinions, pitch Ø21.6
+    "ant_gear_big_t": 30, "ant_gear_small_t": 12,   # two 30:12 stages = 6.25:1 up
+    "ant_cross_y": -46.1, "ant_cross_z": 205.0,     # half-shaft axis: pinion tips
+                            # reach y -34.3, kissing (0.05) the mast face -34.25
+    "ant_idler_y": -29.33, "ant_idler_z": 204.06,   # idler: 16.8 mesh CD to both;
+                            # G3 tips y -16.3 (9.3 clear of the screen mesh -7)
+    "ant_motor_y": -37.875, "ant_motor_z": 189.6,   # motor SHAFT axis; can axis is
+                            # +7.875 in Y (offset rolled -Y): can (y -30, z 189.6),
+                            # 22.3 off the half-shaft line, G1 tips z 176.6 > 174
+    "ant_gear_x": (22.0, 14.0),     # G1/G2 plane (on the shaft |x| 16..25.7) / G3/G4
+                            # plane (inboard of the Ø27.25 gearbox at |x| 25.7..34.7)
+    "preview_ant_mm": 15.0, # GLB preview extension; ANT=<mm> overrides (0..50)
     # Orange picture-frame around the head-back service area (design-ref back.jpg). The
     # louvres + motor-bay opening play the reference's inner hatch. Bottom band notched
     # over the deep-head motor bay (back wall open x +-33 up to z=168 for the tilt sweep;

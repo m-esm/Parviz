@@ -24,14 +24,14 @@ from trimesh.transformations import rotation_matrix as R
 
 from stlpaths import webpath, stlp
 from params import DEG, EXPORT, P, TAU
-from geo import _color, box, cyl, dbore_neg, inter, sub, uni
+from geo import _T, _color, box, cyl, dbore_neg, inter, sub, uni
 from gears import gear_disc, load_gear_stl, worm, worm_cd
 from screen import load_screen, screen_pose
 from tracks import _track_zc, build_tracks
 from motors import motor_28byj, motor_tt
 from pan import build_pan_clips, build_pan_platform, build_pan_race
 from neck import build_neck_clevis, build_tilt_carrier
-from head import (build_antenna, build_arms, build_cam_pod, build_hatch_frame,
+from head import (build_ant_drive, build_antennas, build_arms, build_cam_pod, build_hatch_frame,
                   build_head_parts, build_head_rails, build_led_strip,
                   build_screen_tray, build_sd_plug)
 from chassis import build_belly_plate, build_chassis_parts, build_fascia, build_pod_rails
@@ -241,7 +241,28 @@ def build():
         add(rail, M_head)
     add(build_sd_plug(), M_head, "sd_plug.stl")      # microSD service-slot friction plug
     add(build_led_strip(), M_head)                   # forehead light strip (design ref)
-    add(build_antenna(), M_head)                     # top-right antenna stub (design ref)
+    # twin deployable antenna masts + their geared drive (2026-07-10; PARAMS block).
+    # ANT=<mm> (0..ant_travel) sets the baked extension; default = preview_ant_mm.
+    # M_ant = M_head then a head-local +Z lift -- the lift happens BEFORE the head
+    # pose, i.e. in head-local coordinates, so tilted heads deploy along their own up.
+    ant_mm = float(os.environ.get("ANT", P["preview_ant_mm"]))
+    ant_mm = max(0.0, min(P["ant_travel"], ant_mm))
+    M_ant = M_head @ _T(0, 0, ant_mm)
+    ant_nodes = []
+    for mast in build_antennas():
+        ant_nodes.append(mast.metadata["name"])
+        add(mast, M_ant, f"{mast.metadata['name']}.stl")
+        pose_groups["head"].append(mast.metadata["name"])   # add() saw M_ant, not M_head
+    for pc in build_ant_drive():
+        add(pc, M_head, "ant_bracket.stl" if pc.metadata["name"] == "ant_bracket" else None)
+    for sxa, side in ((-1, "L"), (1, "R")):          # one stepper PER MAST (user:
+        ma = motor_28byj(f"motor_ant_{side}")        # independently controllable):
+        ma.apply_transform(R(-sxa * TAU / 4, (0, 1, 0)))   # shaft points inboard,
+        ma.apply_transform(R(-sxa * TAU / 4, (1, 0, 0)))   # offset rolled to -Y,
+        ma.apply_translation((sxa * 53.5,            # ears vertical
+                              P["ant_motor_y"] + P["motor_shaft_off"],
+                              P["ant_motor_z"]))
+        add(ma, M_head)
     add(build_hatch_frame(), M_head)                 # rear orange hatch frame (design ref)
     add(build_cam_pod(), M_head)                     # raised camera eye-pod (design ref)
     if os.environ.get("ARMS") == "1":               # arms REMOVED for now (user 2026-07-07);
@@ -323,6 +344,8 @@ def build():
             "tilt_axis_y": yt, "tilt_axis_z": zt,
             "pan_stop_deg": 93.3, "tilt_stop_deg": 33.8,   # homing hard-stop limits
             "groups": pose_groups,
+            "ant_nodes": ant_nodes, "ant_travel": P["ant_travel"],
+            "ant_baked_mm": ant_mm,                        # viewer antenna slider
         }, open(webpath(out_name.rsplit(".", 1)[0] + ".pose.json"), "w"), indent=1)
     print(f"wrote {out}  ({len(scene.geometry)} parts)")
     if EXPORT:

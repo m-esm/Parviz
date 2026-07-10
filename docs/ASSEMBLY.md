@@ -27,8 +27,8 @@ Owned quantities cross-checked against a personal parts inventory (2026-07-07).
 | MP1584-class mini buck | motor rail 5V; zip anchors beside the main buck | 1 | 0 | **1** |
 | JST-XH kit + crimper | every joint-crossing / board run is a keyed XH plug | 1 | 0 | **1** |
 | 18 AWG silicone pair + 5A blade fuse | Pi-rail run + inline fuse at the tray | 1 m | 0 | **1** |
-| 28BYJ-48 stepper | 5V, pan + tilt | 2 | 6 (Bag 14) |, |
-| ULN2003 driver | one per stepper | 2 | 9 (3 Bag 14 + 6 Bag 5) |, |
+| 28BYJ-48 stepper | 5V, pan + tilt + 2x antenna drives | 4 | 6 (Bag 14) |, |
+| ULN2003 driver | one per stepper | 4 | 9 (3 Bag 14 + 6 Bag 5) |, |
 | TT gearmotor 1:120 | track drive, one per pod, shaft on X into the sprocket | 2 | 1 (Bag 5) | **1** (match the owned one; or swap both for 2x N20 metal-gear for a lower CoM) |
 | MX1588 dual H-bridge | drives both TT motors, skid steer | 1 | 5 (Bag 7) |, |
 | WS2812 forehead segment | 8 LEDs in the `led_slot` recess: **42 x 5 mm, 1.5 deep** (model dot pitch 4.6). A standard 8x5050 stick is 53.3 x 10.2, it does NOT fit. Buy a narrow (4–5 mm wide) addressable strip (SK6805-2427 / WS2812-2020, ≥160 LED/m) and cut an 8-LED segment, or widen `led_slot` to ~54 x 11 for the common stick | 1 seg | 0 | **1 m narrow strip** (also covers the front strip, next row) |
@@ -205,6 +205,16 @@ tray killed the 88.5 mm blind channels, 2026-07-08.)
     that IS the grip); the barbs' back ramps cam the tongues inboard and release. Open at
     roughly neutral tilt: at the ±33.8° stalls the tilt drivetrain reaches into the pod's
     internal cavity.
+
+15b. **Antenna drives.** Slip a friction O-ring into each top-wall guide bore, drop each
+    mast in from above (rack facing the pinion slot), then hang `ant_bracket` on the back
+    wall (spine + 2 pilots), slide the Ø4 half-shafts through their bushings with the
+    pinion + G4 gears, seat the idler shafts + G2/G3, and bolt each 28BYJ nose-through
+    its face plate (2x M3 into the vertical-ear pilots, shaft inboard). Each mast has its
+    OWN motor + ULN2003 (independent control); wire both to the Pi in the head. Homing:
+    drive down until stall (tip cap on the boss). BUY: 2x Ø4 steel rod ~90 mm, 2x O-ring
+    (Ø7 bore seat), plus the 30T/12T/27T m0.8 spur set per side (or print them with the
+    worm-gear pipeline, docs/WORM.md).
 
 ### Cables (per docs/CABLE-CHECK.md + firmware/WIRING.md)
 

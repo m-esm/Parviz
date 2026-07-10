@@ -63,6 +63,10 @@ WHITELIST = {
     frozenset(("pan_platform", "pan_balls")),    # captured-BB groove (upper race)
     frozenset(("pan_race", "pan_balls")),        # captured-BB groove (lower race)
     frozenset(("pan_platform", "motor_pan")),    # D-shaft in the platform hub
+    frozenset(("ant_gears_L", "antenna_L")),     # rack/pinion mesh (placeholder teeth,
+    frozenset(("ant_gears_R", "antenna_R")),     #  real generated pass later, cf WORM.md)
+    frozenset(("ant_gears_L", "motor_ant_L")),   # G1 bored onto each 28BYJ D-shaft
+    frozenset(("ant_gears_R", "motor_ant_R")),
 }
 
 # Sweep pose grid: (pan_deg, tilt_deg)
