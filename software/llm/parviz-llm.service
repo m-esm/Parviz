@@ -1,0 +1,29 @@
+# Parviz local LLM brain: llama.cpp server + Qwen3-0.6B (see docs/AWARENESS.md
+# Tier 2). Chat web UI at http://moshe-pi5-2gb.local:8081/ (LAN only),
+# OpenAI-compatible API at /v1/chat/completions.
+#
+# Install (from ~/parviz-sw on the Pi):
+#   sudo cp llm/parviz-llm.service /etc/systemd/system/
+#   sudo systemctl daemon-reload && sudo systemctl enable --now parviz-llm
+#
+# Qwen3 is a thinking model: for fast replies add /no_think to the system
+# prompt (web UI: settings gear -> system prompt).
+
+[Unit]
+Description=Parviz local LLM (llama-server, Qwen3-0.6B)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=moshe
+ExecStart=/home/moshe/llama.cpp/build/bin/llama-server \
+    -m /home/moshe/models/Qwen3-0.6B-Q4_0.gguf \
+    -t 4 -c 2048 --jinja \
+    --host 0.0.0.0 --port 8081
+Restart=always
+RestartSec=3
+# never let the LLM OOM the face: cap it well under the 2GB
+MemoryMax=1400M
+
+[Install]
+WantedBy=multi-user.target

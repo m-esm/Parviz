@@ -175,3 +175,13 @@ conversation quality the right architecture is a remote brain (API or a
 bigger box) with the local model as the offline/latency fallback.
 Budget rule: keep model + KV under ~1.2 GB so the face, camera and
 supervisor never fight the OOM killer.
+
+### llm/parviz-llm.service, local LLM chat (llama-server)
+
+Persistent Tier-2 brain service (docs/AWARENESS.md): llama.cpp
+`llama-server` + Qwen3-0.6B-Q4_0, enabled on boot next to the face.
+**Chat UI: http://moshe-pi5-2gb.local:8081/** (LAN), API at
+`/v1/chat/completions` (OpenAI-compatible). `MemoryMax=1400M` so a
+runaway LLM gets killed before it OOMs the face. Qwen3 thinks by
+default; add `/no_think` to the system prompt for snappy replies.
+Verified 2026-07-12: service + face active together, 1.1 GB still free.
