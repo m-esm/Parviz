@@ -13,8 +13,9 @@ Output: exports/parviz_plates.3mf (gitignored, regenerable) with these plates:
   Antennas           2 masts (racks up) + the drive bracket
   Neck and pan       neck clevis, tilt carrier, pan platform/race/cage/clips
   Worm drive         worm wheel + worm (real generated teeth)
-  Track gear         2 sprockets, 12 dished road wheels, 2 pod rails, 2 keeper bars
-  Track links        90 articulated links (88 plain + 2 master)
+  Track gear         4 sprockets (2 optional-motor spares), 4 end idlers, 10 road
+                     wheels, 2 pod rails, 2 keeper bars
+  Track links        128 articulated links (126 plain + 2 master)
 
 A category that overflows the 256x256 bed spills to "Cat 1 of N", "Cat 2 of N".
 ONE file, many plates: swap the spool / pick per-plate settings in Studio per plate.
@@ -46,7 +47,7 @@ from params import P                               # noqa: E402   2026-07-10 ref
 from bambu3mf import write_bambu_3mf               # noqa: E402
 
 BED = 256.0
-OUT = os.path.join(ROOT, "exports", "parviz_plates.3mf")
+OUT = os.path.join(ROOT, "exports", "bambu.3mf")
 
 
 def R(axis, deg):
@@ -139,37 +140,38 @@ def load_part(name):
 
 
 def drivegear_units():
-    """2 sprockets (gear-face down) + 4 road wheels (bore vertical, stand) + rails + keepers."""
+    """Rails + keepers + EVERY running-gear body split straight out of the exported
+    track_wheels STLs (2026-07-11: recipe duplication drifted -- roadwheel_count died,
+    end idlers were missing, dual sprockets landed). Per side: 2 sprockets (one for
+    the OPTIONAL 2nd motor -- print it anyway, it's cheap) + 2 end idlers + 5 road
+    wheels = 9 bodies. Wheels stand on a face (axis was X in-assembly -> R(Y,90))."""
     out = [load_part(n) for n in ("track_pod_rail_L", "track_pod_rail_R",
                                   "track_keeper_L", "track_keeper_R")]
-    for sx in (-1, 1):
-        spr = tracks._sprocket(sx); spr.apply_transform(R(Y, 90))
-        out.append((f"sprocket_{'L' if sx < 0 else 'R'}", spr, TREE))
-    # dished road wheels, same recipe as tracks.build_tracks (rim + dish + hub bolt ring)
-    import tracks as trk
-    from geo import box as gbox, cyl as gcyl, sub as gsub
-    rr_ = P["roadwheel_d"] / 2
-    for i in range(P["roadwheel_count"] * 2):
-        rw = gcyl(rr_, 30.0, axis="x")
-        for fs in (-1, 1):
-            dsh = gsub(gcyl(rr_ - 2.2, 2.4, axis="x"), gcyl(5.2, 3.4, axis="x"))
-            dsh.apply_translation((fs * (30.0 / 2 - 1.1), 0, 0))
-            rw = gsub(rw, dsh)
-            for k in range(5):
-                aa = 2 * np.pi * k / 5
-                bh = gcyl(0.9, 2.0, axis="x")
-                bh.apply_translation((fs * (30.0 / 2 - 0.9), 3.6 * np.cos(aa), 3.6 * np.sin(aa)))
-                rw = gsub(rw, bh)
-        rw = gsub(rw, gcyl(2.1, 34.0, axis="x"))
-        rw.apply_transform(R(Y, 90))
-        out.append((f"road_wheel_{i+1}", rw, NOSUP))
+    for side in ("L", "R"):
+        m = trimesh.load(os.path.join(ROOT, "stl", "base", f"track_wheels_{side}.stl"))
+        bodies = m.split(only_watertight=False)
+        ns, ni, nw = 0, 0, 0
+        for b_ in sorted(bodies, key=lambda p: p.centroid[1]):
+            cy = b_.centroid[1]
+            if abs(b_.bounds[0][2]) < 12 and b_.bounds[0][2] < 10:  # dips to the pin line
+                pass
+            if min(abs(cy - P["spr_y"]), abs(cy - P["spr_y2"])) < 5:
+                ns += 1; nm, ob = f"sprocket_{side}{ns}", TREE
+            elif abs(abs(cy) - P["track_wheelbase"] / 2) < 5:
+                ni += 1; nm, ob = f"end_idler_{side}{ni}", TREE
+            else:
+                nw += 1; nm, ob = f"road_wheel_{side}{nw}", NOSUP
+            b_ = b_.copy()
+            b_.apply_transform(R(Y, 90))
+            out.append((nm, b_, ob))
+        assert (ns, ni, nw) == (2, 2, 5), f"unexpected running gear split {side}: {(ns, ni, nw)}"
     for _, m, _ in out:
         m.apply_translation((0, 0, -m.bounds[0][2]))
     return out
 
 
 def link_units():
-    """44 plain links/side + 1 master/side, grouser-up (self-supporting -> support off)."""
+    """63 plain links/side + 1 master/side, grouser-up (self-supporting -> support off)."""
     plain = tracks._track_link(); plain.apply_transform(R(X, 180))
     master = tracks._track_master_link()[0]; master.apply_transform(R(X, 180))
     n = P["track_links"]
