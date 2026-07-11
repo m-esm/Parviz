@@ -51,7 +51,8 @@ def _fit_report(geo):
         frozenset(("worm_wheel", "neck_clevis")),    # spacer tubes in the bearing seats
         frozenset(("pan_platform", "pan_balls")),    # captured-BB groove (upper race)
         frozenset(("pan_race", "pan_balls")),        # captured-BB groove (lower race)
-        frozenset(("pan_platform", "motor_pan")),    # D-shaft in the platform hub
+        frozenset(("pan_gears", "motor_pan")),       # 32T gear on the D-shaft (fast-pan)
+        frozenset(("pan_gears", "pan_platform")),    # 32T <-> integral 16T pinion mesh
         # resting / bolted seats
         frozenset(("pan_race", "chassis_deck")),     # ring sits on the seat floor
         frozenset(("pan_clips", "chassis_deck")),    # clips screwed into deck pockets

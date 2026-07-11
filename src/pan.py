@@ -9,7 +9,8 @@ import shapely.geometry as sg
 from trimesh.creation import extrude_polygon
 from trimesh.transformations import rotation_matrix as R
 from params import DEG, P, TAU
-from geo import _color, box, cyl, dbore_neg, sub, uni
+from geo import _color, box, cyl, sub, uni
+from gears import gear_disc
 
 
 def _pan_stack():
@@ -45,28 +46,18 @@ def build_pan_platform():
     reb.apply_translation((0, 0, z1 - 1.0))          # cut spans z1-3 .. z1+1
     plate = sub(plate, reb)
 
-    # D-bore coupling hub on the underside. Hub bottom clears the motor's Ø9.1 boss (top at
-    # gear_face+1.45) by 0.3 -- the old 12-long hub swallowed the whole gearbox face.
-    zsh = z1 - 2 - (P["motor_body_h"] + P["motor_gear_h"] + P["motor_shaft_len"])   # can bottom
-    gear_face = zsh + P["motor_body_h"] + P["motor_gear_h"]        # 40.25
-    hub_bot = gear_face + 1.45 + 0.3                                # 42.0
-    hub = cyl(7.0, plate_bot - hub_bot)
-    hub.apply_translation((0, 0, (hub_bot + plate_bot) / 2))
-    plate = uni([plate, hub])
-    # D-profile ONLY over the flat zone (flats start gear_face + shaft_len - flat_len = 44.0;
-    # +0.5 entry margin -- the old D spanned 36..56 and jammed on the round shaft section).
-    # Flats snug (+0.075/side, they drive); round arcs +0.27/side LOOSE so the race locates
-    # radially and the shaft only drives (mini-Oldham, kills the overconstraint). The grub
-    # bore is gone: with loose arcs a grub would just re-introduce the radial fight.
-    d_bot = gear_face + P["motor_shaft_len"] - P["motor_flat_len"] + 0.5           # 44.5
-    dbore = dbore_neg(z1 - d_bot + 1, axis="z", flat_clear=0.075, round_clear=0.27)
-    dbore.apply_transform(R(TAU / 4, (0, 0, 1)))     # motor_28byj cuts its flats facing +-Y;
-    dbore.apply_translation((0, 0, (d_bot + z1 + 1) / 2))   # dbore_neg's face +-X -> align
-    plate = sub(plate, dbore)
-    # plain Ø5.3 round counterbore below the flats (round Ø4.93 shaft section passes freely)
-    rb = cyl(5.3 / 2, d_bot - hub_bot + 4)
-    rb.apply_translation((0, 0, (hub_bot + d_bot) / 2))
-    plate = sub(plate, rb)
+    # FAST-PAN 2:1 gear-up (2026-07-12; see PARAMS pan_gear_*): the old on-axis D-bore hub
+    # is GONE -- the motor moved off-axis and its 32T gear (build.py pan_gears) drives this
+    # integral 16T PINION hub on the platform underside. The race still locates radially
+    # (that job never belonged to the shaft); the teeth only drive. Placeholder gear_disc
+    # teeth, real generated pass later (antenna convention).
+    gz0, gz1 = P["pan_gear_z"]                       # tooth band 45..50 (under seat floor 51)
+    pin_r = P["pan_gear_m"] * P["pan_gear_pinion_t"] / 2         # 6.4
+    shank = cyl(6.5, plate_bot - gz1 + 1.0)          # hub shank, buried 1.0 into the plate
+    shank.apply_translation((0, 0, (gz1 + plate_bot + 1.0) / 2))
+    pin = gear_disc(pin_r, P["pan_gear_pinion_t"], gz1 - gz0 + 0.5, 2.0, axis="z")
+    pin.apply_translation((0, 0, (gz0 + gz1) / 2))   # +0.5 width: roots fuse into the shank
+    plate = uni([plate, shank, pin])
 
     # PAN-STOP LUG (homing pass 2026-07-08): hangs from the plate underside at r28,
     # azimuth 225, down to 0.6 above the seat floor; hits the two deck posts (azimuth

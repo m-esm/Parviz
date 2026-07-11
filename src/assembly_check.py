@@ -74,7 +74,9 @@ WHITELIST = {
     frozenset(("worm_wheel", "neck_clevis")),    # spacer tube in bearing seats
     frozenset(("pan_platform", "pan_balls")),    # captured-BB groove (upper race)
     frozenset(("pan_race", "pan_balls")),        # captured-BB groove (lower race)
-    frozenset(("pan_platform", "motor_pan")),    # D-shaft in the platform hub
+    frozenset(("pan_gears", "motor_pan")),       # 32T gear on the D-shaft (fast-pan 2:1)
+    frozenset(("pan_gears", "pan_platform")),    # 32T <-> integral 16T pinion mesh
+                                                 # (placeholder teeth, real pass later)
     frozenset(("ant_gears_L", "antenna_L")),     # rack/pinion mesh (placeholder teeth,
     frozenset(("ant_gears_R", "antenna_R")),     #  real generated pass later, cf WORM.md)
     frozenset(("ant_gears_L", "motor_ant_L")),   # G1 bored onto each 28BYJ D-shaft

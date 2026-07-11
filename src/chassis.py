@@ -229,12 +229,21 @@ def build_chassis_core():
         post.apply_translation((28.0, 0, seat_floor + 3.6))
         post.apply_transform(R(az * DEG, (0, 0, 1)))
         body = uni([body, post])
-    # clearance through the deck membrane under the seat: Ø30 at the pan axis (platform hub +
-    # shaft) AND Ø30 at the CAN axis (the 28BYJ gearbox stack, r13.6 about the can, crosses
-    # z 32..40.25). Both circles stay inside the race ring ID (r 34) -> the seat floor holds.
-    mx = -P["motor_shaft_off"]
-    for cx_ in (0.0, mx):
-        cbore = cyl(15.0, 30.0); cbore.apply_translation((cx_, 0, seat_floor - 2))
+    # FAST-PAN gear-up (2026-07-12; PARAMS pan_gear_*): shaft/can positions are now derived
+    # -- the 32T motor gear at the shaft drives the platform's integral 16T pinion, both in
+    # the pan_gear_z band (45..50) UNDER the seat floor (51).
+    m_g = P["pan_gear_m"]
+    cd_pan = m_g * (P["pan_gear_motor_t"] + P["pan_gear_pinion_t"]) / 2    # 19.2
+    paz = np.radians(P["pan_shaft_azim"])
+    sxp, syp = cd_pan * np.cos(paz), cd_pan * np.sin(paz)                  # shaft (-19.2, 0)
+    mx, my = sxp, syp + P["motor_shaft_off"]         # CAN axis (-19.2, 7.875): offset -> +Y
+    # clearance through the deck membrane under the seat: Ø30 at the pan axis (pinion hub)
+    # + a GEAR POCKET at the shaft (32T tip r 13.8 + 0.7 running, z through the 46..51
+    # under-seat membrane). Max reach 19.2 + 14.5 = 33.7 < ring ID 34 -> the ring's seat
+    # floor annulus (35.5..44.5) stays fully supported; the swinging stop lug bottoms at
+    # 51.6, 1.6 over the gear band.
+    for cx_, cy_, r_ in ((0.0, 0.0, 15.0), (sxp, syp, 14.5)):
+        cbore = cyl(r_, 30.0); cbore.apply_translation((cx_, cy_, seat_floor - 2))
         body = sub(body, cbore)
     # cable pass through the deck: 16x8 obround (5-pos JST-XH head is 14.9 x 5.9) at
     # cable_exit, INSIDE the race ID -- the old Ø12 pass at (0, neck_y) punched through the
@@ -255,10 +264,14 @@ def build_chassis_core():
 
     # pan-motor PEDESTAL: top face AT the ear-bar underside so the M3s clamp the ears down.
     # (The old 6-thick pad sank the can 5.5 into the floor while the ears floated 12.4 above.)
-    zsh = z1 - 2 - (P["motor_body_h"] + P["motor_gear_h"] + P["motor_shaft_len"])   # can bottom
-    ear_z = zsh + P["motor_body_h"] - 1.0            # ear-bar underside (30.25)
+    # Fast-pan: the motor DROPPED ~13.5 (32T gear on the flats in the 45..50 band) and the
+    # pedestal follows the can to (-19.2, 7.875) -- x -43.2..4.8 stays 2.4 off the drive_L
+    # can (-45.6) and on the widened belly strap (belly_keep x0 -44); ears run along X
+    # (the motor is clocked -90 in build()), wiring box exits +Y.
+    zsh = (P["pan_gear_z"][0] - 4.25) - (P["motor_body_h"] + P["motor_gear_h"])  # can bottom
+    ear_z = zsh + P["motor_body_h"] - 1.0            # ear-bar underside (30.75)
     ped = rounded_box(48, 48, ear_z - (z0 + floor), 6.0)
-    ped.apply_translation((mx, 0, z0 + floor))
+    ped.apply_translation((mx, my, z0 + floor))
     body = uni([body, ped])
     # deck cable pass, now boring through deck AND pedestal corner in one shot (z 29..51,
     # only the corner sliver x 4..16, y -24..-19 comes out of the pedestal); the shaft's
@@ -287,29 +300,29 @@ def build_chassis_core():
     # Ø29 can relief bored from the pedestal top down to the floor (can Ø28.25 drops in,
     # bottom hovers 0.45 above the floor; the ears take the clamp load)
     canb = cyl(29.0 / 2, ear_z + 2 - (z0 + floor))
-    canb.apply_translation((mx, 0, (z0 + floor + ear_z + 2) / 2))
+    canb.apply_translation((mx, my, (z0 + floor + ear_z + 2) / 2))
     body = sub(body, canb)
-    # wiring-box relief: the blue box protrudes past the can on -X (to x ~ -28); open the
-    # pocket clear through the pedestal's -X face so the leads route out sideways
-    wrel = box(22, P["motor_wbox_w"] + 3, ear_z + 2 - (z0 + floor))
-    wrel.apply_translation((mx - 16, 0, (z0 + floor + ear_z + 2) / 2))
+    # wiring-box relief: the blue box now protrudes past the can on +Y (motor clocked -90);
+    # open the pocket clear through the pedestal's +Y face so the leads route out sideways
+    wrel = box(P["motor_wbox_w"] + 3, 22, ear_z + 2 - (z0 + floor))
+    wrel.apply_translation((mx, my + 16, (z0 + floor + ear_z + 2) / 2))
     body = sub(body, wrel)
-    # M3 PILOTS Ø2.5 at the ear holes (can-axis Y = +-17.5; Ø3.5 was clearance, nothing bit)
-    for dy in (-P["motor_ear_cc"] / 2, P["motor_ear_cc"] / 2):
-        e = cyl(1.25, 16); e.apply_translation((mx, dy, ear_z - 4))
+    # M3 PILOTS Ø2.5 at the ear holes (can-axis X = +-17.5 -- ears along X now)
+    for dxe in (-P["motor_ear_cc"] / 2, P["motor_ear_cc"] / 2):
+        e = cyl(1.25, 16); e.apply_translation((mx + dxe, my, ear_z - 4))
         body = sub(body, e)
     # ear-bar SEAT PADS: drop the pedestal top ped_relief (0.8) everywhere EXCEPT two pads
     # under the ear ends and the collar's footing annulus -> the 7x1 bar clamps on defined
     # pads (a full 48x48 print-top face rocks on seam blobs; two 9x10 pads don't).
     pw, pd = P["ped_pad_wxy"]
     relief = rounded_box(50, 50, P["ped_relief"], 6.0)      # oversize slab over the ped top
-    relief.apply_translation((mx, 0, ear_z - P["ped_relief"]))
-    for dy in (-P["motor_ear_cc"] / 2, P["motor_ear_cc"] / 2):
-        pad = box(pw, pd, P["ped_relief"] + 2)
-        pad.apply_translation((mx, dy, ear_z - P["ped_relief"] / 2))
+    relief.apply_translation((mx, my, ear_z - P["ped_relief"]))
+    for dxe in (-P["motor_ear_cc"] / 2, P["motor_ear_cc"] / 2):
+        pad = box(pd, pw, P["ped_relief"] + 2)              # pads rotated with the ear bar
+        pad.apply_translation((mx + dxe, my, ear_z - P["ped_relief"] / 2))
         relief = sub(relief, pad)
     keep = cyl(P["ped_collar_od"] / 2 + 0.5, P["ped_relief"] + 2)   # collar keeps footing
-    keep.apply_translation((mx, 0, ear_z - P["ped_relief"] / 2))
+    keep.apply_translation((mx, my, ear_z - P["ped_relief"] / 2))
     relief = sub(relief, keep)
     body = sub(body, relief)
     # can-locating COLLAR: Ø32/Ø29 x 1.5 ring on the pedestal top. The Ø29 bore already
@@ -319,12 +332,12 @@ def build_chassis_core():
     # wiring-relief window on -X so the wbox leads still exit sideways.
     collar = sub(cyl(P["ped_collar_od"] / 2, P["ped_collar_h"]),
                  cyl(29.0 / 2, P["ped_collar_h"] + 2))
-    collar.apply_translation((mx, 0, ear_z + P["ped_collar_h"] / 2))
-    ncut = box(8.2, P["ped_collar_od"] + 4, P["ped_collar_h"] + 2)
-    ncut.apply_translation((mx, 0, ear_z + P["ped_collar_h"] / 2))
+    collar.apply_translation((mx, my, ear_z + P["ped_collar_h"] / 2))
+    ncut = box(P["ped_collar_od"] + 4, 8.2, P["ped_collar_h"] + 2)  # ear bar crosses in X
+    ncut.apply_translation((mx, my, ear_z + P["ped_collar_h"] / 2))
     collar = sub(collar, ncut)
-    wcut = box(12, P["motor_wbox_w"] + 3, P["ped_collar_h"] + 2)    # matches wrel footprint
-    wcut.apply_translation((mx - 11, 0, ear_z + P["ped_collar_h"] / 2))
+    wcut = box(P["motor_wbox_w"] + 3, 12, P["ped_collar_h"] + 2)    # matches wrel footprint
+    wcut.apply_translation((mx, my + 11, ear_z + P["ped_collar_h"] / 2))
     collar = sub(collar, wcut)
     body = uni([body, collar])
 

@@ -46,27 +46,31 @@ def gear_disc(pitch_r, teeth, width, tooth_h, axis="x"):
 
 
 def worm(pitch_r, length, starts=1, axis="y"):
-    """Single-start worm: a core cylinder wrapped by a helical rib (approximated by a stack of
-    short rotated ribs -- reads as a worm thread; final thread from BOSL2). Axis along `axis`."""
+    """Placeholder worm: a core cylinder wrapped by `starts` helical ribs (approximated by
+    stacks of short rotated ribs -- reads as a worm thread; final thread is a generated
+    pass, docs/WORM.md). Multi-start (fast-tilt 2026-07-12) draws the interleaved ribs so
+    the 3-start swap is visible in review renders. Axis along `axis`."""
     core = cyl(pitch_r * 0.72, length, axis=axis)
     ribs = [core]
     n = 48
-    lead = length / 3.0                                  # visual lead per turn
-    for i in range(n):
-        f = i / n
-        a = TAU * f * (length / lead)
-        seg = box(2.0, 2.0, 2.0)
-        pos_axis = -length / 2 + f * length
-        if axis == "y":
-            seg.apply_translation((0, 0, pitch_r * 0.85)); seg.apply_transform(R(a, (0, 1, 0)))
-            seg.apply_translation((0, pos_axis, 0))
-        elif axis == "x":
-            seg.apply_translation((0, 0, pitch_r * 0.85)); seg.apply_transform(R(a, (1, 0, 0)))
-            seg.apply_translation((pos_axis, 0, 0))
-        else:
-            seg.apply_translation((pitch_r * 0.85, 0, 0)); seg.apply_transform(R(a, (0, 0, 1)))
-            seg.apply_translation((0, 0, pos_axis))
-        ribs.append(seg)
+    lead = length / 3.0 * starts                         # visual lead per turn (per start)
+    for s in range(starts):
+        phase = TAU * s / starts
+        for i in range(n):
+            f = i / n
+            a = phase + TAU * f * (length / lead)
+            seg = box(2.0, 2.0, 2.0)
+            pos_axis = -length / 2 + f * length
+            if axis == "y":
+                seg.apply_translation((0, 0, pitch_r * 0.85)); seg.apply_transform(R(a, (0, 1, 0)))
+                seg.apply_translation((0, pos_axis, 0))
+            elif axis == "x":
+                seg.apply_translation((0, 0, pitch_r * 0.85)); seg.apply_transform(R(a, (1, 0, 0)))
+                seg.apply_translation((pos_axis, 0, 0))
+            else:
+                seg.apply_translation((pitch_r * 0.85, 0, 0)); seg.apply_transform(R(a, (0, 0, 1)))
+                seg.apply_translation((0, 0, pos_axis))
+            ribs.append(seg)
     return uni(ribs)
 
 

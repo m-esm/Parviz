@@ -122,7 +122,8 @@ tray killed the 88.5 mm blind channels, 2026-07-08.)
   through its underside Ø6.5 counterbores (r16.5 circle, clocked 270/30/150) into the
   `neck_clevis` base pilots. The counterbores face DOWN into the race once seated, so this
   bolt-up is impossible after the platform is on the balls. Torque path: screws clamp
-  neck to platform; the platform D-bore keys to the pan motor shaft (below).
+  neck to platform; the platform's integral 16T pinion takes the drive from the pan
+  motor's 32T gear (fast-pan 2:1 gear-up 2026-07-12; the old on-axis D-bore is gone).
 - **B. Tilt axle cartridge.** Slide the `worm_wheel` (+ its two spacer tubes) onto the Ø5
   axle, hub ledge riding the axle's filed flat (D-key: positive torque, nothing to grub).
   Verify the fit on a printed coupon first: a loose flat is backlash.
@@ -164,10 +165,11 @@ tray killed the 88.5 mm blind channels, 2026-07-08.)
 
 ### Pan joint
 
-6. **Pan motor + drivers.** Drop the pan 28BYJ into the pedestal can pocket (offset so the
-   D-shaft lands on the pan axis), clamp the 2 ears with M3 into the pedestal pilots from
-   ABOVE (deck open). Mount ULN #1 and the 2nd ULN/MX1588 board on their standoffs; wiring
-   box leads exit the pedestal -X relief.
+6. **Pan motor + drivers.** Fit the printed 32T `pan_gears` onto the motor's D-flats, then
+   drop the pan 28BYJ into the pedestal can pocket (fast-pan 2026-07-12: the shaft sits
+   OFF-axis at (-19.2, 0), gear up; ears run along X), clamp the 2 ears with M3 into the
+   pedestal pilots from ABOVE (deck open). Mount ULN #1 and the 2nd ULN/MX1588 board on
+   their standoffs; wiring box leads exit the pedestal +Y relief.
 7. **Power tray, ballast, then belly plate.** Screw the PD trigger to the rear-wall M2
    pilots (jack aligned with the USB slot), the 5A buck to the belly plate's 40×20 post
    grid, zip the mini buck beside it, and wire per firmware/WIRING.md (leave 60 mm slack
@@ -180,7 +182,8 @@ tray killed the 88.5 mm blind channels, 2026-07-08.)
    the groove with tweezers. The cage keeps them spaced; any later turret lift leaves all
    18 sitting evenly in the groove instead of bunching and rolling out.
 9. **Lower sub-assembly A** (neck+platform) onto the BBs so the platform's upper groove
-   captures them and the D-bore drops onto the pan-motor shaft (~19.5 mm engagement). Screw
+   captures them and its integral 16T pinion drops into mesh with the motor's 32T gear
+   (fast-pan 2026-07-12: fit the 32T on the motor D-flats BEFORE this step). Screw
    the 3 `pan_clips` into the deck pockets (driver clear 6.17 mm from above); their tabs
    reach over the platform rim rebate to hold the top-heavy head down. Check the platform
    spins free.
@@ -204,7 +207,9 @@ tray killed the 88.5 mm blind channels, 2026-07-08.)
 12. **Hang the head on the axle.** Lower `head_back` so its side hubs take the axle ends, then
     set the two head-clamp grubs at x=±30 with a 1.5 mm hex key driven UP through the bottom
     motor bay (4.0 mm clear). The axle now turns with the head; the worm holds tilt with the
-    driver off (self-locking single-start).
+    driver off ONLY marginally (fast-tilt 2026-07-12: the 3-start worm back-drives;
+    hold is 28BYJ detent+gear friction through 4:1 -- firmware energize-hold or park
+    at the balance point; see CLAUDE.md fast pan/tilt pass).
 13. **Screen + Pi module (tray).** On the BENCH: bolt `screen_tray` to the combined
     touchscreen+Pi with 4× M3×10 pan heads straight into the display's factory 126.2×65.65
     bosses (the pillars are z-offset from the bores, so the driver line is open). Power-test

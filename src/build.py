@@ -5,9 +5,11 @@ Origin (0,0,0) = center of the desk contact plane.
 
 Kinematic chain (bottom -> top):
     tank chassis          fixed base with two track pods and TT gearmotor placeholders
-      -> PAN joint        yaw about vertical Z, driven by a 28BYJ D-shaft in the base
+      -> PAN joint        yaw about vertical Z, 28BYJ through a 2:1 spur GEAR-UP
+                          (fast-pan 2026-07-12; ~180 deg/s peak slew)
         -> pan_platform + neck_clevis  (rotate as one on the captured-BB race)
-          -> TILT joint   pitch about horizontal X, driven by a self-locking worm
+          -> TILT joint   pitch about horizontal X, 3-start worm 4:1 (fast-tilt
+                          2026-07-12; 22.5 deg/s -- NO LONGER self-locking, see PARAMS)
             -> rounded tablet head + screen/Pi + camera
 
 The screen and Pi ride as one module inside the head. DSI/CSI ribbons stay inside the head;
@@ -138,7 +140,13 @@ def build():
     # REAL generated teeth (docs/WORM.md): 12T involute helical wheel + single-start worm,
     # verified meshing at CD 11.9 / 0.000 mm3. PLACEHOLDER_GEARS=1 restores the readable
     # gear_disc/worm placeholders (cheap insurance + regen testing).
-    placeholder_gears = os.environ.get("PLACEHOLDER_GEARS") == "1"
+    # FAST-TILT (2026-07-12): worm_starts=3 -> ratio 4:1, 22.5 deg/s (see PARAMS
+    # worm_starts, incl. the SELF-LOCKING LOSS tradeoff). The committed *_real.stl pair
+    # is the OLD single-start generation, so starts!=1 forces the readable placeholders
+    # until tools/gears/gen_worm_drive.py is re-run for 3 starts (docs/WORM.md) --
+    # same honesty convention as the antenna gears.
+    placeholder_gears = (os.environ.get("PLACEHOLDER_GEARS") == "1"
+                         or P["worm_starts"] != 1)
     if placeholder_gears:
         wheel = gear_disc(wheel_r, P["worm_wheel_teeth"], P["worm_wheel_w"],
                           2.5 * P["worm_module"], axis="x")
@@ -191,7 +199,7 @@ def build():
                                                      # old placeholder ribs overhung 1 mm/end);
                                                      # keep 0.5 off the plate front face
     if placeholder_gears:
-        wm = worm(P["worm_od"] / 2, P["worm_len"], axis="y")
+        wm = worm(P["worm_od"] / 2, P["worm_len"], starts=P["worm_starts"], axis="y")
     else:
         # real single-start RH worm (docs/WORM.md): axis Y, OD 10.55, solid core Ø7, thread
         # span exactly +-7 about origin. The Ø7 core takes the full-depth double-D bore in
@@ -229,12 +237,32 @@ def build():
     # (Pi 5 placeholder removed: the Pi now rides the display's OWN 58x49 back standoffs and
     # is part of the combined screen reference mesh, "Pins Out" assembly. See load_screen().)
 
-    # pan motor: 28BYJ-48 upright in the base, CAN offset -motor_shaft_off so the D-shaft lands
-    # ON the pan axis; shaft tip reaches ~2 mm below the platform top into its D-bore hub.
+    # pan motor + FAST-PAN 2:1 spur gear-up (2026-07-12; see PARAMS pan_gear_*): the shaft
+    # no longer sits ON the pan axis -- it lands CD 19.2 away at azimuth pan_shaft_azim,
+    # the motor clocked -90 deg (ears along X, wiring box exits +Y, D-flats +-X) and
+    # DROPPED ~13.5 so the 32T gear on its flats rides the pan_gear_z band under the seat
+    # floor, driving the platform's integral 16T pinion. Peak slew 90 -> 180 deg/s.
+    m_g = P["pan_gear_m"]
+    cd_pan = m_g * (P["pan_gear_motor_t"] + P["pan_gear_pinion_t"]) / 2    # 19.2
+    paz = P["pan_shaft_azim"] * DEG
+    sx_, sy_ = cd_pan * np.cos(paz), cd_pan * np.sin(paz)                  # shaft (-19.2, 0)
+    gz0, gz1 = P["pan_gear_z"]
+    gf_pan = gz0 - 3.75 - 0.5        # gear face 40.75: flats (gf+3.75..gf+9.75) cover 45..50
+    zsh = gf_pan - (P["motor_body_h"] + P["motor_gear_h"])                 # can bottom 12.95
     mp = motor_28byj("motor_pan")
-    zsh = P["base_h"] - 2 - (P["motor_body_h"] + P["motor_gear_h"] + P["motor_shaft_len"])
-    mp.apply_translation((-P["motor_shaft_off"], 0, zsh))
+    mp.apply_transform(R(-TAU / 4, (0, 0, 1)))       # offset +X -> -Y; ears -> X; wbox -> +Y
+    mp.apply_translation((sx_, sy_ + P["motor_shaft_off"], zsh))
     add(mp, np.eye(4))
+    # 32T drive gear, double-D bored onto the flats (fixed frame -- it spins with the
+    # motor, not the platform). Placeholder gear_disc teeth: the real generated spur pair
+    # is a later pass, antenna-gear convention. Flats face +-X after the -90 clock, which
+    # is dbore_neg's native orientation -- no extra clocking (cf. stage-4 defect D3).
+    big_r = m_g * P["pan_gear_motor_t"] / 2                                # 12.8
+    pg = gear_disc(big_r, P["pan_gear_motor_t"], gz1 - gz0, 2.0, axis="z")
+    pg = sub(pg, dbore_neg(gz1 - gz0 + 1.2, axis="z"))
+    _color(pg, "motor"); pg.metadata["name"] = "pan_gears"
+    pg.apply_translation((sx_, sy_, (gz0 + gz1) / 2))
+    add(pg, np.eye(4), "pan_gears.stl")
 
     # pan bearing: captured-BB lazy-Susan lower race + ball ring (fixed frame; platform is the
     # upper race). Balls carry the head weight on a wide circle -> no wobble, quiet, cheap.

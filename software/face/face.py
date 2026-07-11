@@ -42,11 +42,13 @@ testable) on machines without pygame.
 
 import argparse
 import collections
+import json
 import math
 import os
 import random
 import signal
 import socket
+import subprocess
 import sys
 import time
 
@@ -58,11 +60,12 @@ SCREEN_W, SCREEN_H = 800, 480
 BG = (0, 0, 0)
 ORANGE = (232, 116, 34)
 DIM = (93, 46, 14)            # legacy dim orange (boot label)
-HUD_FG = (148, 163, 178)      # slate: values
-HUD_DIM = (71, 85, 99)        # slate dark: labels, brackets
-HUD_ACC = (56, 180, 205)      # cyan: graphs, cursor
-HUD_OK = (74, 180, 110)
-HUD_BAD = (220, 80, 64)
+HUD_FG = (176, 179, 183)      # light gray: values
+HUD_MID = (128, 131, 135)     # mid gray: graphs, cursor, pip
+HUD_DIM = (88, 91, 95)        # dark gray: labels, brackets, brain line
+HUD_BAD = (220, 80, 64)       # reserved for alerts
+
+DECISION_FILE = "/tmp/parviz_decision.json"   # brain loop writes, face shows
 
 BOOT_LEN_S = 1.6             # power-on reveal
 SACCADE_EVERY_S = (1.2, 3.5)  # micro gaze jumps (life between blinks)
@@ -283,16 +286,23 @@ class Telemetry:
     sysfs file; failures degrade to '--', never raise."""
 
     def __init__(self):
-        self.temp_hist = collections.deque(maxlen=48)
+        self.load_hist = collections.deque(maxlen=48)
+        self.mem_hist = collections.deque(maxlen=48)
         self.temp = None
         self.load_pct = None
         self.mem_pct = None
         self.net_dev = "--"
+        self.ssid = ""
         self.ip = "--"
         self.sig = None          # 0..1 wifi link quality
         self.uptime = "--"
+        self.watts = None        # board power, sum of PMIC rail V*A
+        self.watts_hist = collections.deque(maxlen=36)
+        self.core_v = None
+        self.throttled = None    # int from vcgencmd get_throttled
         self._t_fast = -1e9
         self._t_slow = -1e9
+        self._t_pwr = -1e9
 
     @staticmethod
     def _read(path):
@@ -305,13 +315,13 @@ class Telemetry:
             try:
                 self.temp = int(self._read(
                     "/sys/class/thermal/thermal_zone0/temp").strip()) / 1000
-                self.temp_hist.append(self.temp)
             except OSError:
                 self.temp = None
             try:
                 self.load_pct = min(100, int(float(
                     self._read("/proc/loadavg").split()[0])
                     / (os.cpu_count() or 4) * 100))
+                self.load_hist.append(self.load_pct)
             except OSError:
                 self.load_pct = None
             try:
@@ -321,8 +331,37 @@ class Telemetry:
                     mi[k] = int(v.split()[0])
                 self.mem_pct = int(100 - mi["MemAvailable"] /
                                    mi["MemTotal"] * 100)
+                self.mem_hist.append(self.mem_pct)
             except (OSError, KeyError, ValueError):
                 self.mem_pct = None
+        if now - self._t_pwr >= 10.0:
+            self._t_pwr = now
+            try:
+                out = subprocess.run(
+                    ["vcgencmd", "pmic_read_adc"], capture_output=True,
+                    text=True, timeout=2).stdout
+                volts, amps = {}, {}
+                for line in out.splitlines():
+                    name, val = line.split("=")
+                    rail = name.split()[0]
+                    v = float(val.rstrip("VA\n "))
+                    if rail.endswith("_V"):
+                        volts[rail[:-2]] = v
+                    elif rail.endswith("_A"):
+                        amps[rail[:-2]] = v
+                self.watts = sum(volts[r] * a for r, a in amps.items()
+                                 if r in volts)
+                self.watts_hist.append(self.watts)
+                self.core_v = volts.get("VDD_CORE")
+                th = subprocess.run(
+                    ["vcgencmd", "get_throttled"], capture_output=True,
+                    text=True, timeout=2).stdout
+                self.throttled = int(th.split("=")[1], 16)
+            except (OSError, ValueError, IndexError,
+                    subprocess.SubprocessError):
+                self.watts = None
+                self.core_v = None
+                self.throttled = None
         if now - self._t_slow >= 30.0:
             self._t_slow = now
             self.net_dev = "--"
@@ -348,6 +387,13 @@ class Telemetry:
                         self.sig = min(1.0, float(
                             line.split()[2].rstrip(".")) / 70.0)
             except (OSError, ValueError, IndexError):
+                pass
+            self.ssid = ""
+            try:
+                self.ssid = subprocess.run(
+                    ["iwgetid", "-r"], capture_output=True, text=True,
+                    timeout=2).stdout.strip()
+            except (OSError, subprocess.SubprocessError):
                 pass
             try:
                 up = float(self._read("/proc/uptime").split()[0])
@@ -437,7 +483,11 @@ def eye_geometry(cx, cy, side, gaze, lid, tilt, size, squint=0.0,
     glint = None
     g = base * 0.32
     if c_b - c_t > g * 2.0:
-        g_l, g_t = c_l + base * 0.13, c_t + base * 0.13
+        # the dot RIDES THE GAZE: it sits on the side the eye looks toward
+        gcx = (c_l + c_r) / 2.0 + gaze[0] * ((c_r - c_l) - g) / 2.0 * 0.7
+        gcy = (c_t + c_b) / 2.0 + gaze[1] * ((c_b - c_t) - g) / 2.0 * 0.7
+        g_l = max(c_l + 3, min(c_r - g - 3, gcx - g / 2))
+        g_t = max(c_t + 3, min(c_b - g - 3, gcy - g / 2))
         gbox = [(g_l, g_t), (g_l + g, g_t), (g_l + g, g_t + g),
                 (g_l, g_t + g)]
         glint = chamfer(gbox, 0.3 * g)
@@ -473,6 +523,8 @@ class FaceRenderer:
         self._font_sm = pygame.font.SysFont(
             "dejavusansmono,menlo,consolas,monospace", 14)
         self._eye_gaze = {-1: (0.0, 0.0), 1: (0.0, 0.0)}  # per-eye eased
+        self._dec = None            # latest brain decision line
+        self._dec_t = -1e9
         self._font = pygame.font.SysFont(
             "dejavusansmono,menlo,consolas,monospace", 17)
         self._text_cache = {}       # str -> rendered Surface
@@ -489,12 +541,20 @@ class FaceRenderer:
     def _eye(self, surf, cx, cy, side, lid, dt):
         pg = self.pygame
         st = self.state.pose
-        if self.state.touch_pt is not None:
-            # aim THIS eye at the finger: between the eyes -> cross-eyed
-            tx = (self.state.touch_pt[0] + 1) / 2 * SCREEN_W
-            ty = (self.state.touch_pt[1] + 1) / 2 * SCREEN_H
-            want = (max(-1.0, min(1.0, (tx - cx) / (EYE_W * 0.75))),
-                    max(-1.0, min(1.0, (ty - cy) / (EYE_H * 0.75))))
+        tp = self.state.touch_pt
+        if tp is not None:
+            # each eye aims at the finger; but poked BETWEEN the eyes the
+            # face goes full derp (user ref image): the eye nearer the
+            # finger stares at it, the OTHER rolls up and outward.
+            between = abs(tp[0]) < 0.28 and tp[1] < 0.35
+            stare = -1 if tp[0] <= 0 else 1
+            if between and side != stare:
+                want = (0.7 * side, -1.0)
+            else:
+                tx = (tp[0] + 1) / 2 * SCREEN_W
+                ty = (tp[1] + 1) / 2 * SCREEN_H
+                want = (max(-1.0, min(1.0, (tx - cx) / (EYE_W * 0.75))),
+                        max(-1.0, min(1.0, (ty - cy) / (EYE_H * 0.75))))
         else:
             want = st["gaze"]
         eg = self._eye_gaze[side]
@@ -551,6 +611,37 @@ class FaceRenderer:
                (400 + 34, ym), (400 + MOUTH_HALF, ye)]
         pg.draw.lines(surf, ORANGE, False, pts, STROKE)
 
+    def _spark(self, surf, x, y, w, h, hist, lo=0.0, hi=100.0):
+        """Tiny fixed-scale sparkline (0..100%) with a hairline baseline."""
+        pg = self.pygame
+        pg.draw.line(surf, HUD_DIM, (x, y + h + 2), (x + w, y + h + 2), 1)
+        if len(hist) < 2:
+            return
+        span = max(hi - lo, 1e-6)
+        pts = [(x + i * w / (len(hist) - 1),
+                y + h - min(1.0, max(0.0, (v - lo) / span)) * h)
+               for i, v in enumerate(hist)]
+        pg.draw.lines(surf, HUD_MID, False, pts, 2)
+
+    def _decision_line(self, now):
+        """Latest brain decision (DECISION_FILE, written by the brain loop):
+        '<verbs> // <reason>' while fresh, else None. Polled every 2 s."""
+        if now - self._dec_t >= 2.0:
+            self._dec_t = now
+            self._dec = None
+            try:
+                if now - os.path.getmtime(DECISION_FILE) < 120:
+                    with open(DECISION_FILE) as f:
+                        d = json.load(f)
+                    verbs = "+".join(a.get("do", "?")
+                                     for a in d.get("actions", [])
+                                     if isinstance(a, dict)) or "?"
+                    reason = str(d.get("reason", ""))[:64]
+                    self._dec = f"{verbs} // {reason}"
+            except (OSError, ValueError):
+                pass
+        return self._dec
+
     def _hud(self, surf, now):
         """Corner telemetry blocks in cool HUD tones (orange belongs to the
         face): SYS + temp sparkline top-left, NET top-right, status line
@@ -564,27 +655,35 @@ class FaceRenderer:
                 pg.draw.line(surf, HUD_DIM, (cx, cy), (cx + sx * ln, cy), wd)
                 pg.draw.line(surf, HUD_DIM, (cx, cy), (cx, cy + sy * ln), wd)
 
-        # --- top-left: SYS block + CPU temp sparkline
+        # --- top-left: SYS block, one labeled sparkline row per metric
         x0, y0 = m + 12, m + 6
         t = f"{te.temp:.0f}C" if te.temp is not None else "--"
-        ld = f"{te.load_pct}%" if te.load_pct is not None else "--"
-        mem = f"{te.mem_pct}%" if te.mem_pct is not None else "--"
-        surf.blit(self._text("SYS", HUD_DIM, small=True), (x0, y0))
-        surf.blit(self._text(f"CPU {t} {ld}  MEM {mem}", HUD_FG, small=True),
-                  (x0 + 38, y0))
-        if len(te.temp_hist) >= 2:
-            gw, gh, gy = 100, 20, y0 + 22
-            lo, hi = min(te.temp_hist), max(te.temp_hist)
-            span = max(3.0, hi - lo)
-            pts = [(x0 + i * gw / (len(te.temp_hist) - 1),
-                    gy + gh - (v - lo) / span * gh)
-                   for i, v in enumerate(te.temp_hist)]
-            pg.draw.lines(surf, HUD_ACC, False, pts, 2)
-            pg.draw.line(surf, HUD_DIM, (x0, gy + gh + 3),
-                         (x0 + gw, gy + gh + 3), 1)
+        ld = f"{te.load_pct:2d}%" if te.load_pct is not None else "--"
+        mem = f"{te.mem_pct:2d}%" if te.mem_pct is not None else "--"
+        rows = ((f"CPU {ld} {t}", te.load_hist),
+                (f"MEM {mem}", te.mem_hist))
+        for i, (label, hist) in enumerate(rows):
+            ry = y0 + i * 20
+            surf.blit(self._text(label, HUD_FG, small=True), (x0, ry))
+            self._spark(surf, x0 + 118, ry + 3, 96, 12, hist)
+
+        # --- top-center: dedicated PWR block (real PMIC numbers)
+        if te.watts is not None:
+            uv_now = bool(te.throttled and te.throttled & 0x1)
+            uv_past = bool(te.throttled and te.throttled & 0x10000)
+            state = "UV!" if uv_now else ("OK*" if uv_past else "OK")
+            cv = f"{te.core_v:.2f}V" if te.core_v is not None else "--"
+            ptxt = self._text(
+                f"PWR AC {te.watts:.1f}W  CORE {cv}  {state}",
+                HUD_BAD if uv_now else HUD_FG, small=True)
+            px0 = (SCREEN_W - ptxt.get_width() - 60) // 2
+            surf.blit(ptxt, (px0, m + 6))
+            self._spark(surf, px0 + ptxt.get_width() + 10, m + 9, 50, 10,
+                        te.watts_hist, lo=0.0, hi=12.0)
 
         # --- top-right: NET block (right-aligned)
-        line1 = f"NET {te.net_dev}  {te.ip}"
+        ssid = f" {te.ssid}" if te.ssid else ""
+        line1 = f"NET {te.net_dev}{ssid}  {te.ip}"
         img = self._text(line1, HUD_FG, small=True)
         surf.blit(img, (SCREEN_W - m - 12 - img.get_width(), m + 6))
         # signal bar: 5 segments
@@ -593,7 +692,7 @@ class FaceRenderer:
         for i in range(5):
             r = pg.Rect(bx + i * 14, by, 10, 12)
             if te.sig is not None and te.sig >= (i + 1) / 5.0 - 0.001:
-                pg.draw.rect(surf, HUD_ACC, r)
+                pg.draw.rect(surf, HUD_MID, r)
             else:
                 pg.draw.rect(surf, HUD_DIM, r, 1)
         up = self._text(f"UP {te.uptime}", HUD_DIM, small=True)
@@ -604,9 +703,16 @@ class FaceRenderer:
         img = self._text(label)
         surf.blit(img, (m + 12, SCREEN_H - m - img.get_height() - 6))
         if int(now * 2) % 2 == 0:  # blinking block cursor
-            pg.draw.rect(surf, HUD_ACC, pg.Rect(
+            pg.draw.rect(surf, HUD_MID, pg.Rect(
                 m + 16 + img.get_width(),
                 SCREEN_H - m - img.get_height() - 4, 9, img.get_height() - 4))
+
+        # --- bottom-center: the brain's latest decision, whisper-quiet
+        dec = self._decision_line(now)
+        if dec:
+            dimg = self._text(dec, HUD_DIM, small=True)
+            surf.blit(dimg, ((SCREEN_W - dimg.get_width()) // 2,
+                             SCREEN_H - m - dimg.get_height() - 30))
 
         # --- bottom-right: sensor slots (fill in as hardware arrives)
         sens = self._text("MIC --  CAM --  RDR --  IMU --", HUD_DIM,
@@ -614,12 +720,10 @@ class FaceRenderer:
         sx = SCREEN_W - m - 34 - sens.get_width()
         sy = SCREEN_H - m - sens.get_height() - 8
         surf.blit(sens, (sx, sy))
-        pwr = self._text("PWR AC", HUD_OK, small=True)
-        surf.blit(pwr, (sx - pwr.get_width() - 14, sy))
         # heartbeat pip: breathes with the eyes (proof of life)
         k = (self.state.breath - 1.0) / BREATH_MAG  # -1..1
         r = 5 + 2 * k
-        pg.draw.rect(surf, HUD_ACC, pg.Rect(
+        pg.draw.rect(surf, HUD_MID, pg.Rect(
             int(SCREEN_W - m - 12 - r), int(SCREEN_H - m - 12 - r),
             int(2 * r), int(2 * r)))
 

@@ -94,9 +94,22 @@ P = {
     "axle_d": 5.0,          # tilt axle outer Ø (rides 695 bores)
     "brg_od": 13.0,         # 695-2RS outer Ø (press into the head-side hubs)
     "brg_w": 4.0,
-    # single-start worm + worm wheel (module 1.25). Wheel keyed to the axle; worm on the motor.
+    # worm + worm wheel (module 1.25). Wheel keyed to the axle; worm on the motor.
     "worm_module": 1.25,
-    "worm_wheel_teeth": 12, # ratio 12:1 (still self-locks; 24T tilted 60 deg in 16 s -- too slow)
+    "worm_wheel_teeth": 12, # 12T wheel (24T tilted 60 deg in 16 s -- too slow)
+    # FAST-TILT pass (2026-07-12, user: "tilt should happen really fast"): 1 -> 3 starts,
+    # ratio 12:1 -> 4:1 -> 22.5 deg/s at the usable 15 RPM (60-deg sweep 8 s -> 2.7 s).
+    # Same pitch r 4.4 / CD 11.9 / cartridge -- only the thread count changes. Torque at
+    # speed ~= 20 mNm x 4 x 0.45 eff = 36 mNm vs ~28 needed (25 residual imbalance + inertia)
+    # = 1.3x margin (1.9x at 15 deg/s). Faster options FAIL: a spur gear-up + 3-start nets
+    # 18 mNm vs 31 (0.6x); dropping the worm for a 2:1 spur pair needs the motor shaft
+    # along X, which collides with the cheeks/root block/stop posts everywhere probed.
+    # !! TRADEOFF: 3 starts (lead angle ~23 deg) do NOT self-lock. De-energized the head
+    # is held only by the 28BYJ detent+gear friction through 4:1 (~27-54 mNm at the axle)
+    # -- marginal vs the assumed 25 mNm imbalance. Firmware: energized hold or park at
+    # the balance point. Real generated 3-start teeth are a docs/WORM.md regen (the
+    # committed *_real.stl pair is single-start, so starts!=1 builds placeholders).
+    "worm_starts": 3,
     "worm_wheel_w": 7.0,    # face width
     "worm_wheel_x": 0.0,    # wheel centered on the head midplane (spacer tubes reach both bearings)
     "worm_od": 10.0,        # placeholder-worm visual OD (real generated worm OD is 10.55)
@@ -139,6 +152,29 @@ P = {
     # cable exit through the deck: INSIDE the race ID (r<34) and clear of the (0,-26) neck
     # bolt + the pan-axis bore. The platform slot jogs the bundle here from the neck channel.
     "cable_exit": (12.0, -24.0),
+    # FAST-PAN gear-up (2026-07-12, user: "panning should happen really fast"): the direct
+    # D-hub is replaced by a 2:1 spur gear-UP -- 32T on the motor D-shaft driving a 16T
+    # pinion integral to the platform underside. Peak slew 90 -> 180 deg/s (motor 15 RPM
+    # x 2); accel budget at motor <=10 RPM = 30/2 = 15 mNm vs ~7 race friction + I*alpha
+    # (Iz ~0.0024 kg m^2) -> ~250-300 deg/s^2. 3:1 REJECTED (10 mNm barely beats friction,
+    # zero accel budget); the antennas' 6.25:1 stalls on race friction alone. The 28BYJ is
+    # POWER-limited (~0.035 W) so a 180-deg sweep still takes ~2 s -- the gear-up buys
+    # PEAK slew, which is what reads as fast. m0.8 (the antenna module): gear cluster max
+    # reach = CD 19.2 + tip 13.8 = 33.0 < race ID 34 -> the whole stage hides under the
+    # seat floor. Motor drops ~13.5 and swings off-axis (shaft -19.2,0; can -19.2,+7.875
+    # after a -90 deg clock, ears along X, wbox +Y); shaft flats land in the 32T's D-bore.
+    # Homing unchanged (lug/posts; stall torque at the lug ~17 mNm still stalls); steps/deg
+    # HALVES to ~5.7. Back-drive gets easier -- fine, a balanced vertical axis has no
+    # gravity torque. Placeholder gear_disc teeth (real generated pass later, like the
+    # antennas). pan_gear_z is the shared tooth band; both gears + the deck pocket key off it.
+    "pan_gear_m": 0.8,
+    "pan_gear_motor_t": 32,     # on the motor D-shaft (drives)
+    "pan_gear_pinion_t": 16,    # integral to the platform hub (driven) -> 2:1 UP
+    "pan_gear_z": (45.0, 50.0), # tooth band: under the seat floor 51, over the boss 42.2
+    "pan_shaft_azim": 180.0,    # motor-shaft azimuth about the pan axis (deg). 180 = -X:
+                            # gear center r19.2 stays >=41 deg from both stop posts
+                            # (118/332), the pedestal clears drive_L (x>=-43.2 vs can
+                            # -45.6) and the belly strap only grows 10 on -X
 
     # --- Tank-tread chassis: central body + two side track pods (mobile base) ---
     "base_h": 66.0,         # body top = pan-mount plane (52->66: design-ref stance; head:base
@@ -375,7 +411,10 @@ P = {
     # filling the opening; the two inboard ballast ribs move ONTO the plug.
     "belly_open_wl": (100.0, 110.0),        # opening W(X) x L(Y), corners r8
     "belly_open_c": (0.0, -6.0),            # centre (rear-biased toward the ballast bay)
-    "belly_keep": (-34.0, -26.0, 25.0, 51.0),   # retained strap (x0, y0, x1, y1)
+    "belly_keep": (-44.0, -26.0, 25.0, 51.0),   # retained strap (x0, y0, x1, y1). x0 -34
+                            # -> -44 (fast-pan 2026-07-12): the pedestal followed the
+                            # off-axis can to x -43.2..4.8 and must stay rooted on
+                            # fixed floor, not the removable plug
     "belly_rebate_grow": 8.0,               # rebate ledge past the opening, per side
     "belly_lip_t": 1.5,                     # rebate depth (up from the belly face z=7)
     "belly_fit": 0.15,                      # plate<->rebate/opening clearance per side

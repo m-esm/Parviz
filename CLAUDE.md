@@ -642,3 +642,33 @@ voids y > -19.5, so the lines live on the rear half and die into the corner roun
 Gates: check + check-sweep (14 poses) + fits contact audit all green; trim_neckfoot
 added to PAN_NODES (assembly_check), _FIT_CONTACT_OK (vs pan_platform/neck_clevis),
 the viewer Pan-stage tree and stlpaths -> stl/neck/.
+
+**Fast pan/tilt pass (2026-07-12, user: "both tilt and panning should happen really
+fast -- use gears"):** the 28BYJ is POWER-limited (~0.035 W usable; ~34 mNm at <=10 RPM
+falling to ~20 at 15 RPM, max reliable ~15 RPM), so gearing buys PEAK slew, not sweep
+time. (1) PAN = 2:1 spur GEAR-UP (PARAMS pan_gear_*): the on-axis D-hub is GONE -- the
+motor dropped ~13.5 and swung off-axis (shaft at (-19.2,0) = CD 19.2 at pan_shaft_azim
+180, can at (-19.2,+7.875), clocked -90 so ears run along X, wbox exits +Y, D-flats
++-X), a 32T m0.8 gear on its flats (`pan_gears`, new fixed part, placeholder teeth)
+drives a 16T pinion now INTEGRAL to the pan_platform underside; both live in the z
+45..50 band under the seat floor 51, whole cluster reach r33 < race ID 34 (ring seat
+annulus untouched; the deck got a r14.5 gear pocket in the under-seat membrane, and
+the pedestal followed the can -- belly_keep x0 -34 -> -44 keeps it off the removable
+plug, 2.4 clear of the drive_L can). Peak slew 90 -> ~180 deg/s (motor 15 RPM x 2),
+accel ~250-300 deg/s^2 (15 mNm at the platform vs ~7 race friction + I~0.0024 kg m^2);
+a 180-deg sweep still takes ~2 s (power limit). 3:1 rejected (10 mNm barely beats
+friction), 6.25:1 antenna ratio stalls outright. Homing lug/posts unchanged; steps/deg
+HALVES to ~5.7. (2) TILT = 3-START worm (PARAMS worm_starts): ratio 12:1 -> 4:1, same
+pitch r 4.4 / CD 11.9 / cartridge -- ONLY the thread count changed. 7.5 -> 22.5 deg/s
+(60-deg sweep 8 s -> 2.7 s), margin 1.3x at speed / 1.9x at 15 deg/s vs ~25 mNm
+residual imbalance. Spur-only 2:1 direct drive (45 deg/s) FAILED placement (motor
+shaft must turn onto X: can collides with cheeks/root block/stop posts everywhere
+probed) and a spur+3-start combo fails torque (0.6x). **TRADEOFF: single-start
+self-locking is LOST -- a 3-start (lead ~23 deg) back-drives, so de-energized the head
+holds only via the 28BYJ detent+gear friction through 4:1 (~27-54 mNm at the axle,
+marginal vs imbalance): firmware must energize-hold or park at the balance point,
+and a power-off head may slowly nod.** Placeholders: pan spur pair + the 3-start worm
+(worm_starts!=1 forces placeholder gears -- the committed *_real.stl pair is
+single-start; regenerate per docs/WORM.md). Gates re-whitelisted: (pan_gears,
+motor_pan)+(pan_gears, pan_platform) replaced (pan_platform, motor_pan); viewer PAL
+silver rule grew |gears.

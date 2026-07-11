@@ -128,3 +128,13 @@ the worm. OpenSCAD/BOSL2 is not installed on this machine.
    7.6° twist is fine); worm prints vertical (axis Z on the bed): the 25°
    flank angle is self-supporting. Grease the mesh lightly; design clearance
    doubles as the reservoir.
+
+## TODO: 3-start regeneration (fast-tilt pass 2026-07-12)
+
+PARAMS `worm_starts` is now **3** (ratio 12:1 -> 4:1, 22.5 deg/s tilt; tradeoff notes in
+params.py / CLAUDE.md). The committed `*_real.stl` pair above is the OLD single-start
+generation, so `build.py` forces the readable placeholders whenever `worm_starts != 1`
+(same honesty convention as the antenna gears). Before printing: re-run
+`tools/gears/gen_worm_drive.py` with 3 starts at the SAME pitch r 4.4 / CD 11.9 / 12T
+wheel (lead angle becomes ~23 deg -- NOT self-locking; the wheel helix angle must match),
+re-verify mesh volume 0.000 and update the cosmetic clocking constant in build.py.

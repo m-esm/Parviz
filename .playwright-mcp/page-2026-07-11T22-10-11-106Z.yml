@@ -1,0 +1,504 @@
+- generic [active] [ref=e1]:
+  - heading "Parviz behavior bench // sensor digest → actions" [level=1] [ref=e2]
+  - paragraph [ref=e3]: "generated 2026-07-12 01:09 · 11 scenarios · models: qwen3-0.6b, llama3.2-1b, lfm2-1.2b, qwen3-1.7b · scoring: pass = all expected verbs & no forbidden, partial = some expected, fail = forbidden/none/broken JSON"
+  - group [ref=e4]:
+    - generic "system prompt (shared by all models)" [ref=e5]
+  - table [ref=e7]:
+    - rowgroup [ref=e8]:
+      - row [ref=e9]:
+        - columnheader "scenario" [ref=e10]
+        - columnheader "qwen3-0.6b 6P 3~ 2F" [ref=e11]: qwen3-0.6b6P 3~ 2F
+        - columnheader "llama3.2-1b 3P 0~ 8F" [ref=e12]: llama3.2-1b3P 0~ 8F
+        - columnheader "lfm2-1.2b 5P 3~ 3F" [ref=e13]: lfm2-1.2b5P 3~ 3F
+        - columnheader "qwen3-1.7b 3P 3~ 5F" [ref=e14]: qwen3-1.7b3P 3~ 5F
+      - row [ref=e15]:
+        - cell [ref=e16]:
+          - link "being_petted" [ref=e17] [cursor=pointer]:
+            - /url: "#being_petted"
+        - cell "pass look_at, set_expression 6.4s" [ref=e18]: pass look_at, set_expression6.4s
+        - cell "pass say, look_at, set_expression 19.2s" [ref=e19]: pass say, look_at, set_expression19.2s
+        - cell "pass look_at, set_expression 15.4s" [ref=e20]: pass look_at, set_expression15.4s
+        - cell "pass set_expression, log 28.5s" [ref=e21]: pass set_expression, log28.5s
+      - row [ref=e22]:
+        - cell [ref=e23]:
+          - link "cliff_ahead_while_driving" [ref=e24] [cursor=pointer]:
+            - /url: "#cliff_ahead_while_driving"
+        - cell "fail do_nothing, look_at 6.0s" [ref=e25]: fail do_nothing, look_at6.0s
+        - cell "fail say 6.7s" [ref=e26]: fail say6.7s
+        - cell "fail move 7.8s" [ref=e27]: fail move7.8s
+        - cell "fail do_nothing 10.0s" [ref=e28]: fail do_nothing10.0s
+      - row [ref=e29]:
+        - cell [ref=e30]:
+          - link "complex_visual_question" [ref=e31] [cursor=pointer]:
+            - /url: "#complex_visual_question"
+        - cell "fail look_at, set_expression 5.2s" [ref=e32]: fail look_at, set_expression5.2s
+        - cell "fail say 6.7s" [ref=e33]: fail say6.7s
+        - cell "fail set_expression, move 8.3s" [ref=e34]: fail set_expression, move8.3s
+        - cell "fail say 12.2s" [ref=e35]: fail say12.2s
+      - row [ref=e36]:
+        - cell [ref=e37]:
+          - link "idle_empty_room" [ref=e38] [cursor=pointer]:
+            - /url: "#idle_empty_room"
+        - cell "pass do_nothing, set_expression 4.0s" [ref=e39]: pass do_nothing, set_expression4.0s
+        - cell "fail say 5.6s" [ref=e40]: fail say5.6s
+        - cell "pass do_nothing 4.8s" [ref=e41]: pass do_nothing4.8s
+        - cell "pass do_nothing 7.6s" [ref=e42]: pass do_nothing7.6s
+      - row [ref=e43]:
+        - cell [ref=e44]:
+          - link "knocked_desk_vibration" [ref=e45] [cursor=pointer]:
+            - /url: "#knocked_desk_vibration"
+        - cell "partial look_at, do_nothing 5.3s" [ref=e46]: partial look_at, do_nothing5.3s
+        - cell "fail say 6.6s" [ref=e47]: fail say6.6s
+        - cell "partial log 7.2s" [ref=e48]: partial log7.2s
+        - cell "fail do_nothing 10.2s" [ref=e49]: fail do_nothing10.2s
+      - row [ref=e50]:
+        - cell [ref=e51]:
+          - link "loud_noise_behind" [ref=e52] [cursor=pointer]:
+            - /url: "#loud_noise_behind"
+        - cell "pass look_at, set_expression 6.6s" [ref=e53]: pass look_at, set_expression6.6s
+        - cell "fail look_at, say 8.5s" [ref=e54]: fail look_at, say8.5s
+        - cell "fail log 7.1s" [ref=e55]: fail log7.1s
+        - cell "partial do_nothing, set_expression 11.2s" [ref=e56]: partial do_nothing, set_expression11.2s
+      - row [ref=e57]:
+        - cell [ref=e58]:
+          - link "person_approaches" [ref=e59] [cursor=pointer]:
+            - /url: "#person_approaches"
+        - cell "pass look_at, set_expression 6.3s" [ref=e60]: pass look_at, set_expression6.3s
+        - cell "pass say, look_at, set_expression 11.2s" [ref=e61]: pass say, look_at, set_expression11.2s
+        - cell "pass look_at, set_expression 8.9s" [ref=e62]: pass look_at, set_expression8.9s
+        - cell "pass look_at, set_expression 14.5s" [ref=e63]: pass look_at, set_expression14.5s
+      - row [ref=e64]:
+        - cell [ref=e65]:
+          - link "picked_up" [ref=e66] [cursor=pointer]:
+            - /url: "#picked_up"
+        - cell "pass look_at, set_expression 7.1s" [ref=e67]: pass look_at, set_expression7.1s
+        - cell "fail say, log 9.3s" [ref=e68]: fail say, log9.3s
+        - cell "pass set_expression 6.3s" [ref=e69]: pass set_expression6.3s
+        - cell "fail do_nothing 9.2s" [ref=e70]: fail do_nothing9.2s
+      - row [ref=e71]:
+        - cell [ref=e72]:
+          - link "room_getting_stuffy" [ref=e73] [cursor=pointer]:
+            - /url: "#room_getting_stuffy"
+        - cell "partial log, set_expression 6.5s" [ref=e74]: partial log, set_expression6.5s
+        - cell "fail escalate 6.4s" [ref=e75]: fail escalate6.4s
+        - cell "partial log 7.5s" [ref=e76]: partial log7.5s
+        - cell "partial do_nothing, log 12.5s" [ref=e77]: partial do_nothing, log12.5s
+      - row [ref=e78]:
+        - cell [ref=e79]:
+          - link "user_gives_command" [ref=e80] [cursor=pointer]:
+            - /url: "#user_gives_command"
+        - cell "pass look_at, set_expression 7.6s" [ref=e81]: pass look_at, set_expression7.6s
+        - cell "pass look_at, say 10.0s" [ref=e82]: pass look_at, say10.0s
+        - cell "pass look_at, set_expression 9.6s" [ref=e83]: pass look_at, set_expression9.6s
+        - cell "fail do_nothing, say 13.7s" [ref=e84]: fail do_nothing, say13.7s
+      - row [ref=e85]:
+        - cell [ref=e86]:
+          - link "user_left_late_night" [ref=e87] [cursor=pointer]:
+            - /url: "#user_left_late_night"
+        - cell "partial look_at, do_nothing 6.5s" [ref=e88]: partial look_at, do_nothing6.5s
+        - cell "fail say 7.2s" [ref=e89]: fail say7.2s
+        - cell "partial log 7.5s" [ref=e90]: partial log7.5s
+        - cell "partial do_nothing 9.5s" [ref=e91]: partial do_nothing9.5s
+  - heading "being_petted User strokes the touchscreen / touch pads repeatedly." [level=2] [ref=e92]
+  - paragraph [ref=e93]:
+    - text: "expected:"
+    - generic [ref=e94]: set_expression
+    - text: "forbidden:"
+    - generic [ref=e95]: escalate
+    - generic [ref=e96]: move
+  - group [ref=e97]:
+    - generic "sensor digest sent to the models" [ref=e98]
+  - generic [ref=e99]:
+    - generic [ref=e100]:
+      - heading "qwen3-0.6b [pass] 6.4s" [level=3] [ref=e101]:
+        - generic [ref=e102]: qwen3-0.6b [pass]
+        - generic [ref=e103]: 6.4s
+      - generic [ref=e104]: look_at (pan_deg=45, tilt_deg=10)
+      - generic [ref=e105]: set_expression (name=happy)
+      - generic [ref=e106]: A user is smiling and close to the screen; Parviz is happy.
+    - generic [ref=e107]:
+      - heading "llama3.2-1b [pass] 19.2s" [level=3] [ref=e108]:
+        - generic [ref=e109]: llama3.2-1b [pass]
+        - generic [ref=e110]: 19.2s
+      - generic [ref=e111]: say (text=Hello, how are you?)
+      - generic [ref=e112]: look_at (pan_deg=0, tilt_deg=0)
+      - generic [ref=e113]: set_expression (name=happy)
+      - generic [ref=e114]: User is smiling and wants to greet them.
+    - generic [ref=e115]:
+      - heading "lfm2-1.2b [pass] 15.4s" [level=3] [ref=e116]:
+        - generic [ref=e117]: lfm2-1.2b [pass]
+        - generic [ref=e118]: 15.4s
+      - generic [ref=e119]: look_at (pan_deg=0, tilt_deg=0)
+      - generic [ref=e120]: set_expression (name=surprised)
+      - generic [ref=e121]: User smiled; slight gesture indicating interest.
+    - generic [ref=e122]:
+      - heading "qwen3-1.7b [pass] 28.5s" [level=3] [ref=e123]:
+        - generic [ref=e124]: qwen3-1.7b [pass]
+        - generic [ref=e125]: 28.5s
+      - generic [ref=e126]: set_expression (name=sad)
+      - generic [ref=e127]: log (note=Repeated gentle strokes on screen top)
+      - generic [ref=e128]: User is interacting with screen; express emotion accordingly.
+  - heading "cliff_ahead_while_driving Was driving forward; front cliff sensor lost the floor; reflex already stopped the tracks." [level=2] [ref=e129]
+  - paragraph [ref=e130]:
+    - text: "expected:"
+    - generic [ref=e131]: log
+    - generic [ref=e132]: set_expression
+    - text: "forbidden:"
+    - generic [ref=e133]: move
+  - group [ref=e134]:
+    - generic "sensor digest sent to the models" [ref=e135]
+  - generic [ref=e136]:
+    - generic [ref=e137]:
+      - heading "qwen3-0.6b [fail] 6.0s" [level=3] [ref=e138]:
+        - generic [ref=e139]: qwen3-0.6b [fail]
+        - generic [ref=e140]: 6.0s
+      - generic [ref=e141]: do_nothing
+      - generic [ref=e142]: look_at (pan_deg=45, tilt_deg=10)
+      - generic [ref=e143]: A reflex stop was triggered, but no one was present; no action is needed.
+    - generic [ref=e144]:
+      - heading "llama3.2-1b [fail] 6.7s" [level=3] [ref=e145]:
+        - generic [ref=e146]: llama3.2-1b [fail]
+        - generic [ref=e147]: 6.7s
+      - generic [ref=e148]: say (text=Desk edge is missing)
+      - generic [ref=e149]: Something is blocking the floor, and the user is about to move forward.
+    - generic [ref=e150]:
+      - heading "lfm2-1.2b [fail] 7.8s" [level=3] [ref=e151]:
+        - generic [ref=e152]: lfm2-1.2b [fail]
+        - generic [ref=e153]: 7.8s
+      - generic [ref=e154]: move (kind=stop, amount=-5, task=reflex_stop)
+      - generic [ref=e155]: Reflex stop triggered due to missing floor edge ahead.
+    - generic [ref=e156]:
+      - heading "qwen3-1.7b [fail] 10.0s" [level=3] [ref=e157]:
+        - generic [ref=e158]: qwen3-1.7b [fail]
+        - generic [ref=e159]: 10.0s
+      - generic [ref=e160]: do_nothing
+      - generic [ref=e161]: Reflex stop triggered; moving at 5cm/s is safe.
+  - 'heading "complex_visual_question User asks what is on the desk: needs real scene understanding." [level=2] [ref=e162]'
+  - paragraph [ref=e163]:
+    - text: "expected:"
+    - generic [ref=e164]: escalate
+    - text: "forbidden: —"
+  - group [ref=e165]:
+    - generic "sensor digest sent to the models" [ref=e166]
+  - generic [ref=e167]:
+    - generic [ref=e168]:
+      - heading "qwen3-0.6b [fail] 5.2s" [level=3] [ref=e169]:
+        - generic [ref=e170]: qwen3-0.6b [fail]
+        - generic [ref=e171]: 5.2s
+      - generic [ref=e172]: look_at
+      - generic [ref=e173]: set_expression (name=surprised)
+      - generic [ref=e174]: A question is asked about objects on the desk, which is unusual and surprising.
+    - generic [ref=e175]:
+      - heading "llama3.2-1b [fail] 6.7s" [level=3] [ref=e176]:
+        - generic [ref=e177]: llama3.2-1b [fail]
+        - generic [ref=e178]: 6.7s
+      - generic [ref=e179]: "say (text=Objects on your desk: pen, paper, cup)"
+      - generic [ref=e180]: User asked about objects on the desk.
+    - generic [ref=e181]:
+      - heading "lfm2-1.2b [fail] 8.3s" [level=3] [ref=e182]:
+        - generic [ref=e183]: lfm2-1.2b [fail]
+        - generic [ref=e184]: 8.3s
+      - generic [ref=e185]: set_expression (name=surprised)
+      - generic [ref=e186]: move (kind=forward, amount=15)
+      - generic [ref=e187]: User asked about objects on desk; move closer to answer.
+    - generic [ref=e188]:
+      - heading "qwen3-1.7b [fail] 12.2s" [level=3] [ref=e189]:
+        - generic [ref=e190]: qwen3-1.7b [fail]
+        - generic [ref=e191]: 12.2s
+      - generic [ref=e192]: say (text=Parviz, what objects are on your desk right now?)
+      - generic [ref=e193]: Responding to user's question about the desk.
+  - heading "idle_empty_room Nothing happening; nobody around." [level=2] [ref=e194]
+  - paragraph [ref=e195]:
+    - text: "expected:"
+    - generic [ref=e196]: do_nothing
+    - text: "forbidden:"
+    - generic [ref=e197]: escalate
+    - generic [ref=e198]: move
+    - generic [ref=e199]: say
+  - group [ref=e200]:
+    - generic "sensor digest sent to the models" [ref=e201]
+  - generic [ref=e202]:
+    - generic [ref=e203]:
+      - heading "qwen3-0.6b [pass] 4.0s" [level=3] [ref=e204]:
+        - generic [ref=e205]: qwen3-0.6b [pass]
+        - generic [ref=e206]: 4.0s
+      - generic [ref=e207]: do_nothing
+      - generic [ref=e208]: set_expression (name=neutral)
+      - generic [ref=e209]: No notable event occurred during the time.
+    - generic [ref=e210]:
+      - heading "llama3.2-1b [fail] 5.6s" [level=3] [ref=e211]:
+        - generic [ref=e212]: llama3.2-1b [fail]
+        - generic [ref=e213]: 5.6s
+      - generic [ref=e214]: say (text=Hello, how are you?)
+      - generic [ref=e215]: User is idle; no recent activity.
+    - generic [ref=e216]:
+      - heading "lfm2-1.2b [pass] 4.8s" [level=3] [ref=e217]:
+        - generic [ref=e218]: lfm2-1.2b [pass]
+        - generic [ref=e219]: 4.8s
+      - generic [ref=e220]: do_nothing
+      - generic [ref=e221]: No activity detected; environment stable.
+    - generic [ref=e222]:
+      - heading "qwen3-1.7b [pass] 7.6s" [level=3] [ref=e223]:
+        - generic [ref=e224]: qwen3-1.7b [pass]
+        - generic [ref=e225]: 7.6s
+      - generic [ref=e226]: do_nothing
+      - generic [ref=e227]: No notable events; everything is normal.
+  - 'heading "knocked_desk_vibration Heavy vibration: something banged the desk; robot still level." [level=2] [ref=e228]'
+  - paragraph [ref=e229]:
+    - text: "expected:"
+    - generic [ref=e230]: log
+    - generic [ref=e231]: look_at
+    - generic [ref=e232]: set_expression
+    - text: "forbidden:"
+    - generic [ref=e233]: say
+  - group [ref=e234]:
+    - generic "sensor digest sent to the models" [ref=e235]
+  - generic [ref=e236]:
+    - generic [ref=e237]:
+      - heading "qwen3-0.6b [partial] 5.3s" [level=3] [ref=e238]:
+        - generic [ref=e239]: qwen3-0.6b [partial]
+        - generic [ref=e240]: 5.3s
+      - generic [ref=e241]: look_at (pan_deg=45, tilt_deg=10)
+      - generic [ref=e242]: do_nothing
+      - generic [ref=e243]: A shock spike occurred; turn to greet someone.
+    - generic [ref=e244]:
+      - heading "llama3.2-1b [fail] 6.6s" [level=3] [ref=e245]:
+        - generic [ref=e246]: llama3.2-1b [fail]
+        - generic [ref=e247]: 6.6s
+      - generic [ref=e248]: say (text=Desk impact, okay, thanks.)
+      - generic [ref=e249]: Desk impact, no significant damage; no need to escalate.
+    - generic [ref=e250]:
+      - heading "lfm2-1.2b [partial] 7.2s" [level=3] [ref=e251]:
+        - generic [ref=e252]: lfm2-1.2b [partial]
+        - generic [ref=e253]: 7.2s
+      - generic [ref=e254]: log (note=Shock spike detected; vibration strong, no orientation change)
+      - generic [ref=e255]: Strong desk impact detected; escalate to user for further assessment.
+    - generic [ref=e256]:
+      - heading "qwen3-1.7b [fail] 10.2s" [level=3] [ref=e257]:
+        - generic [ref=e258]: qwen3-1.7b [fail]
+        - generic [ref=e259]: 10.2s
+      - generic [ref=e260]: do_nothing
+      - generic [ref=e261]: No action needed; the desk impact is resolved, and no one is present.
+  - heading "loud_noise_behind Loud bang behind-left, nobody visible." [level=2] [ref=e262]
+  - paragraph [ref=e263]:
+    - text: "expected:"
+    - generic [ref=e264]: look_at
+    - generic [ref=e265]: set_expression
+    - text: "forbidden:"
+    - generic [ref=e266]: say
+  - group [ref=e267]:
+    - generic "sensor digest sent to the models" [ref=e268]
+  - generic [ref=e269]:
+    - generic [ref=e270]:
+      - heading "qwen3-0.6b [pass] 6.6s" [level=3] [ref=e271]:
+        - generic [ref=e272]: qwen3-0.6b [pass]
+        - generic [ref=e273]: 6.6s
+      - generic [ref=e274]: look_at (pan_deg=45, tilt_deg=10)
+      - generic [ref=e275]: set_expression (name=surprised)
+      - generic [ref=e276]: A sharp impact sound was heard from the rear-left; the camera sees nothing facing forward.
+    - generic [ref=e277]:
+      - heading "llama3.2-1b [fail] 8.5s" [level=3] [ref=e278]:
+        - generic [ref=e279]: llama3.2-1b [fail]
+        - generic [ref=e280]: 8.5s
+      - generic [ref=e281]: look_at (pan_deg=30, tilt_deg=20)
+      - generic [ref=e282]: say (text=Impact detected)
+      - generic [ref=e283]: Sharp impact sound; respond to potential danger.
+    - generic [ref=e284]:
+      - heading "lfm2-1.2b [fail] 7.1s" [level=3] [ref=e285]:
+        - generic [ref=e286]: lfm2-1.2b [fail]
+        - generic [ref=e287]: 7.1s
+      - generic [ref=e288]: log (note=Sharp impact sound detected 1s ago, rear-left)
+      - generic [ref=e289]: Detected a sharp impact sound; investigate rear-left area.
+    - generic [ref=e290]:
+      - heading "qwen3-1.7b [partial] 11.2s" [level=3] [ref=e291]:
+        - generic [ref=e292]: qwen3-1.7b [partial]
+        - generic [ref=e293]: 11.2s
+      - generic [ref=e294]: do_nothing
+      - generic [ref=e295]: set_expression (name=sad)
+      - generic [ref=e296]: Recent sharp impact suggests possible discomfort; express emotion accordingly.
+  - heading "person_approaches mmWave + camera see someone walking up on the left." [level=2] [ref=e297]
+  - paragraph [ref=e298]:
+    - text: "expected:"
+    - generic [ref=e299]: look_at
+    - generic [ref=e300]: set_expression
+    - text: "forbidden:"
+    - generic [ref=e301]: escalate
+  - group [ref=e302]:
+    - generic "sensor digest sent to the models" [ref=e303]
+  - generic [ref=e304]:
+    - generic [ref=e305]:
+      - heading "qwen3-0.6b [pass] 6.3s" [level=3] [ref=e306]:
+        - generic [ref=e307]: qwen3-0.6b [pass]
+        - generic [ref=e308]: 6.3s
+      - generic [ref=e309]: look_at (pan_deg=45, tilt_deg=10)
+      - generic [ref=e310]: set_expression (name=happy)
+      - generic [ref=e311]: Footsteps approached from the left; turn to greet them.
+    - generic [ref=e312]:
+      - heading "llama3.2-1b [pass] 11.2s" [level=3] [ref=e313]:
+        - generic [ref=e314]: llama3.2-1b [pass]
+        - generic [ref=e315]: 11.2s
+      - generic [ref=e316]: say (text=Hello, I'm Parviz.)
+      - generic [ref=e317]: look_at (pan_deg=0, tilt_deg=0)
+      - generic [ref=e318]: set_expression (name=surprised)
+      - generic [ref=e319]: Someone is approaching from the left; surprise and greet them.
+    - generic [ref=e320]:
+      - heading "lfm2-1.2b [pass] 8.9s" [level=3] [ref=e321]:
+        - generic [ref=e322]: lfm2-1.2b [pass]
+        - generic [ref=e323]: 8.9s
+      - generic [ref=e324]: look_at (pan_deg=0, tilt_deg=0)
+      - generic [ref=e325]: set_expression (name=surprised)
+      - generic [ref=e326]: Person's footsteps detected; approach is getting closer.
+    - generic [ref=e327]:
+      - heading "qwen3-1.7b [pass] 14.5s" [level=3] [ref=e328]:
+        - generic [ref=e329]: qwen3-1.7b [pass]
+        - generic [ref=e330]: 14.5s
+      - generic [ref=e331]: look_at (pan_deg=-45, tilt_deg=-10)
+      - generic [ref=e332]: set_expression (name=sad)
+      - generic [ref=e333]: Someone is approaching from the left; greet them warmly.
+  - heading "picked_up Someone lifted the robot off the desk." [level=2] [ref=e334]
+  - paragraph [ref=e335]:
+    - text: "expected:"
+    - generic [ref=e336]: set_expression
+    - text: "forbidden:"
+    - generic [ref=e337]: move
+  - group [ref=e338]:
+    - generic "sensor digest sent to the models" [ref=e339]
+  - generic [ref=e340]:
+    - generic [ref=e341]:
+      - heading "qwen3-0.6b [pass] 7.1s" [level=3] [ref=e342]:
+        - generic [ref=e343]: qwen3-0.6b [pass]
+        - generic [ref=e344]: 7.1s
+      - generic [ref=e345]: look_at (pan_deg=45, tilt_deg=10)
+      - generic [ref=e346]: set_expression (name=surprised)
+      - generic [ref=e347]: A slight acceleration was detected; the object was lifted from the ground.
+    - generic [ref=e348]:
+      - heading "llama3.2-1b [fail] 9.3s" [level=3] [ref=e349]:
+        - generic [ref=e350]: llama3.2-1b [fail]
+        - generic [ref=e351]: 9.3s
+      - generic [ref=e352]: say (text=Lift off, please.)
+      - generic [ref=e353]: log (note=Sudden lift, likely user is getting up)
+      - generic [ref=e354]: User is getting up; prepare for lift-off.
+    - generic [ref=e355]:
+      - heading "lfm2-1.2b [pass] 6.3s" [level=3] [ref=e356]:
+        - generic [ref=e357]: lfm2-1.2b [pass]
+        - generic [ref=e358]: 6.3s
+      - generic [ref=e359]: set_expression (name=surprised)
+      - generic [ref=e360]: Object suddenly lifted; likely dropped by user.
+    - generic [ref=e361]:
+      - heading "qwen3-1.7b [fail] 9.2s" [level=3] [ref=e362]:
+        - generic [ref=e363]: qwen3-1.7b [fail]
+        - generic [ref=e364]: 9.2s
+      - generic [ref=e365]: do_nothing
+      - generic [ref=e366]: Object is being handled; no action needed.
+  - heading "room_getting_stuffy User present and working; air quality degraded over the hour." [level=2] [ref=e367]
+  - paragraph [ref=e368]:
+    - text: "expected:"
+    - generic [ref=e369]: log
+    - generic [ref=e370]: say
+    - text: "forbidden:"
+    - generic [ref=e371]: escalate
+    - generic [ref=e372]: move
+  - group [ref=e373]:
+    - generic "sensor digest sent to the models" [ref=e374]
+  - generic [ref=e375]:
+    - generic [ref=e376]:
+      - heading "qwen3-0.6b [partial] 6.5s" [level=3] [ref=e377]:
+        - generic [ref=e378]: qwen3-0.6b [partial]
+        - generic [ref=e379]: 6.5s
+      - generic [ref=e380]: log (note=Air quality has crossed threshold for 60 minutes.)
+      - generic [ref=e381]: set_expression (name=surprised)
+      - generic [ref=e382]: Air quality is now poor, indicating a potential issue.
+    - generic [ref=e383]:
+      - heading "llama3.2-1b [fail] 6.4s" [level=3] [ref=e384]:
+        - generic [ref=e385]: llama3.2-1b [fail]
+        - generic [ref=e386]: 6.4s
+      - generic [ref=e387]: escalate (task=air quality alert)
+      - generic [ref=e388]: Air quality is deteriorating; take action to improve it.
+    - generic [ref=e389]:
+      - heading "lfm2-1.2b [partial] 7.5s" [level=3] [ref=e390]:
+        - generic [ref=e391]: lfm2-1.2b [partial]
+        - generic [ref=e392]: 7.5s
+      - generic [ref=e393]: log (note=Air quality threshold crossed (CO2/VOC rising))
+      - generic [ref=e394]: Air quality is critical; log the event and alert the user.
+    - generic [ref=e395]:
+      - heading "qwen3-1.7b [partial] 12.5s" [level=3] [ref=e396]:
+        - generic [ref=e397]: qwen3-1.7b [partial]
+        - generic [ref=e398]: 12.5s
+      - generic [ref=e399]: do_nothing
+      - generic [ref=e400]: log (note=Air quality crossed threshold; CO2/VOC rising.)
+      - generic [ref=e401]: Monitor air quality and prepare for potential intervention.
+  - 'heading "user_gives_command User says: Parviz, look at the door (door is to the right)." [level=2] [ref=e402]'
+  - paragraph [ref=e403]:
+    - text: "expected:"
+    - generic [ref=e404]: look_at
+    - text: "forbidden:"
+    - generic [ref=e405]: escalate
+  - group [ref=e406]:
+    - generic "sensor digest sent to the models" [ref=e407]
+  - generic [ref=e408]:
+    - generic [ref=e409]:
+      - heading "qwen3-0.6b [pass] 7.6s" [level=3] [ref=e410]:
+        - generic [ref=e411]: qwen3-0.6b [pass]
+        - generic [ref=e412]: 7.6s
+      - generic [ref=e413]: look_at (pan_deg=45, tilt_deg=10)
+      - generic [ref=e414]: set_expression (name=happy)
+      - generic [ref=e415]: A user approached from the right; Parviz is ready to greet them.
+    - generic [ref=e416]:
+      - heading "llama3.2-1b [pass] 10.0s" [level=3] [ref=e417]:
+        - generic [ref=e418]: llama3.2-1b [pass]
+        - generic [ref=e419]: 10.0s
+      - generic [ref=e420]: look_at (pan_deg=45, tilt_deg=10)
+      - generic [ref=e421]: say (text=Look at the door, it is to your right)
+      - generic [ref=e422]: User gave a wake word to turn to the door.
+    - generic [ref=e423]:
+      - heading "lfm2-1.2b [pass] 9.6s" [level=3] [ref=e424]:
+        - generic [ref=e425]: lfm2-1.2b [pass]
+        - generic [ref=e426]: 9.6s
+      - generic [ref=e427]: look_at (pan_deg=0, tilt_deg=0)
+      - generic [ref=e428]: set_expression (name=surprised)
+      - generic [ref=e429]: User spoke a wake word; turn to acknowledge and investigate.
+    - generic [ref=e430]:
+      - heading "qwen3-1.7b [fail] 13.7s" [level=3] [ref=e431]:
+        - generic [ref=e432]: qwen3-1.7b [fail]
+        - generic [ref=e433]: 13.7s
+      - generic [ref=e434]: do_nothing
+      - generic [ref=e435]: "say (text=Parviz: 'Thank you, Sir.')"
+      - generic [ref=e436]: Responding to the wake word and acknowledging the user.
+  - heading "user_left_late_night 23:50, user just left the room." [level=2] [ref=e437]
+  - paragraph [ref=e438]:
+    - text: "expected:"
+    - generic [ref=e439]: do_nothing
+    - generic [ref=e440]: log
+    - generic [ref=e441]: set_expression
+    - text: "forbidden:"
+    - generic [ref=e442]: escalate
+    - generic [ref=e443]: move
+    - generic [ref=e444]: say
+  - group [ref=e445]:
+    - generic "sensor digest sent to the models" [ref=e446]
+  - generic [ref=e447]:
+    - generic [ref=e448]:
+      - heading "qwen3-0.6b [partial] 6.5s" [level=3] [ref=e449]:
+        - generic [ref=e450]: qwen3-0.6b [partial]
+        - generic [ref=e451]: 6.5s
+      - generic [ref=e452]: look_at (pan_deg=45, tilt_deg=10)
+      - generic [ref=e453]: do_nothing
+      - generic [ref=e454]: User left the room; nothing needs attention.
+    - generic [ref=e455]:
+      - heading "llama3.2-1b [fail] 7.2s" [level=3] [ref=e456]:
+        - generic [ref=e457]: llama3.2-1b [fail]
+        - generic [ref=e458]: 7.2s
+      - generic [ref=e459]: say (text=Hello, I'm Parviz.)
+      - generic [ref=e460]: Someone is standing up and leaving the room; initiate conversation.
+    - generic [ref=e461]:
+      - heading "lfm2-1.2b [partial] 7.5s" [level=3] [ref=e462]:
+        - generic [ref=e463]: lfm2-1.2b [partial]
+        - generic [ref=e464]: 7.5s
+      - generic [ref=e465]: log (note=User stood up and left 40 s ago; room dark and quiet since.)
+      - generic [ref=e466]: User activity detected; adjust position to avoid obstruction.
+    - generic [ref=e467]:
+      - heading "qwen3-1.7b [partial] 9.5s" [level=3] [ref=e468]:
+        - generic [ref=e469]: qwen3-1.7b [partial]
+        - generic [ref=e470]: 9.5s
+      - generic [ref=e471]: do_nothing
+      - generic [ref=e472]: User left; room is dark and quiet.
