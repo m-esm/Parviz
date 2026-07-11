@@ -1,0 +1,22 @@
+# Parviz brain daemon: digest of ALL sensory features -> local LLM ->
+# /tmp/parviz_decision.json (the face executes it; stale file = face sleeps).
+#
+# Install (from ~/parviz-sw on the Pi):
+#   sudo cp brain/parviz-brain.service /etc/systemd/system/
+#   sudo systemctl daemon-reload && sudo systemctl enable --now parviz-brain
+
+[Unit]
+Description=Parviz brain (sensor digest -> LLM -> actions)
+After=parviz-llm.service
+Wants=parviz-llm.service
+
+[Service]
+User=moshe
+WorkingDirectory=/home/moshe/parviz-sw/brain
+ExecStart=/usr/bin/python3 /home/moshe/parviz-sw/brain/brain.py
+Restart=always
+RestartSec=5
+MemoryMax=150M
+
+[Install]
+WantedBy=multi-user.target

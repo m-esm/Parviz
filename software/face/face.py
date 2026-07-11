@@ -66,7 +66,8 @@ HUD_DIM = (88, 91, 95)        # dark gray: labels, brackets
 HUD_FAINT = (62, 64, 68)      # faintest: raw model output, secondary lines
 HUD_BAD = (220, 80, 64)       # reserved for alerts
 
-DECISION_FILE = "/tmp/parviz_decision.json"   # brain loop writes, face shows
+DECISION_FILE = "/tmp/parviz_decision.json"   # brain writes, face EXECUTES
+BRAIN_STALE_S = 45.0   # no fresh decision for this long -> face sleeps
 
 BOOT_LEN_S = 1.6             # power-on reveal
 SACCADE_EVERY_S = (1.2, 3.5)  # micro gaze jumps (life between blinks)
@@ -75,10 +76,11 @@ BREATH_PERIOD_S = 4.4        # slow size oscillation
 BREATH_MAG = 0.012
 RIPPLE_LEN_S = 0.35          # touch feedback outline
 
-# Layout scales off the panel size (800x480): big eyes that own the screen.
-EYE_W = int(SCREEN_W * 0.28)          # 224
-EYE_H = int(SCREEN_H * 0.40)          # 192
-EYE_CX = (int(SCREEN_W * 0.30), int(SCREEN_W * 0.70))   # 240, 560
+# Layout scales off the panel size (800x480). Eyes sized down a notch
+# (2026-07-12, user) so the HUD/telemetry reads clearly around them.
+EYE_W = int(SCREEN_W * 0.235)         # 188
+EYE_H = int(SCREEN_H * 0.33)          # 158
+EYE_CX = (int(SCREEN_W * 0.31), int(SCREEN_W * 0.69))   # 248, 552
 EYE_CY = int(SCREEN_H * 0.365)         # eyes ride high; mouth + telemetry below
 MOUTH_CY = int(SCREEN_H * 0.72)
 MOUTH_HALF = 92
@@ -182,6 +184,12 @@ class FaceState:
         else:
             base = EXPRESSIONS[self.expression]
             self.target.update(open=base["open"], mouth=base["mouth"])
+
+    def set_gaze(self, gx, gy):
+        """Brain look_at: aim the eyes without changing the expression."""
+        self.target = dict(self.target)
+        self.target["gaze"] = (max(-1.0, min(1.0, gx)),
+                               max(-1.0, min(1.0, gy)))
 
     def tick(self, now, dt):
         gx, gy = self.pose["gaze"]
@@ -624,6 +632,10 @@ class FaceRenderer:
         self._eye_gaze = {-1: (0.0, 0.0), 1: (0.0, 0.0)}  # per-eye eased
         self._dec = None            # latest brain decision line
         self._dec_t = -1e9
+        self._dec_stale = False     # heartbeat: stale brain -> sleep
+        self._dec_applied_mt = 0.0
+        self._dec_pending = None
+        self._status_until = None
         self.demo_on = False        # runtime toggle: triple-tap the screen
         self._taps = []
         self._font = pygame.font.SysFont(
@@ -656,11 +668,8 @@ class FaceRenderer:
                 ty = (tp[1] + 1) / 2 * SCREEN_H
                 want = (max(-1.0, min(1.0, (tx - cx) / (EYE_W * 0.75))),
                         max(-1.0, min(1.0, (ty - cy) / (EYE_H * 0.75))))
-        elif (self.vision.want is not None
-              and self.state.expression == "neutral"):
-            want = self.vision.want   # idle attention: follow the person
         else:
-            want = st["gaze"]
+            want = st["gaze"]   # gaze targets come from the brain only
         eg = self._eye_gaze[side]
         eg = (_ease(eg[0], want[0], dt, speed=12.0),
               _ease(eg[1], want[1], dt, speed=12.0))
@@ -729,13 +738,17 @@ class FaceRenderer:
         pg.draw.lines(surf, HUD_MID, False, pts, 2)
 
     def _decision_line(self, now):
-        """Latest brain decision (DECISION_FILE, written by the brain loop):
-        '<verbs> // <reason>' while fresh, else None. Polled every 2 s."""
+        """Poll DECISION_FILE every 2 s: display line, NEW decisions queued
+        for execution (self._dec_pending), staleness for the sleep rule."""
         if now - self._dec_t >= 2.0:
             self._dec_t = now
             self._dec = None
+            self._dec_stale = True
             try:
-                if now - os.path.getmtime(DECISION_FILE) < 120:
+                mt = os.path.getmtime(DECISION_FILE)
+                age = time.time() - mt
+                self._dec_stale = age > BRAIN_STALE_S
+                if age < 120:
                     with open(DECISION_FILE) as f:
                         d = json.load(f)
                     verbs = "+".join(a.get("do", "?")
@@ -743,9 +756,40 @@ class FaceRenderer:
                                      if isinstance(a, dict)) or "?"
                     reason = str(d.get("reason", ""))[:64]
                     self._dec = f"{verbs} // {reason}"
+                    if mt != self._dec_applied_mt:
+                        self._dec_applied_mt = mt
+                        self._dec_pending = d
             except (OSError, ValueError):
                 pass
         return self._dec
+
+    def _apply_brain(self, now):
+        """Execute the LLM's decision: the brain is the ONLY source of
+        truth for expression/gaze/speech. A stale brain puts the face to
+        sleep until decisions flow again."""
+        d, self._dec_pending = self._dec_pending, None
+        if d:
+            for a in d.get("actions", []):
+                if not isinstance(a, dict):
+                    continue
+                do = a.get("do")
+                if do == "set_expression" and a.get("name") in EXPRESSIONS:
+                    self.set_expression(a["name"])
+                elif do == "look_at":
+                    try:
+                        gx = float(a.get("pan_deg", 0)) / 88.0
+                        gy = -float(a.get("tilt_deg", 0)) / 30.0
+                    except (TypeError, ValueError):
+                        continue
+                    self.state.set_gaze(gx, gy)
+                elif do == "say" and a.get("text"):
+                    self.status = f'"{str(a["text"])[:56]}"'
+                    self._status_until = now + 6.0
+        if self._status_until is not None and now > self._status_until:
+            self.status = None
+            self._status_until = None
+        if self._dec_stale and self.state.expression != "sleepy":
+            self.set_expression("sleepy")   # brain not responding
 
     def _hud(self, surf, now):
         """Corner telemetry blocks in cool HUD tones (orange belongs to the
@@ -811,12 +855,11 @@ class FaceRenderer:
                 m + 16 + img.get_width(),
                 SCREEN_H - m - img.get_height() - 4, 9, img.get_height() - 4))
 
-        # --- bottom-center: the brain's latest decision, whisper-quiet
+        # --- top-center (under PWR): the brain's decision, whisper-quiet
         dec = self._decision_line(now)
         if dec:
             dimg = self._text(dec, HUD_FAINT, tiny=True)
-            surf.blit(dimg, ((SCREEN_W - dimg.get_width()) // 2,
-                             SCREEN_H - m - dimg.get_height() - 30))
+            surf.blit(dimg, ((SCREEN_W - dimg.get_width()) // 2, m + 52))
 
         # --- bottom-left: ghost camera feed + raw model output
         cimg = self.campre.surface(pg, now)
@@ -980,16 +1023,8 @@ class FaceRenderer:
             if self.demo_on and now - self._boot_t0 > BOOT_LEN_S:
                 director.tick(now, self)
             elif self.state.touch_pt is None:
-                # Tier-1 behavior: mirror a visible smile (perception's
-                # landmark signals); revert only what vision itself set.
-                ve = (self.vision.raw or {}).get("visible_expression")
-                if ve == "happy" and self.state.expression == "neutral":
-                    self.set_expression("happy")
-                    self._vis_set = True
-                elif (getattr(self, "_vis_set", False) and ve != "happy"
-                      and self.state.expression == "happy"):
-                    self.set_expression("neutral")
-                    self._vis_set = False
+                # The LLM is the only source of truth for behavior.
+                self._apply_brain(now)
             lid = self.state.tick(now, dt)
             self.draw(lid, dt)
             self.clock.tick(30)

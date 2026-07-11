@@ -354,3 +354,23 @@ mirror -- person smiles (smile>0.5) -> Parviz goes happy, reverts when
 the smile goes (only if vision set it; touch/demo/brain win). Raw line
 under the cam feed now shows the label + smile score + lmk ms. Verified
 end-to-end on a live smile at the desk.
+
+### brain/brain.py + parviz-brain.service, THE LOOP IS CLOSED (2026-07-12)
+
+The LLM is now the ONLY source of truth for behavior (user directive).
+brain.py ticks every 15 s (inference is 7-15 s; faster ticks ran the
+fanless Pi to 85C throttle): builds a digest of EVERYTHING (all vision
+features incl. raw signals + confidences + timings, cpu/mem/temp, time,
+an event ring of person arrived/left + expression changes + its own past
+actions), asks the local Qwen (v2 prompt/schema imported from
+scenarios.py), writes /tmp/parviz_decision.json, journals to
+brain/journal.log. The face EXECUTES decisions (set_expression /
+look_at -> eye gaze / say -> status line for 6 s) and the smile-mirror +
+person-following reflexes were REMOVED - the LLM sees those signals and
+decides. HEARTBEAT CONTRACT: decision-file mtime stale >45 s (brain or
+LLM down) -> the face puts itself to sleep; verified by killing both
+services (face went sleepy alone) and recovery through llama-server
+restarts (rides the 500/503s). Eyes sized down (188x158) so the HUD
+reads clearly. THERMAL NOTE: sustained brain ticking holds the SoC near
+80-85C on the bare board - a heatsink/active cooler belongs on the buy
+list before longer runs.
