@@ -185,3 +185,34 @@ Persistent Tier-2 brain service (docs/AWARENESS.md): llama.cpp
 runaway LLM gets killed before it OOMs the face. Qwen3 thinks by
 default; add `/no_think` to the system prompt for snappy replies.
 Verified 2026-07-12: service + face active together, 1.1 GB still free.
+
+### brain/scenarios.py, simulated sensory input -> LLM behavior
+
+The Tier-2 loop from docs/AWARENESS.md, runnable before any sensor
+exists: full-suite sensor SNAPSHOTs (mics/camera/mmWave/IMU/vibration/
+env/sonar/cliff/touch) render to a compact text digest; the system
+prompt gives Parviz's behavior rules + a constrained action vocabulary
+(do_nothing / set_expression / look_at / say / move / log / escalate);
+10 scenarios (idle, person approaches, voice command, picked up, cliff
+stop, loud noise, stuffy room, petting, escalation-worthy question,
+late night) run against llama-server. Output shape is grammar-enforced
+via response_format json_schema; results append to
+`brain/results/<tag>.jsonl` with per-scenario `expect` verbs for the
+upcoming behavior benchmark.
+
+```sh
+python3 brain/scenarios.py --host moshe-pi5-2gb.local:8081 --tag mytag
+python3 brain/scenarios.py --scenario person_approaches --runs 5
+python3 brain/scenarios.py --digest-only   # inspect digests, no LLM
+```
+
+Findings on Qwen3-0.6B (2026-07-12, results/ committed):
+- raw prompt: right instincts, broken JSON shape; json_object grammar +
+  thinking template = empty replies.
+- schema-only: valid JSON but DEGENERATE (`look_at` twice for every
+  scenario, no parameters). Grammar alone kills a 0.6B.
+- schema + 2 few-shot examples + `chat_template_kwargs
+  {"enable_thinking": false}`: parameterized sensible actions (~6-10 s
+  per decision). Residual 0.6B failures, the benchmark targets: copies
+  the few-shot pan_deg=45 verbatim (looks RIGHT at a LEFT sound), never
+  chooses `escalate` or `say`, occasional gratuitous look_at when idle.
