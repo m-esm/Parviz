@@ -324,9 +324,9 @@ Tier-1 vision per the user's benchmark research: OpenCV FaceDetectorYN
   cx/cy robot-frame normalized, size, facing_camera heuristic, pan/tilt
   suggestion, raw det box, fps, infer_ms)
 - /dev/shm/parviz_preview.jpg: 160x120 @3 Hz for the face CAM window
-Measured on-device: 15 FPS (at cap), ~16 ms inference, 189 MB RSS, ~77%
-of one core (optimization headroom: drop to 10 Hz when nobody present),
-live detection of a real face at 0.95 conf. `--bench N` prints the
+Measured on-device: ~16 ms inference, 189 MB RSS, live detection of a
+real face at 0.95 conf. Detection rate 2 Hz per user (was 15 Hz / 77% of
+a core; at 2 Hz it is ~15%), `--hz` overrides. `--bench N` prints the
 research CSV; `--image f.jpg` one-shot test. parviz-perception.service
 (MemoryMax=400M) enabled on boot.
 

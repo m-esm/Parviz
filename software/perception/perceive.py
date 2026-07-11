@@ -43,8 +43,8 @@ PREVIEW_JPG = "/dev/shm/parviz_preview.jpg"
 
 CAP_W, CAP_H = 640, 480
 DET_W, DET_H = 320, 240
-LOOP_HZ = 15.0
-PREVIEW_EVERY_S = 0.33
+LOOP_HZ = 2.0        # detection rate; 2 Hz is plenty for desk presence
+PREVIEW_EVERY_S = 0.5
 # imx708 video-mode FOV, approximate; refine when the head is mounted.
 FOV_X_DEG, FOV_Y_DEG = 62.0, 48.0
 
@@ -97,19 +97,19 @@ def write_atomic(path, data):
     os.replace(tmp, path)
 
 
-def run(bench_s=None):
+def run(bench_s=None, hz=LOOP_HZ):
     from picamera2 import Picamera2
     cam = Picamera2()
     cam.configure(cam.create_video_configuration(
         main={"size": (CAP_W, CAP_H), "format": "BGR888"}))
     cam.start()
     det = make_detector()
-    period = 1.0 / LOOP_HZ
+    period = 1.0 / hz
     last_prev = 0.0
     lat = []
     t_start = time.monotonic()
     fps_t0, fps_n, fps = t_start, 0, 0.0
-    print(f"perceive: yunet {DET_W}x{DET_H}, loop {LOOP_HZ} Hz", flush=True)
+    print(f"perceive: yunet {DET_W}x{DET_H}, loop {hz} Hz", flush=True)
     while True:
         t0 = time.monotonic()
         frame = cam.capture_array()                    # RGB-ordered
@@ -162,6 +162,8 @@ def run(bench_s=None):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--bench", type=float, default=None, metavar="SECONDS")
+    ap.add_argument("--hz", type=float, default=LOOP_HZ,
+                    help=f"detection rate (default {LOOP_HZ})")
     ap.add_argument("--image", default=None,
                     help="one-shot: detect faces in an image file, print")
     args = ap.parse_args()
@@ -176,7 +178,7 @@ def main():
                   f"score={f[14]:.2f}")
         print(json.dumps(interaction_state(faces, 0, 0), indent=1))
         return
-    run(bench_s=args.bench)
+    run(bench_s=args.bench, hz=args.hz)
 
 
 if __name__ == "__main__":
