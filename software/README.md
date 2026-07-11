@@ -298,3 +298,18 @@ eyes = DERP per user ref image: near eye stares at the finger, other
 rolls up-out. BG is true (0,0,0); the residual glow is IPS backlight,
 so the service dims it to 120/255 at start (ExecStartPre tee -- sh does
 NOT glob redirection targets, tee args do). Settled CPU ~6% of one core.
+
+Face v7 (2026-07-12): EMOTIONS +concerned/angry/sick (angry = the
+positive-tilt V + pinpoint pupils + frown; sick = droopy + queasy
+half-open mouth). PUPIL ANATOMY corrected per user: the orange octagon
+is the fixed-size IRIS, the black dot inside is the PUPIL, it DILATES
+(surprised ~11 px, happy ~25 px) and rides the gaze. DEMO now covers
+every case: all 12 expressions + 4 gaze directions + talking mouth-flap
+(SPEAKING modulates `open` per frame) + a BOOP scene that injects a
+synthetic between-the-eyes touch (derp + ripple) + INTRUDER/SAD scenes.
+CAMERA PREVIEW: 96x72 live window right-edge center (picamera2 lores
+160x120 BGR888 at ~6 fps; fails soft to CAM --). Costs +30 MB RSS and
+~6% of one core. NOTE: the face process now OWNS the camera; when the
+perception process arrives it takes ownership and the preview should
+consume ITS frames instead. Brain schema updated with the new emotion
+names (scenarios.py enum + prompts).

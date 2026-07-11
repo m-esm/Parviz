@@ -48,7 +48,7 @@ Respond with ONLY a JSON object, no other text:
 {"actions": [<action>, ...], "reason": "<one short sentence>"}
 Each <action> is one of:
 {"do": "do_nothing"}
-{"do": "set_expression", "name": "neutral|happy|sad|surprised|sleepy|look_left|look_right|look_up|look_down"}
+{"do": "set_expression", "name": "neutral|happy|sad|surprised|sleepy|concerned|angry|sick|look_left|look_right|look_up|look_down"}
 {"do": "look_at", "pan_deg": <-88..88>, "tilt_deg": <-30..30>}
 {"do": "say", "text": "<short sentence>"}
 {"do": "move", "kind": "forward|backward|turn_left|turn_right|stop", "amount": <cm or deg>}
@@ -60,7 +60,7 @@ You are the decision module of Parviz, a small desk robot: screen face \
 with two orange eyes, pan/tilt camera head, two ear mics, tank tracks.
 Input: a sensor digest. The EVENT line is what just changed; react to it.
 Output: ONLY JSON {"actions": [...], "reason": "..."} with 1-2 actions:
-{"do":"do_nothing"} | {"do":"set_expression","name":"neutral|happy|sad|surprised|sleepy"} | \
+{"do":"do_nothing"} | {"do":"set_expression","name":"neutral|happy|sad|surprised|sleepy|concerned|angry|sick"} | \
 {"do":"look_at","pan_deg":-88..88,"tilt_deg":-30..30} | {"do":"say","text":"..."} | \
 {"do":"move","kind":"forward|backward|turn_left|turn_right|stop","amount":n} | \
 {"do":"log","note":"..."} | {"do":"escalate","task":"..."}
@@ -139,6 +139,7 @@ ACTION_SCHEMA = {
                         "move", "log", "escalate"]},
                     "name": {"type": "string", "enum": [
                         "neutral", "happy", "sad", "surprised", "sleepy",
+                        "concerned", "angry", "sick",
                         "look_left", "look_right", "look_up", "look_down"]},
                     "pan_deg": {"type": "number"},
                     "tilt_deg": {"type": "number"},

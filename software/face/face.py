@@ -108,6 +108,12 @@ EXPRESSIONS = {
                        size=1.3, pupil=0.55, mouth=0.0, open=0.9),
     "sleepy":     dict(gaze=(0.0, 0.3),  lid=0.55, squint=0.15, tilt=-0.2,
                        size=1.0, pupil=1.1, mouth=0.05, open=0.0),
+    "concerned":  dict(gaze=(0.0, -0.1), lid=0.1,  squint=0.0,  tilt=-0.35,
+                       size=1.05, pupil=0.8, mouth=-0.35, open=0.0),
+    "angry":      dict(gaze=(0.0, 0.0),  lid=0.25, squint=0.15, tilt=0.9,
+                       size=1.0, pupil=0.7, mouth=-0.5, open=0.0),
+    "sick":       dict(gaze=(0.0, 0.45), lid=0.45, squint=0.1,  tilt=-0.5,
+                       size=0.95, pupil=0.75, mouth=-0.3, open=0.35),
     "look_left":  dict(gaze=(-0.9, 0.0), lid=0.0,  squint=0.1,  tilt=0.0,
                        size=1.0, pupil=0.9, mouth=0.1, open=0.0),
     "look_right": dict(gaze=(0.9, 0.0),  lid=0.0,  squint=0.1,  tilt=0.0,
@@ -223,14 +229,19 @@ DEMO_SCENES = [
     ("LISTENING", [(0.6, "surprised", "WAKE WORD"),
                    (3.0, "look_up", "LISTENING{dots}")]),
     ("THINKING", [(3.0, "look_down", "THINKING{dots}")]),
-    ("SPEAKING", [(2.6, "happy", "SPEAKING")]),
+    ("SPEAKING", [(3.0, "talk", "SPEAKING{dots}")]),
     ("ESCALATE", [(3.2, "look_up", "ASKING BIG BRAIN{dots}")]),
-    ("ALERT", [(0.5, "surprised", "!! CLIFF"), (0.5, "surprised", "CLIFF !!"),
+    ("ALERT", [(0.5, "surprised", "!! CLIFF"), (0.5, "angry", "CLIFF !!"),
                (0.5, "surprised", "!! CLIFF"),
-               (1.8, "neutral", "REFLEX STOP OK")]),
+               (1.8, "concerned", "REFLEX STOP OK")]),
+    ("INTRUDER", [(0.8, "surprised", "UNKNOWN PERSON"),
+                  (2.2, "angry", "GO AWAY")]),
     ("PETTED", [(2.8, "happy", "<3")]),
-    ("LOW POWER", [(2.2, "sleepy", "LOW POWER"),
-                   (1.6, "sleepy", "SLEEP SOON")]),
+    ("BOOP", [(0.5, "neutral", "TOUCH INCOMING"),
+              (2.4, "boop", "HEHE")]),
+    ("LOW POWER", [(2.2, "concerned", "LOW POWER"),
+                   (1.8, "sick", "VERY LOW POWER")]),
+    ("SAD", [(2.6, "sad", "USER LEFT")]),
     ("SLEEP", [(1.2, "sleepy", None), (2.4, "shut", "ZZZ{dots}")]),
     ("WAKE", [(1.2, "surprised", "GOOD MORNING"), (2.0, "neutral", None)]),
 ]
@@ -250,33 +261,83 @@ class DemoDirector:
         name, steps = self.scenes[self._i]
         return name, steps[self._j]
 
-    def _apply(self, face):
+    def _apply(self, face, now):
         _, (_, expr, _) = self._step()
         if expr == "shut":
             face.state.target = dict(face.state.target)
             face.state.target["lid"] = 1.0
+        elif expr == "boop":
+            # synthetic poke between the eyes: derp + o-mouth + ripple
+            face.state.touch((0.0, -0.15))
+            face._ripples.append((SCREEN_W / 2, EYE_CY, now))
+        elif expr == "talk":
+            face.set_expression("happy")
         elif expr:
             face.set_expression(expr)
 
     def tick(self, now, face):
         if self._t0 is None:
             self._t0 = now
-            self._apply(face)
-        name, (dur, _, status) = self._step()
+            self._apply(face, now)
+        name, (dur, expr, status) = self._step()
         if now - self._t0 >= dur:
+            if expr == "boop":       # lift the synthetic finger
+                face.state.touch(None)
             self._j += 1
             _, steps = self.scenes[self._i]
             if self._j >= len(steps):
                 self._j = 0
                 self._i = (self._i + 1) % len(self.scenes)
             self._t0 = now
-            self._apply(face)
-            name, (dur, _, status) = self._step()
+            self._apply(face, now)
+            name, (dur, expr, status) = self._step()
+        if expr == "talk":           # mouth flaps while speaking
+            face.state.target["open"] = 0.12 + 0.38 * (
+                0.5 + 0.5 * math.sin(now * 9.0))
         if status:
             dots = "." * (1 + int(now * 2.5) % 3)
             face.status = f"{name} // {status}".replace("{dots}", dots)
         else:
             face.status = f"DEMO // {name}"
+
+
+class CamPreview:
+    """Tiny live camera window for the HUD (user: 'camera is connected,
+    show what it sees'). picamera2 lores stream at 160x120, resampled to
+    a 96x72 square at ~6 fps. Fails soft: no camera / no picamera2 ->
+    disabled, the CAM slot stays '--'."""
+
+    SIZE = (96, 72)
+
+    def __init__(self):
+        self.ok = False
+        self.cam = None
+        self._img = None
+        self._t = -1e9
+        try:
+            from picamera2 import Picamera2
+            self.cam = Picamera2()
+            cfg = self.cam.create_video_configuration(
+                main={"size": (160, 120), "format": "BGR888"})
+            self.cam.configure(cfg)
+            self.cam.start()
+            self.ok = True
+        except Exception:   # any camera failure must never kill the face
+            self.cam = None
+
+    def surface(self, pygame, now):
+        if not self.ok:
+            return None
+        if now - self._t >= 0.16:
+            self._t = now
+            try:
+                arr = self.cam.capture_array()
+                img = pygame.image.frombuffer(
+                    arr.tobytes(), (arr.shape[1], arr.shape[0]), "RGB")
+                self._img = pygame.transform.scale(img, self.SIZE)
+            except Exception:
+                pass
+        return self._img
 
 
 class Telemetry:
@@ -462,10 +523,10 @@ def eye_geometry(cx, cy, side, gaze, lid, tilt, size, squint=0.0,
     else:
         inner = chamfer(iquad, max(2.0, c - GAP * 0.414))
 
-    # Pupil = iris ring (thin chamfered outline) + filled octagon core +
-    # a BG glint notch top-left of the core (the highlight that makes it
-    # read as an eye and not a button).
-    base = min(w, h) * 0.36 * pupil_k     # core side
+    # Human-pupil anatomy (user): the orange disc is the IRIS and its size
+    # is FIXED; the black dot inside is the PUPIL, it DILATES with pupil_k
+    # and rides the gaze. Ring outline frames the iris.
+    base = min(w, h) * 0.36               # iris disc side (constant)
     ir = base * 1.42                      # iris ring side
     px = cx + gaze[0] * (w / 2.0 - ir / 2.0 - GAP - 4)
     py = cy + gaze[1] * (hh - ir / 2.0 - GAP - 4)
@@ -485,9 +546,9 @@ def eye_geometry(cx, cy, side, gaze, lid, tilt, size, squint=0.0,
         return outer, inner, {"iris": iris, "core": None, "glint": None}
     cbox = [(c_l, c_t), (c_r, c_t), (c_r, c_b), (c_l, c_b)]
     core = chamfer(cbox, 0.29 * min(c_r - c_l, c_b - c_t))
-    glint = None
-    g = base * 0.32
-    if c_b - c_t > g * 2.0:
+    dot = None
+    g = base * max(0.16, min(0.62, 0.30 * pupil_k))   # dilating pupil dot
+    if c_b - c_t > g * 1.6:
         # the dot RIDES THE GAZE: it sits on the side the eye looks toward
         gcx = (c_l + c_r) / 2.0 + gaze[0] * ((c_r - c_l) - g) / 2.0 * 0.7
         gcy = (c_t + c_b) / 2.0 + gaze[1] * ((c_b - c_t) - g) / 2.0 * 0.7
@@ -495,8 +556,8 @@ def eye_geometry(cx, cy, side, gaze, lid, tilt, size, squint=0.0,
         g_t = max(c_t + 3, min(c_b - g - 3, gcy - g / 2))
         gbox = [(g_l, g_t), (g_l + g, g_t), (g_l + g, g_t + g),
                 (g_l, g_t + g)]
-        glint = chamfer(gbox, 0.3 * g)
-    return outer, inner, {"iris": iris, "core": core, "glint": glint}
+        dot = chamfer(gbox, 0.3 * g)
+    return outer, inner, {"iris": iris, "core": core, "glint": dot}
 
 
 def shut_bar(cx, cy, w=EYE_W):
@@ -525,6 +586,7 @@ class FaceRenderer:
         self._ripples = []          # [(x, y, t0)] touch feedback
         self.status = None          # HUD status override (demo / brain)
         self.tele = Telemetry()
+        self.campre = CamPreview()
         self._font_sm = pygame.font.SysFont(
             "dejavusansmono,menlo,consolas,monospace", 14)
         self._eye_gaze = {-1: (0.0, 0.0), 1: (0.0, 0.0)}  # per-eye eased
@@ -718,8 +780,20 @@ class FaceRenderer:
             surf.blit(dimg, ((SCREEN_W - dimg.get_width()) // 2,
                              SCREEN_H - m - dimg.get_height() - 30))
 
+        # --- right edge: live camera window
+        cimg = self.campre.surface(pg, now)
+        if cimg is not None:
+            cw, chh = CamPreview.SIZE
+            cx0, cy0 = SCREEN_W - m - cw - 4, (SCREEN_H - chh) // 2
+            surf.blit(cimg, (cx0, cy0))
+            pg.draw.rect(surf, HUD_DIM,
+                         pg.Rect(cx0 - 1, cy0 - 1, cw + 2, chh + 2), 1)
+            lab = self._text("CAM", HUD_DIM, small=True)
+            surf.blit(lab, (cx0, cy0 - lab.get_height() - 3))
+
         # --- bottom-right: sensor slots (fill in as hardware arrives)
-        sens = self._text("MIC --  CAM --  RDR --  IMU --", HUD_DIM,
+        cam_s = "OK" if self.campre.ok else "--"
+        sens = self._text(f"MIC --  CAM {cam_s}  RDR --  IMU --", HUD_DIM,
                           small=True)
         sx = SCREEN_W - m - 34 - sens.get_width()
         sy = SCREEN_H - m - sens.get_height() - 8
