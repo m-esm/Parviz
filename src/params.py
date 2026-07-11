@@ -199,7 +199,7 @@ P = {
     "sprocket_outer_d": 37.6,   # tip r 18.8 = pin circle 19.32 - 0.5 clearance (OD 42 jammed links)
     "idler_bore_d": 15.95,  # F688ZZ (8x16x5, flange 18) press seat; flange recess 18.5 x 1.0
     "roadwheel_d": 20.0,    # dished road wheels riding the bottom-run knuckle crowns
-    "roadwheel_ys": (80.5, 57.5, 33.5, 11.5, -11.5, -33.5),   # EXPLICIT stations
+    "roadwheel_ys": (57.5, 33.5, 11.5, -11.5, -33.5),   # EXPLICIT stations
                             # (2026-07-11 mid-drive): the ground-run sprocket at spr_y
                             # -68 needs 28.8+ axle gaps (18.8 + 10): nearest wheel
                             # -33.5 sits 34.5 away; -68..-120 is carried by the
@@ -207,6 +207,15 @@ P = {
                             # 2026-07-11: at +-34.5 the beam nut slot's edge 38.15
                             # nicked the pod-join dowel SOCKET edge 38.075 by 0.075;
                             # +-33.5 clears it 0.93, wheel gaps stay 22/24)
+    "spr_y2": 90.0,         # SECOND drive station (2026-07-11, user: "two motors per
+                            # side, second optional but all fittings ready"): mirrored
+                            # about the shaft -- the TT sits FLIPPED (gearbox trailing
+                            # -y), so its envelope ys2-52.6..ys2+12 clears the ULN
+                            # posts (y<=36) and the front inner wall (115); tab/rib
+                            # land at ys2+14..15, nub ys2-11=79 (the y80 vent left the
+                            # row for it), M3s ys2-20.3=69.7. Sprocket 2 mounts the
+                            # optional TT's own shaft; without it the station is empty
+                            # (end idler + the 57.5 wheel carry the front run).
     "spr_y": -68.0,         # drive sprocket station on the ground run (center z = pin
                             # line + pin circle = 25.32). THE derivation (all failed
                             # spots documented 2026-07-11): the TT envelope ys-12..
@@ -296,7 +305,12 @@ P = {
     # y -24..24). (-38, 45) clears everything: board y 29..61 > pedestal 24, < US board
     # 71.4; x -55.5..-20.5 clear of ULN#1 (x >= 20.5) and both TT cans (|x| >= 44.4 only
     # at y < -10).
-    "uln2_c": (-38.0, 45.0),
+    "uln2_c": (0.0, 80.0),  # moved 2026-07-11 (dual motors): the old (-38, 45) posts
+                            # sat inside the flipped front TT_L's envelope (y 37..102,
+                            # x -68..-40); pedestal x -37..10 blocks every left-side
+                            # spot, so the board rides the empty front-center floor
+                            # (posts +-17.5 x, y 64..96 -- clear of both TT columns,
+                            # the pedestal, the belly opening rim at y 49, and walls)
     # Ballast bay: rear cavity floor (head+Pi CoM is forward-high -> mass low + rearward).
     # 3 ribs across X make three ~9.5-wide pockets against the rear wall (inner face y=-73)
     # for steel bar / coins / shot; the front rib at -40 fences the mass. Ribs end at

@@ -98,6 +98,13 @@ def build():
         dm.apply_translation((sx * ax, P["spr_y"], _track_zc()))   # mid-drive: shaft on
         # the ground-run sprocket axis (pin line + pin circle = 25.32), see PARAMS spr_y
         add(dm, np.eye(4))
+        dm2 = motor_tt("drive2_L" if sx < 0 else "drive2_R")   # OPTIONAL 2nd TT
+        dm2.apply_transform(R(TAU / 2, (1, 0, 0)))   # (2026-07-11): flipped about its
+        if sx < 0:                                   # shaft so the gearbox trails -y;
+            dm2.apply_transform(R(TAU / 2, (0, 1, 0)))   # then side-mirrored like dm
+        dm2.apply_translation((sx * ax, P["spr_y2"], _track_zc()))
+        add(dm2, np.eye(4))                          # all fittings modeled -- populate
+        # this station when the 2nd motor pair is bought (BOM: optional)
 
     # --- PAN GROUP ---
     add(build_pan_platform(), M_pan, "pan_platform.stl")

@@ -519,3 +519,22 @@ z 157) -- y -40 is the derived clear column (trim rails y +-13, Ø26 tilt clamp
 tubes to y -31, Ø20 pivot bosses, wall flat ends y -54). BOM: F688ZZ 4 -> 8 (two
 per end idler x4), M4x40 12, hinge pins 128, Ø8 stubs x4 ~50 mm (M8 bolts work).
 PRINT NOTE: 128 track links total -- budget the print time.
+
+**End-axle + dual-drive pass (2026-07-11, user rounds 9-10):** (1) M8 END BOLT-AXLES
+(user: "two wheels per side not connected to anything" -- the plain Ø8 stubs had no
+axial retention and the idlers showed bare bearing bores outside): each end wheel now
+rides an M8 bolt, head outboard as the hubcap, shank through the F688 pair and the
+pylon, NUT on the pylon's inboard face; on the FRONT pylons the nut clamps the through
+tension slot = the tensioner (M3 set screws deleted; rear press sockets became Ø8.4
+through holes). (2) SECOND DRIVE STATION per side at spr_y2=+90 (user: "two motors on
+each side, second optional but all fittings ready"): the whole TT feature set loops
+over both stations with mirrored y-offsets (the front TT flips about its shaft --
+gearbox trails -y; tab/rib at ys2+14..15, nub 79, M3s 69.7); sprocket 2 rides the
+OPTIONAL motor's own shaft (drive2_L/R placeholders modeled; without motors the
+station is empty and the end idler + 57.5 wheel carry the front run). Knock-ons:
+road wheels 6 -> 5 stations (57.5, +-33.5, +-11.5; both sprockets get 28.8+ axle
+gaps), beam gets a second hub notch, the y80 vent left the row for the front nub,
+and ULN2 moved (-38,45) -> (0,80) -- its posts sat inside the flipped TT_L envelope
+and the pedestal blocks every left-side alternative. BOM: 4x M8x60 + nuts (Bag 13
+"Machine Bolts" may cover it -- verify), M4x40 12 -> 10, TT motors: 2 required
+(own 1, buy 1) + 2 OPTIONAL for twin drive.

@@ -402,7 +402,7 @@ def build_chassis_core():
         usr = cyl(P["us_d"] / 2 + 0.3, 12, axis="y")  # rear obstacle HC-SR04 barrel
         usr.apply_translation((sx * P["us_dx"], -(fw - 2.5), P["us_cz"]))
         body = sub(body, usr)                         # passes (2026-07-11, twin ring)
-    for vy in (-112.0, -96.0, 16.0, 32.0, 48.0, 64.0, 80.0, 96.0):
+    for vy in (-112.0, -96.0, 16.0, 32.0, 48.0, 64.0, 96.0):   # y80 -> the 2nd nub
         # side ventilation slots, RE-CLOCKED 2026-07-11 (mid-drive): the TT feature
         # zone moved to y ~ -87..-15 (motor at spr_y -68), so the old row shifted
         # out of it into the now feature-free bands of the 240 tub
@@ -418,38 +418,39 @@ def build_chassis_core():
     # ground run at spr_y, center z = the pin line + pin circle = _track_zc() = 25.32;
     # the TT rides its shaft there directly (dropped ~9 and moved to the vent-free
     # band -- the side vents were re-clocked around the new motor zone).
-    zs, ys = _track_zc(), P["spr_y"]                  # 25.32, -41
+    # TWO STATIONS per side (2026-07-11, user: "two motors on each side, second
+    # optional but all fittings ready"): the rear station (spr_y, orientation +1) and
+    # a mirrored FRONT station (spr_y2, orientation -1: the TT flips about its shaft,
+    # so every y-offset changes sign -- gearbox trails -y, tab/rib sit forward).
+    zs = _track_zc()                                  # 25.32
     xw = P["chassis_w"] / 2                           # wall outer face (70); inner face 65
-    axm = xw - 5.0 - P["tt_gearbox"][2] / 2 - 0.1     # motor axis x (45.58)
-    for s in (-1, 1):
+    axm = xw - 5.0 - P["tt_gearbox"][2] / 2 - 0.1     # motor axis x
+    for ys, o in ((P["spr_y"], 1.0), (P["spr_y2"], -1.0)):
+      for s in (-1, 1):
         ph = cyl(4.0, 12, axis="x"); ph.apply_translation((s * (xw - 2.5), ys, zs))
         body = sub(body, ph)                          # Ø8 shaft pass-through (clears Ø7.2 boss)
         rec = cyl(8.5, 2.2, axis="x"); rec.apply_translation((s * (xw - 0.9), ys, zs))
         body = sub(body, rec)                         # outer recess -> 3 mm web, hub sits close
         for dz in (-8.75, 8.75):                      # M3 through gearbox + wall, nut in the gap
-            mh = cyl(1.6, 12, axis="x"); mh.apply_translation((s * (xw - 2.5), ys + 20.3, zs + dz))
+            mh = cyl(1.6, 12, axis="x"); mh.apply_translation((s * (xw - 2.5), ys + o * 20.3, zs + dz))
             body = sub(body, mh)
-        nubp = cyl(2.1, 2.3, axis="x"); nubp.apply_translation((s * (xw - 5.0 + 1.1), ys + 11.0, zs))
+        nubp = cyl(2.1, 2.3, axis="x"); nubp.apply_translation((s * (xw - 5.0 + 1.1), ys + o * 11.0, zs))
         body = sub(body, nubp)                        # Ø4.2 x 2.2 locating-nub pocket, inner face
-        # pocket over the motor: the raised gearbox/can top is at z 45.52 (zs 34.32 + 11.2)
-        # but the cavity ceiling is 32 -- cut to 45.8, still under the z46 deck seam (the
-        # pan-seat floor plane and the race ring footprint r34..46 stay clear: nearest
-        # pocket corner is at r 50.2)
-        dkp = box(19.4, 64.7, 13.9); dkp.apply_translation((s * (xw - 14.5), ys + 20.35, 38.85))
+        # pocket over the motor: gearbox/can top 36.5 at zs 25.32 -- cut to 45.8, still
+        # under the z46 deck seam (pan-seat floor + race ring footprint stay clear)
+        dkp = box(19.4, 64.7, 13.9); dkp.apply_translation((s * (xw - 14.5), ys + o * 20.35, 38.85))
         body = sub(body, dkp)
-        # cavity-corner relief: the cavity's r12 rounded corner leaves body material where the
-        # rectangular gearbox rear corner sits -- square it off locally (spans old + raised z)
-        crn = box(7.0, 14.2, 33.9); crn.apply_translation((s * (xw - 8.4), ys - 5.1, 28.85))
+        # cavity-corner relief for the rectangular gearbox corner
+        crn = box(7.0, 14.2, 33.9); crn.apply_translation((s * (xw - 8.4), ys - o * 5.1, 28.85))
         body = sub(body, crn)
-        # TT front-tab RIB (2026-07-10 toy-tank hull: the rear wall receded -100 ->
-        # -120, so the tab/hole pockets that used to be cut into it get a floor-to-
-        # z40 rib bridged to the side wall at the old station; the cuts land in it)
-        rib = box(69.1 - (axm - 4.0), 6.9, 28.0)       # front face y -92.3: 0.3 shy of
-        rib.apply_translation((s * ((axm - 4.0 + 69.1) / 2), ys - 15.1, 26.0))
-        body = uni([body, rib])                        # the gearbox face plane (~-92)
-        tabp = box(4.2, 5.7, 6.4); tabp.apply_translation((s * axm, ys - 14.15, zs))
+        # TT tab RIB: floor-to-z40, bridged to the side wall; the tab pocket + hole
+        # cuts land in it (0.3 shy of the gearbox face plane)
+        rib = box(69.1 - (axm - 4.0), 6.9, 28.0)
+        rib.apply_translation((s * ((axm - 4.0 + 69.1) / 2), ys - o * 15.1, 26.0))
+        body = uni([body, rib])
+        tabp = box(4.2, 5.7, 6.4); tabp.apply_translation((s * axm, ys - o * 14.15, zs))
         body = sub(body, tabp)                        # front-tab pocket in the rib (1+ skin)
-        tabh = cyl(1.4, 14, axis="x"); tabh.apply_translation((s * axm, ys - 14.0, zs))
+        tabh = cyl(1.4, 14, axis="x"); tabh.apply_translation((s * axm, ys - o * 14.0, zs))
         body = sub(body, tabh)                        # Ø2.8 tab-hole continuation (M2.5 self-tap)
         # (the old wall-mounted idler tension arm/plate/slot was DELETED 2026-07-11:
         # both loop ends now ride Ø8 stubs in DECK-OVERHANG PYLONS -- see
@@ -721,16 +722,21 @@ def build_chassis_parts():
             hb = cyl(7.0, 8.0, axis="x")               # hub boss around the socket
             hb.apply_translation((sx_ * 66.0, sgn2 * ey_, za_))
             dtgt = uni([dtgt, py, hb])
-            if sgn2 > 0:                               # front: tension slot + set screw
-                sl = uni([cyl(4.1, 9.0, axis="x"), box(9.0, P["idler_slot"], 8.2)])
-                sl.apply_translation((sx_ * 65.5, sgn2 * ey_, za_))
+            # END-AXLE FIX (2026-07-11, user: "two wheels per side not connected to
+            # anything"): the plain O8 stubs had NO axial retention -- the idlers
+            # could walk outboard off them, and the wheels showed bare bearing bores
+            # outside. Each end wheel now rides an M8 BOLT-AXLE: head outboard as the
+            # hubcap, shank through the F688 pair, NUT on the pylon's inboard face
+            # (open air under the overhang, wrench-accessible). FRONT: the through
+            # SLOT stays and the nut CLAMPS the slide = tension lock, replacing the
+            # old M3 set screw. REAR: through O8.4 clearance hole (was a blind press).
+            if sgn2 > 0:                               # front: tension slot, bolt-clamped
+                sl = uni([cyl(4.2, 10.0, axis="x"), box(10.0, P["idler_slot"], 8.4)])
+                sl.apply_translation((sx_ * 66.0, sgn2 * ey_, za_))
                 dtgt = sub(dtgt, sl)
-                ss = cyl(1.25, 14.0, axis="y")
-                ss.apply_translation((sx_ * 65.5, sgn2 * ey_ + 8.0, za_))
-                dtgt = sub(dtgt, ss)
-            else:                                      # rear: blind Ø7.85 press socket
-                sk = cyl(3.925, 7.0, axis="x")
-                sk.apply_translation((sx_ * 66.6, sgn2 * ey_, za_))
+            else:                                      # rear: O8.4 through clearance
+                sk = cyl(4.2, 10.0, axis="x")
+                sk.apply_translation((sx_ * 66.0, sgn2 * ey_, za_))
                 dtgt = sub(dtgt, sk)
         if sgn2 > 0:
             deck_f = dtgt
@@ -850,9 +856,10 @@ def build_pod_rails():
         beam.apply_translation((s * 77.2, 0, 20.0))    # (mid-drive 2026-07-11: stations
         # to +-80.5 + nut-slot margin; ramp links leave the ground at +-120)
         rail = uni(parts + [spine, beam])
-        hn = cyl(6.75, 10.0, axis="x")                 # Ø13.5 notch: the mid-drive
-        hn.apply_translation((s * 77.2, P["spr_y"], _track_zc()))   # sprocket hub tube
-        rail = sub(rail, hn)                           # (Ø12) crosses the beam here
+        for sy_ in (P["spr_y"], P["spr_y2"]):          # Ø13.5 notches: both drive
+            hn = cyl(6.75, 10.0, axis="x")             # sprockets' hub tubes (Ø12)
+            hn.apply_translation((s * 77.2, sy_, _track_zc()))   # cross the beam
+            rail = sub(rail, hn)
         for ry in P["roadwheel_ys"]:
             ab = cyl(2.2, 9.0, axis="x")               # Ø4.4 M4 clearance bore
             ab.apply_translation((s * 77.2, ry, rr_z))

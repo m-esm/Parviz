@@ -261,8 +261,10 @@ def build_tracks():
         # bottom run rack-style -- the robot's weight presses the run into the teeth,
         # so ground reaction guarantees the 2-3-pin bite. TT stays direct on the
         # double-D shaft, dropped with it to z 25.32.
-        spr = _sprocket(sx)
-        spr.apply_translation((cx, P["spr_y"], (zc - R) + R)); wheel_pieces.append(spr)
+        for sy_ in (P["spr_y"], P["spr_y2"]):          # two stations (2026-07-11: the
+            spr = _sprocket(sx)                        # front sprocket rides the
+            spr.apply_translation((cx, sy_, (zc - R) + R))   # OPTIONAL second TT's
+            wheel_pieces.append(spr)                   # shaft; fittings all present)
         # END WHEELS (both ends are now FREE IDLERS on Ø8 stubs in the deck-overhang
         # pylons; the front pair tensions): rides the knuckle crowns with 0.12 running
         # clearance; TWO
@@ -321,11 +323,15 @@ def build_tracks():
             hd = cyl(3.5, 3.5, axis="x")
             hd.apply_translation((sx * 113.15, ry, rwz))       # head on the hub face
             hw += [sh, hd]
-        for ey_ in (wb / 2, -wb / 2):                  # Ø8 end stubs INTO the pylons
-            stub = cyl(4.0, 49.0, axis="x")            # x 64..113: rear presses its
-            stub.apply_translation((sx * 88.5, ey_, za))   # Ø7.85 socket (designed,
-            hw.append(stub)                            # whitelisted), front slides in
-            # its Ø8.2 tension slot; outboard end reaches the wheel's outer face +2
+        for ey_ in (wb / 2, -wb / 2):                  # M8 END BOLT-AXLES (2026-07-11
+            sh8 = cyl(4.0, 60.4, axis="x")             # fix: plain stubs had no axial
+            sh8.apply_translation((sx * 88.2, ey_, za))    # retention): shank x 58..
+            hd8 = cyl(6.5, 5.3, axis="x")              # 118.4 through bearings + pylon,
+            hd8.apply_translation((sx * 121.05, ey_, za))  # head = the outboard hubcap
+            nt8 = cyl(7.2, 6.5, axis="x")              # (base 118.4 = wheel face + 1
+            nt8.apply_translation((sx * 58.75, ey_, za))   # washer), M8 nut against the
+            hw += [sh8, hd8, nt8]                      # pylon inboard face (62); front
+            # nut clamps the tension slot = the tensioner, no set screw needed
         hwn = trimesh.util.concatenate(hw)
         _color(hwn, "motor")
         hwn.metadata["name"] = "axle_hw_%s" % ("L" if sx < 0 else "R")
