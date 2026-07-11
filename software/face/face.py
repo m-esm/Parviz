@@ -390,9 +390,14 @@ class Telemetry:
                 pass
             self.ssid = ""
             try:
-                self.ssid = subprocess.run(
-                    ["iwgetid", "-r"], capture_output=True, text=True,
-                    timeout=2).stdout.strip()
+                out = subprocess.run(
+                    ["iw", "dev", "wlan0", "info"], capture_output=True,
+                    text=True, timeout=2).stdout
+                for line in out.splitlines():
+                    line = line.strip()
+                    if line.startswith("ssid "):
+                        self.ssid = line[5:].strip()
+                        break
             except (OSError, subprocess.SubprocessError):
                 pass
             try:
@@ -673,12 +678,11 @@ class FaceRenderer:
             uv_past = bool(te.throttled and te.throttled & 0x10000)
             state = "UV!" if uv_now else ("OK*" if uv_past else "OK")
             cv = f"{te.core_v:.2f}V" if te.core_v is not None else "--"
-            ptxt = self._text(
-                f"PWR AC {te.watts:.1f}W  CORE {cv}  {state}",
-                HUD_BAD if uv_now else HUD_FG, small=True)
-            px0 = (SCREEN_W - ptxt.get_width() - 60) // 2
+            ptxt = self._text(f"PWR {te.watts:.1f}W {cv} {state}",
+                              HUD_BAD if uv_now else HUD_FG, small=True)
+            px0 = 268   # fixed slot between the SYS and NET blocks
             surf.blit(ptxt, (px0, m + 6))
-            self._spark(surf, px0 + ptxt.get_width() + 10, m + 9, 50, 10,
+            self._spark(surf, px0 + ptxt.get_width() + 12, m + 9, 46, 10,
                         te.watts_hist, lo=0.0, hi=12.0)
 
         # --- top-right: NET block (right-aligned)

@@ -20,7 +20,8 @@ WorkingDirectory=/home/moshe/parviz-sw/face
 Environment=SDL_VIDEODRIVER=kmsdrm
 # dim the DSI backlight (user: bg as black as possible; IPS glow is the
 # limit, not the pixel color) -- '+' runs this line as root
-ExecStartPre=+/bin/sh -c 'echo 120 > /sys/class/backlight/*/brightness || true'
+# NOTE: sh does NOT glob redirection targets; tee's args do glob.
+ExecStartPre=+/bin/sh -c 'echo 120 | tee /sys/class/backlight/*/brightness || true'
 ExecStart=/usr/bin/python3 /home/moshe/parviz-sw/face/face.py
 Restart=always
 RestartSec=2

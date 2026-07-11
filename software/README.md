@@ -282,3 +282,19 @@ heartbeat pip bottom-right. Telemetry class samples procfs/sysfs fast
 items @2 s, slow @30 s, degrades to '--'. TOUCH: per-eye gaze, each eye
 aims at the finger independently (renderer eases per eye), so a poke
 BETWEEN THE EYES goes cross-eyed + opens a silly o-mouth (user todo).
+
+Face v6 (2026-07-12, user rounds): HUD went LIGHT-GRAY monochrome
+(orange = face only; three grays, red reserved for alerts), MEM sparkline
+joined CPU (fixed 0-100% scale, labels left), dedicated PWR block top-
+center: real PMIC numbers via `vcgencmd pmic_read_adc` (sum of rail V*A
+= board watts, ~2.4 W idle, + core V + throttle state; OK* = past
+undervolt since boot) with a watts sparkline; NET gained the SSID (`iw
+dev wlan0 info`, iwgetid is not on trixie). LLM DECISIONS show subtly
+bottom-center: the brain writes {"actions":[...],"reason":...} to
+/tmp/parviz_decision.json, the face polls mtime every 2 s and shows
+"verbs // reason" while <120 s fresh (first face<->brain IPC). Pupil
+GLINT rides the gaze (dot sits where the eye looks). Touch between the
+eyes = DERP per user ref image: near eye stares at the finger, other
+rolls up-out. BG is true (0,0,0); the residual glow is IPS backlight,
+so the service dims it to 120/255 at start (ExecStartPre tee -- sh does
+NOT glob redirection targets, tee args do). Settled CPU ~6% of one core.
