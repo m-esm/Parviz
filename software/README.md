@@ -337,3 +337,20 @@ neutral expression only; touch and brain expressions win), CAM window
 draws the raw detection box + faint raw numbers (HUD_FAINT 11 px, user:
 subtle), CAM slot shows OK from frame freshness. DEMO TOGGLE: triple-tap
 the screen within 1 s toggles demo mode at runtime, OFF by default.
+
+Pipeline stage 2 (2026-07-12, user's diagram): Camera -> YuNet -> CROP+
+ALIGN (rotate on YuNet eye line, 1.7x box margin, 256x256) -> MediaPipe
+FACE LANDMARKER -> behavior. No mediapipe python wheel exists for
+cp313/aarch64, so the .task bundle's face_landmarks_detector.tflite
+(478 pts, in models/) runs directly via ai-edge-litert (pip, installed
+--user on the Pi); its confidence head is a LOGIT (sigmoid it). The
+bundled blendshapes model needs mediapipe's private 146-index subset, so
+expression SIGNALS are geometric from canonical facemesh indices: EAR
+(eyes_closed <0.16), mouth_open (13-14 gap / face height), smile (mouth
+width/jaw width + corner lift), brow_gap -> visible_expression label
+(neutral/happy/surprised/eyes_closed; visible, not felt). Measured live:
+landmarker 26 ms on top of YuNet 16 ms, still 1 Hz. Face BEHAVIOR: smile
+mirror -- person smiles (smile>0.5) -> Parviz goes happy, reverts when
+the smile goes (only if vision set it; touch/demo/brain win). Raw line
+under the cam feed now shows the label + smile score + lmk ms. Verified
+end-to-end on a live smile at the desk.

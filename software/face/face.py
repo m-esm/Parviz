@@ -846,10 +846,15 @@ class FaceRenderer:
                     l1 = (f'f{raw["n_faces"]} {raw["conf"]:.2f} '
                           f'x{raw["cx"]:+.2f} y{raw["cy"]:+.2f} '
                           f's{raw["size"]:.2f}')
+                    if "visible_expression" in raw:
+                        l1 += (f'  {raw["visible_expression"]} '
+                               f'sm{raw.get("smile", 0):.2f}')
                 else:
                     l1 = "no face"
                 l2 = (f'yunet {raw.get("fps", 0):.0f}fps '
                       f'{raw.get("infer_ms", 0):.0f}ms')
+                if "lm_ms" in raw:
+                    l2 += f'  lmk {raw["lm_ms"]:.0f}ms'
                 for i, s in enumerate((l1, l2)):
                     img = self._text(s, HUD_FAINT, tiny=True)
                     surf.blit(img, (cx0 + cw + 8,
@@ -974,6 +979,17 @@ class FaceRenderer:
                     self.state.touch(None)
             if self.demo_on and now - self._boot_t0 > BOOT_LEN_S:
                 director.tick(now, self)
+            elif self.state.touch_pt is None:
+                # Tier-1 behavior: mirror a visible smile (perception's
+                # landmark signals); revert only what vision itself set.
+                ve = (self.vision.raw or {}).get("visible_expression")
+                if ve == "happy" and self.state.expression == "neutral":
+                    self.set_expression("happy")
+                    self._vis_set = True
+                elif (getattr(self, "_vis_set", False) and ve != "happy"
+                      and self.state.expression == "happy"):
+                    self.set_expression("neutral")
+                    self._vis_set = False
             lid = self.state.tick(now, dt)
             self.draw(lid, dt)
             self.clock.tick(30)

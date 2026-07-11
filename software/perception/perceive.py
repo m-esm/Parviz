@@ -29,6 +29,7 @@ Test:   python3 perceive.py --image f.jpg   # one-shot detector check
 
 import argparse
 import json
+import math
 import os
 import statistics
 import time
@@ -38,6 +39,7 @@ import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 MODEL = os.path.join(HERE, "models", "face_detection_yunet_2023mar.onnx")
+LM_MODEL = os.path.join(HERE, "models", "face_landmarks_detector.tflite")
 VISION_JSON = "/dev/shm/parviz_vision.json"
 PREVIEW_JPG = "/dev/shm/parviz_preview.jpg"
 
@@ -61,6 +63,80 @@ def detect(det, bgr_det):
     [x,y,w,h, ...5 landmark pairs..., score] in detector pixels."""
     _, faces = det.detect(bgr_det)
     return [] if faces is None else list(faces)
+
+
+class Landmarker:
+    """MediaPipe face-landmarks tflite run directly via LiteRT (no
+    mediapipe python: no cp313/aarch64 wheel). 478 x/y/z points in the
+    256x256 aligned-crop space + face confidence."""
+
+    def __init__(self, path=LM_MODEL):
+        from ai_edge_litert.interpreter import Interpreter
+        self.it = Interpreter(model_path=path, num_threads=2)
+        self.it.allocate_tensors()
+        self._in = self.it.get_input_details()[0]["index"]
+        outs = self.it.get_output_details()
+        self._lm = outs[0]["index"]
+        self._conf = outs[1]["index"]
+
+    def run(self, bgr256):
+        rgb = cv2.cvtColor(bgr256, cv2.COLOR_BGR2RGB).astype(
+            np.float32) / 255.0
+        self.it.set_tensor(self._in, rgb[None])
+        self.it.invoke()
+        lm = self.it.get_tensor(self._lm).reshape(-1, 3)
+        logit = float(self.it.get_tensor(self._conf).ravel()[0])
+        return lm, 1.0 / (1.0 + math.exp(-logit))   # logit -> probability
+
+
+def crop_align(bgr_full, face, sx, sy, out=256):
+    """Rotate so the YuNet eye landmarks are horizontal, crop the face
+    box with margin, resize to the landmark model's input."""
+    x, y, w, h = [float(v) for v in face[:4]]
+    le = (face[4] * sx, face[5] * sy)
+    re = (face[6] * sx, face[7] * sy)
+    ang = math.degrees(math.atan2(re[1] - le[1], re[0] - le[0]))
+    cx, cy = (x + w / 2) * sx, (y + h / 2) * sy
+    size = max(w * sx, h * sy) * 1.7
+    m = cv2.getRotationMatrix2D((cx, cy), ang, 1.0)
+    m[0, 2] += size / 2 - cx
+    m[1, 2] += size / 2 - cy
+    crop = cv2.warpAffine(bgr_full, m, (int(size), int(size)))
+    return cv2.resize(crop, (out, out), interpolation=cv2.INTER_AREA)
+
+
+def face_signals(lm):
+    """Measurable expression signals from canonical facemesh indices.
+    Aligned crop -> y is upright, so vertical geometry is meaningful."""
+    def d(a, b):
+        return float(np.linalg.norm(lm[a][:2] - lm[b][:2]))
+    face_h = d(10, 152) or 1.0
+    ear_l = (d(160, 144) + d(158, 153)) / (2 * (d(33, 133) or 1))
+    ear_r = (d(385, 380) + d(387, 373)) / (2 * (d(362, 263) or 1))
+    mouth_open = d(13, 14) / face_h
+    width_ratio = d(61, 291) / (d(234, 454) or 1)
+    # + when the mouth corners sit ABOVE the inner-lip midpoint
+    corner_lift = (((lm[13][1] + lm[14][1]) / 2
+                    - (lm[61][1] + lm[291][1]) / 2) / face_h)
+    smile = max(0.0, min(1.0, (width_ratio - 0.42) * 4 + corner_lift * 12))
+    brow_gap = ((lm[159][1] - lm[105][1]) +
+                (lm[386][1] - lm[334][1])) / 2 / face_h
+    return {"ear": round(float(ear_l + ear_r) / 2, 3),
+            "eyes_closed": bool(ear_l < 0.16 and ear_r < 0.16),
+            "mouth_open": round(float(mouth_open), 3),
+            "smile": round(float(smile), 2),
+            "brow_gap": round(float(brow_gap), 3)}
+
+
+def classify(sig):
+    """Signals -> a VISIBLE expression label (not a claim about feelings)."""
+    if sig["eyes_closed"]:
+        return "eyes_closed"
+    if sig["mouth_open"] > 0.11 and sig["brow_gap"] > 0.10:
+        return "surprised"
+    if sig["smile"] > 0.5:
+        return "happy"
+    return "neutral"
 
 
 def interaction_state(faces, fps, infer_ms):
@@ -104,6 +180,11 @@ def run(bench_s=None, hz=LOOP_HZ):
         main={"size": (CAP_W, CAP_H), "format": "BGR888"}))
     cam.start()
     det = make_detector()
+    try:
+        lmk = Landmarker()
+    except Exception as e:      # LiteRT missing -> detection-only mode
+        print(f"landmarker unavailable ({e}); detection only", flush=True)
+        lmk = None
     period = 1.0 / hz
     last_prev = 0.0
     lat = []
@@ -125,8 +206,19 @@ def run(bench_s=None, hz=LOOP_HZ):
         if t0 - fps_t0 >= 2.0:
             fps = fps_n / (t0 - fps_t0)
             fps_t0, fps_n = t0, 0
-        write_atomic(VISION_JSON,
-                     json.dumps(interaction_state(faces, fps, infer_ms)))
+        st = interaction_state(faces, fps, infer_ms)
+        if lmk is not None and faces:
+            # crop + align the largest face, then landmarks -> signals
+            f = max(faces, key=lambda f: f[2] * f[3])
+            t2 = time.monotonic()
+            crop = crop_align(bgr, f, CAP_W / DET_W, CAP_H / DET_H)
+            lm, lconf = lmk.run(crop)
+            if lconf > 0.5:
+                sig = face_signals(lm)
+                sig["visible_expression"] = classify(sig)
+                sig["lm_ms"] = round((time.monotonic() - t2) * 1000, 1)
+                st.update(sig)
+        write_atomic(VISION_JSON, json.dumps(st))
         if t0 - last_prev >= PREVIEW_EVERY_S:
             last_prev = t0
             prev = cv2.resize(bgr, (160, 120), interpolation=cv2.INTER_AREA)
@@ -176,7 +268,20 @@ def main():
         for f in faces:
             print(f"  box=({f[0]:.0f},{f[1]:.0f},{f[2]:.0f},{f[3]:.0f}) "
                   f"score={f[14]:.2f}")
-        print(json.dumps(interaction_state(faces, 0, 0), indent=1))
+        st = interaction_state(faces, 0, 0)
+        if faces:
+            try:
+                lmk = Landmarker()
+                crop = crop_align(img, max(faces, key=lambda f: f[2] * f[3]),
+                                  1.0, 1.0)
+                lm, lconf = lmk.run(crop)
+                sig = face_signals(lm)
+                sig["visible_expression"] = classify(sig)
+                sig["lm_conf"] = round(lconf, 2)
+                st.update(sig)
+            except Exception as e:
+                print(f"landmarker skipped: {e}")
+        print(json.dumps(st, indent=1))
         return
     run(bench_s=args.bench, hz=args.hz)
 
