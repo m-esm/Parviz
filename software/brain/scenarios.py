@@ -450,7 +450,7 @@ def main():
     os.makedirs(os.path.join(HERE, "results"), exist_ok=True)
     outpath = os.path.join(HERE, "results", f"{args.tag}.jsonl")
 
-    with open(outpath, "a") as outf:
+    with open(outpath if not args.digest_only else os.devnull, "a") as outf:
         for name in names:
             sc = SCENARIOS[name]
             render = build_digest_v2 if args.prompt == "v2" else build_digest
