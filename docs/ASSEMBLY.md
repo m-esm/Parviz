@@ -46,7 +46,7 @@ Owned quantities cross-checked against a personal parts inventory (2026-07-07).
 | F688ZZ flanged | 8x16x5, flange Ø18; END idlers (both loop ends are free idlers since the 2026-07-11 mid-drive), **2 per wheel x 4 wheels** (one pressed at each face, Ø15.95 through-seat + Ø18.5x1.0 flange recess both sides) | 8 | 0 | **8** |
 | 6 mm airsoft BBs | pan race, Ø80 circle, `pan_race_n`=18 | 18 | 0 | **smallest bag (100+)** |
 | Ø5 SOLID rod | tilt axle, ~100 mm silver steel (**NOT tube**: a 1.0 flat on a Ø5/Ø2.5 tube leaves a 0.25 wall). **File a 1.0-deep flat** from the insertion end to ~15 past center (D-key for the worm wheel's hub ledge); only the ~6 mm under the hub needs a clean 1.0 ±0.1 depth. The flat crosses the +X 695 seat, so that inner race rides a D-profile (fine, the spacer tubes clamp it). Print a D-bore coupon first, starting at **+0.05** clearance (+0.15 measured as ±4.4° of head backlash) | 1 | 0 | **1** |
-| M8x60 bolts + nuts | END BOLT-AXLES (2026-07-11: plain stubs had no retention): head = outboard hubcap, shank through the F688 pair + pylon, nut inboard; front nuts CLAMP the tension slots (no set screws). +4 washers | 4+4 | the Bag 13 "Machine Bolts" bag may have M8; verify | **4x M8x60 + nuts if absent** |
+| M8x60 bolts + NYLOC nuts | END BOLT-AXLES (2026-07-11: plain stubs had no retention): head = outboard hubcap, shank through the F688 pair + pylon, nut inboard; front nuts CLAMP the tension slots (no set screws). NYLOC required: the nut lives in the prow-cheek clearance pocket with no wrench access after the deck drops on -- torque on the bench, retension from the outboard head only. +4 washers | 4+4 | the Bag 13 "Machine Bolts" bag may have M8; verify | **4x M8x60 + nuts if absent** |
 | 608zz | **not used** in the current design. The "608zz x30" Bag 13 entry is still flagged: photos look like white plastic rings/spacers, NEEDS ID. Don't design around them | 0 | 30? (unverified) |, |
 
 ### Fasteners and pins
@@ -144,9 +144,13 @@ tray killed the 88.5 mm blind channels, 2026-07-08.)
    gearbox + wall with the nut floating in the pod gap.
 4. **Track running gear.** Press an F688ZZ into EACH face of all four end idlers (Ø15.95
    seat + Ø18.5 flange recess both sides). Each end wheel: M8 bolt from outboard
-   through the bearings and the pylon, washer + nut inboard. Rear pair: snug the nuts.
-   Front pair: leave loose, set tension AFTER threading the tracks, then tighten --
-   the nut clamps the slot. Fit the sprockets on the
+   through the bearings and the pylon, washer + NYLOC nut inboard, started ON THE
+   BENCH with the deck upside down. Orient each nut HEX FLATS FORE-AFT: as the deck
+   drops onto the tub the nut descends into its prow-cheek NUT CHANNEL (y-walls 13.8
+   apart), which grips the flats -- all torquing happens from the outboard head, no
+   inboard tool ever needed. Rear pair: snug. Front pair: leave loose, set tension
+   AFTER threading the tracks, then tighten from the head -- the channel holds the
+   nut, the nut clamps the slot. Fit the sprockets on the
    TT shafts (they mesh the ground run under the hull; the robot's weight seats them). Drop an M4 nut up each wheel-beam slot (do this BEFORE mounting the
    rails if access is tight), then bolt each road wheel with its M4x40 from outboard --
    snug, then back off 1/8 turn so the wheel spins free.

@@ -147,6 +147,20 @@ P = {
                             # track_wheelbase so the TT front tabs still pocket the rear
                             # wall (inner face 95 ~= |ys| 80.66 + tab reach ~14.5)
     "chassis_clear": 7.0,   # ground clearance under the body
+    # PROW CHEEKS (2026-07-11, user: "drive axle blocking the front and rear view
+    # LEDs... the chassis should be a bit longer from both side so the axle shaft of
+    # the last wheel will be hidden inside"): the M8 end-axle NUT stacks protrude to
+    # |y| 135.4 (x 55.5..62) in free air ahead of the 120 walls, right over the corner
+    # lamps. Four prow blocks (x |32..70|, clear of the +-30 trim rings) extend the
+    # tub tub_nose past each wall, each with an open-top nut pocket (x 47..63.5, 3.0
+    # front skin -- the nut descends into it as the deck+axle drops on; spec M8 NYLOC,
+    # the pocket is clearance not a wrench flat), a pylon notch (x 61..70.5, 1.0
+    # clear), and the glacis plane continued (+tub_nose shift). The CENTER band stays
+    # at chassis_l/2: the cliff cone crosses z 46 at y ~131 (probed), a full-width
+    # nose would ping itself. Cheek tops cap FLAT at the z 46 seam so they live
+    # wholly in chassis_lower; the wedge up to the deck slope stays an open shadow
+    # line like the pylon bay. Lamps + rear buzzer pod ride the cheek noses.
+    "tub_nose": 20.0,       # prow cheek reach past the wall (nut face 135.4 + 4.6)
     # GLACIS (2026-07-10, user: "the chassis shouldn't be a box -- from the side it
     # should have the same form as the tracks"): the hull's front/rear lower corners
     # are cut at the SAME 33 deg as the track ramps, from (|y| 83.1, z 7) up to the
@@ -525,14 +539,19 @@ P = {
     "us_cz": 32.0,          # barrel Ø16 -> z 24..40, centred in the grille opening (the
                             # 28.5 spot collided with the relocated ring's lower band)
     "us_d": 16.0,
-    "lamp_x": 54.0, "lamp_cz": 26.0,   # above the z18 glacis top    # amber corner lamps 12x7, proud 2 (hug the 140-wide corners)
+    "lamp_x": 54.0, "lamp_cz": 23.0,   # amber corner lamps 12x7, proud 2, on the PROW
+                            # CHEEK noses (2026-07-11; z 26 -> 23 so the wire drill at
+                            # lamp_cz passes UNDER the nut pocket floor z 25; bottom
+                            # 19.5 stays 1.5 above the glacis crease z 18 at the nose)
     "fled_cz": 12.0,        # white dot strip now ON the glacis face, tilted 33 deg with it
     # Chassis REAR styling (design-ref back.jpg): orange frame panel (the wall shows
     # through the opening as the 'hatch') above the USB-C slot (x +-7, z 15..23), and a
     # silver cylinder pod low-right (speaker/buzzer placeholder).
     # rear_panel_* retired 2026-07-11: trim_rear is now a TWIN of the front grille ring
                             # (grille_* params) framing the rear obstacle HC-SR04
-    "rear_cyl_x": 47.0,     # image-RIGHT in the ref back view; 2.5 clear of the trim panel
+    "rear_cyl_x": 41.0,     # image-RIGHT in the ref back view; 47 -> 41 2026-07-11: on
+                            # the prow cheek nose the Ø10 sound bore (36..46) must stay
+                            # 1.0 inboard of the nut pocket wall x 47
     "rear_cyl_cz": 30.5, "rear_cyl_d": 14.0,    # raised over the rear glacis (was 16)
     # Raised camera POD on the forehead (design ref: the camera reads as an eye). Pure
     # cosmetic shell over the recessed CM3: the bore flares 45 deg/side from the existing

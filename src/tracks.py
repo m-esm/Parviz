@@ -329,9 +329,12 @@ def build_tracks():
             sh8.apply_translation((sx * 88.2, ey_, za))    # 118.4 through bearings +
             hd8 = cyl(6.5, 5.3, axis="x")              # pylon, head = outboard hubcap
             hd8.apply_translation((sx * 121.05, ey_, za))
-            nt8 = cyl(7.2, 6.5, axis="x")              # M8 nut against the pylon inboard
-            nt8.apply_translation((sx * 58.75, ey_, za))   # face; the front nut clamps
-            hw.append((bnm, trimesh.util.concatenate([sh8, hd8, nt8])))   # the slot
+            ws8 = cyl(7.2, 1.5, axis="x")              # Ø14.4 washer on the pylon
+            ws8.apply_translation((sx * 61.25, ey_, za))   # inboard face (x 60.5..62)
+            nt8 = cyl(7.2, 5.0, axis="x", sections=6)  # M8 NYLOC as a true hex, FLATS
+            nt8.apply_translation((sx * 58.0, ey_, za))    # to +-y: the 13.8 nut channel holds the
+            # flats while the bolt is torqued from the outboard head (x 55.5..60.5)
+            hw.append((bnm, trimesh.util.concatenate([sh8, hd8, ws8, nt8])))
         side = "L" if sx < 0 else "R"
         # GRANULAR SCENE NODES (2026-07-11, user: "select every little component"):
         # each link / wheel / fastener becomes its own dotted child node

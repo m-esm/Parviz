@@ -21,7 +21,8 @@
   canvas{display:block;touch-action:none}  /* OrbitControls owns all touch gestures */
 
   /* ---- instrument panel ---- */
-  #hud{position:fixed;top:16px;left:16px;z-index:10;width:336px;
+  #hud{position:fixed;top:16px;left:16px;z-index:10;width:400px;
+    min-width:280px;max-width:70vw;resize:horizontal;   /* drag the bottom-right grip */
     background:var(--panel);border:1px solid var(--hair);border-radius:14px;
     backdrop-filter:blur(20px) saturate(1.25);-webkit-backdrop-filter:blur(20px) saturate(1.25);
     box-shadow:0 16px 44px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.06);
@@ -131,7 +132,8 @@
     box-shadow:0 8px 24px rgba(0,0,0,.45)}
   @media (max-width: 700px){
     #hudtoggle{display:block}
-    #hud{top:auto;left:0;right:0;bottom:0;width:100%;border-radius:16px 16px 0 0;
+    #hud{top:auto;left:0;right:0;bottom:0;width:100%;resize:none;min-width:0;max-width:none;
+      border-radius:16px 16px 0 0;
       max-height:62vh;max-height:62dvh;
       padding-bottom:calc(13px + env(safe-area-inset-bottom));
       transform:translateY(105%);transition:transform .28s ease;
@@ -167,7 +169,7 @@
   <div class="dims" id="bbox"><span class="ax">-</span></div>
   <div class="dims" id="selinfo" style="display:none;flex-wrap:wrap"></div>
 
-  <div class="sec">Parts</div>
+  <div class="sec">Navigation</div>
   <div id="parts"></div>
 
   <div class="sec">Pose</div>
@@ -790,6 +792,14 @@ $('hudtoggle').addEventListener('click',()=>$('hud').classList.toggle('open'));
 renderer.domElement.addEventListener('pointerdown',()=>{
   if(mobile.matches) $('hud').classList.remove('open');
 });
+
+// resizable navigation panel (desktop): native resize grip; persist the chosen width
+if(!mobile.matches){
+  const saved = parseInt(localStorage.getItem('hudw') || '0', 10);
+  if(saved >= 280) $('hud').style.width = saved + 'px';
+  new ResizeObserver(()=>{ const w = $('hud').offsetWidth;
+    if(w >= 280) localStorage.setItem('hudw', w); }).observe($('hud'));
+}
 
 let last=performance.now();
 (function loop(t){

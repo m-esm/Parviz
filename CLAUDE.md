@@ -559,3 +559,22 @@ mesh per parent (`metadata scene=False`, export-only; build.py's add() skips it 
 scene). The viewer nests dotted children as a collapsed 3rd tree level under their
 parent, and fit-map pair names (parent-level) resolve to children by prefix. When adding
 new multi-body parts, follow tracks.py's `emit()` pattern.
+
+**Prow cheeks (2026-07-11, user: "drive axle blocking the front and rear view LEDs...
+chassis a bit longer from both side so the axle shaft of the last wheel will be hidden
+inside"):** four tub blocks (x |32..70|, clear of the +-30 trim rings) extend the lower
+hull tub_nose=20 past each wall (noses at y +-140, tracks still 14 proud at +-154). Each
+swallows its M8 end-axle NUT in an open-top NUT CHANNEL (x 47..60, y-walls 13.8 apart
+centered on the axle -- the descending nut, hex FLATS to +-y, self-captures against the
+walls, so the FRONT tension axles snug from the outboard head with zero tool access; a
+wider washer slice x 60..63.5 takes the Ø14.4 washer; 3.0 front skin; spec M8 NYLOC;
+the hw placeholder models the true hex, flats to +-y), notches around the deck
+pylon (x 61..70.5, 1.0 clear), continues the 33 deg glacis (+20 shift), and caps FLAT at
+the z 46 seam (wholly in chassis_lower; the wedge up to the deck slope stays an open
+shadow line like the pylon bay). The CENTER fascia band stays recessed at y 120: the
+cliff cone crosses z 46 at y ~131 (ray-probed, 0 hits) so a full-width nose would ping
+itself. Amber lamps moved to the cheek noses (lamp_cz 26->23, wire drill under the
+pocket floor), rear buzzer pod to x 41 on its cheek (Ø10 bore 1.0 clear of the pocket),
+USB-C entry became a recessed corridor through the rear-left cheek. Viewer: the parts
+panel is now "Navigation", 400px default, drag-resizable (native resize grip,
+localStorage-persisted width), solid + fit-map-off defaults.

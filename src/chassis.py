@@ -79,11 +79,12 @@ def build_fascia():
         cliff = uni(cliff)
         _color(cliff, "sensor"); cliff.metadata["name"] = cnm
         parts.append(cliff)
-    # amber indicator lamps at the fascia corners
+    # amber indicator lamps at the fascia corners -- on the PROW CHEEK noses since
+    # 2026-07-11 (the cheeks extend tub_nose past the wall; see PARAMS tub_nose)
     for sx, nm in ((-1, "lamp_L"), (1, "lamp_R")):
         l = rounded_box(12.0, 7.0, 2.0, 2.5)
         l.apply_transform(R(-TAU / 4, (1, 0, 0)))
-        l.apply_translation((sx * P["lamp_x"], fw, P["lamp_cz"]))
+        l.apply_translation((sx * P["lamp_x"], fw + P["tub_nose"], P["lamp_cz"]))
         _color(l, "lamp"); l.metadata["name"] = nm
         parts.append(l)
     # white LED dot strip at the bottom lip: slim base + 7 round emitters. Base 1.2 (was
@@ -125,15 +126,16 @@ def build_fascia():
     # is its printed grille cap. FIXING: Ø17 x 1.5 base flange + 2x Ø2 pins into blind
     # wall sockets straddling the Ø10 sound/wire through-hole (cut in build_base).
     rcx, rcz = P["rear_cyl_x"], P["rear_cyl_cz"]
+    fwn = fw + P["tub_nose"]                         # buzzer rides the rear cheek nose
     flange = cyl(P["rearpod_flange_r"], P["rearpod_flange_t"], axis="y", sections=48)
-    flange.apply_translation((rcx, -fw - P["rearpod_flange_t"] / 2, rcz))
+    flange.apply_translation((rcx, -fwn - P["rearpod_flange_t"] / 2, rcz))
     pod_l = 9.0 - P["rearpod_flange_t"]              # overall proud height stays 9.0
     pod = cyl(P["rear_cyl_d"] / 2, pod_l, axis="y", sections=48)
-    pod.apply_translation((rcx, -fw - P["rearpod_flange_t"] - pod_l / 2, rcz))
+    pod.apply_translation((rcx, -fwn - P["rearpod_flange_t"] - pod_l / 2, rcz))
     rcp = [flange, pod]
     for sxp in (-1, 1):
         rcp.append(fix_pin(P["fix_pin2_r"], P["fix_pin_len"], (0, 1, 0),
-                           (rcx + sxp * P["rearpod_pin_dx"], -fw, rcz)))
+                           (rcx + sxp * P["rearpod_pin_dx"], -fwn, rcz)))
     rc = uni(rcp)
     _color(rc, "sensor"); rc.metadata["name"] = "sensor_rear"
     parts.append(rc)
@@ -478,11 +480,8 @@ def build_chassis_core():
     for px, pz in P["rear_pin_pts"]:
         body = sub(body, blind_socket(P["fix_socket_r"], P["fix_socket_deep"],
                                       (0, -1, 0), (px, -fw, pz)))
-    # lamp_L/R: Ø2.5 wire pass through the front wall behind each lamp window
-    for s in (-1, 1):
-        wl = cyl(P["wire_pass_r"], 7.0, axis="y")
-        wl.apply_translation((s * P["lamp_x"], fw - 2.5, P["lamp_cz"]))
-        body = sub(body, wl)
+    # lamp_L/R wire passes + sensor_rear bore/sockets moved AFTER the prow-cheek
+    # union below (2026-07-11) -- cut here they'd be refilled by the cheeks.
     # led_front: the strip (z 8..11) sits against the FLOOR band (z 7..12), so a straight
     # wire pass would dead-end in the floor slab -- angle it up-inward from behind the
     # strip base into the cavity (axis (10, 79, 9) -> (10, 70, 14.5); exit z 12.7+ at the
@@ -495,15 +494,6 @@ def build_chassis_core():
     gfy = gy0w + (P["fled_cz"] - z0) / np.tan(gaw)   # the cavity right behind it
     wf.apply_translation(np.array([10.0, gfy, P["fled_cz"]]) - 3.0 * gnw)
     body = sub(body, wf)
-    # sensor_rear: Ø10 sound/wire through-hole + 2x Ø2.2 x 2.5 blind cap-pin sockets
-    # (0.9 web between the bore and each socket; see PARAMS rearpod_*)
-    sh_ = cyl(P["rearpod_hole_r"], 7.0, axis="y")
-    sh_.apply_translation((P["rear_cyl_x"], -fw + 2.5, P["rear_cyl_cz"]))
-    body = sub(body, sh_)
-    for sxp in (-1, 1):
-        body = sub(body, blind_socket(P["fix_socket2_r"], P["fix_socket_deep"], (0, -1, 0),
-                                      (P["rear_cyl_x"] + sxp * P["rearpod_pin_dx"], -fw,
-                                       P["rear_cyl_cz"])))
     # --- GLACIS (2026-07-10, see PARAMS): slice the hull's front/rear lower corners
     # at the track-ramp angle so the side profile follows the tracks. The cut plane
     # runs (|y| glacis_y0, z 7) -> (wall, glacis_z1); a rotated box under that plane
@@ -518,6 +508,73 @@ def build_chassis_core():
         c_ = np.array([0.0, sgn * gy0, z0g]) - 30.0 * n_     # top face ON the plane
         wedge.apply_translation(c_)
         body = sub(body, wedge)
+
+    # --- PROW CHEEKS (2026-07-11; see PARAMS tub_nose): four blocks x |32..70| extend
+    # the tub tub_nose past each wall so the M8 end-axle nut stacks (x 55.5..62,
+    # protruding to |y| 135.4 over the corner lamps) hide inside. Per cheek: the
+    # glacis plane continued (+nose shift), a PYLON NOTCH (x 61..70.5, z 26.3+; the
+    # deck pylons at x 62..69 / z 27.3+ keep 1.0 all around), and an open-top NUT
+    # POCKET (x 47..63.5, |y| 119..fwn-3, z 25 up through the flat z 46 top -- the
+    # pre-torqued nut descends in as the deck+axle assembly drops on; spec M8 NYLOC,
+    # the pocket is clearance, not a wrench flat). Tops cap FLAT at the seam so the
+    # cheeks live wholly in chassis_lower; the wedge up to the deck slope stays an
+    # open shadow line like the pylon bay. The center band (|x| < 32, clearing the
+    # +-30 trim rings) keeps the recessed fascia wall: the cliff cone crosses z 46
+    # at y ~131 (probed 2026-07-11), a full-width nose would ping itself.
+    nose = P["tub_nose"]
+    fwn = fw + nose
+    seam_ck = P["chassis_split_z"]
+    for sgn in (1, -1):
+        for sx in (-1, 1):
+            ck = box(38.0, nose + 4.0, seam_ck - z0)
+            ck.apply_translation((sx * 51.0, sgn * (fwn - (nose + 4.0) / 2),
+                                  z0 + (seam_ck - z0) / 2))
+            gwdg = box(60.0, 100.0, 60.0)
+            gwdg.apply_transform(R(sgn * ga, (1, 0, 0)))
+            gn_ = np.array([0.0, -sgn * np.sin(ga), np.cos(ga)])
+            gc_ = np.array([sx * 51.0, sgn * (gy0 + nose), z0g]) - 30.0 * gn_
+            gwdg.apply_translation(gc_)
+            ck = sub(ck, gwdg)
+            nt = box(9.5, nose + 6.0, 25.0)
+            nt.apply_translation((sx * 65.75, sgn * (fwn - nose / 2), 26.3 + 12.5))
+            ck = sub(ck, nt)
+            # nut pocket = NUT CHANNEL + washer slice. The channel's y-walls sit
+            # 13.8 apart (nut flats 13 + 0.4/side drop-in slop) centered on the
+            # axle y, so the descending nut (flats to +-y) self-captures: torque
+            # the bolt from the outboard head, the walls hold the nut -- this is
+            # what lets the FRONT tension axles be snugged after the tracks are
+            # threaded, with zero tool access to the pocket. The washer slice is
+            # wider (Ø14.4 washer + 0.8) and merges into the pylon notch.
+            wb2 = P["track_wheelbase"] / 2                     # axle y 128.163
+            nutch = box(13.0, 13.8, 24.0)                      # x 47..60
+            nutch.apply_translation((sx * 53.5, sgn * wb2, 25.0 + 12.0))
+            ck = sub(ck, nutch)
+            wsl = box(3.5, 15.2, 24.0)                         # x 60..63.5
+            wsl.apply_translation((sx * 61.75, sgn * wb2, 25.0 + 12.0))
+            ck = sub(ck, wsl)
+            body = uni([body, ck])
+    # relocated wall cuts, now through the cheeks:
+    # lamp_L/R: Ø2.5 wire pass from the cheek nose (z 23 runs UNDER the pocket floor
+    # z 25) through the old wall into the cavity
+    for s in (-1, 1):
+        wl = cyl(P["wire_pass_r"], 34.0, axis="y")
+        wl.apply_translation((s * P["lamp_x"], fwn - 15.0, P["lamp_cz"]))
+        body = sub(body, wl)
+    # USB-C corridor: the wall slot cut earlier got buried by the rear-left cheek;
+    # re-cut the full recessed corridor through cheek + wall (same 14x8 section)
+    usb2 = box(14, 40, 8)
+    usb2.apply_translation((-38.0, -(fwn - 18.0), z0 + 24))
+    body = sub(body, usb2)
+    # sensor_rear: Ø10 sound/wire bore through cheek + wall + 2x blind cap-pin
+    # sockets in the cheek nose (the +dx socket lands in the pocket's 3.0 front
+    # skin: 2.5 deep leaves a 0.5 web)
+    sh_ = cyl(P["rearpod_hole_r"], 32.0, axis="y")
+    sh_.apply_translation((P["rear_cyl_x"], -(fwn - 15.0), P["rear_cyl_cz"]))
+    body = sub(body, sh_)
+    for sxp in (-1, 1):
+        body = sub(body, blind_socket(P["fix_socket2_r"], P["fix_socket_deep"], (0, -1, 0),
+                                      (P["rear_cyl_x"] + sxp * P["rearpod_pin_dx"], -fwn,
+                                       P["rear_cyl_cz"])))
 
     # --- BELLY ACCESS PLATE opening (task #26; the plate itself is build_belly_plate).
     # Cut LAST so no later union refills it. Opening through the 5-floor (z 7..12) +
