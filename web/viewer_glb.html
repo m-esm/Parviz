@@ -21,7 +21,7 @@
   canvas{display:block;touch-action:none}  /* OrbitControls owns all touch gestures */
 
   /* ---- instrument panel ---- */
-  #hud{position:fixed;top:16px;left:16px;z-index:10;width:256px;
+  #hud{position:fixed;top:16px;left:16px;z-index:10;width:336px;
     background:var(--panel);border:1px solid var(--hair);border-radius:14px;
     backdrop-filter:blur(20px) saturate(1.25);-webkit-backdrop-filter:blur(20px) saturate(1.25);
     box-shadow:0 16px 44px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.06);
@@ -40,7 +40,7 @@
   .sec::after{content:"";flex:1;height:1px;background:var(--hair)}
 
   /* part rows */
-  #parts{display:flex;flex-direction:column;gap:1px;max-height:32vh;overflow:auto}
+  #parts{display:flex;flex-direction:column;gap:1px;max-height:44vh;overflow:auto}
   #parts::-webkit-scrollbar{width:6px}
   #parts::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:6px}
   .part{display:flex;align-items:center;gap:9px;padding:4px 6px;border-radius:8px;cursor:pointer;
@@ -185,7 +185,7 @@
 
   <div class="sec">Appearance</div>
   <label class="ctl">Transparency <span class="val" id="opacity_v">0%</span>
-    <input type="range" id="opacity" min="0" max="0.92" step="0.02" value="0.5"></label>
+    <input type="range" id="opacity" min="0" max="0.92" step="0.02" value="0"></label>
   <label class="ctl">Explode <span class="val" id="explode_v">0%</span>
     <input type="range" id="explode" min="0" max="1" step="0.01" value="0"></label>
 
@@ -199,7 +199,7 @@
   </div>
 
   <div class="sec">Fits</div>
-  <label class="chk"><input type="checkbox" id="t_fits" checked> Fit map
+  <label class="chk"><input type="checkbox" id="t_fits"> Fit map
     <span id="fits_sum" style="margin-left:auto;font:10px var(--mono);color:var(--ink-faint)"></span></label>
   <div id="fits"></div>
 
@@ -475,7 +475,7 @@ new GLTFLoader().load(MODEL, (gltf)=>{
   overallDim.visible=false; scene.add(overallDim);
 
   applyDims();
-  // apply the slider's default transparency (50%) to the freshly loaded materials
+  // apply the slider's default transparency (0% = solid) to the freshly loaded materials
   $('opacity').dispatchEvent(new Event('input'));
   window.__ready = true;
   applyPose();                                       // pose.json may have loaded first
