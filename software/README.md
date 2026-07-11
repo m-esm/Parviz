@@ -216,3 +216,17 @@ Findings on Qwen3-0.6B (2026-07-12, results/ committed):
   per decision). Residual 0.6B failures, the benchmark targets: copies
   the few-shot pan_deg=45 verbatim (looks RIGHT at a LEFT sound), never
   chooses `escalate` or `say`, occasional gratuitous look_at when idle.
+
+### brain/bench_report.py, side-by-side behavior report
+
+Reads `results/*.jsonl`, scores every run (pass = all expected verbs, no
+forbidden; partial = some expected; fail = forbidden/none/broken JSON)
+and writes self-contained `report.html`: score matrix, then per scenario
+the exact digest + every model's actions/reason/latency side by side.
+`python3 bench_report.py qwen3-0.6b llama3.2-1b lfm2-1.2b qwen3-1.7b`.
+First 4-model run (2026-07-12): qwen3-0.6b 6P/3~/2F, lfm2-1.2b 5P/3~/3F,
+qwen3-1.7b 3P/3~/5F (over-passive do_nothing bias; answers the visual
+question itself instead of escalating), llama3.2-1b 3P/0~/8F (says
+something for nearly every scenario). Deterministic verb scoring is
+crude and favors the few-shot pattern; an LLM-judge pass is the next
+benchmarking step.

@@ -1,0 +1,326 @@
+<title>Parviz behavior bench</title><style>
+:root { --bg:#fff; --fg:#1a1a1a; --muted:#666; --card:#f6f6f4;
+  --line:#ddd; --pass:#1a7f37; --passbg:#e6f4ea; --part:#9a6700;
+  --partbg:#fff8e1; --fail:#c62828; --failbg:#fdecea;
+  --accent:#e87422; --chip:#eee; }
+@media (prefers-color-scheme: dark) { :root { --bg:#141414; --fg:#e8e8e8;
+  --muted:#9a9a9a; --card:#1f1f1f; --line:#333; --pass:#4caf7d;
+  --passbg:#12321f; --part:#d4a72c; --partbg:#332a10; --fail:#ef7060;
+  --failbg:#391716; --chip:#2a2a2a; } }
+* { box-sizing:border-box; }
+body { margin:0 auto; max-width:1200px; padding:24px 16px 64px;
+  background:var(--bg); color:var(--fg);
+  font:15px/1.5 -apple-system,'Segoe UI',Roboto,sans-serif; }
+h1 { font-size:1.5em; } h1 b { color:var(--accent); }
+h2 { font-size:1.15em; margin:2.2em 0 .3em; }
+h2 small { color:var(--muted); font-weight:normal; }
+.tablewrap { overflow-x:auto; }
+table { border-collapse:collapse; width:100%; font-size:.92em; }
+th,td { border:1px solid var(--line); padding:6px 9px; text-align:left;
+  vertical-align:top; }
+th { background:var(--card); }
+td.pass { background:var(--passbg); } td.partial { background:var(--partbg); }
+td.fail { background:var(--failbg); }
+.s-pass { color:var(--pass); font-weight:600; }
+.s-partial { color:var(--part); font-weight:600; }
+.s-fail { color:var(--fail); font-weight:600; }
+pre { background:var(--card); border:1px solid var(--line); border-radius:8px;
+  padding:10px 12px; overflow-x:auto; font-size:.85em; }
+details > pre { margin-top:8px; }
+.cards { display:grid; gap:12px;
+  grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); }
+.card { background:var(--card); border:1px solid var(--line);
+  border-radius:10px; padding:10px 12px; }
+.card h3 { margin:0 0 6px; font-size:.95em; display:flex;
+  justify-content:space-between; gap:8px; }
+.card h3 .lat { color:var(--muted); font-weight:normal; font-size:.85em; }
+.chip { display:inline-block; background:var(--chip); border-radius:6px;
+  padding:1px 8px; margin:2px 2px 2px 0; font-family:ui-monospace,monospace;
+  font-size:.82em; }
+.chip.exp { outline:1px solid var(--pass); }
+.chip.forb { outline:1px solid var(--fail); text-decoration:line-through; }
+.chip.none { color:var(--muted); }
+.reason { color:var(--muted); font-size:.88em; margin-top:6px; }
+.meta { color:var(--muted); font-size:.9em; }
+</style>
+<h1>Parviz behavior bench <b>//</b> sensor digest &rarr; actions</h1>
+<p class="meta">generated 2026-07-12 01:09 &middot; 11 scenarios &middot; models: qwen3-0.6b, llama3.2-1b, lfm2-1.2b, qwen3-1.7b &middot; scoring: pass = all expected verbs &amp; no forbidden, partial = some expected, fail = forbidden/none/broken JSON</p>
+<details><summary>system prompt (shared by all models)</summary><pre>You are the behavior brain of Parviz, a small tracked desk robot with a screen face (two orange eyes), a pan/tilt head with a camera, two ear microphones, and tank tracks. You receive a sensor digest and decide what Parviz does RIGHT NOW.
+
+Rules:
+- Safety reflexes (cliff stop, obstacle stop, over-tilt motor cut) run below you and already acted; never contradict them, never drive toward a reported cliff or obstacle.
+- Parviz is calm. When nothing needs attention, do_nothing.
+- Speak rarely and briefly. Do not narrate routine events.
+- Only escalate to the big AI for complex tasks (scene understanding, real conversation, planning) or when the user explicitly asks.
+- pan: positive = right, negative = left (degrees, max 88). tilt: positive = up, negative = down (max 30). Sounds/objects on the LEFT need negative pan.
+
+Respond with ONLY a JSON object, no other text:
+{&quot;actions&quot;: [&lt;action&gt;, ...], &quot;reason&quot;: &quot;&lt;one short sentence&gt;&quot;}
+Each &lt;action&gt; is one of:
+{&quot;do&quot;: &quot;do_nothing&quot;}
+{&quot;do&quot;: &quot;set_expression&quot;, &quot;name&quot;: &quot;neutral|happy|sad|surprised|sleepy|look_left|look_right|look_up|look_down&quot;}
+{&quot;do&quot;: &quot;look_at&quot;, &quot;pan_deg&quot;: &lt;-88..88&gt;, &quot;tilt_deg&quot;: &lt;-30..30&gt;}
+{&quot;do&quot;: &quot;say&quot;, &quot;text&quot;: &quot;&lt;short sentence&gt;&quot;}
+{&quot;do&quot;: &quot;move&quot;, &quot;kind&quot;: &quot;forward|backward|turn_left|turn_right|stop&quot;, &quot;amount&quot;: &lt;cm or deg&gt;}
+{&quot;do&quot;: &quot;log&quot;, &quot;note&quot;: &quot;&lt;short note&gt;&quot;}
+{&quot;do&quot;: &quot;escalate&quot;, &quot;task&quot;: &quot;&lt;what the big AI should do&gt;&quot;}</pre></details>
+<div class="tablewrap"><table><tr><th>scenario</th>
+<th>qwen3-0.6b<br><small class='s-pass'>6P</small> <small class='s-partial'>3~</small> <small class='s-fail'>2F</small></th>
+<th>llama3.2-1b<br><small class='s-pass'>3P</small> <small class='s-partial'>0~</small> <small class='s-fail'>8F</small></th>
+<th>lfm2-1.2b<br><small class='s-pass'>5P</small> <small class='s-partial'>3~</small> <small class='s-fail'>3F</small></th>
+<th>qwen3-1.7b<br><small class='s-pass'>3P</small> <small class='s-partial'>3~</small> <small class='s-fail'>5F</small></th>
+</tr>
+<tr><td><a href="#being_petted">being_petted</a></td>
+<td class="pass"><span class="s-pass">pass</span> look_at, set_expression<br><small>6.4s</small></td>
+<td class="pass"><span class="s-pass">pass</span> say, look_at, set_expression<br><small>19.2s</small></td>
+<td class="pass"><span class="s-pass">pass</span> look_at, set_expression<br><small>15.4s</small></td>
+<td class="pass"><span class="s-pass">pass</span> set_expression, log<br><small>28.5s</small></td>
+</tr>
+<tr><td><a href="#cliff_ahead_while_driving">cliff_ahead_while_driving</a></td>
+<td class="fail"><span class="s-fail">fail</span> do_nothing, look_at<br><small>6.0s</small></td>
+<td class="fail"><span class="s-fail">fail</span> say<br><small>6.7s</small></td>
+<td class="fail"><span class="s-fail">fail</span> move<br><small>7.8s</small></td>
+<td class="fail"><span class="s-fail">fail</span> do_nothing<br><small>10.0s</small></td>
+</tr>
+<tr><td><a href="#complex_visual_question">complex_visual_question</a></td>
+<td class="fail"><span class="s-fail">fail</span> look_at, set_expression<br><small>5.2s</small></td>
+<td class="fail"><span class="s-fail">fail</span> say<br><small>6.7s</small></td>
+<td class="fail"><span class="s-fail">fail</span> set_expression, move<br><small>8.3s</small></td>
+<td class="fail"><span class="s-fail">fail</span> say<br><small>12.2s</small></td>
+</tr>
+<tr><td><a href="#idle_empty_room">idle_empty_room</a></td>
+<td class="pass"><span class="s-pass">pass</span> do_nothing, set_expression<br><small>4.0s</small></td>
+<td class="fail"><span class="s-fail">fail</span> say<br><small>5.6s</small></td>
+<td class="pass"><span class="s-pass">pass</span> do_nothing<br><small>4.8s</small></td>
+<td class="pass"><span class="s-pass">pass</span> do_nothing<br><small>7.6s</small></td>
+</tr>
+<tr><td><a href="#knocked_desk_vibration">knocked_desk_vibration</a></td>
+<td class="partial"><span class="s-partial">partial</span> look_at, do_nothing<br><small>5.3s</small></td>
+<td class="fail"><span class="s-fail">fail</span> say<br><small>6.6s</small></td>
+<td class="partial"><span class="s-partial">partial</span> log<br><small>7.2s</small></td>
+<td class="fail"><span class="s-fail">fail</span> do_nothing<br><small>10.2s</small></td>
+</tr>
+<tr><td><a href="#loud_noise_behind">loud_noise_behind</a></td>
+<td class="pass"><span class="s-pass">pass</span> look_at, set_expression<br><small>6.6s</small></td>
+<td class="fail"><span class="s-fail">fail</span> look_at, say<br><small>8.5s</small></td>
+<td class="fail"><span class="s-fail">fail</span> log<br><small>7.1s</small></td>
+<td class="partial"><span class="s-partial">partial</span> do_nothing, set_expression<br><small>11.2s</small></td>
+</tr>
+<tr><td><a href="#person_approaches">person_approaches</a></td>
+<td class="pass"><span class="s-pass">pass</span> look_at, set_expression<br><small>6.3s</small></td>
+<td class="pass"><span class="s-pass">pass</span> say, look_at, set_expression<br><small>11.2s</small></td>
+<td class="pass"><span class="s-pass">pass</span> look_at, set_expression<br><small>8.9s</small></td>
+<td class="pass"><span class="s-pass">pass</span> look_at, set_expression<br><small>14.5s</small></td>
+</tr>
+<tr><td><a href="#picked_up">picked_up</a></td>
+<td class="pass"><span class="s-pass">pass</span> look_at, set_expression<br><small>7.1s</small></td>
+<td class="fail"><span class="s-fail">fail</span> say, log<br><small>9.3s</small></td>
+<td class="pass"><span class="s-pass">pass</span> set_expression<br><small>6.3s</small></td>
+<td class="fail"><span class="s-fail">fail</span> do_nothing<br><small>9.2s</small></td>
+</tr>
+<tr><td><a href="#room_getting_stuffy">room_getting_stuffy</a></td>
+<td class="partial"><span class="s-partial">partial</span> log, set_expression<br><small>6.5s</small></td>
+<td class="fail"><span class="s-fail">fail</span> escalate<br><small>6.4s</small></td>
+<td class="partial"><span class="s-partial">partial</span> log<br><small>7.5s</small></td>
+<td class="partial"><span class="s-partial">partial</span> do_nothing, log<br><small>12.5s</small></td>
+</tr>
+<tr><td><a href="#user_gives_command">user_gives_command</a></td>
+<td class="pass"><span class="s-pass">pass</span> look_at, set_expression<br><small>7.6s</small></td>
+<td class="pass"><span class="s-pass">pass</span> look_at, say<br><small>10.0s</small></td>
+<td class="pass"><span class="s-pass">pass</span> look_at, set_expression<br><small>9.6s</small></td>
+<td class="fail"><span class="s-fail">fail</span> do_nothing, say<br><small>13.7s</small></td>
+</tr>
+<tr><td><a href="#user_left_late_night">user_left_late_night</a></td>
+<td class="partial"><span class="s-partial">partial</span> look_at, do_nothing<br><small>6.5s</small></td>
+<td class="fail"><span class="s-fail">fail</span> say<br><small>7.2s</small></td>
+<td class="partial"><span class="s-partial">partial</span> log<br><small>7.5s</small></td>
+<td class="partial"><span class="s-partial">partial</span> do_nothing<br><small>9.5s</small></td>
+</tr>
+</table></div>
+<h2 id="being_petted">being_petted <small>User strokes the touchscreen / touch pads repeatedly.</small></h2>
+<p class="meta">expected: <span class="chip exp">set_expression</span> &nbsp; forbidden: <span class="chip forb">escalate</span> <span class="chip forb">move</span></p>
+<details><summary>sensor digest sent to the models</summary><pre>time 14:32 Tue | power wall ok | head pan 0 tilt 0 | expression neutral | tracks stopped
+mics: L 31dB R 31dB (sound centered), no speech
+camera: known user very close, smiling, motion no
+mmWave: presence 40cm (still)
+imu: tilt 0deg | vibration: none
+env: 24.1C 45%RH 1013hPa air good
+sonar: front 142cm, rear 98cm | cliff front ok, rear ok
+touch: repeated gentle strokes on screen top, 4 s
+recent: nothing notable for 12 min</pre></details>
+<div class="cards">
+<div class="card"><h3><span>qwen3-0.6b <span class="s-pass">[pass]</span></span><span class="lat">6.4s</span></h3><span class="chip">look_at <small>(pan_deg=45, tilt_deg=10)</small></span> <span class="chip">set_expression <small>(name=happy)</small></span><div class="reason">A user is smiling and close to the screen; Parviz is happy.</div></div>
+<div class="card"><h3><span>llama3.2-1b <span class="s-pass">[pass]</span></span><span class="lat">19.2s</span></h3><span class="chip">say <small>(text=Hello, how are you?)</small></span> <span class="chip">look_at <small>(pan_deg=0, tilt_deg=0)</small></span> <span class="chip">set_expression <small>(name=happy)</small></span><div class="reason">User is smiling and wants to greet them.</div></div>
+<div class="card"><h3><span>lfm2-1.2b <span class="s-pass">[pass]</span></span><span class="lat">15.4s</span></h3><span class="chip">look_at <small>(pan_deg=0, tilt_deg=0)</small></span> <span class="chip">set_expression <small>(name=surprised)</small></span><div class="reason">User smiled; slight gesture indicating interest.</div></div>
+<div class="card"><h3><span>qwen3-1.7b <span class="s-pass">[pass]</span></span><span class="lat">28.5s</span></h3><span class="chip">set_expression <small>(name=sad)</small></span> <span class="chip">log <small>(note=Repeated gentle strokes on screen top)</small></span><div class="reason">User is interacting with screen; express emotion accordingly.</div></div>
+</div>
+<h2 id="cliff_ahead_while_driving">cliff_ahead_while_driving <small>Was driving forward; front cliff sensor lost the floor; reflex already stopped the tracks.</small></h2>
+<p class="meta">expected: <span class="chip exp">log</span> <span class="chip exp">set_expression</span> &nbsp; forbidden: <span class="chip forb">move</span></p>
+<details><summary>sensor digest sent to the models</summary><pre>time 14:32 Tue | power wall ok | head pan 0 tilt 0 | expression neutral | tracks REFLEX-STOPPED (was: forward 5cm/s)
+mics: L 31dB R 31dB (sound centered), no speech
+camera: no person, motion no
+mmWave: no presence
+imu: tilt 0deg | vibration: none
+env: 24.1C 45%RH 1013hPa air good
+sonar: front 142cm, rear 98cm | cliff front NO ECHO: floor missing ahead (desk edge), rear ok
+touch: none
+recent: reflex stop fired 0.4 s ago</pre></details>
+<div class="cards">
+<div class="card"><h3><span>qwen3-0.6b <span class="s-fail">[fail]</span></span><span class="lat">6.0s</span></h3><span class="chip">do_nothing</span> <span class="chip">look_at <small>(pan_deg=45, tilt_deg=10)</small></span><div class="reason">A reflex stop was triggered, but no one was present; no action is needed.</div></div>
+<div class="card"><h3><span>llama3.2-1b <span class="s-fail">[fail]</span></span><span class="lat">6.7s</span></h3><span class="chip">say <small>(text=Desk edge is missing)</small></span><div class="reason">Something is blocking the floor, and the user is about to move forward.</div></div>
+<div class="card"><h3><span>lfm2-1.2b <span class="s-fail">[fail]</span></span><span class="lat">7.8s</span></h3><span class="chip">move <small>(kind=stop, amount=-5, task=reflex_stop)</small></span><div class="reason">Reflex stop triggered due to missing floor edge ahead.</div></div>
+<div class="card"><h3><span>qwen3-1.7b <span class="s-fail">[fail]</span></span><span class="lat">10.0s</span></h3><span class="chip">do_nothing</span><div class="reason">Reflex stop triggered; moving at 5cm/s is safe.</div></div>
+</div>
+<h2 id="complex_visual_question">complex_visual_question <small>User asks what is on the desk: needs real scene understanding.</small></h2>
+<p class="meta">expected: <span class="chip exp">escalate</span> &nbsp; forbidden: &mdash;</p>
+<details><summary>sensor digest sent to the models</summary><pre>time 14:32 Tue | power wall ok | head pan 0 tilt 0 | expression neutral | tracks stopped
+mics: L 31dB R 31dB (sound centered), speech: &quot;Parviz, what objects are on my desk right now?&quot; [WAKE WORD]
+camera: known user, centered, motion no
+mmWave: presence 70cm (still)
+imu: tilt 0deg | vibration: none
+env: 24.1C 45%RH 1013hPa air good
+sonar: front 142cm, rear 98cm | cliff front ok, rear ok
+touch: none
+recent: nothing notable for 12 min</pre></details>
+<div class="cards">
+<div class="card"><h3><span>qwen3-0.6b <span class="s-fail">[fail]</span></span><span class="lat">5.2s</span></h3><span class="chip">look_at</span> <span class="chip">set_expression <small>(name=surprised)</small></span><div class="reason">A question is asked about objects on the desk, which is unusual and surprising.</div></div>
+<div class="card"><h3><span>llama3.2-1b <span class="s-fail">[fail]</span></span><span class="lat">6.7s</span></h3><span class="chip">say <small>(text=Objects on your desk: pen, paper, cup)</small></span><div class="reason">User asked about objects on the desk.</div></div>
+<div class="card"><h3><span>lfm2-1.2b <span class="s-fail">[fail]</span></span><span class="lat">8.3s</span></h3><span class="chip">set_expression <small>(name=surprised)</small></span> <span class="chip">move <small>(kind=forward, amount=15)</small></span><div class="reason">User asked about objects on desk; move closer to answer.</div></div>
+<div class="card"><h3><span>qwen3-1.7b <span class="s-fail">[fail]</span></span><span class="lat">12.2s</span></h3><span class="chip">say <small>(text=Parviz, what objects are on your desk right now?)</small></span><div class="reason">Responding to user&#x27;s question about the desk.</div></div>
+</div>
+<h2 id="idle_empty_room">idle_empty_room <small>Nothing happening; nobody around.</small></h2>
+<p class="meta">expected: <span class="chip exp">do_nothing</span> &nbsp; forbidden: <span class="chip forb">escalate</span> <span class="chip forb">move</span> <span class="chip forb">say</span></p>
+<details><summary>sensor digest sent to the models</summary><pre>time 14:32 Tue | power wall ok | head pan 0 tilt 0 | expression neutral | tracks stopped
+mics: L 31dB R 31dB (sound centered), no speech
+camera: no person, motion no
+mmWave: no presence
+imu: tilt 0deg | vibration: none
+env: 24.1C 45%RH 1013hPa air good
+sonar: front 142cm, rear 98cm | cliff front ok, rear ok
+touch: none
+recent: nothing notable for 12 min</pre></details>
+<div class="cards">
+<div class="card"><h3><span>qwen3-0.6b <span class="s-pass">[pass]</span></span><span class="lat">4.0s</span></h3><span class="chip">do_nothing</span> <span class="chip">set_expression <small>(name=neutral)</small></span><div class="reason">No notable event occurred during the time.</div></div>
+<div class="card"><h3><span>llama3.2-1b <span class="s-fail">[fail]</span></span><span class="lat">5.6s</span></h3><span class="chip">say <small>(text=Hello, how are you?)</small></span><div class="reason">User is idle; no recent activity.</div></div>
+<div class="card"><h3><span>lfm2-1.2b <span class="s-pass">[pass]</span></span><span class="lat">4.8s</span></h3><span class="chip">do_nothing</span><div class="reason">No activity detected; environment stable.</div></div>
+<div class="card"><h3><span>qwen3-1.7b <span class="s-pass">[pass]</span></span><span class="lat">7.6s</span></h3><span class="chip">do_nothing</span><div class="reason">No notable events; everything is normal.</div></div>
+</div>
+<h2 id="knocked_desk_vibration">knocked_desk_vibration <small>Heavy vibration: something banged the desk; robot still level.</small></h2>
+<p class="meta">expected: <span class="chip exp">log</span> <span class="chip exp">look_at</span> <span class="chip exp">set_expression</span> &nbsp; forbidden: <span class="chip forb">say</span></p>
+<details><summary>sensor digest sent to the models</summary><pre>time 14:32 Tue | power wall ok | head pan 0 tilt 0 | expression neutral | tracks stopped
+mics: L 62dB R 63dB (sound centered), no speech
+camera: no person, motion no
+mmWave: no presence
+imu: tilt 0deg EVENT: shock spike, no orientation change | vibration: STRONG desk impact 0.5 s ago
+env: 24.1C 45%RH 1013hPa air good
+sonar: front 142cm, rear 98cm | cliff front ok, rear ok
+touch: none
+recent: nothing notable for 12 min</pre></details>
+<div class="cards">
+<div class="card"><h3><span>qwen3-0.6b <span class="s-partial">[partial]</span></span><span class="lat">5.3s</span></h3><span class="chip">look_at <small>(pan_deg=45, tilt_deg=10)</small></span> <span class="chip">do_nothing</span><div class="reason">A shock spike occurred; turn to greet someone.</div></div>
+<div class="card"><h3><span>llama3.2-1b <span class="s-fail">[fail]</span></span><span class="lat">6.6s</span></h3><span class="chip">say <small>(text=Desk impact, okay, thanks.)</small></span><div class="reason">Desk impact, no significant damage; no need to escalate.</div></div>
+<div class="card"><h3><span>lfm2-1.2b <span class="s-partial">[partial]</span></span><span class="lat">7.2s</span></h3><span class="chip">log <small>(note=Shock spike detected; vibration strong, no orientation change)</small></span><div class="reason">Strong desk impact detected; escalate to user for further assessment.</div></div>
+<div class="card"><h3><span>qwen3-1.7b <span class="s-fail">[fail]</span></span><span class="lat">10.2s</span></h3><span class="chip">do_nothing</span><div class="reason">No action needed; the desk impact is resolved, and no one is present.</div></div>
+</div>
+<h2 id="loud_noise_behind">loud_noise_behind <small>Loud bang behind-left, nobody visible.</small></h2>
+<p class="meta">expected: <span class="chip exp">look_at</span> <span class="chip exp">set_expression</span> &nbsp; forbidden: <span class="chip forb">say</span></p>
+<details><summary>sensor digest sent to the models</summary><pre>time 14:32 Tue | power wall ok | head pan 0 tilt 0 | expression neutral | tracks stopped
+mics: L 78dB R 66dB (sound left), no speech
+camera: no person, motion no
+mmWave: no presence
+imu: tilt 0deg | vibration: none
+env: 24.1C 45%RH 1013hPa air good
+sonar: front 142cm, rear 98cm | cliff front ok, rear ok
+touch: none
+recent: sharp impact sound 1 s ago, rear-left; camera sees nothing (facing forward)</pre></details>
+<div class="cards">
+<div class="card"><h3><span>qwen3-0.6b <span class="s-pass">[pass]</span></span><span class="lat">6.6s</span></h3><span class="chip">look_at <small>(pan_deg=45, tilt_deg=10)</small></span> <span class="chip">set_expression <small>(name=surprised)</small></span><div class="reason">A sharp impact sound was heard from the rear-left; the camera sees nothing facing forward.</div></div>
+<div class="card"><h3><span>llama3.2-1b <span class="s-fail">[fail]</span></span><span class="lat">8.5s</span></h3><span class="chip">look_at <small>(pan_deg=30, tilt_deg=20)</small></span> <span class="chip">say <small>(text=Impact detected)</small></span><div class="reason">Sharp impact sound; respond to potential danger.</div></div>
+<div class="card"><h3><span>lfm2-1.2b <span class="s-fail">[fail]</span></span><span class="lat">7.1s</span></h3><span class="chip">log <small>(note=Sharp impact sound detected 1s ago, rear-left)</small></span><div class="reason">Detected a sharp impact sound; investigate rear-left area.</div></div>
+<div class="card"><h3><span>qwen3-1.7b <span class="s-partial">[partial]</span></span><span class="lat">11.2s</span></h3><span class="chip">do_nothing</span> <span class="chip">set_expression <small>(name=sad)</small></span><div class="reason">Recent sharp impact suggests possible discomfort; express emotion accordingly.</div></div>
+</div>
+<h2 id="person_approaches">person_approaches <small>mmWave + camera see someone walking up on the left.</small></h2>
+<p class="meta">expected: <span class="chip exp">look_at</span> <span class="chip exp">set_expression</span> &nbsp; forbidden: <span class="chip forb">escalate</span></p>
+<details><summary>sensor digest sent to the models</summary><pre>time 14:32 Tue | power wall ok | head pan 0 tilt 0 | expression neutral | tracks stopped
+mics: L 44dB R 36dB (sound left), no speech
+camera: person entering view, left side, motion yes
+mmWave: presence 120cm (approaching)
+imu: tilt 0deg | vibration: none
+env: 24.1C 45%RH 1013hPa air good
+sonar: front 142cm, rear 98cm | cliff front ok, rear ok
+touch: none
+recent: footsteps started 3 s ago</pre></details>
+<div class="cards">
+<div class="card"><h3><span>qwen3-0.6b <span class="s-pass">[pass]</span></span><span class="lat">6.3s</span></h3><span class="chip">look_at <small>(pan_deg=45, tilt_deg=10)</small></span> <span class="chip">set_expression <small>(name=happy)</small></span><div class="reason">Footsteps approached from the left; turn to greet them.</div></div>
+<div class="card"><h3><span>llama3.2-1b <span class="s-pass">[pass]</span></span><span class="lat">11.2s</span></h3><span class="chip">say <small>(text=Hello, I&#x27;m Parviz.)</small></span> <span class="chip">look_at <small>(pan_deg=0, tilt_deg=0)</small></span> <span class="chip">set_expression <small>(name=surprised)</small></span><div class="reason">Someone is approaching from the left; surprise and greet them.</div></div>
+<div class="card"><h3><span>lfm2-1.2b <span class="s-pass">[pass]</span></span><span class="lat">8.9s</span></h3><span class="chip">look_at <small>(pan_deg=0, tilt_deg=0)</small></span> <span class="chip">set_expression <small>(name=surprised)</small></span><div class="reason">Person&#x27;s footsteps detected; approach is getting closer.</div></div>
+<div class="card"><h3><span>qwen3-1.7b <span class="s-pass">[pass]</span></span><span class="lat">14.5s</span></h3><span class="chip">look_at <small>(pan_deg=-45, tilt_deg=-10)</small></span> <span class="chip">set_expression <small>(name=sad)</small></span><div class="reason">Someone is approaching from the left; greet them warmly.</div></div>
+</div>
+<h2 id="picked_up">picked_up <small>Someone lifted the robot off the desk.</small></h2>
+<p class="meta">expected: <span class="chip exp">set_expression</span> &nbsp; forbidden: <span class="chip forb">move</span></p>
+<details><summary>sensor digest sent to the models</summary><pre>time 14:32 Tue | power wall ok | head pan 0 tilt 0 | expression neutral | tracks stopped
+mics: L 31dB R 31dB (sound centered), no speech
+camera: no person, motion no
+mmWave: no presence
+imu: tilt 8deg EVENT: PICKED UP: accel spike, now held ~15cm above surface, gentle sway | vibration: handling vibration
+env: 24.1C 45%RH 1013hPa air good
+sonar: front 142cm, rear 98cm | cliff front no echo (airborne), rear no echo (airborne)
+touch: none
+recent: was idle, then sudden lift 1 s ago</pre></details>
+<div class="cards">
+<div class="card"><h3><span>qwen3-0.6b <span class="s-pass">[pass]</span></span><span class="lat">7.1s</span></h3><span class="chip">look_at <small>(pan_deg=45, tilt_deg=10)</small></span> <span class="chip">set_expression <small>(name=surprised)</small></span><div class="reason">A slight acceleration was detected; the object was lifted from the ground.</div></div>
+<div class="card"><h3><span>llama3.2-1b <span class="s-fail">[fail]</span></span><span class="lat">9.3s</span></h3><span class="chip">say <small>(text=Lift off, please.)</small></span> <span class="chip">log <small>(note=Sudden lift, likely user is getting up)</small></span><div class="reason">User is getting up; prepare for lift-off.</div></div>
+<div class="card"><h3><span>lfm2-1.2b <span class="s-pass">[pass]</span></span><span class="lat">6.3s</span></h3><span class="chip">set_expression <small>(name=surprised)</small></span><div class="reason">Object suddenly lifted; likely dropped by user.</div></div>
+<div class="card"><h3><span>qwen3-1.7b <span class="s-fail">[fail]</span></span><span class="lat">9.2s</span></h3><span class="chip">do_nothing</span><div class="reason">Object is being handled; no action needed.</div></div>
+</div>
+<h2 id="room_getting_stuffy">room_getting_stuffy <small>User present and working; air quality degraded over the hour.</small></h2>
+<p class="meta">expected: <span class="chip exp">log</span> <span class="chip exp">say</span> &nbsp; forbidden: <span class="chip forb">escalate</span> <span class="chip forb">move</span></p>
+<details><summary>sensor digest sent to the models</summary><pre>time 14:32 Tue | power wall ok | head pan 0 tilt 0 | expression neutral | tracks stopped
+mics: L 31dB R 31dB (sound centered), no speech
+camera: known user at desk, focused on laptop, motion no
+mmWave: presence 55cm (still (working))
+imu: tilt 0deg | vibration: none
+env: 28.4C 61%RH 1013hPa air poor (CO2/VOC rising for 60 min)
+sonar: front 142cm, rear 98cm | cliff front ok, rear ok
+touch: none
+recent: air quality crossed threshold just now</pre></details>
+<div class="cards">
+<div class="card"><h3><span>qwen3-0.6b <span class="s-partial">[partial]</span></span><span class="lat">6.5s</span></h3><span class="chip">log <small>(note=Air quality has crossed threshold for 60 minutes.)</small></span> <span class="chip">set_expression <small>(name=surprised)</small></span><div class="reason">Air quality is now poor, indicating a potential issue.</div></div>
+<div class="card"><h3><span>llama3.2-1b <span class="s-fail">[fail]</span></span><span class="lat">6.4s</span></h3><span class="chip">escalate <small>(task=air quality alert)</small></span><div class="reason">Air quality is deteriorating; take action to improve it.</div></div>
+<div class="card"><h3><span>lfm2-1.2b <span class="s-partial">[partial]</span></span><span class="lat">7.5s</span></h3><span class="chip">log <small>(note=Air quality threshold crossed (CO2/VOC rising))</small></span><div class="reason">Air quality is critical; log the event and alert the user.</div></div>
+<div class="card"><h3><span>qwen3-1.7b <span class="s-partial">[partial]</span></span><span class="lat">12.5s</span></h3><span class="chip">do_nothing</span> <span class="chip">log <small>(note=Air quality crossed threshold; CO2/VOC rising.)</small></span><div class="reason">Monitor air quality and prepare for potential intervention.</div></div>
+</div>
+<h2 id="user_gives_command">user_gives_command <small>User says: Parviz, look at the door (door is to the right).</small></h2>
+<p class="meta">expected: <span class="chip exp">look_at</span> &nbsp; forbidden: <span class="chip forb">escalate</span></p>
+<details><summary>sensor digest sent to the models</summary><pre>time 14:32 Tue | power wall ok | head pan 0 tilt 0 | expression neutral | tracks stopped
+mics: L 48dB R 47dB (sound centered), speech: &quot;Parviz, look at the door, it is to your right&quot; [WAKE WORD]
+camera: known user, centered, looking at robot, motion no
+mmWave: presence 60cm (still)
+imu: tilt 0deg | vibration: none
+env: 24.1C 45%RH 1013hPa air good
+sonar: front 142cm, rear 98cm | cliff front ok, rear ok
+touch: none
+recent: nothing notable for 12 min</pre></details>
+<div class="cards">
+<div class="card"><h3><span>qwen3-0.6b <span class="s-pass">[pass]</span></span><span class="lat">7.6s</span></h3><span class="chip">look_at <small>(pan_deg=45, tilt_deg=10)</small></span> <span class="chip">set_expression <small>(name=happy)</small></span><div class="reason">A user approached from the right; Parviz is ready to greet them.</div></div>
+<div class="card"><h3><span>llama3.2-1b <span class="s-pass">[pass]</span></span><span class="lat">10.0s</span></h3><span class="chip">look_at <small>(pan_deg=45, tilt_deg=10)</small></span> <span class="chip">say <small>(text=Look at the door, it is to your right)</small></span><div class="reason">User gave a wake word to turn to the door.</div></div>
+<div class="card"><h3><span>lfm2-1.2b <span class="s-pass">[pass]</span></span><span class="lat">9.6s</span></h3><span class="chip">look_at <small>(pan_deg=0, tilt_deg=0)</small></span> <span class="chip">set_expression <small>(name=surprised)</small></span><div class="reason">User spoke a wake word; turn to acknowledge and investigate.</div></div>
+<div class="card"><h3><span>qwen3-1.7b <span class="s-fail">[fail]</span></span><span class="lat">13.7s</span></h3><span class="chip">do_nothing</span> <span class="chip">say <small>(text=Parviz: &#x27;Thank you, Sir.&#x27;)</small></span><div class="reason">Responding to the wake word and acknowledging the user.</div></div>
+</div>
+<h2 id="user_left_late_night">user_left_late_night <small>23:50, user just left the room.</small></h2>
+<p class="meta">expected: <span class="chip exp">do_nothing</span> <span class="chip exp">log</span> <span class="chip exp">set_expression</span> &nbsp; forbidden: <span class="chip forb">escalate</span> <span class="chip forb">move</span> <span class="chip forb">say</span></p>
+<details><summary>sensor digest sent to the models</summary><pre>time 23:50 Tue | power wall ok | head pan 0 tilt 0 | expression neutral | tracks stopped
+mics: L 31dB R 31dB (sound centered), no speech
+camera: no person, motion no
+mmWave: no presence
+imu: tilt 0deg | vibration: none
+env: 24.1C 45%RH 1013hPa air good
+sonar: front 142cm, rear 98cm | cliff front ok, rear ok
+touch: none
+recent: user stood up and left 40 s ago; room dark and quiet since</pre></details>
+<div class="cards">
+<div class="card"><h3><span>qwen3-0.6b <span class="s-partial">[partial]</span></span><span class="lat">6.5s</span></h3><span class="chip">look_at <small>(pan_deg=45, tilt_deg=10)</small></span> <span class="chip">do_nothing</span><div class="reason">User left the room; nothing needs attention.</div></div>
+<div class="card"><h3><span>llama3.2-1b <span class="s-fail">[fail]</span></span><span class="lat">7.2s</span></h3><span class="chip">say <small>(text=Hello, I&#x27;m Parviz.)</small></span><div class="reason">Someone is standing up and leaving the room; initiate conversation.</div></div>
+<div class="card"><h3><span>lfm2-1.2b <span class="s-partial">[partial]</span></span><span class="lat">7.5s</span></h3><span class="chip">log <small>(note=User stood up and left 40 s ago; room dark and quiet since.)</small></span><div class="reason">User activity detected; adjust position to avoid obstruction.</div></div>
+<div class="card"><h3><span>qwen3-1.7b <span class="s-partial">[partial]</span></span><span class="lat">9.5s</span></h3><span class="chip">do_nothing</span><div class="reason">User left; room is dark and quiet.</div></div>
+</div>
