@@ -30,7 +30,7 @@ from screen import load_screen, screen_pose
 from tracks import _track_zc, build_tracks
 from motors import motor_28byj, motor_tt
 from pan import build_pan_clips, build_pan_platform, build_pan_race
-from neck import build_neck_clevis, build_tilt_carrier
+from neck import build_neck_clevis, build_tilt_carrier, build_trim_neckfoot
 from head import (build_ant_drive, build_antennas, build_arms, build_cam_pod, build_hatch_frame,
                   build_ear_jacks, build_head_parts, build_head_rails, build_led_strip,
                   build_screen_tray, build_sd_plug)
@@ -120,6 +120,9 @@ def build():
     pose_groups["pan"].append("neck_clevis")         # bypasses add(): tag its group by hand
     if EXPORT:
         neck.export(stlp("neck_clevis.stl"))
+    # orange pedestal collar at the column foot (neck styling pass 2026-07-12): rides the
+    # platform (pan group), slipped over the column before the neck bolts down, pinned+glued
+    add(build_trim_neckfoot(), M_pan, "trim_neckfoot.stl")
 
     # --- TILT WORM DRIVE (self-locking single-start) ---
     wx = P["worm_wheel_x"]

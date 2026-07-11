@@ -621,3 +621,24 @@ deciding what Parviz does. Tiered: reflexes hard-coded; perception + ASR always 
 Mac) ONLY for specific tasks or on user request. RAM (2GB) is the binding constraint.
 Software side: face v2 (rigid orange eyes, touch-tracking pupils) runs as
 `parviz-face.service` on boot (console target, kmsdrm; desktop disabled).
+
+**Neck styling pass (2026-07-12, design-ref):** the neck region now matches the ref's
+dark-mechanism read. (1) RECOLOR: COLORS neck/pan -> matte charcoal / near-black (the
+bright-steel column + platform disc read as raw CAD); viewer PAL split so worm gear
+metal stays silver ([/worm|wheel/] before the neck rule) and neck|clevis|fork|carrier
+went matte; keep COLORS<->PAL in sync as ever. (2) `trim_neckfoot` (NEW printed part,
+orange accent, PAN group): a stepped chamfer-look pedestal collar at the column foot,
+64x54 x 3 tall on the platform, arc-trimmed to r 44.3 about the pan axis (platform
+solid top ends at the r45 rebate, clip tabs flush at r45.4). Top z 69.0 = exactly where
+the chin notch starts; PROBED ceiling: the tilt-swept head bottom dips to z 70.6 right
+around the column (and to ~70 over nearly the whole deck, which is why no tall fixed
+turret plinth or under-head shroud is possible -- the sweep owns everything above
+~z 70; the slot interior is owned by the cheek stall rake to y -86.9). Fixing: slip
+over the column FROM BELOW BEFORE the neck bolts to the platform (cheeks at x +-26
+block a top-down pass), then 2x Ø3x6 pins through the collar into blind platform
+sockets at (+-27, neck_y) + glue. Prints flat, no support. (3) Column PANEL-LINE
+grooves (1.2 deep, x +-24 faces, z 74/82, y -38..-21 -- above z 69 the chin notch
+voids y > -19.5, so the lines live on the rear half and die into the corner round).
+Gates: check + check-sweep (14 poses) + fits contact audit all green; trim_neckfoot
+added to PAN_NODES (assembly_check), _FIT_CONTACT_OK (vs pan_platform/neck_clevis),
+the viewer Pan-stage tree and stlpaths -> stl/neck/.

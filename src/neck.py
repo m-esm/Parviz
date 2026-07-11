@@ -8,7 +8,7 @@ import shapely.geometry as sg
 from trimesh.creation import extrude_polygon
 from trimesh.transformations import rotation_matrix as R
 from params import P
-from geo import _color, box, cyl, rounded_box, sub, uni
+from geo import _color, box, cyl, inter, rounded_box, sub, uni
 from gears import worm_cd
 
 
@@ -221,9 +221,68 @@ def build_neck_clevis():
             pil = cyl(1.25, 12, axis="y")
             pil.apply_translation((sx * P["uln_w"] / 2, uln_y - 3, 93 + sz * P["uln_h"] / 2))
             neck = sub(neck, pil)
+    # cosmetic PANEL-LINE GROOVES (neck styling pass 2026-07-12, design-ref language: the
+    # ref neck is stepped/blocky, ours was a smooth extrusion). Two 1.2-deep x 2.6-tall
+    # horizontal grooves per SIDE face (x +-24), z 74 / 82 -- the band visible through the
+    # deck-to-head gap (deck 66, head bottom 88). Side faces only: the front face above
+    # z 69 is the chin-notch face with a 2.5 wall to the cable channel, and the rear face
+    # carries the ULN bosses (z 77..109). Above z 69 the chin notch voids the column at
+    # y > -19.5, so the grooves live on the REAR half of the side face (y -38..-21, dying
+    # into the r10 corner round like a product panel line); the 16 mm side wall to the
+    # x +-8 channel laughs at a 1.2 cut.
+    for gz in (74.0, 82.0):
+        for gsx in (-1, 1):
+            gr = box(2.4, 17.0, 2.6)
+            gr.apply_translation((gsx * 24.0, -29.5, gz))
+            neck = sub(neck, gr)
     _color(neck, "neck")
     neck.metadata["name"] = "neck_clevis"
     return neck
+
+
+def build_trim_neckfoot():
+    """Orange pedestal COLLAR at the column foot (neck styling pass 2026-07-12): a stepped
+    chamfer-look ring that drops over the column and seats on the pan platform, so the neck
+    grows out of a turret boss instead of a bare disc (ref language: chunky base + safety-
+    orange band right under the neck). Pan group -- it rides the platform.
+
+    Envelope (probed, see the styling-pass notes): the tilt-swept head bottom dips to
+    z 70.6 right around the column, so the collar tops out at z 69.0 (1.6 clear) -- exactly
+    where the column's chin notch begins, which the collar visually caps. Radially it is
+    trimmed to r 44.3 about the PAN axis: the platform's solid top ends at the r45 rim
+    rebate and the fixed clip tabs reach in to r 45.4 flush with the top, so the collar can
+    never sweep over them while panning.
+
+    Print: flat on its base, no support (the step is a flat roof over 1.6 mm -- bridges).
+    Fixing: slip over the column from below BEFORE the neck bolts to the platform (the
+    cheeks at x +-26 block a top-down pass), then 2x Ø3x6 pins dropped through the collar
+    into the platform's blind sockets (build_pan_platform) + glue on the seat. Inner is a
+    +0.25/side slip fit on the 48x46 column."""
+    z0 = P["base_h"]                                     # platform top (collar seat)
+    ny = P["neck_y"]
+    # stepped body: full outline z 66..67.6, inset band z 67.6..69.0 (reads as a chamfered
+    # plinth, prints as two clean perimeters)
+    lower = rounded_box(64.0, 54.0, 1.6, 8.0)
+    lower.apply_translation((0, ny, z0))
+    upper = rounded_box(60.8, 50.8, 1.4, 7.0)
+    upper.apply_translation((0, ny, z0 + 1.6))
+    ring = uni([lower, upper])
+    # column pass: +0.25/side slip on the 48x46 r10 column
+    bore = rounded_box(48.5, 46.5, 5.0, 10.25)
+    bore.apply_translation((0, ny, z0 - 1.0))
+    ring = sub(ring, bore)
+    # trim to r44.3 about the pan axis (platform solid top r45; clips flush at r45.4+)
+    keep = cyl(44.3, 8.0, sections=96)
+    keep.apply_translation((0, 0, z0 + 2.0))
+    ring = inter(ring, keep)
+    # 2x Ø3.2 pin bores straight down into the platform sockets (x band wall is 7.75 wide)
+    for sx in (-1, 1):
+        pb = cyl(1.6, 8.0)
+        pb.apply_translation((sx * 27.0, ny, z0 + 1.5))
+        ring = sub(ring, pb)
+    _color(ring, "accent")
+    ring.metadata["name"] = "trim_neckfoot"
+    return ring
 
 
 def build_tilt_carrier():

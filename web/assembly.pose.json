@@ -39,6 +39,7 @@
   "pan": [
    "pan_platform",
    "neck_clevis",
+   "trim_neckfoot",
    "tilt_worm",
    "motor_tilt",
    "tilt_carrier"

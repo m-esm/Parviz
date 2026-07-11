@@ -54,7 +54,8 @@ HEAD_NODES = {
     "worm_wheel", "tilt_axle", "cam_cover", "camera_ref", "head_door",
     "sd_plug", "screen_tray",
 }
-PAN_NODES = {"pan_platform", "neck_clevis", "tilt_worm", "motor_tilt", "tilt_carrier"}
+PAN_NODES = {"pan_platform", "neck_clevis", "tilt_worm", "motor_tilt", "tilt_carrier",
+             "trim_neckfoot"}
 
 # Intended (designed-contact) couplings, order-independent.
 # print-speed sub-splits (2026-07-10): pieces of one object alias to the parent for

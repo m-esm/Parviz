@@ -65,6 +65,8 @@ def _fit_report(geo):
         frozenset(("trim_rail_L", "head_bezel")), frozenset(("trim_rail_L", "head_back")),
         frozenset(("trim_rail_R", "head_bezel")), frozenset(("trim_rail_R", "head_back")),
         frozenset(("trim_hatch_frame", "head_back")),
+        frozenset(("trim_neckfoot", "pan_platform")),     # collar seats on the platform
+        frozenset(("trim_neckfoot", "neck_clevis")),      # (pins + glue, styling 2026-07-12)
         frozenset(("camera_pod", "head_bezel")), frozenset(("antenna_stub", "head_back")),
         frozenset(("led_strip", "head_bezel")),
         frozenset(("trim_fascia", "chassis_lower")), frozenset(("trim_fascia", "chassis_deck")),

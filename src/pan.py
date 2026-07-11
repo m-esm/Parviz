@@ -111,6 +111,15 @@ def build_pan_platform():
         plate = sub(plate, h)
         cb = cyl(3.25, 8.0); cb.apply_translation((hx, hy, plate_bot))
         plate = sub(plate, cb)
+
+    # 2x blind Ø3.2 x 3.5 pin sockets for the trim_neckfoot collar (neck styling pass
+    # 2026-07-12, see build_trim_neckfoot): at (+-27, neck_y) -- r 31.9 from the pan axis,
+    # clear of the cable slot (x -4..16 / y -30..-20), the neck-bolt cbores (|x| <= 17.8),
+    # the D-hub (r7) and the ball-groove footprint (in-plate cross-section starts r 37.1).
+    for sx in (-1, 1):
+        ps = cyl(1.6, 3.5)
+        ps.apply_translation((sx * 27.0, P["neck_y"], z1 - 3.5 / 2))
+        plate = sub(plate, ps)
     _color(plate, "pan")
     plate.metadata["name"] = "pan_platform"
     return plate

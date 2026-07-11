@@ -18,9 +18,11 @@ COLORS = {
     "screen":  [26, 30, 38, 255],
     "cradle":  [46, 50, 56, 255],       # matte charcoal (head bezel)
     "back":    [54, 58, 65, 255],       # charcoal (head back, covers)
-    "neck":    [86, 92, 102, 255],      # dark steel mechanicals
-    "fork":    [86, 92, 102, 255],
-    "pan":     [74, 79, 87, 255],       # graphite
+    "neck":    [52, 56, 63, 255],       # matte charcoal mechanicals (neck styling pass
+                                        # 2026-07-12: bright steel read as raw CAD; the
+                                        # ref neck blocks are near-black plastic)
+    "fork":    [154, 160, 168, 255],    # worm_wheel: silver gear metal (split from neck)
+    "pan":     [46, 50, 56, 255],       # near-black turret (was graphite; ref two-tone)
     "base":    [44, 48, 54, 255],       # matte charcoal chassis
     "track":   [35, 37, 41, 255],       # near-black rubber
     "motor":   [154, 160, 168, 255],    # silver actuation

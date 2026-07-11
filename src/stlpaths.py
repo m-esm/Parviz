@@ -26,6 +26,7 @@ SUBSYSTEMS = [
     ("yoke", "neck"),
     ("pan", "neck"),
     ("tilt", "neck"),
+    ("trim_neckfoot", "neck"),  # orange pedestal collar at the column foot (styling)
     ("head", "head"),          # screen shell (face), camera mount, ears/back
     ("ant", "head"),           # deployable antenna masts + drive bracket
     ("face", "head"),
