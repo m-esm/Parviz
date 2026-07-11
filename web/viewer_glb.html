@@ -101,6 +101,25 @@
   select{background:#232830;color:var(--ink);border:1px solid var(--hair);border-radius:6px;
     padding:2px 6px;font:11px var(--mono)}
 
+  /* small header-inline button (Reset UI); order:1 pushes it past the .sec hairline */
+  .sec button{order:1;font:600 9px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;
+    color:var(--ink-faint);background:transparent;border:1px solid var(--hair);border-radius:6px;
+    padding:3px 7px;cursor:pointer;transition:color .12s,border-color .12s}
+  .sec button:hover{color:var(--ink);border-color:var(--ink-dim)}
+
+  /* right-click context menu on the 3D view */
+  #ctx{position:fixed;z-index:20;display:none;min-width:132px;padding:4px;
+    background:var(--panel);border:1px solid var(--hair);border-radius:10px;
+    backdrop-filter:blur(20px) saturate(1.25);-webkit-backdrop-filter:blur(20px) saturate(1.25);
+    box-shadow:0 12px 32px rgba(0,0,0,.5)}
+  #ctx .cxn{font:600 10px/1 var(--mono);letter-spacing:.06em;color:var(--accent);
+    padding:5px 8px 7px;border-bottom:1px solid var(--hair);margin-bottom:3px;
+    max-width:230px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #ctx .cxi{display:flex;justify-content:space-between;align-items:center;gap:14px;
+    padding:5px 8px;border-radius:7px;font:12px/1 var(--mono);color:var(--ink);cursor:pointer;user-select:none}
+  #ctx .cxi:hover{background:var(--accent-soft)}
+  #ctx .cxi .k{font:10px var(--mono);color:var(--ink-faint)}
+
   #legend{margin:6px 2px 0;font:10.5px/1.5 var(--mono);color:var(--ink-dim);display:none}
   #legend span{white-space:nowrap}
 
@@ -170,7 +189,7 @@
   <div class="dims" id="bbox"><span class="ax">-</span></div>
   <div class="dims" id="selinfo" style="display:none;flex-wrap:wrap"></div>
 
-  <div class="sec">Navigation</div>
+  <div class="sec">Navigation<button id="ui_reset" title="forget saved UI state + panel width, reload">Reset UI</button></div>
   <div id="parts"></div>
 
   <div class="sec">Pose</div>
@@ -405,14 +424,14 @@ new GLTFLoader().load(MODEL, (gltf)=>{
     return ['Other', 'Misc'];
   }
   function mkGroup(title, parentBody, cls, key, parentKey){
-    const grp=document.createElement('div'); grp.className=cls;
+    const grp=document.createElement('div'); grp.className=cls; grp.dataset.vskey=key;
     const head=document.createElement('div'); head.className='chead';
     head.innerHTML=`<span class="carrow">▾</span><span class="cname">${title}</span>`;
     const cb=document.createElement('input'); cb.type='checkbox'; cb.checked=true;
     cb.addEventListener('click',e=>e.stopPropagation());
     head.appendChild(cb);
     const body=document.createElement('div'); body.className='cbody';
-    head.addEventListener('click',()=>grp.classList.toggle('closed'));
+    head.addEventListener('click',()=>{ grp.classList.toggle('closed'); saveVS(); });
     cb.addEventListener('change',()=>{
       body.querySelectorAll('.part input').forEach(pc=>{
         if(pc.checked!==cb.checked){ pc.checked=cb.checked; pc.dispatchEvent(new Event('change')); }
@@ -483,6 +502,7 @@ new GLTFLoader().load(MODEL, (gltf)=>{
   window.__ready = true;
   applyPose();                                       // pose.json may have loaded first
   if($('t_fits').checked) $('t_fits').dispatchEvent(new Event('change'));   // default-on
+  restoreVS();                                       // saved UI state, now that rows exist
 }, undefined, err=>{ document.getElementById('bbox').textContent='LOAD ERROR: '+err; });
 
 const $=id=>document.getElementById(id);
@@ -544,6 +564,9 @@ fetch(MODEL.replace(/\.glb$/,'')+'.pose.json?'+Date.now()).then(r=>r.ok?r.json()
       el.addEventListener('input',applyPose);
     }
   }
+  if(VS && VS.sliders)                               // saved pose beats the baked default;
+    for(const id of ['pan','tilt','antL','antR'])    // range inputs clamp to the new min/max
+      if(VS.sliders[id]!==undefined && !$(id).disabled) $(id).value=VS.sliders[id];
   applyPose();
 }).catch(()=>{});
 function applyPose(){
@@ -773,19 +796,137 @@ function selectPart(name){
     '<span class="ax" style="color:'+TXT.z+'">H</span><b>'+s.z.toFixed(1)+'</b>';
   $('selinfo').style.display='flex';
 }
+function rayPart(ndc){                               // topmost visible part under an NDC point
+  if(!window.__ready) return null;
+  selRay.setFromCamera(ndc,camera);
+  const meshes=[];
+  for(const g of Object.values(groups)) for(const o of g.meshes) if(o.visible) meshes.push(o);
+  const hit=selRay.intersectObjects(meshes,false)[0];
+  return hit ? hit.object.userData.pname : null;
+}
 renderer.domElement.addEventListener('pointerdown',e=>{ selDown=[e.clientX,e.clientY]; });
 renderer.domElement.addEventListener('pointerup',e=>{
   if(!selDown) return;
   const moved=Math.hypot(e.clientX-selDown[0], e.clientY-selDown[1]); selDown=null;
   if(moved>6 || !window.__ready) return;             // it was an orbit drag, not a click
   selNdc.x=(e.clientX/innerWidth)*2-1; selNdc.y=-(e.clientY/innerHeight)*2+1;
-  selRay.setFromCamera(selNdc,camera);
-  const meshes=[];
-  for(const g of Object.values(groups)) for(const o of g.meshes) if(o.visible) meshes.push(o);
-  const hit=selRay.intersectObjects(meshes,false)[0];
-  selectPart(hit ? hit.object.userData.pname : null);
+  selectPart(rayPart(selNdc));
 });
-addEventListener('keydown',e=>{ if(e.key==='Escape' && selName) selectPart(selName); });
+
+// ---- right-click context menu + hotkeys (H hide · I isolate · A show all) ----
+const ctx=document.createElement('div'); ctx.id='ctx'; document.body.appendChild(ctx);
+const hoverNdc=new THREE.Vector2(); let hoverIn=false;   // last pointer pos, for hotkey raycasts
+renderer.domElement.addEventListener('pointermove',e=>{
+  hoverNdc.x=(e.clientX/innerWidth)*2-1; hoverNdc.y=-(e.clientY/innerHeight)*2+1; hoverIn=true;
+  if(e.buttons&2) closeCtx(); });                    // right-drag = orbit pan, not a menu
+renderer.domElement.addEventListener('pointerleave',()=>{ hoverIn=false; });
+function setPartVisible(name,on){                    // drive the tree checkbox so row state,
+  const g=groups[name]; if(!g||!g.row) return;       // syncCat, dims + persistence all follow
+  const cb=g.row.querySelector('input');
+  if(cb.checked!==on){ cb.checked=on; cb.dispatchEvent(new Event('change',{bubbles:true})); }
+}
+function hidePart(name){
+  if(!name) return;
+  if(name===selName) selectPart(selName);            // deselect before it vanishes
+  setPartVisible(name,false);
+}
+function isolatePart(name){
+  if(!name) return;
+  for(const n of Object.keys(groups)) setPartVisible(n, n===name);
+}
+function showAllParts(){ for(const n of Object.keys(groups)) setPartVisible(n,true); }
+function closeCtx(){ ctx.style.display='none'; }
+renderer.domElement.addEventListener('contextmenu',e=>{
+  e.preventDefault();
+  if(!window.__ready) return;
+  const name=rayPart(new THREE.Vector2((e.clientX/innerWidth)*2-1, -(e.clientY/innerHeight)*2+1));
+  const items=[];
+  if(name){
+    items.push(`<div class="cxn">${name}</div>`);
+    items.push('<div class="cxi" data-act="hide">Hide<span class="k">H</span></div>');
+    items.push('<div class="cxi" data-act="iso">Isolate<span class="k">I</span></div>');
+  }
+  items.push('<div class="cxi" data-act="all">Show all<span class="k">A</span></div>');
+  if(name) items.push('<div class="cxi" data-act="copy">Copy name</div>');
+  ctx.innerHTML=items.join(''); ctx.dataset.part=name||'';
+  ctx.style.display='block';                         // measure, then keep it on-screen
+  ctx.style.left=Math.min(e.clientX, innerWidth -ctx.offsetWidth -8)+'px';
+  ctx.style.top =Math.min(e.clientY, innerHeight-ctx.offsetHeight-8)+'px';
+});
+ctx.addEventListener('click',e=>{
+  const it=e.target.closest('.cxi'); if(!it) return;
+  const name=ctx.dataset.part, act=it.dataset.act;
+  if(act==='hide') hidePart(name);
+  else if(act==='iso') isolatePart(name);
+  else if(act==='all') showAllParts();
+  else if(act==='copy' && name && navigator.clipboard) navigator.clipboard.writeText(name).catch(()=>{});
+  closeCtx();
+});
+addEventListener('pointerdown',e=>{ if(!ctx.contains(e.target)) closeCtx(); });
+addEventListener('keydown',e=>{
+  if(e.key==='Escape'){ closeCtx(); if(selName) selectPart(selName); return; }
+  const t=e.target;
+  if(t && (t.tagName==='INPUT'||t.tagName==='SELECT'||t.tagName==='TEXTAREA'||t.isContentEditable)) return;
+  if(e.metaKey||e.ctrlKey||e.altKey) return;
+  const k=e.key.toLowerCase();
+  if(k==='a'){ showAllParts(); closeCtx(); return; }
+  if(k!=='h' && k!=='i') return;
+  const name=selName || (hoverIn ? rayPart(hoverNdc) : null);   // selected beats hovered
+  if(!name) return;
+  if(k==='h') hidePart(name); else isolatePart(name);
+  closeCtx();
+});
+
+// ---- persisted UI state: one JSON blob under 'viewerState' (the panel width keeps its
+// own 'hudw' key + mechanism). Saved debounced 300ms on any HUD change (user events
+// bubble to #hud; collapse clicks + programmatic bubbling changes call/reach saveVS);
+// restored by restoreVS() at the end of the GLTF callback, once the parts tree exists.
+const VSKEY='viewerState';
+const VS_SLIDERS=['pan','tilt','antL','antR','opacity','explode','cut','spinspd'];
+const VS_CHECKS=['t_sweep','t_bbox','t_dims','t_fits','t_section','t_spin'];
+let VS=null; try{ VS=JSON.parse(localStorage.getItem(VSKEY)); }catch(_){ VS=null; }
+let vsReady=false, vsTimer=null;
+function saveVS(){
+  if(!vsReady) return;                               // ignore churn during restore
+  clearTimeout(vsTimer);
+  vsTimer=setTimeout(()=>{
+    const st={sliders:{}, checks:{}, secAxis:$('sec_axis').value,
+      hidden:Object.entries(groups).filter(([,g])=>g.row && !g.row.querySelector('input').checked)
+             .map(([n])=>n),                         // store the (small) UNCHECKED set
+      collapsed:[...document.querySelectorAll('#parts .cgrp.closed')]
+                .map(el=>el.dataset.vskey).filter(Boolean)};
+    VS_SLIDERS.forEach(id=>st.sliders[id]=$(id).value);
+    VS_CHECKS.forEach(id=>st.checks[id]=$(id).checked);
+    try{ localStorage.setItem(VSKEY, JSON.stringify(st)); }catch(_){}
+  },300);
+}
+function restoreVS(){
+  if(VS){
+    if(VS.secAxis) $('sec_axis').value=VS.secAxis;
+    for(const id of ['opacity','explode','cut','spinspd'])        // pan/tilt/ant restore in
+      if(VS.sliders && VS.sliders[id]!==undefined){               // the pose.json loader
+        $(id).value=VS.sliders[id]; $(id).dispatchEvent(new Event('input')); }
+    for(const id of VS_CHECKS)
+      if(VS.checks && VS.checks[id]!==undefined && $(id).checked!==VS.checks[id]){
+        $(id).checked=VS.checks[id]; $(id).dispatchEvent(new Event('change')); }
+    for(const n of (VS.hidden||[])){
+      const g=groups[n]; if(!g||!g.row) continue;    // tolerate parts that no longer exist
+      const cb=g.row.querySelector('input');
+      if(cb.checked){ cb.checked=false; cb.dispatchEvent(new Event('change')); }
+    }
+    if(Array.isArray(VS.collapsed)){
+      const cset=new Set(VS.collapsed);
+      document.querySelectorAll('#parts .cgrp').forEach(el=>{
+        if(el.dataset.vskey) el.classList.toggle('closed', cset.has(el.dataset.vskey)); });
+    }
+  }
+  vsReady=true;
+}
+$('hud').addEventListener('input',()=>saveVS());
+$('hud').addEventListener('change',()=>saveVS());
+$('ui_reset').addEventListener('click',()=>{
+  localStorage.removeItem(VSKEY); localStorage.removeItem('hudw'); location.reload();
+});
 
 // mobile bottom sheet: ☰ toggles the HUD; starting an orbit gesture tucks it away
 const mobile = matchMedia('(max-width: 700px)');
