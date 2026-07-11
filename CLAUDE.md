@@ -672,3 +672,14 @@ and a power-off head may slowly nod.** Placeholders: pan spur pair + the 3-start
 single-start; regenerate per docs/WORM.md). Gates re-whitelisted: (pan_gears,
 motor_pan)+(pan_gears, pan_platform) replaced (pan_platform, motor_pan); viewer PAL
 silver rule grew |gears.
+
+**Arduino I/O plane (2026-07-12, user):** most elec components (sonars, IMU, BME688,
+mmWave, touch, vibration, LEDs, possibly motors) wire to an ARDUINO dev board, which
+connects to the Pi 5 over ONE USB cable (serial telemetry/commands + flashing). Camera/
+mics/display stay on the Pi. With arduino-cli on the Pi, the AI tier can WRITE, COMPILE
+and FLASH the Arduino firmware on the fly over that same cable — firmware is an
+LLM-modifiable artifact (repo: firmware/arduino/ when it lands). Reflexes (cliff-stop)
+can live in-firmware below the Pi. Full rationale: docs/AWARENESS.md "Arduino I/O
+plane". Board choice + motor placement open — check the parts inventory first. CAD
+knock-on: the electronics bay needs a mounting spot for the Arduino + one internal USB
+run to the Pi.

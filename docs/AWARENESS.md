@@ -80,6 +80,36 @@ the ambient model is 0.6B-class: the 1.7B ceiling model fits ONLY alone,
 not next to the ears. Bigger ambient brains mean a bigger-RAM Pi or an
 accelerator, not a config change.
 
+## Arduino I/O plane (decided direction, 2026-07-12)
+
+Most of the electrical components do NOT wire to the Pi's GPIO: they
+connect to an **Arduino dev board**, and the Arduino connects to the Pi 5
+over **one USB cable** (serial telemetry + commands + power + flashing on
+the same wire). The Pi keeps only what needs its bandwidth: camera (CSI),
+mics (USB), display (DSI).
+
+Why:
+- **Real-time belongs on the microcontroller**: HC-SR04 echo timing,
+  vibration debounce, LED strip protocols, encoder counting, stepper
+  pulse trains — all jitter-free there, all jittery under Linux.
+- **Electrical decoupling**: sensor mistakes fry a $5 board, not the Pi;
+  5V-tolerant pins; one clean harness instead of a GPIO spaghetti.
+- **The Pi can REPROGRAM the Arduino on the fly using its AI.** With
+  `arduino-cli` installed on the Pi, firmware is just another artifact
+  the LLM tier can write: generate sketch -> compile -> flash over the
+  same USB cable -> verify over serial. New sensor arrives, the robot
+  can (with the big-brain tier) write, flash, and test its own firmware
+  for it. Firmware lives in the repo (`firmware/arduino/`) like any code.
+
+Protocol intent: line-based JSON over serial (~10 Hz telemetry into the
+world state: sonar distances, IMU, env, touch events; commands back:
+motors, LEDs). The Arduino is a Tier-0/Tier-1 peripheral, reflexes like
+cliff-stop can live IN the firmware, below even the Pi.
+
+Open here: which board (classic Uno/Nano AVR vs RP2040/ESP32-class with
+more headroom — check the parts inventory before buying), and which of
+pan/tilt steppers + TT motors move behind it vs stay on Pi GPIO/ULN2003.
+
 ## Open decisions
 
 - "AI camera": keep plain CM3 + on-CPU detect, vs IMX500 AI Camera or a
