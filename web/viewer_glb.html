@@ -52,6 +52,8 @@
   .part input{margin:0}
   .part.off{opacity:.4}
   .cgrp{margin:2px 0}
+  .cgrp.sub{margin:1px 0 1px 14px;border-left:1px solid rgba(255,255,255,.08);padding-left:6px}
+  .cgrp.sub .chead .cname{font-size:11px;opacity:.85}
   .chead{display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:8px;
     cursor:pointer;user-select:none;font:600 11px/1 var(--mono);letter-spacing:.08em;
     text-transform:uppercase;color:var(--ink-dim)}
@@ -361,25 +363,44 @@ new GLTFLoader().load(MODEL, (gltf)=>{
     `<span class="ax" style="color:${TXT.z}">H</span><b>${sz.z.toFixed(0)}</b>`+
     `<span class="ax">mm</span>`;
 
-  // parts panel grouped BY OBJECT (2026-07-10: the big prints are split into pieces;
-  // each object gets a collapsible group with a toggle-all checkbox)
-  const CATS = [
-    ['Head shell',      /^(head_|sd_plug|led_strip|camera_pod)/],
-    ['Screen & camera', /^(screen_|cam_cover|camera_ref)/],
-    ['Antennas',        /^(antenna_|ant_|motor_ant)/],
-    ['Neck & tilt',     /^(neck_|tilt_|worm_|motor_tilt)/],
-    ['Pan stage',       /^(pan_|motor_pan)/],
-    ['Chassis',         /^(chassis_|belly_plate)/],
-    ['Fascia & trim',   /^(trim_|sensor_|lamp_|led_front)/],
-    ['Track pod L',     /^(track_L|drivewheels_L|track_keeper_L|pod_rail_L|drive_L)/],
-    ['Track pod R',     /^(track_R|drivewheels_R|track_keeper_R|pod_rail_R|drive_R)/],
+  // parts panel: TWO-LEVEL category tree (2026-07-11, user: granular viewing with
+  // multi-level sub-categories). Top groups hold sub-groups hold parts; every level
+  // gets a collapse arrow + a tri-state toggle-all that propagates both ways.
+  const TREE = [
+    ['Chassis', [
+      ['Hull',          /^(chassis_lower_|belly_plate)/],
+      ['Deck',          /^chassis_deck_/],
+      ['Fascia & trim', /^(trim_fascia|trim_rear|lamp_|led_front)/],
+      ['Sensors',       /^sensor_/],
+    ]],
+    ['Drive', [
+      ['Motors',        /^drive2?_[LR]$/],
+      ['Track L',       /^(track_L$|track_keeper_L)/],
+      ['Track R',       /^(track_R$|track_keeper_R)/],
+      ['Running gear',  /^drivewheels_/],
+      ['Rails & axles', /^(pod_rail_|axle_hw_)/],
+    ]],
+    ['Pan & neck', [
+      ['Pan stage',   /^(pan_|motor_pan)/],
+      ['Neck & tilt', /^(neck_|tilt_|worm_|motor_tilt)/],
+    ]],
+    ['Head', [
+      ['Shell',           /^(head_|trim_rail_|trim_hatch_frame|sd_plug)/],
+      ['Screen & camera', /^(screen_|cam_cover|camera_)/],
+      ['Antennas',        /^(antenna_|ant_|motor_ant)/],
+      ['Lights & ears',   /^(led_strip|ear_mic_)/],
+    ]],
   ];
   const host = document.getElementById('parts');
-  const catBodies = new Map();
-  function catFor(n){ for(const [t,re] of CATS) if(re.test(n)) return t; return 'Other'; }
-  function catUI(title){
-    if(catBodies.has(title)) return catBodies.get(title);
-    const grp=document.createElement('div'); grp.className='cgrp';
+  const catBodies = new Map();          // key 'Top' or 'Top/Sub' -> {body, cb, parent}
+  function catFor(n){
+    for(const [top, subs] of TREE)
+      for(const [sub, re] of subs)
+        if(re.test(n)) return [top, sub];
+    return ['Other', 'Misc'];
+  }
+  function mkGroup(title, parentBody, cls, key, parentKey){
+    const grp=document.createElement('div'); grp.className=cls;
     const head=document.createElement('div'); head.className='chead';
     head.innerHTML=`<span class="carrow">▾</span><span class="cname">${title}</span>`;
     const cb=document.createElement('input'); cb.type='checkbox'; cb.checked=true;
@@ -392,15 +413,22 @@ new GLTFLoader().load(MODEL, (gltf)=>{
         if(pc.checked!==cb.checked){ pc.checked=cb.checked; pc.dispatchEvent(new Event('change')); }
       });
     });
-    grp.appendChild(head); grp.appendChild(body); host.appendChild(grp);
-    const rec={body, cb}; catBodies.set(title, rec); return rec;
+    grp.appendChild(head); grp.appendChild(body); parentBody.appendChild(grp);
+    const rec={body, cb, parent:parentKey}; catBodies.set(key, rec); return rec;
   }
-  function syncCat(title){
-    const rec=catBodies.get(title); if(!rec) return;
+  function catUI(top, sub){
+    const tk=top, sk=top+'/'+sub;
+    if(!catBodies.has(tk)) mkGroup(top, host, 'cgrp', tk, null);
+    if(!catBodies.has(sk)) mkGroup(sub, catBodies.get(tk).body, 'cgrp sub', sk, tk);
+    return catBodies.get(sk);
+  }
+  function syncCat(key){
+    const rec=catBodies.get(key); if(!rec) return;
     const boxes=[...rec.body.querySelectorAll('.part input')];
     const on=boxes.filter(b=>b.checked).length;
     rec.cb.checked = on===boxes.length;
     rec.cb.indeterminate = on>0 && on<boxes.length;
+    if(rec.parent) syncCat(rec.parent);
   }
   for(const [name,g] of Object.entries(groups)){
     g.home = g.meshes.map(o=>o.position.clone());
@@ -413,8 +441,9 @@ new GLTFLoader().load(MODEL, (gltf)=>{
     const D = dimBox(gb, Math.max(6, diag*0.02));
     D.visible=false; g.dim=D; g.dimHome=D.position.clone(); g.labels=D.labels; dimsRoot.add(D);
 
-    const cat = catFor(name);
-    const rec = catUI(cat);
+    const [top, sub] = catFor(name);
+    const cat = top + '/' + sub;
+    const rec = catUI(top, sub);
     const row = document.createElement('label'); row.className='part';
     row.innerHTML = `<span class="sw" style="background:${hex(name)}"></span>`+
                     `<span class="nm">${name}</span><input type="checkbox" checked>`;
