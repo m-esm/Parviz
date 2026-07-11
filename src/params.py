@@ -199,12 +199,14 @@ P = {
     "sprocket_outer_d": 37.6,   # tip r 18.8 = pin circle 19.32 - 0.5 clearance (OD 42 jammed links)
     "idler_bore_d": 15.95,  # F688ZZ (8x16x5, flange 18) press seat; flange recess 18.5 x 1.0
     "roadwheel_d": 20.0,    # dished road wheels riding the bottom-run knuckle crowns
-    "roadwheel_ys": (80.5, 57.5, 34.5, 11.5, -11.5, -34.5),   # EXPLICIT stations
+    "roadwheel_ys": (80.5, 57.5, 33.5, 11.5, -11.5, -33.5),   # EXPLICIT stations
                             # (2026-07-11 mid-drive): the ground-run sprocket at spr_y
                             # -68 needs 28.8+ axle gaps (18.8 + 10): nearest wheel
-                            # -34.5 sits 33.5 away; -68..-120 is carried by the
-                            # sprocket + rear end idler. Nut slots at +-34.5 clear the
-                            # pod-join dowels (+-40, z 20) by 1.85
+                            # -33.5 sits 34.5 away; -68..-120 is carried by the
+                            # sprocket + rear end idler. Stations +-33.5 (QA loop
+                            # 2026-07-11: at +-34.5 the beam nut slot's edge 38.15
+                            # nicked the pod-join dowel SOCKET edge 38.075 by 0.075;
+                            # +-33.5 clears it 0.93, wheel gaps stay 22/24)
     "spr_y": -68.0,         # drive sprocket station on the ground run (center z = pin
                             # line + pin circle = 25.32). THE derivation (all failed
                             # spots documented 2026-07-11): the TT envelope ys-12..
