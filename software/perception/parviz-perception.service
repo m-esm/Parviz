@@ -1,0 +1,21 @@
+# Parviz perception daemon: YuNet face detection -> /dev/shm/parviz_vision.json
+# + camera preview frames for the face. SOLE owner of the camera.
+#
+# Install (from ~/parviz-sw on the Pi):
+#   sudo cp perception/parviz-perception.service /etc/systemd/system/
+#   sudo systemctl daemon-reload && sudo systemctl enable --now parviz-perception
+
+[Unit]
+Description=Parviz perception (YuNet face detection)
+After=multi-user.target
+
+[Service]
+User=moshe
+WorkingDirectory=/home/moshe/parviz-sw/perception
+ExecStart=/usr/bin/python3 /home/moshe/parviz-sw/perception/perceive.py
+Restart=always
+RestartSec=3
+MemoryMax=400M
+
+[Install]
+WantedBy=multi-user.target

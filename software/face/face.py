@@ -62,7 +62,8 @@ ORANGE = (232, 116, 34)
 DIM = (93, 46, 14)            # legacy dim orange (boot label)
 HUD_FG = (176, 179, 183)      # light gray: values
 HUD_MID = (128, 131, 135)     # mid gray: graphs, cursor, pip
-HUD_DIM = (88, 91, 95)        # dark gray: labels, brackets, brain line
+HUD_DIM = (88, 91, 95)        # dark gray: labels, brackets
+HUD_FAINT = (62, 64, 68)      # faintest: raw model output, secondary lines
 HUD_BAD = (220, 80, 64)       # reserved for alerts
 
 DECISION_FILE = "/tmp/parviz_decision.json"   # brain loop writes, face shows
@@ -301,43 +302,66 @@ class DemoDirector:
             face.status = f"DEMO // {name}"
 
 
+PREVIEW_JPG = "/dev/shm/parviz_preview.jpg"   # written by perception
+VISION_JSON = "/dev/shm/parviz_vision.json"   # written by perception
+
+
 class CamPreview:
-    """Tiny live camera window for the HUD (user: 'camera is connected,
-    show what it sees'). picamera2 lores stream at 160x120, resampled to
-    a 96x72 square at ~6 fps. Fails soft: no camera / no picamera2 ->
-    disabled, the CAM slot stays '--'."""
+    """Tiny live camera window for the HUD. The face does NOT own the
+    camera: the perception daemon does, and shares 160x120 JPEG frames
+    via /dev/shm. Stale/absent frames -> window hidden, CAM slot '--'."""
 
     SIZE = (96, 72)
 
     def __init__(self):
         self.ok = False
-        self.cam = None
         self._img = None
         self._t = -1e9
-        try:
-            from picamera2 import Picamera2
-            self.cam = Picamera2()
-            cfg = self.cam.create_video_configuration(
-                main={"size": (160, 120), "format": "BGR888"})
-            self.cam.configure(cfg)
-            self.cam.start()
-            self.ok = True
-        except Exception:   # any camera failure must never kill the face
-            self.cam = None
 
     def surface(self, pygame, now):
-        if not self.ok:
-            return None
-        if now - self._t >= 0.16:
+        if now - self._t >= 0.25:
             self._t = now
             try:
-                arr = self.cam.capture_array()
-                img = pygame.image.frombuffer(
-                    arr.tobytes(), (arr.shape[1], arr.shape[0]), "RGB")
-                self._img = pygame.transform.scale(img, self.SIZE)
-            except Exception:
-                pass
-        return self._img
+                self.ok = (time.time() -
+                           os.path.getmtime(PREVIEW_JPG)) < 3.0
+                if self.ok:
+                    img = pygame.image.load(PREVIEW_JPG)
+                    self._img = pygame.transform.scale(img, self.SIZE)
+            except (OSError, pygame.error):
+                self.ok = False
+        return self._img if self.ok else None
+
+
+class VisionGaze:
+    """Person-following idle gaze: reads perception's interaction state;
+    while a person is present (and nothing stronger is going on) the eyes
+    drift toward them. Touch and non-neutral expressions win."""
+
+    def __init__(self):
+        self._t = -1e9
+        self.want = None      # (gx, gy) in gaze space, or None
+        self.present = False
+        self.raw = None       # last parsed state dict (raw model output)
+
+    def poll(self, now):
+        if now - self._t < 0.25:
+            return
+        self._t = now
+        self.want = None
+        self.present = False
+        self.raw = None
+        try:
+            if time.time() - os.path.getmtime(VISION_JSON) > 1.5:
+                return
+            with open(VISION_JSON) as f:
+                st = json.load(f)
+            self.raw = st
+            if st.get("person_present"):
+                self.present = True
+                self.want = (max(-1.0, min(1.0, st["cx"] * 1.3)),
+                             max(-1.0, min(1.0, st["cy"] * 1.3)))
+        except (OSError, ValueError, KeyError):
+            pass
 
 
 class Telemetry:
@@ -587,11 +611,16 @@ class FaceRenderer:
         self.status = None          # HUD status override (demo / brain)
         self.tele = Telemetry()
         self.campre = CamPreview()
+        self.vision = VisionGaze()
         self._font_sm = pygame.font.SysFont(
             "dejavusansmono,menlo,consolas,monospace", 14)
+        self._font_xs = pygame.font.SysFont(
+            "dejavusansmono,menlo,consolas,monospace", 11)
         self._eye_gaze = {-1: (0.0, 0.0), 1: (0.0, 0.0)}  # per-eye eased
         self._dec = None            # latest brain decision line
         self._dec_t = -1e9
+        self.demo_on = False        # runtime toggle: triple-tap the screen
+        self._taps = []
         self._font = pygame.font.SysFont(
             "dejavusansmono,menlo,consolas,monospace", 17)
         self._text_cache = {}       # str -> rendered Surface
@@ -622,6 +651,9 @@ class FaceRenderer:
                 ty = (tp[1] + 1) / 2 * SCREEN_H
                 want = (max(-1.0, min(1.0, (tx - cx) / (EYE_W * 0.75))),
                         max(-1.0, min(1.0, (ty - cy) / (EYE_H * 0.75))))
+        elif (self.vision.want is not None
+              and self.state.expression == "neutral"):
+            want = self.vision.want   # idle attention: follow the person
         else:
             want = st["gaze"]
         eg = self._eye_gaze[side]
@@ -650,12 +682,13 @@ class FaceRenderer:
             if pupil["glint"] is not None:
                 pg.draw.polygon(surf, BG, pupil["glint"])
 
-    def _text(self, s, color=HUD_FG, small=False):
-        key = (s, color, small)
+    def _text(self, s, color=HUD_FG, small=False, tiny=False):
+        key = (s, color, small, tiny)
         if key not in self._text_cache:
             if len(self._text_cache) > 96:
                 self._text_cache.clear()
-            font = self._font_sm if small else self._font
+            font = (self._font_xs if tiny
+                    else self._font_sm if small else self._font)
             self._text_cache[key] = font.render(s, True, color)
         return self._text_cache[key]
 
@@ -776,11 +809,11 @@ class FaceRenderer:
         # --- bottom-center: the brain's latest decision, whisper-quiet
         dec = self._decision_line(now)
         if dec:
-            dimg = self._text(dec, HUD_DIM, small=True)
+            dimg = self._text(dec, HUD_FAINT, tiny=True)
             surf.blit(dimg, ((SCREEN_W - dimg.get_width()) // 2,
                              SCREEN_H - m - dimg.get_height() - 30))
 
-        # --- right edge: live camera window
+        # --- right edge: live camera window + raw model output
         cimg = self.campre.surface(pg, now)
         if cimg is not None:
             cw, chh = CamPreview.SIZE
@@ -788,13 +821,36 @@ class FaceRenderer:
             surf.blit(cimg, (cx0, cy0))
             pg.draw.rect(surf, HUD_DIM,
                          pg.Rect(cx0 - 1, cy0 - 1, cw + 2, chh + 2), 1)
-            lab = self._text("CAM", HUD_DIM, small=True)
+            lab = self._text("CAM ●" if self.vision.present else "CAM",
+                             HUD_DIM, tiny=True)
             surf.blit(lab, (cx0, cy0 - lab.get_height() - 3))
+            raw = self.vision.raw
+            if raw:
+                # detection box over the preview (det 320x240 -> window)
+                if raw.get("box"):
+                    bx, by, bw, bh = raw["box"]
+                    pg.draw.rect(surf, HUD_MID, pg.Rect(
+                        cx0 + int(bx * cw / 320), cy0 + int(by * chh / 240),
+                        max(2, int(bw * cw / 320)),
+                        max(2, int(bh * chh / 240))), 1)
+                # raw numbers, faintest text under the window
+                if raw.get("person_present"):
+                    l1 = (f'f{raw["n_faces"]} {raw["conf"]:.2f} '
+                          f'x{raw["cx"]:+.2f} y{raw["cy"]:+.2f} '
+                          f's{raw["size"]:.2f}')
+                else:
+                    l1 = "no face"
+                l2 = (f'yunet {raw.get("fps", 0):.0f}fps '
+                      f'{raw.get("infer_ms", 0):.0f}ms')
+                for i, s in enumerate((l1, l2)):
+                    img = self._text(s, HUD_FAINT, tiny=True)
+                    surf.blit(img, (cx0 + cw - img.get_width(),
+                                    cy0 + chh + 4 + i * 13))
 
         # --- bottom-right: sensor slots (fill in as hardware arrives)
         cam_s = "OK" if self.campre.ok else "--"
-        sens = self._text(f"MIC --  CAM {cam_s}  RDR --  IMU --", HUD_DIM,
-                          small=True)
+        sens = self._text(f"MIC --  CAM {cam_s}  RDR --  IMU --", HUD_FAINT,
+                          tiny=True)
         sx = SCREEN_W - m - 34 - sens.get_width()
         sy = SCREEN_H - m - sens.get_height() - 8
         surf.blit(sens, (sx, sy))
@@ -825,6 +881,7 @@ class FaceRenderer:
         now = time.monotonic()
         surf.fill(BG)
         boot_ph = (now - self._boot_t0) / BOOT_LEN_S
+        self.vision.poll(now)
         self._hud(surf, now)
         for side, ex in ((-1, EYE_CX[0]), (1, EYE_CX[1])):
             self._eye(surf, ex, EYE_CY, side, lid, dt)
@@ -854,10 +911,24 @@ class FaceRenderer:
 
     # ---------------------------------------------------------------- loop
 
+    def _tap(self, now):
+        """Triple-tap within 1 s toggles demo mode (off by default)."""
+        self._taps = [t for t in self._taps if now - t < 1.0] + [now]
+        if len(self._taps) >= 3:
+            self._taps = []
+            self.demo_on = not self.demo_on
+            if not self.demo_on:
+                self.status = None
+                self.state.touch(None)
+                self.set_expression("neutral")
+            return True
+        return False
+
     def run(self, seconds=None, demo=False):
         pg = self.pygame
         t_start = time.monotonic()
-        director = DemoDirector() if demo else None
+        self.demo_on = demo
+        director = DemoDirector()
         last = t_start
         while True:
             now = time.monotonic()
@@ -878,6 +949,8 @@ class FaceRenderer:
                     if ev.type == pg.FINGERDOWN:
                         self._ripples.append((ev.x * SCREEN_W,
                                               ev.y * SCREEN_H, now))
+                        if self._tap(now):
+                            director = DemoDirector()  # restart clean
                 elif ev.type == pg.FINGERUP:
                     self.state.touch(None)
                 elif ev.type == pg.MOUSEBUTTONDOWN or \
@@ -887,9 +960,11 @@ class FaceRenderer:
                                       y / SCREEN_H * 2 - 1))
                     if ev.type == pg.MOUSEBUTTONDOWN:
                         self._ripples.append((x, y, now))
+                        if self._tap(now):
+                            director = DemoDirector()
                 elif ev.type == pg.MOUSEBUTTONUP:
                     self.state.touch(None)
-            if director is not None and now - self._boot_t0 > BOOT_LEN_S:
+            if self.demo_on and now - self._boot_t0 > BOOT_LEN_S:
                 director.tick(now, self)
             lid = self.state.tick(now, dt)
             self.draw(lid, dt)

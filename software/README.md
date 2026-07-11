@@ -313,3 +313,25 @@ CAMERA PREVIEW: 96x72 live window right-edge center (picamera2 lores
 perception process arrives it takes ownership and the preview should
 consume ITS frames instead. Brain schema updated with the new emotion
 names (scenarios.py enum + prompts).
+
+### perception/perceive.py, YuNet vision daemon (2026-07-12)
+
+Tier-1 vision per the user's benchmark research: OpenCV FaceDetectorYN
+(YuNet 2023mar ONNX, 232 KB, in models/) on picamera2 640x480 -> 320x240,
+15 Hz loop. SOLE camera owner (the face's CamPreview now READS its
+/dev/shm frames instead of opening picamera2). Publishes atomically:
+- /dev/shm/parviz_vision.json: interaction state (person_present, conf,
+  cx/cy robot-frame normalized, size, facing_camera heuristic, pan/tilt
+  suggestion, raw det box, fps, infer_ms)
+- /dev/shm/parviz_preview.jpg: 160x120 @3 Hz for the face CAM window
+Measured on-device: 15 FPS (at cap), ~16 ms inference, 189 MB RSS, ~77%
+of one core (optimization headroom: drop to 10 Hz when nobody present),
+live detection of a real face at 0.95 conf. `--bench N` prints the
+research CSV; `--image f.jpg` one-shot test. parviz-perception.service
+(MemoryMax=400M) enabled on boot.
+
+Face integration: idle eyes FOLLOW the detected person (VisionGaze,
+neutral expression only; touch and brain expressions win), CAM window
+draws the raw detection box + faint raw numbers (HUD_FAINT 11 px, user:
+subtle), CAM slot shows OK from frame freshness. DEMO TOGGLE: triple-tap
+the screen within 1 s toggles demo mode at runtime, OFF by default.
