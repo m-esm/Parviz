@@ -259,3 +259,14 @@ field is the same hook the brain loop will use later. Run on the Pi:
 `sudo systemctl stop parviz-face && cd parviz-sw &&
 SDL_VIDEODRIVER=kmsdrm python3 face/face.py --demo --seconds 45;
 sudo systemctl start parviz-face`
+
+Face v4 (2026-07-12, user feedback rounds): eyes = TWO THIN OUTLINES
+(4px outer + 2px inset echo, GAP 11; the bold filled ring is gone) and
+more expressive: bottom-lid `squint` (happy is a squint, not a droop)
+and `pupil` dilation per expression (surprised = pinpoint, happy/touch
+= dilated). Eyes moved high (cy 0.365*H); a rigid 3-segment MOUTH is
+back by user request (smile/frown polyline; chamfered-O when `open`,
+surprise/speaking) at 0.72*H. Bottom TELEMETRY bar refreshed every 5 s:
+CPU temp + NET (wlan/eth operstate) + PWR AC real today, MIC/CAM/RDR
+show `--` until the hardware is wired (AWARENESS.md suite). All still
+one hue, straight strokes, ~10% CPU.

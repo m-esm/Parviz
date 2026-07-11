@@ -1,13 +1,14 @@
 """desk-pi face renderer: fullscreen animated face for the official 7" display.
 
-Look (2026-07-12 revision, styled after the rendered CAD model): RIGID
-LINES ONLY, two CHAMFERED-corner eyes drawn as thick orange ring frames
-(the chassis fascia's grille ring / the design-ref bezel octagon) with
-chamfered square pupils; a shut eye is a chamfered-end bar like the
-trim blocks. No mouth, no eyebrows. Single color: the body's safety
-orange (src/geo.py COLORS["accent"] = 232,116,34) on black. Expressions
-are carried by lid height, top-corner tilt and pupil position, every
-stroke is a straight line. TOUCH: while a finger is on the panel the
+Look (2026-07-12, third revision per user): RIGID LINES ONLY, two
+CHAMFERED-corner eyes drawn as TWO THIN OUTLINES (outer + inset echo,
+no bold ring) riding HIGH on the screen, chamfered pupils that DILATE
+with mood, a rigid 3-segment MOUTH (smile/frown polyline, chamfered-O
+when open/surprised), and a bottom TELEMETRY bar (CPU temp, network,
+power + placeholders for unwired sensors). No eyebrows. Single hue:
+body safety orange (src/geo.py COLORS["accent"] = 232,116,34) on black.
+Expressions = lid + bottom-lid squint + corner tilt + pupil size +
+mouth curve/open; every stroke is a straight line. TOUCH: while a finger is on the panel the
 pupils track it (eyes widen slightly); lifting it blinks and returns
 to the current expression; each press spawns a fading chamfered ripple.
 
@@ -66,27 +67,44 @@ RIPPLE_LEN_S = 0.35          # touch feedback outline
 EYE_W = int(SCREEN_W * 0.28)          # 224
 EYE_H = int(SCREEN_H * 0.40)          # 192
 EYE_CX = (int(SCREEN_W * 0.30), int(SCREEN_W * 0.70))   # 240, 560
-EYE_CY = SCREEN_H // 2
-STROKE = 12                            # ring-frame wall, reads like the grille ring
+EYE_CY = int(SCREEN_H * 0.365)         # eyes ride high; mouth + telemetry below
+MOUTH_CY = int(SCREEN_H * 0.72)
+MOUTH_HALF = 92
+STROKE = 4                             # outer outline width (thin, not bold)
+STROKE_IN = 2                          # inner outline width
+GAP = 11                               # spacing between the two outlines
 CHAMFER = 0.20                         # corner cut as a fraction of the eye opening
 
 FRAME_DUMP = "/tmp/face_frame.png"
 
 # name -> dict of pose targets the animator eases toward.
-#   gaze: (-1..1, -1..1) pupil offset, +x = viewer's right, +y = down
-#   lid:  0 open .. 1 closed (straight shutter from the top)
-#   tilt: -1 outer top corners drop (sad) .. +1 outer top corners rise
-#   size: eye height scale (surprised > 1)
+#   gaze:   (-1..1, -1..1) pupil offset, +x = viewer's right, +y = down
+#   lid:    0 open .. 1 closed (straight shutter from the top)
+#   squint: 0 open .. 1 bottom lid raised (happy squint, distinct from lid)
+#   tilt:   -1 outer top corners drop (sad) .. +1 outer top corners rise
+#   size:   eye height scale (surprised > 1)
+#   pupil:  pupil dilation, <1 alert/pinpoint, >1 relaxed/interested
+#   mouth:  -1 frown .. 0 flat .. 1 smile (3-segment rigid polyline)
+#   open:   0 closed .. 1 mouth open (chamfered O, surprise/speech)
 EXPRESSIONS = {
-    "neutral":    dict(gaze=(0.0, 0.0),  lid=0.0,  tilt=0.0,  size=1.0),
-    "happy":      dict(gaze=(0.0, -0.1), lid=0.2,  tilt=0.6,  size=0.9),
-    "sad":        dict(gaze=(0.0, 0.35), lid=0.25, tilt=-0.7, size=1.0),
-    "surprised":  dict(gaze=(0.0, -0.2), lid=0.0,  tilt=0.1,  size=1.3),
-    "sleepy":     dict(gaze=(0.0, 0.3),  lid=0.6,  tilt=-0.2, size=1.0),
-    "look_left":  dict(gaze=(-0.9, 0.0), lid=0.0,  tilt=0.0,  size=1.0),
-    "look_right": dict(gaze=(0.9, 0.0),  lid=0.0,  tilt=0.0,  size=1.0),
-    "look_up":    dict(gaze=(0.0, -0.9), lid=0.0,  tilt=0.2,  size=1.05),
-    "look_down":  dict(gaze=(0.0, 0.9),  lid=0.15, tilt=0.0,  size=1.0),
+    "neutral":    dict(gaze=(0.0, 0.0),  lid=0.0,  squint=0.0,  tilt=0.0,
+                       size=1.0, pupil=1.0, mouth=0.1, open=0.0),
+    "happy":      dict(gaze=(0.0, -0.1), lid=0.05, squint=0.45, tilt=0.6,
+                       size=0.95, pupil=1.2, mouth=0.85, open=0.0),
+    "sad":        dict(gaze=(0.0, 0.35), lid=0.3,  squint=0.0,  tilt=-0.7,
+                       size=1.0, pupil=0.85, mouth=-0.7, open=0.0),
+    "surprised":  dict(gaze=(0.0, -0.2), lid=0.0,  squint=0.0,  tilt=0.1,
+                       size=1.3, pupil=0.55, mouth=0.0, open=0.9),
+    "sleepy":     dict(gaze=(0.0, 0.3),  lid=0.55, squint=0.15, tilt=-0.2,
+                       size=1.0, pupil=1.1, mouth=0.05, open=0.0),
+    "look_left":  dict(gaze=(-0.9, 0.0), lid=0.0,  squint=0.1,  tilt=0.0,
+                       size=1.0, pupil=0.9, mouth=0.1, open=0.0),
+    "look_right": dict(gaze=(0.9, 0.0),  lid=0.0,  squint=0.1,  tilt=0.0,
+                       size=1.0, pupil=0.9, mouth=0.1, open=0.0),
+    "look_up":    dict(gaze=(0.0, -0.9), lid=0.0,  squint=0.1,  tilt=0.2,
+                       size=1.05, pupil=0.9, mouth=0.1, open=0.0),
+    "look_down":  dict(gaze=(0.0, 0.9),  lid=0.15, squint=0.0,  tilt=0.0,
+                       size=1.0, pupil=0.9, mouth=0.0, open=0.0),
 }
 
 BLINK_EVERY_S = (2.5, 6.0)   # random interval range
@@ -134,13 +152,13 @@ class FaceState:
         gx = max(-1.0, min(1.0, gaze[0]))
         gy = max(-1.0, min(1.0, gaze[1]))
         self.target = dict(self.target)
-        self.target.update(gaze=(gx, gy), lid=0.0, size=1.1)
+        self.target.update(gaze=(gx, gy), lid=0.0, size=1.1, pupil=1.3)
 
     def tick(self, now, dt):
         gx, gy = self.pose["gaze"]
         tx, ty = self.target["gaze"]
         self.pose["gaze"] = (_ease(gx, tx, dt), _ease(gy, ty, dt))
-        for k in ("lid", "tilt", "size"):
+        for k in ("lid", "squint", "tilt", "size", "pupil", "mouth", "open"):
             self.pose[k] = _ease(self.pose[k], self.target[k], dt)
 
         # Micro-life. Saccade: a small instant gaze offset that eases back
@@ -253,15 +271,16 @@ def chamfer(poly, c):
     return out
 
 
-def eye_geometry(cx, cy, side, gaze, lid, tilt, size,
-                 w=EYE_W, h=EYE_H, stroke=STROKE):
+def eye_geometry(cx, cy, side, gaze, lid, tilt, size, squint=0.0,
+                 pupil_k=1.0, w=EYE_W, h=EYE_H):
     """Straight-line eye geometry, no pygame: (outer_poly, inner_poly, pupil).
 
-    The eye is a chamfered-corner ring frame (the model's grille-ring motif):
-    outer_poly filled in orange, inner_poly punched back to black, pupil a
-    filled chamfered square clamped inside the opening. outer_poly is None
-    when the eye is effectively shut (caller draws a chamfered bar instead);
-    pupil is None when the opening is too short for it.
+    The eye is TWO thin chamfered outlines (outer + inset echo) with a
+    filled chamfered pupil that dilates with pupil_k. lid closes from the
+    top, squint raises the bottom lid (happy squint reads different from
+    a drooping lid). outer_poly is None when the eye is effectively shut
+    (caller draws a chamfered bar instead); pupil is None when the opening
+    is too short for it.
     side: -1 left eye, +1 right (tilt moves the OUTER top corner).
     """
     hh = h * size / 2.0
@@ -271,30 +290,33 @@ def eye_geometry(cx, cy, side, gaze, lid, tilt, size,
     d_out, d_in = -tilt * 30.0, tilt * 8.0
     tl = top + (d_out if side < 0 else d_in)
     tr = top + (d_out if side > 0 else d_in)
-    # lid: shutter descends from the top, straight edge.
+    # lid: shutter descends from the top; squint: bottom lid rises.
     lid = max(0.0, min(1.0, lid))
+    squint = max(0.0, min(1.0, squint))
     tl += (bot - tl) * lid
     tr += (bot - tr) * lid
-    if min(bot - tl, bot - tr) < stroke * 1.5:
+    b = bot - 2.0 * hh * 0.5 * squint
+    if min(b - tl, b - tr) < 14:
         return None, None, None  # effectively shut
-    quad = [(l, tl), (r, tr), (r, bot), (l, bot)]
-    c = CHAMFER * min(w, min(bot - tl, bot - tr))
+    quad = [(l, tl), (r, tr), (r, b), (l, b)]
+    c = CHAMFER * min(w, min(b - tl, b - tr))
     outer = chamfer(quad, c)
-    # Inner frame edge: inset the quad by the wall, chamfer with the facet
-    # kept parallel to the outer one (a 45-deg facet inset by s sits at
-    # corner distance c - s*(sqrt(2)-1)).
-    iquad = [(l + stroke, tl + stroke), (r - stroke, tr + stroke),
-             (r - stroke, bot - stroke), (l + stroke, bot - stroke)]
-    inner = chamfer(iquad, max(2.0, c - stroke * 0.414))
+    # inner outline: an inset echo of the outer, parallel facets
+    iquad = [(l + GAP, tl + GAP), (r - GAP, tr + GAP),
+             (r - GAP, b - GAP), (l + GAP, b - GAP)]
+    if min(p[1] for p in iquad[2:]) - max(iquad[0][1], iquad[1][1]) < 10:
+        inner = None
+    else:
+        inner = chamfer(iquad, max(2.0, c - GAP * 0.414))
 
-    pw = int(w * 0.30)
-    ph_full = int(h * 0.42)
-    px = cx + gaze[0] * (w / 2.0 - pw / 2.0 - stroke * 2)
-    py = cy + gaze[1] * (hh - ph_full / 2.0 - stroke * 2)
-    # clamp the pupil under the (possibly tilted/lowered) top edge
+    pw = w * 0.30 * pupil_k
+    ph_full = h * 0.42 * pupil_k
+    px = cx + gaze[0] * (w / 2.0 - pw / 2.0 - GAP - 6)
+    py = cy + gaze[1] * (hh - ph_full / 2.0 - GAP - 6)
+    # clamp the pupil inside the (tilted/lidded/squinted) opening
     top_at_px = tl + (tr - tl) * ((px - l) / (r - l))
-    p_top = max(py - ph_full / 2.0, top_at_px + stroke * 1.5)
-    p_bot = min(py + ph_full / 2.0, bot - stroke * 1.5)
+    p_top = max(py - ph_full / 2.0, top_at_px + 8)
+    p_bot = min(py + ph_full / 2.0, b - 8)
     if p_bot - p_top < 10:
         return outer, inner, None
     prect = [(px - pw / 2, p_top), (px + pw / 2, p_top),
@@ -303,9 +325,9 @@ def eye_geometry(cx, cy, side, gaze, lid, tilt, size,
     return outer, inner, pupil
 
 
-def shut_bar(cx, cy, w=EYE_W, stroke=STROKE):
+def shut_bar(cx, cy, w=EYE_W):
     """Chamfered-end bar for a fully shut eye (the trim-block silhouette)."""
-    half, hh = w * 0.45, stroke * 0.7
+    half, hh = w * 0.45, 5.0
     rect = [(cx - half, cy - hh), (cx + half, cy - hh),
             (cx + half, cy + hh), (cx - half, cy + hh)]
     return chamfer(rect, hh)
@@ -328,6 +350,11 @@ class FaceRenderer:
         self._boot_t0 = time.monotonic()
         self._ripples = []          # [(x, y, t0)] touch feedback
         self.status = None          # HUD status override (demo / brain)
+        self._tele = ""             # telemetry summary line
+        self._tele_t = 0.0
+        self._font_sm = pygame.font.SysFont(
+            "dejavusansmono,menlo,consolas,monospace", 14)
+        self._tele_cache = {}
         self._font = pygame.font.SysFont(
             "dejavusansmono,menlo,consolas,monospace", 17)
         self._text_cache = {}       # str -> rendered Surface
@@ -348,13 +375,16 @@ class FaceRenderer:
                 st["gaze"][1] + self.state.sacc[1])
         outer, inner, pupil = eye_geometry(cx, cy, side, gaze, lid,
                                            st["tilt"],
-                                           st["size"] * self.state.breath)
+                                           st["size"] * self.state.breath,
+                                           squint=st["squint"],
+                                           pupil_k=st["pupil"])
         if outer is None:
             pg.draw.polygon(surf, ORANGE, shut_bar(cx, cy))
             return
-        # Ring frame: fill the chamfered outline, punch the opening back out.
-        pg.draw.polygon(surf, ORANGE, outer)
-        pg.draw.polygon(surf, BG, inner)
+        # Two thin outlines (outer + inset echo), then the filled pupil.
+        pg.draw.polygon(surf, ORANGE, outer, STROKE)
+        if inner is not None:
+            pg.draw.polygon(surf, ORANGE, inner, STROKE_IN)
         if pupil is not None:
             pg.draw.polygon(surf, ORANGE, pupil)
 
@@ -364,6 +394,49 @@ class FaceRenderer:
                 self._text_cache.clear()
             self._text_cache[s] = self._font.render(s, True, DIM)
         return self._text_cache[s]
+
+    def _mouth(self, surf):
+        pg = self.pygame
+        st = self.state.pose
+        m, op = st["mouth"], st["open"]
+        if op > 0.25:
+            # open mouth: small chamfered O outline, height grows with open
+            hw, hh = 26.0, 7.0 + 20.0 * op
+            rect = [(400 - hw, MOUTH_CY - hh), (400 + hw, MOUTH_CY - hh),
+                    (400 + hw, MOUTH_CY + hh), (400 - hw, MOUTH_CY + hh)]
+            pg.draw.polygon(surf, ORANGE, chamfer(rect, min(hw, hh) * 0.5),
+                            STROKE)
+            return
+        # closed mouth: rigid 3-segment polyline, ends swing with the mood
+        ye = MOUTH_CY - m * 24.0
+        ym = MOUTH_CY + m * 9.0
+        pts = [(400 - MOUTH_HALF, ye), (400 - 34, ym),
+               (400 + 34, ym), (400 + MOUTH_HALF, ye)]
+        pg.draw.lines(surf, ORANGE, False, pts, STROKE)
+
+    def _telemetry(self, now):
+        """Sensor/system summary line, resampled every 5 s. Real values
+        where the hardware exists today; '--' for sensors not wired yet."""
+        if now - self._tele_t < 5.0 and self._tele:
+            return self._tele
+        self._tele_t = now
+        try:
+            with open("/sys/class/thermal/thermal_zone0/temp") as f:
+                cpu = f"{int(f.read().strip()) // 1000}C"
+        except OSError:
+            cpu = "--"
+        net = "--"
+        for dev in ("wlan0", "eth0"):
+            try:
+                with open(f"/sys/class/net/{dev}/operstate") as f:
+                    if f.read().strip() == "up":
+                        net = dev[:1].upper() + "OK"  # WOK / EOK
+                        break
+            except OSError:
+                pass
+        self._tele = (f"CPU {cpu}  NET {net}  PWR AC  "
+                      f"MIC --  CAM --  RDR --")
+        return self._tele
 
     def _hud(self, surf, now):
         """Static tech chrome: corner brackets, status line, heartbeat pip.
@@ -381,6 +454,14 @@ class FaceRenderer:
             pg.draw.rect(surf, DIM, pg.Rect(
                 m + 16 + img.get_width(),
                 SCREEN_H - m - img.get_height() - 4, 9, img.get_height() - 4))
+        # telemetry summary, right-aligned before the heartbeat pip
+        tele = self._telemetry(now)
+        if tele not in self._tele_cache:
+            self._tele_cache.clear()
+            self._tele_cache[tele] = self._font_sm.render(tele, True, DIM)
+        timg = self._tele_cache[tele]
+        surf.blit(timg, (SCREEN_W - m - 34 - timg.get_width(),
+                         SCREEN_H - m - timg.get_height() - 8))
         # heartbeat pip: breathes with the eyes (proof of life, bottom-right)
         k = (self.state.breath - 1.0) / BREATH_MAG  # -1..1
         r = 5 + 2 * k
@@ -411,6 +492,7 @@ class FaceRenderer:
         self._hud(surf, now)
         for side, ex in ((-1, EYE_CX[0]), (1, EYE_CX[1])):
             self._eye(surf, ex, EYE_CY, side, lid)
+        self._mouth(surf)
         if boot_ph < 1.0:
             # power-on: curtains sweep open from the center line outward,
             # and the status line types itself out.
