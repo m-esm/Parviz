@@ -43,7 +43,12 @@ Qwen3-0.6B-class GGUF (measured on the Pi 5 2GB: 21 tok/s generation,
 software/README.md). It runs on a slow tick (seconds) plus event triggers,
 and answers one question: *what should Parviz do right now?* Output is a
 constrained action vocabulary: set_expression, look_at, say, move, log,
-escalate, do_nothing (most common answer).
+escalate, do_nothing (most common answer). **The face is an LLM output
+device**: the expression shown and where the eyes/head look come from
+these actions, not from local heuristics. Only reflex-speed overlays stay
+local in the face process (idle blink, pupils tracking an active touch);
+the brain's set_expression/look_at wins otherwise, so the face needs a
+control channel (local socket) the brain writes to.
 
 **Tier 3, escalation (rare, explicit):** only for specific tasks or when
 the user asks: real conversation, scene understanding ("what's on my
