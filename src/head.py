@@ -48,13 +48,23 @@ def build_head_shell():
     # stepped screen aperture: full-size POCKET behind (module drops in) + a smaller front
     # WINDOW that pierces the face, leaving a lip that retains the glass edge.
     ov, cl = P["bezel_overlap"], P["screen_clear"]
-    # the pocket PIERCES the face (front at y=31.1): the glass front sits at 30.99, i.e.
-    # FLUSH with the face, so any lip in front of it interfered 0.49 mm and blocked the
-    # module from seating on its factory-screw bosses. Retention is the 4 M3 factory
-    # screws; the pocket side walls locate the module (flush edge-to-edge glass look).
-    pocket = box(P["screen_w"] + 2 * cl, 40.0, P["screen_h"] + 2 * cl)
-    pocket.apply_transform(screen_pose() @ _T(0, -7.4, 0))
-    shell = sub(shell, pocket)
+    # STEPPED pocket, stopping BEHIND the face (face at 33 since 2026-07-11; the old
+    # flush-glass face pierced here and exposed a see-through slot around the module):
+    # (1) a GLASS SLAB cut at full module width, only the 2.0-thick glass band deep
+    # (world y 28.3..31.1): the glass front (30.99) seats 0.11 behind the lip the
+    # window cut leaves, so the aperture overlaps the glass `ov` per side. (2) the
+    # BODY pocket behind steps 10.4 NARROWER (the module is only |x| <= 84.6 behind
+    # the glass, measured; z 2.0 clear): the step SHELF at y 28.3 closes the 0.5 side
+    # slot around the glass edge, which used to run straight into the interior -- the
+    # r16 corner arc rolls the shell surface behind y 31.1 past |x| 94, so no lip can
+    # cover the outermost glass edge there. Retention is still the 4 M3 factory screws
+    # via the tray; the lip only locates.
+    gl = box(P["screen_w"] + 2 * cl, 2.8, P["screen_h"] + 2 * cl)
+    gl.apply_transform(screen_pose() @ _T(0, 11.2, 0))       # world y 28.3..31.1
+    shell = sub(shell, gl)
+    bk = box(173.2, 40.0, 105.4)                             # |x|<=86.6, z 98.35..203.75
+    bk.apply_transform(screen_pose() @ _T(0, -9.9, -1.95))   # world y -11.4..28.6
+    shell = sub(shell, bk)
     window = box(P["screen_w"] - 2 * ov, 60.0, P["screen_h"] - 2 * ov)
     window.apply_transform(screen_pose() @ _T(0, 20, 0))     # pierce the front face -> lip
     shell = sub(shell, window)
@@ -521,19 +531,21 @@ def build_head_parts():
         pil = cyl(1.25, 8.0, axis="y")
         pil.apply_translation((tx, wall_if + 4.0, tz)); back = sub(back, pil)
 
-    # head_back halves join (frame side): under-the-top-wall flange, 2x M3 axis X
+    # head_back halves join (frame side): under-the-top-wall flange, 2x M3 axis X.
+    # Center tracks the ceiling (body_z_top - 7.5: 7-tall box fusing 1 into the top
+    # wall). At the 2026-07-11 raised top (242) it spans z 231..238 -- clear of the
+    # antenna G3 tips (z <= 216, y -15.3) and behind the cam_cover (y >= 13.9).
+    zfl = P["body_z_top"] - 7.5
     fl1 = box(28.0, 21.0, 7.0)
-    fl1.apply_translation((0, -2.5, 218.5))          # y -13..8, z 215..222 (fuses up):
-                                                     # antenna G3 tips reach y -15.3 /
-                                                     # z 218, the cam_cover starts y~11
+    fl1.apply_translation((0, -2.5, zfl))            # y -13..8
     back = uni([back, fl1])
     for fy_ in (-9.0, 4.5):
         scr = cyl(P["m3_clear_r"], 15.0, axis="x")
-        scr.apply_translation((7.0, fy_, 218.5)); back = sub(back, scr)
+        scr.apply_translation((7.0, fy_, zfl)); back = sub(back, scr)
         cbx = cyl(3.4, 4.0, axis="x")
-        cbx.apply_translation((12.5, fy_, 218.5)); back = sub(back, cbx)
+        cbx.apply_translation((12.5, fy_, zfl)); back = sub(back, cbx)
         pil = cyl(1.25, 9.0, axis="x")
-        pil.apply_translation((-4.5, fy_, 218.5)); back = sub(back, pil)
+        pil.apply_translation((-4.5, fy_, zfl)); back = sub(back, pil)
 
     # panel / frame split at the wall inner face; recover wall-hung floaters (the
     # gusset webs) into the panel so nothing is left floating in the frame
@@ -850,8 +862,16 @@ def build_ear_jacks():
         ps = []
         fm = cyl(7.3, 24.0, axis="x")                    # foam tip: 12 out, 12 in
         fm.apply_translation((sxe * xw, ey, ez)); ps.append(fm)
-        gn = cyl(2.0, 32.0, axis="x")                    # gooseneck stub, inboard
-        gn.apply_translation((sxe * (xw - 12.0 - 15.0), ey, ez)); ps.append(gn)
+        # gooseneck stub, inboard: ANGLED forward (+y) like the real flexible neck --
+        # a straight coaxial stub at the human-proportioned ear spot (y -29, z 172.5)
+        # ran through the antenna mast (x +-85, y -31) and the screen-tray z-174
+        # pillars (right 57.6..65.6, LEFT -68.6..-60.6). Rooted deep in the foam
+        # (|x| 93) and diving to (|x| 71.5, y -12): 1.3 off the mast axis line
+        # (dist 6.5 vs 5.25 contact), 0.9 off the left pillar band, 3 off the
+        # screen-stack rear (y -7).
+        gn = trimesh.creation.cylinder(
+            radius=2.0, segment=[(sxe * 93.0, ey, ez), (sxe * 71.5, -12.0, ez)])
+        ps.append(gn)
         m = uni(ps)
         _color(m, "track"); m.metadata["name"] = nm     # rubber-black, like the mic
         out.append(m)
@@ -874,9 +894,9 @@ def build_cam_pod():
     bore.apply_transform(R(TAU / 4, (1, 0, 0)))      # shrink toward -Y (into the wall)
     bore.apply_translation((0, fy + P["cam_pod_t"] + 0.25, lz))
     pod = sub(pod, bore)
-    # FIXING: glue + 2x Ø2 locating pins ABOVE the glass line only (the pod's lower band
-    # overlaps the screen-pocket face opening below z 208.9, where M2 bosses / pins are
-    # impossible); sockets sit in the z>209 wall strip (PARAMS campod_pin_pts).
+    # FIXING: glue + 2x Ø2 locating pins. The raised bay (cam_lens_z 226) puts the whole
+    # pod footprint (z 216..236) on solid forehead wall above the pocket top (208.9), so
+    # the pins sit symmetrically inside it (PARAMS campod_pin_pts).
     pp = [pod]
     for px, pz in P["campod_pin_pts"]:
         pp.append(fix_pin(P["fix_pin2_r"], P["fix_pin_len"], (0, -1, 0), (px, fy, pz)))

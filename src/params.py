@@ -31,18 +31,29 @@ P = {
     "head_wall": 4.0,
     "head_w": 205.0,        # shell outer width (screen 193 + walls + margin)
     "face_angle": 0.0,      # upright front face (the neck's tilt gives the look-up/down)
-    "body_front_y": 31.0,   # front face plane (glass sits flush here)
+    "body_front_y": 33.0,   # front face plane. 31 -> 33 (2026-07-11, user: "gap between the
+                            # LCD and the body, I can see the internals"): the glass front
+                            # (30.99) used to be FLUSH with the face, so the module pocket had
+                            # to pierce it and the aperture showed a see-through slot around
+                            # the whole glass. The face now stands 2.0 in FRONT of the glass:
+                            # the pocket stops at y 31.1 (0.11 locator clearance over the
+                            # glass) and the window cut leaves a real bezel_overlap retaining
+                            # lip on all 4 sides -- phone-bezel look, no see-through ring.
     "body_back_y": -70.0,   # back face plane (task #27 deep head: was -31, which left the whole
                             # tilt stepper hanging exposed behind the head. The 28BYJ can rear
                             # sits at y=-64.3 (face_y -34.5 - 2 - 27.8); -70 puts it inside the
                             # envelope with wall 4 + 1.7 static clearance to the inner face -66)
     "body_z_bot": 88.0,     # shell bottom height above desk (113-25: design-ref head drop --
                             # the whole head+tilt stack sits 25 lower over the chassis)
-    "body_z_top": 226.0,    # shell top height (was 251; -25 head drop. 243+8 history: the CM3 bay needs ~14 mm between
-                            # the screen window top (229.9) and the ceiling; 243 gave only 9.1 --
-                            # the board punched the top wall and the barrel crossed the panel)
+    "body_z_top": 242.0,    # shell top height. 226 -> 242 (2026-07-11, user: "clear the camera
+                            # pod out of the LCD frame, make the forehead taller"): the CM3 bay
+                            # + eye-pod now live ENTIRELY above the screen -- board bottom 211.6
+                            # sits 2.7 over the pocket top (208.9), pod bottom 216 sits 7.1 over
+                            # it, board top 235.5 keeps 2.5 to the interior ceiling (238)
     "corner_r": 16.0,       # rounded vertical edges (friendly, clean)
-    "bezel_overlap": 3.5,   # front lip = LOCATOR now (glass is held by the 4 factory screws below)
+    "bezel_overlap": 3.5,   # front lip overlaps the glass edge this much per side (a real
+                            # covering lip again since body_front_y 33; still only a LOCATOR --
+                            # the glass is held by the 4 factory screws, never bezel bosses)
     "screen_clear": 0.5,    # clearance around the module in its pocket
     "bezel_back": 4.0,      # split plane sits this far behind the screen back
 
@@ -380,10 +391,12 @@ P = {
     "cam_hole_z_top": 2.565,   # top hole row Z (from board center)
     "cam_hole_z_bot": -9.935,  # bottom hole row Z
     "cam_lens_dz": 2.47,    # optical axis above board center (X = 0; official CM3 +2.469)
-    "cam_lens_z": 212.0,    # lens axis height (237-25 head drop; whole camera bay shifts with
-                            # the shell+screen, so the relative clearances below hold): barrel bottom
-                            # 234.1 clears the display module top (233.4) and the pocket (233.9);
-                            # csk bottom 233.0 keeps a 3.1 ligament over the window top (229.9)
+    "cam_lens_z": 226.0,    # lens axis height. 212 -> 226 (2026-07-11, user: the eye-pod crowded
+                            # the LCD frame -- at 212 the pod's lower band sat ON the glass and
+                            # the CM3 board hung down behind the panel to z 197.6): the whole bay
+                            # is now ABOVE the screen inside the raised forehead (body_z_top 242).
+                            # Board z 211.6..235.5 (2.7 over the pocket top 208.9); the pier no
+                            # longer hides behind the display panel, its old y constraint is gone
     # CM3 front stack: 10.8 sq AF housing (front 4.0 above board front), Ø5.75 barrel to 6.98;
     # 1.12 board; keep 3.2 clear behind for the flex connector (overall depth 11.3).
     "cam_pcb_t": 1.12,
@@ -403,9 +416,12 @@ P = {
     # (measured from the reference mesh in the camera zone), so long wall-rooted bosses punch
     # the panel. The pier drops from the ceiling BEHIND the panel's top strip and carries the
     # 4 M2 bosses; the board hangs 4.5 mm behind the panel, the barrel passes over its top edge.
-    "cam_pier_w": 32.0,     # pier width (X); display panel is the limit in Y, not X
+    "cam_pier_w": 32.0,     # pier width (X)
     "cam_pier_t": 3.0,      # pier plate thickness (Y)
-    "cam_pier_y1": 24.5,    # pier FRONT face: 0.53 behind the measured panel front (25.03)
+    "cam_pier_y1": 26.5,    # pier FRONT face. 24.5 -> 26.5 with body_front_y 31 -> 33: the bay
+                            # now sits ABOVE the display (cam_lens_z 226) so the old panel-front
+                            # constraint (25.03) is gone; +2 keeps the barrel poking 0.48 into
+                            # the wall bore and the pupil ~3 mm behind the outer face, as before
     "cam_boss_pilot_r": 0.85,  # M2 self-tap pilot Ø1.7
     "cam_m2_clear_r": 1.15, # M2 clearance (cover)
     "cam_ribbon_w": 17.0, "cam_ribbon_t": 2.5,   # CSI ribbon exit slot (pod bottom -> Pi bay)
@@ -430,7 +446,8 @@ P = {
     "led_slot_d": 1.5,      # recess depth into the 4 mm face wall
     # image-LEFT of the camera in the reference front view = robot +X (front view looks -Y)
     "led_cx": 45.0,         # slot center X (clear of the camera pier |x|<16)
-    "led_cz": 214.0,        # slot center Z (lens 212; slot z 211.5..216.5 > pocket top 208.9 ok)
+    "led_cz": 226.0,        # slot center Z, on the lens axis (226): the LED row and the eye
+                            # read as one forehead band; slot z 223.5..228.5 > pocket top 208.9
     # Knurled antenna stub on the head top face (cosmetic; Pi WiFi is internal).
     # Image-RIGHT in the reference front view = robot -X.
     # --- TWIN DEPLOYABLE ANTENNAS (2026-07-10, user: two masts, one per head side,
@@ -454,7 +471,9 @@ P = {
     "ant_x": 85.0, "ant_y": -31.0,  # mast axes (mirrored +-)
     "ant_mast_d": 6.5,      # mast shaft Ø (slides in Ø7 top-wall bore, 0.25/side)
     "ant_travel": 50.0,     # max extension past the head top surface
-    "ant_mast_z": (147.0, 226.5),   # retracted shaft span (rack keeps pinion mesh at +50)
+    "ant_mast_z": (147.0, 242.5),   # retracted shaft span: top = body_z_top + 0.5 (cap rests
+                            # on the top-wall boss); tracks the 2026-07-11 forehead raise.
+                            # Rack (150..214) still meshes the z-205 pinion at +50 extension
     "ant_rack_top": 214.0,  # rack teeth stop here (mast-local): above is never meshed
     "ant_tip_d": 11.0, "ant_tip_h": 14.0,   # knurled cap, rests 0.5 over the boss
     "ant_gear_m": 0.8,      # module for all antenna spur gears + racks
@@ -582,14 +601,19 @@ P = {
     # z 166.5..183.5; the z-188 socket sits 1.9 above it).
     "rail_pin_pts": ((-8.0, 146.0), (8.0, 146.0), (0.0, 188.0)),
     # EAR MICS (2026-07-11, ordered: 2x 3.5 mm gooseneck "hose" mics, one per side;
-    # v3 same day, user: "vertically in the center of the head sides"): Ø15 grommet
-    # bore per side wall, only the foam tip out. z 157 ~= the head's vertical center
-    # (shell 88..226); y -36 is the only clear column there: rear of the trim rails
-    # (y +-13, z 115..205), 0.5 off the Ø20 tilt pivot-hub bosses (y -18, z 153),
-    # 1.7 off the Ø26 tilt clamp tubes (edge y -31, reach x 99; the first -36 try
-    # clipped them by 100 mm3), behind the screen stack (y 6..31).
-    "ear_y": -40.0,
-    "ear_z": 157.0,
+    # v4 same day, user: "same distance from borders as humans"): Ø15 grommet bore per
+    # side wall, only the foam tip out. HUMAN-PROPORTIONED spot: human ears sit ~55-60%
+    # of the way back from the face profile and near the head's vertical center. Head
+    # depth 103 (face 33, back -70) -> y -29 = 60.2% back (hit exactly). Vertical
+    # center is 165 (shell 88..242), but the Ø26 tilt pivot-hub boss + Ø14 clamp tube
+    # cluster at (y -18, z 153) blocks it: the Ø15 bore needs center distance >= 22
+    # from the boss axis (13 + 7.5 + 1.5 margin), and at y -29 that forces z >= 172.1.
+    # COMPROMISE: z 172.5, 7.5 above center (dist 22.4 -> 1.9 bore-to-boss gap). Also
+    # clear: trim rails (y +-13), sd slot (z <= 164.5, left), Pi I/O slot (y >= -8.5,
+    # right), wall flat band (corner curve starts y -54), foam tip vs clamp tubes
+    # inside (yz gap 5.0), screen stack (y >= -7).
+    "ear_y": -29.0,
+    "ear_z": 172.5,
     # ARM SHOULDER INTERFACE (docs/ARM-MECH.md; arms are ARMS=1-gated but the head prints
     # the interface NOW so option B/C arms bolt on without a head_back reprint): per side
     # wall, 2x M3 captive-nut pockets + a Ø6.2 servo-lead pass, all under the rail.
@@ -628,10 +652,10 @@ P = {
     # trim_rear pins, (x, z) on the rear wall band (side bands x 22..36, bottom z 24..28):
     # clear of the USB slot (x +-7, z 15..23, 1.4 gap) and TT tab pockets (x 43.5..47.7).
     "rear_pin_pts": ((-28.0, 32.0), (28.0, 32.0), (0.0, 21.0)),   # ring-band pins (twin ring)
-    # camera_pod Ø2 pins, (x, z) on the bezel face, ABOVE the glass line: the face is
-    # open (pocket) below z 208.9, so the pod's lower band only kisses glass and the pins
-    # carry it on the z>209 wall strip. Clear of the Ø8 aperture flare (r 8.94 > 4).
-    "campod_pin_pts": ((-8.0, 216.0), (8.0, 216.0)),
+    # camera_pod Ø2 pins, (x, z) on the bezel face: with the bay raised (cam_lens_z 226)
+    # the whole pod footprint (z 216..236) lands on solid forehead wall, so the pins sit
+    # inside it symmetrically. Clear of the Ø8 aperture flare (r 8.94 > 4).
+    "campod_pin_pts": ((-8.0, 230.0), (8.0, 230.0)),
     # antenna: Ø6 spigot under the collar -> Ø6.2 x 3 blind socket in the head top wall
     # (4 thick: 3 deep leaves 1.0 ceiling skin; camera pier |x|<16 and the top bezel
     # posts x +-40 both clear x -62). Glue or friction fit.

@@ -578,3 +578,18 @@ pocket floor), rear buzzer pod to x 41 on its cheek (Ø10 bore 1.0 clear of the 
 USB-C entry became a recessed corridor through the rear-left cheek. Viewer: the parts
 panel is now "Navigation", 400px default, drag-resizable (native resize grip,
 localStorage-persisted width), solid + fit-map-off defaults.
+
+**Head pass (2026-07-11, user rounds: LCD gap / camera pod / ears):** (1) LCD SEATED
+WATERTIGHT: body_front_y 31 -> 33 -- the glass used to be FLUSH with the face plane so
+the module pocket pierced it (a see-through slot ringed the glass). The face now stands
+2.0 proud, the pocket stops 0.11 over the glass (locator only, bezel bosses still
+forbidden), the window keeps the real 3.5 bezel_overlap lip, and the pocket is STEPPED
+(full width only for the 2 mm glass band; |x| 86.6 behind it) with a y 28.3 shelf that
+seals the old side slots. (2) CAMERA POD ABOVE THE SCREEN in a taller forehead:
+cam_lens_z 212 -> 226, body_z_top 226 -> 242; the CM3 board (211.6..235.5) clears the
+screen pocket top 208.9 by 2.7; led_cz 226, campod pins (+-8, 230), ant masts to 242.5,
+head_back top-flange now parametric (body_z_top - 7.5). Overall bbox H 261 -> 277.
+(3) EARS at the human spot: ear_y -40 -> -29 (60% back of the 103 head depth), ear_z
+157 -> 172.5 (vertical center 165 blocked by the Ø26 tilt clamp boss at z 153 -- bore
+kept 1.9 clear above it); the gooseneck stub angles (93,-29) -> (71.5,-12) around the
+antenna mast and tray pillars.
