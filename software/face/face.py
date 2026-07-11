@@ -1,12 +1,15 @@
 """desk-pi face renderer: fullscreen animated face for the official 7" display.
 
-Look (2026-07-11 revision, per user): RIGID LINES ONLY, two rectangular
-outlined eyes with square pupils, no mouth, no eyebrows. Single color:
-the body's safety orange (src/geo.py COLORS["accent"] = 232,116,34) on
-black. Expressions are carried by lid height, top-corner tilt and pupil
-position, every stroke is a straight line. TOUCH: while a finger is on
-the panel the pupils track it (eyes widen slightly); lifting it blinks
-and returns to the current expression.
+Look (2026-07-12 revision, styled after the rendered CAD model): RIGID
+LINES ONLY, two CHAMFERED-corner eyes drawn as thick orange ring frames
+(the chassis fascia's grille ring / the design-ref bezel octagon) with
+chamfered square pupils; a shut eye is a chamfered-end bar like the
+trim blocks. No mouth, no eyebrows. Single color: the body's safety
+orange (src/geo.py COLORS["accent"] = 232,116,34) on black. Expressions
+are carried by lid height, top-corner tilt and pupil position, every
+stroke is a straight line. TOUCH: while a finger is on the panel the
+pupils track it (eyes widen slightly); lifting it blinks and returns
+to the current expression.
 
 Display target: 800x480 (official RPi 7" touchscreen, DSI).
 
@@ -49,7 +52,8 @@ EYE_W = int(SCREEN_W * 0.28)          # 224
 EYE_H = int(SCREEN_H * 0.40)          # 192
 EYE_CX = (int(SCREEN_W * 0.30), int(SCREEN_W * 0.70))   # 240, 560
 EYE_CY = SCREEN_H // 2
-STROKE = 10
+STROKE = 12                            # ring-frame wall, reads like the grille ring
+CHAMFER = 0.20                         # corner cut as a fraction of the eye opening
 
 FRAME_DUMP = "/tmp/face_frame.png"
 
@@ -134,13 +138,31 @@ class FaceState:
         return max(self.pose["lid"], blink)  # effective lid closure this frame
 
 
+def chamfer(poly, c):
+    """Cut every corner of a convex polygon with a straight facet: each
+    vertex becomes two points, one along each adjacent edge at distance c
+    (clamped to 40% of the edge so short edges never invert)."""
+    out = []
+    n = len(poly)
+    for i in range(n):
+        vx, vy = poly[i]
+        for qx, qy in (poly[i - 1], poly[(i + 1) % n]):
+            dx, dy = qx - vx, qy - vy
+            d = math.hypot(dx, dy) or 1.0
+            t = min(c, 0.4 * d) / d
+            out.append((vx + dx * t, vy + dy * t))
+    return out
+
+
 def eye_geometry(cx, cy, side, gaze, lid, tilt, size,
                  w=EYE_W, h=EYE_H, stroke=STROKE):
-    """Straight-line eye geometry, no pygame: returns (outline_pts, pupil_rect).
+    """Straight-line eye geometry, no pygame: (outer_poly, inner_poly, pupil).
 
-    outline_pts: 4 (x,y) corners of the eye polygon (None when fully shut,
-    caller draws a flat line at cy instead). pupil_rect: (x, y, w, h) filled
-    square, clamped inside the opening (None when the opening is too short).
+    The eye is a chamfered-corner ring frame (the model's grille-ring motif):
+    outer_poly filled in orange, inner_poly punched back to black, pupil a
+    filled chamfered square clamped inside the opening. outer_poly is None
+    when the eye is effectively shut (caller draws a chamfered bar instead);
+    pupil is None when the opening is too short for it.
     side: -1 left eye, +1 right (tilt moves the OUTER top corner).
     """
     hh = h * size / 2.0
@@ -155,8 +177,16 @@ def eye_geometry(cx, cy, side, gaze, lid, tilt, size,
     tl += (bot - tl) * lid
     tr += (bot - tr) * lid
     if min(bot - tl, bot - tr) < stroke * 1.5:
-        return None, None  # effectively shut
-    outline = [(l, tl), (r, tr), (r, bot), (l, bot)]
+        return None, None, None  # effectively shut
+    quad = [(l, tl), (r, tr), (r, bot), (l, bot)]
+    c = CHAMFER * min(w, min(bot - tl, bot - tr))
+    outer = chamfer(quad, c)
+    # Inner frame edge: inset the quad by the wall, chamfer with the facet
+    # kept parallel to the outer one (a 45-deg facet inset by s sits at
+    # corner distance c - s*(sqrt(2)-1)).
+    iquad = [(l + stroke, tl + stroke), (r - stroke, tr + stroke),
+             (r - stroke, bot - stroke), (l + stroke, bot - stroke)]
+    inner = chamfer(iquad, max(2.0, c - stroke * 0.414))
 
     pw = int(w * 0.30)
     ph_full = int(h * 0.42)
@@ -167,8 +197,19 @@ def eye_geometry(cx, cy, side, gaze, lid, tilt, size,
     p_top = max(py - ph_full / 2.0, top_at_px + stroke * 1.5)
     p_bot = min(py + ph_full / 2.0, bot - stroke * 1.5)
     if p_bot - p_top < 10:
-        return outline, None
-    return outline, (int(px - pw / 2), int(p_top), pw, int(p_bot - p_top))
+        return outer, inner, None
+    prect = [(px - pw / 2, p_top), (px + pw / 2, p_top),
+             (px + pw / 2, p_bot), (px - pw / 2, p_bot)]
+    pupil = chamfer(prect, 0.28 * min(pw, p_bot - p_top))
+    return outer, inner, pupil
+
+
+def shut_bar(cx, cy, w=EYE_W, stroke=STROKE):
+    """Chamfered-end bar for a fully shut eye (the trim-block silhouette)."""
+    half, hh = w * 0.45, stroke * 0.7
+    rect = [(cx - half, cy - hh), (cx + half, cy - hh),
+            (cx + half, cy + hh), (cx - half, cy + hh)]
+    return chamfer(rect, hh)
 
 
 class FaceRenderer:
@@ -198,16 +239,16 @@ class FaceRenderer:
     def _eye(self, surf, cx, cy, side, lid):
         pg = self.pygame
         st = self.state.pose
-        outline, pupil = eye_geometry(cx, cy, side, st["gaze"], lid,
-                                      st["tilt"], st["size"])
-        if outline is None:
-            half = int(EYE_W * 0.45)
-            pg.draw.line(surf, ORANGE, (cx - half, cy), (cx + half, cy),
-                         STROKE)
+        outer, inner, pupil = eye_geometry(cx, cy, side, st["gaze"], lid,
+                                           st["tilt"], st["size"])
+        if outer is None:
+            pg.draw.polygon(surf, ORANGE, shut_bar(cx, cy))
             return
-        pg.draw.polygon(surf, ORANGE, outline, STROKE)
+        # Ring frame: fill the chamfered outline, punch the opening back out.
+        pg.draw.polygon(surf, ORANGE, outer)
+        pg.draw.polygon(surf, BG, inner)
         if pupil is not None:
-            pg.draw.rect(surf, ORANGE, pg.Rect(*pupil))
+            pg.draw.polygon(surf, ORANGE, pupil)
 
     def draw(self, lid):
         surf = self.screen
