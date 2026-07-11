@@ -55,6 +55,74 @@ Each <action> is one of:
 {"do": "log", "note": "<short note>"}
 {"do": "escalate", "task": "<what the big AI should do>"}"""
 
+SYSTEM_PROMPT_V2 = """\
+You are the decision module of Parviz, a small desk robot: screen face \
+with two orange eyes, pan/tilt camera head, two ear mics, tank tracks.
+Input: a sensor digest. The EVENT line is what just changed; react to it.
+Output: ONLY JSON {"actions": [...], "reason": "..."} with 1-2 actions:
+{"do":"do_nothing"} | {"do":"set_expression","name":"neutral|happy|sad|surprised|sleepy"} | \
+{"do":"look_at","pan_deg":-88..88,"tilt_deg":-30..30} | {"do":"say","text":"..."} | \
+{"do":"move","kind":"forward|backward|turn_left|turn_right|stop","amount":n} | \
+{"do":"log","note":"..."} | {"do":"escalate","task":"..."}
+
+Decision guide:
+- Default is do_nothing. No event, no action.
+- Person appears or approaches: look_at them, friendly expression.
+- User speaks a command: obey exactly (look/move where they said).
+- User asks something you cannot answer from this digest (needs seeing, \
+knowledge, or planning): escalate with the task.
+- Environment/health warning the user should hear: say it, briefly, once.
+- Sudden noise or shock: look toward it, surprised expression.
+- pan_deg: LEFT = negative, RIGHT = positive. tilt_deg: up = positive.
+- Safety reflexes already ran below you; never drive toward a cliff or \
+obstacle, never fight a reflex stop."""
+
+_V2_DIGEST_A = ("EVENT: nothing new; user typing quietly for 20 min\n"
+                "person: known user at desk 65cm (mmWave still)\n"
+                "sound: L 35dB R 35dB, centered, no speech\n"
+                "env: 23.0C 42%RH air good | imu level | touch none\n"
+                "sonar front 120cm rear 90cm, cliffs ok | head pan 0 tilt 0")
+_V2_DIGEST_B = ("EVENT: footsteps + person entering view on the LEFT "
+                "(pan negative)\n"
+                "person: approaching, 150cm (mmWave)\n"
+                "sound: L 52dB R 39dB, from LEFT, no speech\n"
+                "env: 23.5C 44%RH air good | imu level | touch none\n"
+                "sonar front 130cm rear 95cm, cliffs ok | head pan 0 tilt 0")
+_V2_DIGEST_C = ('EVENT: user asks: "Parviz, what is the weather going to '
+                'be tomorrow?" [WAKE WORD]\n'
+                "person: known user 70cm, looking at robot\n"
+                "sound: L 47dB R 47dB, centered\n"
+                "env: 23.2C 43%RH air good | imu level | touch none\n"
+                "sonar front 125cm rear 92cm, cliffs ok | head pan 0 tilt 0")
+_V2_DIGEST_D = ("EVENT: humidity crossed 70% and still rising\n"
+                "person: known user at desk 60cm (mmWave still)\n"
+                "sound: L 36dB R 36dB, centered, no speech\n"
+                "env: 26.8C 71%RH air fair | imu level | touch none\n"
+                "sonar front 118cm rear 88cm, cliffs ok | head pan 0 tilt 0")
+FEW_SHOT_V2 = [
+    {"role": "user", "content": _V2_DIGEST_A},
+    {"role": "assistant", "content": json.dumps({
+        "actions": [{"do": "do_nothing"}],
+        "reason": "Nothing changed; user is working."})},
+    {"role": "user", "content": _V2_DIGEST_B},
+    {"role": "assistant", "content": json.dumps({
+        "actions": [{"do": "look_at", "pan_deg": -40, "tilt_deg": 10},
+                    {"do": "set_expression", "name": "happy"}],
+        "reason": "Someone approaches from the left; turn left to greet."})},
+    {"role": "user", "content": _V2_DIGEST_C},
+    {"role": "assistant", "content": json.dumps({
+        "actions": [{"do": "escalate",
+                     "task": "answer the user's weather question"}],
+        "reason": "Needs outside knowledge I do not have."})},
+    {"role": "user", "content": _V2_DIGEST_D},
+    {"role": "assistant", "content": json.dumps({
+        "actions": [{"do": "say",
+                     "text": "Humidity is over 70 percent, maybe crack a "
+                             "window."},
+                    {"do": "log", "note": "humidity 71% rising"}],
+        "reason": "Environment warning worth one brief heads-up."})},
+]
+
 # Grammar-enforced response shape (llama.cpp compiles this to GBNF, so the
 # model CANNOT emit bare-string actions or truncated JSON).
 ACTION_SCHEMA = {
@@ -179,6 +247,41 @@ def build_digest(s):
     ])
 
 
+def build_digest_v2(s):
+    """v2 format: EVENT first, explicit side hints, merged status lines."""
+    mic = s["mics"]
+    ev = []
+    if mic["speech"]:
+        ev.append(f'user says: "{mic["speech"]}"'
+                  + (" [WAKE WORD]" if mic["wake_word"] else ""))
+    if s["imu"]["event"]:
+        ev.append(s["imu"]["event"])
+    if s["vibration"]:
+        ev.append(s["vibration"])
+    if s["touch"]:
+        ev.append(f'touch: {s["touch"]}')
+    ev.append(s["recent"])
+    side = mic["level_l_db"] - mic["level_r_db"]
+    loc = ("from LEFT (pan negative)" if side > 3
+           else "from RIGHT (pan positive)" if side < -3 else "centered")
+    mm = s["mmwave"]
+    person = s["camera"]["person"] or "none visible"
+    if mm["presence"]:
+        person += f', {mm["dist_cm"]}cm ({mm["state"]}, mmWave)'
+    env = s["env"]
+    so = s["sonar"]
+    return "\n".join([
+        "EVENT: " + "; ".join(ev),
+        f"person: {person}",
+        f'sound: L {mic["level_l_db"]}dB R {mic["level_r_db"]}dB, {loc}',
+        f'env: {env["temp_c"]}C {env["rh_pct"]}%RH air {env["air"]} | imu '
+        f'tilt {s["imu"]["tilt_deg"]}deg | tracks {s["pose"]["tracks"]}',
+        f'sonar front {so["front_cm"]}cm rear {so["rear_cm"]}cm, cliff '
+        f'front {so["cliff_front"]} rear {so["cliff_rear"]} | head pan '
+        f'{s["pose"]["pan"]} tilt {s["pose"]["tilt"]}',
+    ])
+
+
 def scenario(desc, expect, **overrides):
     """A scenario = baseline snapshot + deep overrides + expectations.
 
@@ -291,11 +394,13 @@ SCENARIOS = {
 }
 
 
-def ask(host, digest, temperature=0.2, timeout=120):
+def ask(host, digest, temperature=0.2, timeout=120, prompt="v1"):
+    sys_p, shots = ((SYSTEM_PROMPT_V2, FEW_SHOT_V2) if prompt == "v2"
+                    else (SYSTEM_PROMPT, FEW_SHOT))
     body = {
         "messages": [
-            {"role": "system", "content": SYSTEM_PROMPT},
-            *FEW_SHOT,
+            {"role": "system", "content": sys_p},
+            *shots,
             {"role": "user", "content": digest},
         ],
         "temperature": temperature,
@@ -332,6 +437,9 @@ def main():
                     help="run one scenario (default: all)")
     ap.add_argument("--runs", type=int, default=1)
     ap.add_argument("--temperature", type=float, default=0.2)
+    ap.add_argument("--prompt", choices=("v1", "v2"), default="v1",
+                    help="prompt/digest variant (v2: EVENT-first digest, "
+                         "decision-guide prompt, 4 diverse few-shots)")
     ap.add_argument("--tag", default="run",
                     help="results file tag: results/<tag>.jsonl")
     ap.add_argument("--digest-only", action="store_true",
@@ -345,14 +453,16 @@ def main():
     with open(outpath, "a") as outf:
         for name in names:
             sc = SCENARIOS[name]
-            digest = build_digest(sc["snapshot"])
+            render = build_digest_v2 if args.prompt == "v2" else build_digest
+            digest = render(sc["snapshot"])
             print(f"\n=== {name}: {sc['desc']}")
             if args.digest_only:
                 print(digest)
                 continue
             for i in range(args.runs):
                 parsed, ok, dt, usage = ask(args.host, digest,
-                                            args.temperature)
+                                            args.temperature,
+                                            prompt=args.prompt)
                 verbs = [a.get("do") for a in parsed.get("actions", [])
                          if isinstance(a, dict)]
                 flag = "" if ok else "  [UNPARSEABLE]"

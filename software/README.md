@@ -230,3 +230,14 @@ question itself instead of escalating), llama3.2-1b 3P/0~/8F (says
 something for nearly every scenario). Deterministic verb scoring is
 crude and favors the few-shot pattern; an LLM-judge pass is the next
 benchmarking step.
+
+Prompt-format ablation (2026-07-12, user hypothesis "maybe the prompt is
+wrong for these models" -- partly confirmed): `--prompt v2` = EVENT-first
+digest with explicit side hints ("from LEFT (pan negative)"), compact
+decision-guide system prompt, 4 diverse few-shots (incl. escalate + say).
+Results: v2 improved every metric it touched -- qwen3-0.6b 2F->1F and the
+left/right pan sign FIXED (+45 -> -45; v1's sign error was pure prompt
+anchoring), qwen3-1.7b 3P->5P. But NO model ever chooses `escalate`, even
+with an explicit escalate example: tiny models cannot tell "answerable
+from digest" from "needs outside capability". That is a capability gap,
+not a prompt gap, and the headline metric for model selection.

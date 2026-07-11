@@ -22,7 +22,8 @@ import os
 import sys
 import time
 
-from scenarios import SCENARIOS, SYSTEM_PROMPT, build_digest
+from scenarios import (SCENARIOS, SYSTEM_PROMPT, SYSTEM_PROMPT_V2,
+                       build_digest, build_digest_v2)
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "report.html")
@@ -137,9 +138,11 @@ details > pre { margin-top:8px; }
              f'{", ".join(html.escape(t) for t in tags)} &middot; scoring: '
              'pass = all expected verbs &amp; no forbidden, partial = some '
              'expected, fail = forbidden/none/broken JSON</p>')
-    p.append("<details><summary>system prompt (shared by all models)"
-             "</summary><pre>" + html.escape(SYSTEM_PROMPT) + "</pre>"
-             "</details>")
+    p.append("<details><summary>system prompt v1</summary><pre>"
+             + html.escape(SYSTEM_PROMPT) + "</pre></details>")
+    p.append("<details><summary>system prompt v2 (-v2 tags: EVENT-first "
+             "digest, decision guide, 4 few-shots)</summary><pre>"
+             + html.escape(SYSTEM_PROMPT_V2) + "</pre></details>")
 
     # score matrix
     p.append('<div class="tablewrap"><table><tr><th>scenario</th>')
@@ -176,10 +179,16 @@ details > pre { margin-top:8px; }
                         for v in sorted(sc_def["expect"].get("forbid", [])))
         p.append(f'<p class="meta">expected: {exp or "&mdash;"} '
                  f'&nbsp; forbidden: {forb or "&mdash;"}</p>')
-        p.append("<details><summary>sensor digest sent to the models"
-                 "</summary><pre>"
-                 + html.escape(build_digest(sc_def["snapshot"]))
-                 + "</pre></details>")
+        # show each distinct digest actually sent (v1/v2 runs differ)
+        seen = {}
+        for t in tags:
+            rec = data[t].get(n)
+            if rec:
+                seen.setdefault(rec["digest"], []).append(t)
+        for digest, users in seen.items():
+            p.append(f'<details><summary>sensor digest sent to '
+                     f'{html.escape(", ".join(users))}</summary><pre>'
+                     + html.escape(digest) + "</pre></details>")
         p.append('<div class="cards">')
         for t in tags:
             rec = data[t].get(n)
