@@ -1,8 +1,12 @@
 """desk-pi face renderer: fullscreen animated face for the official 7" display.
 
-Design ref: reference/design/front.jpg, near-black screen, two big cyan
-outlined round eyes with offset pupils + white highlight dots, thin arc
-eyebrows, small smile arc. Idle blink every few seconds.
+Look (2026-07-11 revision, per user): RIGID LINES ONLY, two rectangular
+outlined eyes with square pupils, no mouth, no eyebrows. Single color:
+the body's safety orange (src/geo.py COLORS["accent"] = 232,116,34) on
+black. Expressions are carried by lid height, top-corner tilt and pupil
+position, every stroke is a straight line. TOUCH: while a finger is on
+the panel the pupils track it (eyes widen slightly); lifting it blinks
+and returns to the current expression.
 
 Display target: 800x480 (official RPi 7" touchscreen, DSI).
 
@@ -15,6 +19,10 @@ in that case run it INSIDE the session instead:
     WAYLAND_DISPLAY=wayland-0 XDG_RUNTIME_DIR=/run/user/$(id -u) python3 face.py
 (or DISPLAY=:0 on X11). Don't fight the compositor for the DRM master.
 
+Headless verification (e.g. under the systemd service, no compositor to
+screenshot through): `kill -USR1 <pid>` makes the next frame land in
+/tmp/face_frame.png.
+
 Dev on a laptop:  python3 face.py --windowed --seconds 10
 
 API stub: FaceRenderer.set_expression(name), supported names in EXPRESSIONS.
@@ -26,33 +34,40 @@ import argparse
 import math
 import os
 import random
+import signal
 import sys
 import time
 
 SCREEN_W, SCREEN_H = 800, 480
 
-# Palette pulled from the design render (front.jpg vibe).
-BG = (7, 12, 26)            # near-black navy
-GLOW = (90, 200, 235)       # cyan line work (eyes, brows, mouth)
-GLOW_DIM = (34, 80, 105)    # outer glow pass
-PUPIL = (120, 215, 245)
-HIGHLIGHT = (235, 250, 255)
+# Single-color palette: body safety orange (src/geo.py COLORS["accent"]).
+BG = (0, 0, 0)
+ORANGE = (232, 116, 34)
+
+# Layout scales off the panel size (800x480): big eyes that own the screen.
+EYE_W = int(SCREEN_W * 0.28)          # 224
+EYE_H = int(SCREEN_H * 0.40)          # 192
+EYE_CX = (int(SCREEN_W * 0.30), int(SCREEN_W * 0.70))   # 240, 560
+EYE_CY = SCREEN_H // 2
+STROKE = 10
+
+FRAME_DUMP = "/tmp/face_frame.png"
 
 # name -> dict of pose targets the animator eases toward.
 #   gaze: (-1..1, -1..1) pupil offset, +x = viewer's right, +y = down
-#   lid:  0 open .. 1 closed
-#   brow: -1 angry .. 0 neutral .. 1 raised
-#   smile: 0 flat .. 1 big smile, negative = frown
+#   lid:  0 open .. 1 closed (straight shutter from the top)
+#   tilt: -1 outer top corners drop (sad) .. +1 outer top corners rise
+#   size: eye height scale (surprised > 1)
 EXPRESSIONS = {
-    "neutral":    dict(gaze=(0.0, 0.0),  lid=0.0, brow=0.15, smile=0.45),
-    "happy":      dict(gaze=(0.0, -0.1), lid=0.15, brow=0.6, smile=1.0),
-    "sad":        dict(gaze=(0.0, 0.35), lid=0.35, brow=-0.4, smile=-0.6),
-    "surprised":  dict(gaze=(0.0, -0.2), lid=-0.2, brow=1.0, smile=0.15),
-    "sleepy":     dict(gaze=(0.0, 0.3),  lid=0.65, brow=0.0, smile=0.2),
-    "look_left":  dict(gaze=(-0.9, 0.0), lid=0.0, brow=0.15, smile=0.45),
-    "look_right": dict(gaze=(0.9, 0.0),  lid=0.0, brow=0.15, smile=0.45),
-    "look_up":    dict(gaze=(0.0, -0.9), lid=0.0, brow=0.5, smile=0.45),
-    "look_down":  dict(gaze=(0.0, 0.9),  lid=0.2, brow=0.0, smile=0.3),
+    "neutral":    dict(gaze=(0.0, 0.0),  lid=0.0,  tilt=0.0,  size=1.0),
+    "happy":      dict(gaze=(0.0, -0.1), lid=0.2,  tilt=0.6,  size=0.9),
+    "sad":        dict(gaze=(0.0, 0.35), lid=0.25, tilt=-0.7, size=1.0),
+    "surprised":  dict(gaze=(0.0, -0.2), lid=0.0,  tilt=0.1,  size=1.3),
+    "sleepy":     dict(gaze=(0.0, 0.3),  lid=0.6,  tilt=-0.2, size=1.0),
+    "look_left":  dict(gaze=(-0.9, 0.0), lid=0.0,  tilt=0.0,  size=1.0),
+    "look_right": dict(gaze=(0.9, 0.0),  lid=0.0,  tilt=0.0,  size=1.0),
+    "look_up":    dict(gaze=(0.0, -0.9), lid=0.0,  tilt=0.2,  size=1.05),
+    "look_down":  dict(gaze=(0.0, 0.9),  lid=0.15, tilt=0.0,  size=1.0),
 }
 
 BLINK_EVERY_S = (2.5, 6.0)   # random interval range
@@ -84,11 +99,25 @@ class FaceState:
         self.expression = name
         self.target = dict(EXPRESSIONS[name])
 
+    def touch(self, gaze):
+        """Touchscreen hook: gaze=(-1..1, -1..1) while a finger is down
+        (pupils track it, eyes widen a little), None on release (back to
+        the current expression + an acknowledging blink)."""
+        if gaze is None:
+            self.target = dict(EXPRESSIONS[self.expression])
+            self._blink_t0 = None
+            self._next_blink = 0.0     # blink on the next tick
+            return
+        gx = max(-1.0, min(1.0, gaze[0]))
+        gy = max(-1.0, min(1.0, gaze[1]))
+        self.target = dict(self.target)
+        self.target.update(gaze=(gx, gy), lid=0.0, size=1.1)
+
     def tick(self, now, dt):
         gx, gy = self.pose["gaze"]
         tx, ty = self.target["gaze"]
         self.pose["gaze"] = (_ease(gx, tx, dt), _ease(gy, ty, dt))
-        for k in ("lid", "brow", "smile"):
+        for k in ("lid", "tilt", "size"):
             self.pose[k] = _ease(self.pose[k], self.target[k], dt)
 
         # Idle blink: brief triangular lid pulse layered over the pose.
@@ -105,6 +134,43 @@ class FaceState:
         return max(self.pose["lid"], blink)  # effective lid closure this frame
 
 
+def eye_geometry(cx, cy, side, gaze, lid, tilt, size,
+                 w=EYE_W, h=EYE_H, stroke=STROKE):
+    """Straight-line eye geometry, no pygame: returns (outline_pts, pupil_rect).
+
+    outline_pts: 4 (x,y) corners of the eye polygon (None when fully shut,
+    caller draws a flat line at cy instead). pupil_rect: (x, y, w, h) filled
+    square, clamped inside the opening (None when the opening is too short).
+    side: -1 left eye, +1 right (tilt moves the OUTER top corner).
+    """
+    hh = h * size / 2.0
+    l, r = cx - w // 2, cx + w // 2
+    top, bot = cy - hh, cy + hh
+    # tilt: outer top corner rises (+) / drops (-); inner nudges opposite.
+    d_out, d_in = -tilt * 30.0, tilt * 8.0
+    tl = top + (d_out if side < 0 else d_in)
+    tr = top + (d_out if side > 0 else d_in)
+    # lid: shutter descends from the top, straight edge.
+    lid = max(0.0, min(1.0, lid))
+    tl += (bot - tl) * lid
+    tr += (bot - tr) * lid
+    if min(bot - tl, bot - tr) < stroke * 1.5:
+        return None, None  # effectively shut
+    outline = [(l, tl), (r, tr), (r, bot), (l, bot)]
+
+    pw = int(w * 0.30)
+    ph_full = int(h * 0.42)
+    px = cx + gaze[0] * (w / 2.0 - pw / 2.0 - stroke * 2)
+    py = cy + gaze[1] * (hh - ph_full / 2.0 - stroke * 2)
+    # clamp the pupil under the (possibly tilted/lowered) top edge
+    top_at_px = tl + (tr - tl) * ((px - l) / (r - l))
+    p_top = max(py - ph_full / 2.0, top_at_px + stroke * 1.5)
+    p_bot = min(py + ph_full / 2.0, bot - stroke * 1.5)
+    if p_bot - p_top < 10:
+        return outline, None
+    return outline, (int(px - pw / 2), int(p_top), pw, int(p_bot - p_top))
+
+
 class FaceRenderer:
     """pygame drawing of a FaceState. Construct only where pygame exists."""
 
@@ -118,67 +184,43 @@ class FaceRenderer:
         pygame.mouse.set_visible(False)
         self.clock = pygame.time.Clock()
         self.state = FaceState(now=time.monotonic())
+        self._dump_req = False
+        signal.signal(signal.SIGUSR1, self._on_usr1)
+
+    def _on_usr1(self, _sig, _frm):
+        self._dump_req = True
 
     def set_expression(self, name):
         self.state.set_expression(name)
 
     # ------------------------------------------------------------- drawing
 
-    def _eye(self, surf, cx, cy, r, gaze, lid):
+    def _eye(self, surf, cx, cy, side, lid):
         pg = self.pygame
-        # soft outer glow + main ring
-        pg.draw.circle(surf, GLOW_DIM, (cx, cy), r + 6, 10)
-        pg.draw.circle(surf, GLOW, (cx, cy), r, 7)
-        # pupil: offset disc with two highlight dots (design-ref look)
-        px = cx + int(gaze[0] * r * 0.42)
-        py = cy + int(gaze[1] * r * 0.42)
-        pr = int(r * 0.52)
-        pg.draw.circle(surf, PUPIL, (px, py), pr)
-        pg.draw.circle(surf, HIGHLIGHT, (px - pr // 3, py - pr // 3),
-                       max(3, pr // 4))
-        pg.draw.circle(surf, HIGHLIGHT, (px + pr // 3, py + pr // 5),
-                       max(2, pr // 7))
-        # lid: BG-colored shutter descending from above the eye
-        if lid > 0.02:
-            cover = int((r + 12) * 2 * min(1.0, lid))
-            rect = pg.Rect(cx - r - 12, cy - r - 12, (r + 12) * 2, cover)
-            pg.draw.rect(surf, BG, rect)
-            if lid < 0.98:  # lid edge line
-                y = rect.bottom
-                pg.draw.line(surf, GLOW, (cx - r, y), (cx + r, y), 5)
-
-    def _brow(self, surf, cx, cy, r, brow, side):
-        pg = self.pygame
-        lift = int(brow * 14)
-        w, h = int(r * 1.7), int(r * 0.9)
-        rect = pg.Rect(cx - w // 2, cy - r - 38 - lift, w, h)
-        # slight inner tilt when negative (angry)
-        a0, a1 = math.radians(25), math.radians(155)
-        pg.draw.arc(surf, GLOW, rect, a0, a1, 6)
-
-    def _mouth(self, surf, cx, cy, smile):
-        pg = self.pygame
-        w = 120 + int(40 * abs(smile))
-        h = max(10, int(56 * abs(smile)))
-        if smile >= 0:
-            rect = pg.Rect(cx - w // 2, cy - h, w, h * 2)
-            pg.draw.arc(surf, GLOW, rect, math.radians(200),
-                        math.radians(340), 7)
-        else:
-            rect = pg.Rect(cx - w // 2, cy, w, h * 2)
-            pg.draw.arc(surf, GLOW, rect, math.radians(20),
-                        math.radians(160), 7)
+        st = self.state.pose
+        outline, pupil = eye_geometry(cx, cy, side, st["gaze"], lid,
+                                      st["tilt"], st["size"])
+        if outline is None:
+            half = int(EYE_W * 0.45)
+            pg.draw.line(surf, ORANGE, (cx - half, cy), (cx + half, cy),
+                         STROKE)
+            return
+        pg.draw.polygon(surf, ORANGE, outline, STROKE)
+        if pupil is not None:
+            pg.draw.rect(surf, ORANGE, pg.Rect(*pupil))
 
     def draw(self, lid):
         surf = self.screen
         surf.fill(BG)
-        st = self.state.pose
-        eye_r = 68
-        ey = 190
-        for side, ex in ((-1, 280), (1, 520)):
-            self._brow(surf, ex, ey, eye_r, st["brow"], side)
-            self._eye(surf, ex, ey, eye_r, st["gaze"], lid)
-        self._mouth(surf, 400, 360, st["smile"])
+        for side, ex in ((-1, EYE_CX[0]), (1, EYE_CX[1])):
+            self._eye(surf, ex, EYE_CY, side, lid)
+        if self._dump_req:
+            self._dump_req = False
+            try:
+                self.pygame.image.save(surf, FRAME_DUMP)
+                print(f"frame dumped to {FRAME_DUMP}", flush=True)
+            except Exception as e:  # never kill the face over a debug dump
+                print(f"frame dump failed: {e}", file=sys.stderr, flush=True)
         self.pygame.display.flip()
 
     # ---------------------------------------------------------------- loop
@@ -199,6 +241,20 @@ class FaceRenderer:
                     return
                 if ev.type == pg.KEYDOWN and ev.key in (pg.K_ESCAPE, pg.K_q):
                     return
+                # Touchscreen: pupils track the finger, release blinks.
+                # (SDL also synthesizes mouse events from touch; handle both,
+                # the duplicate state updates are idempotent.)
+                if ev.type in (pg.FINGERDOWN, pg.FINGERMOTION):
+                    self.state.touch((ev.x * 2 - 1, ev.y * 2 - 1))
+                elif ev.type == pg.FINGERUP:
+                    self.state.touch(None)
+                elif ev.type == pg.MOUSEBUTTONDOWN or \
+                        (ev.type == pg.MOUSEMOTION and ev.buttons[0]):
+                    x, y = ev.pos
+                    self.state.touch((x / SCREEN_W * 2 - 1,
+                                      y / SCREEN_H * 2 - 1))
+                elif ev.type == pg.MOUSEBUTTONUP:
+                    self.state.touch(None)
             if demo:
                 idx = int((now - t_start) / 2.0) % len(demo_seq)
                 if demo_seq[idx] != self.state.expression:

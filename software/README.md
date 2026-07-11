@@ -14,11 +14,36 @@ rsync -av --exclude __pycache__ software/ moshe@moshe-pi5-2gb.local:parviz-sw/
 
 ### face/face.py, fullscreen face (800x480, official 7" touchscreen)
 
-Design-ref face (see `reference/design/front.jpg`): dark navy background,
-two cyan outlined eyes with offset pupils + highlight dots, arc brows,
-smile arc, idle blink. `FaceRenderer.set_expression(name)` API stub;
-expressions: neutral, happy, sad, surprised, sleepy, look_left, look_right,
-look_up, look_down.
+Rigid-line robot face (2026-07-11 revision, per user): two rectangular
+outlined eyes with square pupils, NO mouth, NO eyebrows, single color =
+the body's safety orange (`src/geo.py COLORS["accent"]` = 232,116,34) on
+black. Expressions come from lid height, top-corner tilt and pupil
+position; every stroke is straight. Layout scales off the panel size
+(eyes 224x192 centered at 240/560). Idle blink stays.
+`FaceRenderer.set_expression(name)` API; expressions: neutral, happy, sad,
+surprised, sleepy, look_left, look_right, look_up, look_down.
+
+TOUCH: while a finger is on the panel the pupils track it and the eyes
+widen slightly; lifting the finger blinks and returns to the current
+expression. Handles both SDL FINGER* events (the DSI ft5x06 panel) and
+mouse-drag (windowed dev).
+
+Headless visual check (no compositor to screenshot through):
+`kill -USR1 <pid>` makes the next frame land in `/tmp/face_frame.png`.
+
+### face/parviz-face.service, boot service
+
+The Pi boots to console (`sudo systemctl set-default multi-user.target`,
+desktop disabled; revert with `graphical.target`) and systemd starts the
+face fullscreen via KMS/DRM. SDL scans the DRM cards for a connected
+connector, which is always the DSI panel (HDMI unplugged), so no device
+index is pinned. DRM card numbers shuffle between boots; never hardcode
+`/dev/dri/cardN`.
+
+```sh
+sudo cp face/parviz-face.service /etc/systemd/system/
+sudo systemctl daemon-reload && sudo systemctl enable --now parviz-face
+```
 
 Needs pygame (check `python3 -c "import pygame"`; else
 `pip3 install --user pygame`, no sudo).
@@ -87,13 +112,20 @@ picamera2 / numpy all present from the OS):
 - `motion/test_steppers.py`: 19/19 pass on the Pi (no GPIO wired yet, so
   only dry-run coverage; live coil test waits on the ULN2003 wiring).
 - `face/face.py --demo --seconds 12`: renders fullscreen on the 7" DSI
-  panel (`card1-DSI-2`, 800x480). A `labwc` Wayland session owns the
-  display, so it ran with `WAYLAND_DISPLAY=wayland-0
-  XDG_RUNTIME_DIR=/run/user/1000`; verified via a mid-demo `grim -o DSI-2`
-  screenshot (expressions animate, blink works).
+  panel (800x480); expression demo verified frame-by-frame via screenshots.
+- **Boot service verified 2026-07-12**: `parviz-face.service` active after
+  a real reboot, holding the DSI card via kmsdrm, ~10% of one core,
+  system RAM 306 MB used (desktop disabled freed ~120 MB).
+- **Touch verified end-to-end** with a virtual multitouch device
+  (python3-evdev uinput, MT slots + `INPUT_PROP_DIRECT`): pupils track a
+  synthetic drag-and-hold, release blinks. NOTE: a single-touch ABS
+  uinput device does NOT work for this, SDL classifies it as a
+  pointer and only the press comes through; emulate real MT.
 
-`grim` + `wlr-randr` are installed on the Pi; `grim -o DSI-2 out.png` is
-the standard way to screenshot the panel for remote verification.
+Remote screenshots: desktop session up -> `grim -o DSI-2 out.png`;
+console/service mode -> `kill -USR1 $(pgrep -fn face.py)` and fetch
+`/tmp/face_frame.png` (the service renders into a DRM dumb buffer, there
+is nothing for grim to grab).
 
 ## Next hardware step
 

@@ -1,0 +1,26 @@
+# Parviz face renderer, boots straight onto the 7" DSI panel via KMS/DRM.
+# Requires the desktop disabled (sudo systemctl set-default multi-user.target),
+# SDL grabs DRM master on /dev/dri/card1 (DSI) when no compositor is running.
+#
+# Install (from ~/parviz-sw on the Pi):
+#   sudo cp face/parviz-face.service /etc/systemd/system/
+#   sudo systemctl daemon-reload && sudo systemctl enable --now parviz-face
+#
+# Visual check over SSH: kill -USR1 $(pgrep -fn face.py)
+# then fetch /tmp/face_frame.png.
+
+[Unit]
+Description=Parviz face renderer (desk-pi 7" DSI panel)
+After=systemd-user-sessions.service
+
+[Service]
+User=moshe
+SupplementaryGroups=video render input
+WorkingDirectory=/home/moshe/parviz-sw/face
+Environment=SDL_VIDEODRIVER=kmsdrm
+ExecStart=/usr/bin/python3 /home/moshe/parviz-sw/face/face.py
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target
