@@ -1,5 +1,6 @@
 # desk-pi software
 
+Parviz robot software. Awareness/LLM design intent: ../docs/AWARENESS.md.
 Software spike for the tracked desk robot: face renderer, neck stepper
 driver, camera check. Lives here in the repo and mirrored to `~/parviz-sw`
 on the Pi (`ssh moshe@moshe-pi5-2gb.local`, key auth).

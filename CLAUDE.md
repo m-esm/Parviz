@@ -609,3 +609,15 @@ interior exactly 2 x tip r + dual phase match; top is the slack side). spr_y2 90
 half-pitch stagger REJECTED: fouls the y-64 vent + ULN1 post line, and moot at CR 1.37.
 Sprocket-to-road-wheel edge gap is now 2.0 (intra-part, gate-blind): keep center gaps
 >= 30.5 when re-stationing.
+
+**Parviz awareness architecture (2026-07-12, user):** the robot is named **Parviz**.
+Design intent in `docs/AWARENESS.md`: always-on ambient awareness — 2 ear mics, camera
+(AI-camera upgrade open), BME688-class env sensor, capacitive touch, IMU, vibration,
+mmWave presence, 4x HC-SR04 — fused into a world-state digest that is fed to an LLM
+deciding what Parviz does. Tiered: reflexes hard-coded; perception + ASR always LOCAL
+(raw audio never leaves the robot); ambient decisions by the local ~0.6B model
+(llama.cpp on the Pi, benchmarked in software/README.md: Qwen3-0.6B Q4_0 = 21 tok/s,
+0.94 s replies, coexists with the face; 1.7B fits only alone); bigger AI (Claude API /
+Mac) ONLY for specific tasks or on user request. RAM (2GB) is the binding constraint.
+Software side: face v2 (rigid orange eyes, touch-tracking pupils) runs as
+`parviz-face.service` on boot (console target, kmsdrm; desktop disabled).
