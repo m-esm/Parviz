@@ -2,12 +2,12 @@
 
 Software spike for the tracked desk robot: face renderer, neck stepper
 driver, camera check. Lives here in the repo and mirrored to `~/parviz-sw`
-on the Pi (`ssh pi@parviz.local`, key auth).
+on the Pi (`ssh moshe@moshe-pi5-2gb.local`, key auth).
 
 ## Deploy
 
 ```sh
-rsync -av --exclude __pycache__ software/ pi@parviz.local:parviz-sw/
+rsync -av --exclude __pycache__ software/ moshe@moshe-pi5-2gb.local:parviz-sw/
 ```
 
 ## Pieces
@@ -75,29 +75,30 @@ python3 camera/preview.py
 # expect: OK: /tmp/desk_pi_cam.jpg (... KB) via picamera2, resolution 4608x2592
 ```
 
-## Hardware verification status (2026-07-07)
+## Hardware verification status (2026-07-11)
 
-**Nothing verified on hardware this pass, the Pi was unreachable.**
-`parviz.local` did not resolve (mDNS), the last known IP
-<pi-lan-ip> timed out, and a full subnet sweep found no Raspberry Pi MAC
-on the LAN. The Pi is powered off or off WiFi.
+**All three pieces verified on the Pi** (`moshe-pi5-2gb.local`, Pi 5 2GB,
+Debian 13 trixie, kernel 6.18, Python 3.13.5; pygame 2.6.1 / lgpio /
+picamera2 / numpy all present from the OS):
 
-Verified locally (macOS, python 3.9):
+- `camera/preview.py`: full-res capture works,
+  `OK: /tmp/desk_pi_cam.jpg (694 KB) via picamera2, resolution 4608x2592`
+  (imx708 on CAM1). Frame pulled back and inspected, real image.
+- `motion/test_steppers.py`: 19/19 pass on the Pi (no GPIO wired yet, so
+  only dry-run coverage; live coil test waits on the ULN2003 wiring).
+- `face/face.py --demo --seconds 12`: renders fullscreen on the 7" DSI
+  panel (`card1-DSI-2`, 800x480). A `labwc` Wayland session owns the
+  display, so it ran with `WAYLAND_DISPLAY=wayland-0
+  XDG_RUNTIME_DIR=/run/user/1000`; verified via a mid-demo `grim -o DSI-2`
+  screenshot (expressions animate, blink works).
 
-- `motion/test_steppers.py`: 19/19 tests pass (half-step sequencing,
-  direction, inversion, ±88/±30 clamps, relative-move creep, gear ratio,
-  dry-run never imports lgpio).
-- `steppers.py` dry-run smoke demo runs.
-- `face.py` and `preview.py` compile (`py_compile`); face geometry/state
-  (`FaceState`) runs without pygame. Fullscreen rendering is untested
-  until the Pi is up.
-
-Known-good from a previous session (memory): OS Debian 13 trixie,
-kernel 6.18 aarch64, camera imx708 detected by `rpicam-hello --list-cameras`.
+`grim` + `wlr-randr` are installed on the Pi; `grim -o DSI-2 out.png` is
+the standard way to screenshot the panel for remote verification.
 
 ## Next hardware step
 
-Power the Pi, then rerun the spike: `rsync` (above), recon
-(`rpicam-hello --list-cameras`, `python3 -c "import lgpio, pygame"`,
-`ls /sys/class/drm`), `python3 camera/preview.py`, and
-`python3 face/face.py --demo --seconds 10` on the 7" panel.
+Wire one 28BYJ-48 + ULN2003 to the Pi (pick 4 BCM pins, e.g. 17/18/27/22),
+then run the first live coil test:
+`python3 -c "from steppers import PanStepper; PanStepper(pins=(17,18,27,22)).move_to(30)"`.
+After that: pin map into a `pins.py` (or config), and a supervisor that
+ties face + camera + motion together.

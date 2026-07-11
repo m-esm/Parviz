@@ -593,3 +593,19 @@ head_back top-flange now parametric (body_z_top - 7.5). Overall bbox H 261 -> 27
 157 -> 172.5 (vertical center 165 blocked by the Ø26 tilt clamp boss at z 153 -- bore
 kept 1.9 clear above it); the gooseneck stub angles (93,-29) -> (71.5,-12) around the
 antenna mast and tray pillars.
+
+**Sprocket conjugate teeth (2026-07-11, review task #15 verdict DEFECT -> fixed):** the
+old _sprocket_disc had pin pockets but NO teeth (tip r 18.8 UNDER the 19.32 pin circle):
+1-pin bite, a 35% per-pitch dead gap bridged only by ~2.4 N rim friction (loaded starts
+could deadlock + freewheel), end-of-stroke cam-out at stall, and a 0.355 skip barrier
+that FDM tolerance could eat -- with no mesh-depth adjuster anywhere (tension is
+horizontal, mesh depth vertical). Now `_sprocket_profile()` generates the true
+rack-conjugate roller-pinion form (pin+0.275 swept envelope, 0.5 deg steps, 12x): tip r
+20.5, contact ratio 1.37 (a pin is ALWAYS caged, min escape lift 0.914), zero-lift
+conjugate action (max penetration -0.15 = clearance), tooth tips 0.62 above the link
+web (ceiling: tip r 20.72), skip barrier 2.055 (5.8x; FDM +-0.2 is now 10% of it).
+Dual-run engagement was evaluated and rejected (top run 8.6 clear by design: needs
+interior exactly 2 x tip r + dual phase match; top is the slack side). spr_y2 90->87
+half-pitch stagger REJECTED: fouls the y-64 vent + ULN1 post line, and moot at CR 1.37.
+Sprocket-to-road-wheel edge gap is now 2.0 (intra-part, gate-blind): keep center gaps
+>= 30.5 when re-stationing.

@@ -171,23 +171,56 @@ def _track_master_link():
     return body, keepers
 
 
-def _sprocket_disc(width):
-    """Pin-pocket sprocket disc (2026-07-10 fix): sprocket_teeth circular pin seats on
-    the track_wheel_r pin circle cut into a sprocket_outer_d/2 blank. Replaces the
-    placeholder gear_disc trapezoid teeth, whose radial engagement with the pins was
-    only ~0.36 (tip 18.8 vs pin underside 18.445 at pin circle 19.32) on top of the
-    2.0-bore/1.75-pin slop -- a recipe for tooth-skip under stall torque. Seat r 1.15 =
-    pin 0.875 + 0.275 running clearance; the seat floor sits at r 18.17 so the seat
-    WRAPS the pin (0.63 radial bite), and the seat mouth at the rim opens 2.05 > the
-    Ø1.75 pin, so pins drop in/out freely as the links articulate onto the polygon.
-    Phase on the TT shaft is free (D-socket clocks 2 ways, pins self-seat on tension)."""
-    blank = sg.Point(0, 0).buffer(P["sprocket_outer_d"] / 2, resolution=64)
+def _sprocket_profile():
+    """2D conjugate pin-rack sprocket profile (2026-07-11 kinematic fix), shapely
+    polygon in the extrusion plane (+x = BDC toward the ground run, +y = track +Y).
+
+    The 2026-07-10 pin-pocket disc had SEATS but NO TEETH: tip r 18.8 sat BELOW the
+    pin circle 19.32, so at most 1 pin was ever radially trapped (window +-3.72 <
+    pitch 10), each pocket drove its pin for only ~6.5 of every 10 mm (dead gap
+    bridged by rim-on-pin friction), the pin cammed out at the stroke end under
+    stall load, and the 0.355 skip barrier (tip + pin - pin circle) was inside FDM
+    tolerance. Now the sprocket_teeth seats keep their place on the track_wheel_r
+    pin circle, but the rim rises to tip r 20.5 (sprocket_outer_d/2, ADDENDUM 1.18
+    past the pin circle) and each tooth GAP is the true CONJUGATE envelope: the
+    Ø1.75 pin + 0.275 running clearance (r 1.15, same as the old seat -- it also
+    swallows the 0.125 bore slop and the ~0.06 chordal-action band) is swept through
+    the rack mesh -- the ground run advances y = rp * theta while the sprocket turns
+    theta, so in the sprocket frame the pin rides Rot(-theta) @ (rp, rp*theta) --
+    and the swept union is subtracted at 0.5 deg steps over +-40 deg. The flanks
+    come out near-radial (classic roller-chain form): drive contact is smooth
+    (measured conjugate-motion penetration -0.15 / -0.18, i.e. clearance, at the
+    pin-circle and the chordal 19.099 ratio), and a trapped pin must LIFT past the
+    tip circle to escape sideways. MEASURED (numeric probe, 2026-07-11): per-pin
+    radial-retention (>=0.8) window +-5.38 = 10.75 > pitch/2, tip-circle trap
+    window 13.71 (contact ratio 1.37) -> at every phase at least one pin is caged
+    (min best-pin escape lift 0.91 at the half-pitch phase, 2.05 at BDC); skip
+    barrier 2.06 (5.8x the old 0.355, FDM +-0.2 is now 10%);
+    tooth tips dip to z 4.82 = 0.62 above the link web face (z 4.2, chamfers only
+    add room) and stay 0.9 clear of the B knuckles in X (band 8 < channel +-4.9).
+    Seat floor stays r 18.17 (0.63 radial bite). Phase on the TT shaft is free
+    (D-socket clocks 2 ways, pins self-seat on tension)."""
+    from shapely.ops import unary_union
+    import shapely.affinity as sa
     rp = P["track_wheel_r"]
-    for k in range(P["sprocket_teeth"]):
-        a = TAU * k / P["sprocket_teeth"]
-        blank = blank.difference(
-            sg.Point(rp * np.cos(a), rp * np.sin(a)).buffer(1.15, resolution=32))
-    disc = extrude_polygon(blank, width)
+    blank = sg.Point(0, 0).buffer(P["sprocket_outer_d"] / 2, resolution=96)
+    swept = []
+    for th in np.arange(-40.0, 40.01, 0.5) * (np.pi / 180.0):
+        c, s = np.cos(th), np.sin(th)
+        u, v = rp, rp * th                             # pin in rack coords at angle th
+        swept.append(sg.Point(c * u + s * v, -s * u + c * v).buffer(1.15, resolution=24))
+    gap = unary_union(swept)
+    gaps = unary_union([sa.rotate(gap, 360.0 * k / P["sprocket_teeth"], origin=(0, 0))
+                        for k in range(P["sprocket_teeth"])])
+    return blank.difference(gaps).simplify(0.01)
+
+
+def _sprocket_disc(width):
+    """Conjugate-tooth sprocket disc: _sprocket_profile() extruded `width` wide and
+    rotated so the extrusion axis is the X axle axis (+x profile axis -> world -z =
+    bottom dead center, +y -> world +y: the profile is 12-fold symmetric and mirror
+    symmetric per gap, so clocking/handedness need no special casing)."""
+    disc = extrude_polygon(_sprocket_profile(), width)
     disc.apply_translation((0, 0, -width / 2))
     disc.apply_transform(R(TAU / 4, (0, 1, 0)))        # extrusion z -> the X axle axis
     return disc
@@ -195,7 +228,7 @@ def _sprocket_disc(width):
 
 def _sprocket(sx):
     """Drive sprocket + inboard hub tube reaching the TT shaft through the chassis-wall web.
-    Disc (tip r 18.8, real pin pockets -- see _sprocket_disc) at the pod centre (96.4 at
+    Disc (tip r 20.5, conjugate teeth -- see _sprocket_profile) at the pod centre (96.4 at
     chassis_w 140 / tw 44.8; hub local -28.1 --
     values are chassis_w/track_width-derived); hub OD12 runs inboard to where the D-socket
     (bore Ø5.65, flat gap 3.85 print clearance, 8.0 deep = TT flat length) grips the shaft flats.
@@ -206,7 +239,7 @@ def _sprocket(sx):
     hub_in = (P["chassis_w"] / 2 - 2.0 + 0.3) - cx                 # world 68.3 -> local -28.1
     # band pinned to 8 (the links' open +-4.9 sprocket channel), NOT tw-derived
     spr = _sprocket_disc(8.0)
-    hub = cyl(6.0, -hub_in - 3.5, axis="x")                        # corners to the 18.8 tip circle
+    hub = cyl(6.0, -hub_in - 3.5, axis="x")                        # inboard of the toothed rim
     hub.apply_translation(((hub_in - 3.5) / 2, 0, 0))
     spr = uni([spr, hub])
     dd = inter(cyl((P["tt_shaft_d"] + 0.25) / 2, 8.6, axis="x"),   # TT double-D socket

@@ -221,7 +221,17 @@ P = {
     "track_grouser_h": 1.5, # tread lug (print grousers in TPU or add pads)
     "track_pin_bore_d": 2.0,    # link hinge bore for Ø1.75 filament pins (ref uses ~2.0 drafted)
     "sprocket_teeth": 12,
-    "sprocket_outer_d": 37.6,   # tip r 18.8 = pin circle 19.32 - 0.5 clearance (OD 42 jammed links)
+    "sprocket_outer_d": 41.0,   # TIP r 20.5 = pin circle 19.32 + 1.18 ADDENDUM (2026-07-11
+                            # conjugate-tooth fix; the old 37.6 tip sat BELOW the pin
+                            # circle -- pockets, no teeth: 35% of every pitch was dead
+                            # gap and the 0.355 skip barrier was inside FDM tolerance).
+                            # Real conjugate teeth now rise past the pins: skip barrier
+                            # tip + pin - pin circle = 2.06, per-pin trap window (>=0.8
+                            # radial retention) 10.75 > pitch/2 (contact ratio 1.37 on
+                            # the tip circle), tooth tips dip to z 4.82
+                            # over the ground run = 0.62 above the link web face (4.2).
+                            # Ceiling: tip r <= 20.72 keeps the 0.4 web clearance; 20.5
+                            # leaves 0.22 for FDM. See _sprocket_profile() in tracks.py.
     "idler_bore_d": 15.95,  # F688ZZ (8x16x5, flange 18) press seat; flange recess 18.5 x 1.0
     "roadwheel_d": 20.0,    # dished road wheels riding the bottom-run knuckle crowns
     "roadwheel_ys": (57.5, 33.5, 11.5, -11.5, -33.5),   # EXPLICIT stations
@@ -241,6 +251,14 @@ P = {
                             # row for it), M3s ys2-20.3=69.7. Sprocket 2 mounts the
                             # optional TT's own shaft; without it the station is empty
                             # (end idler + the 57.5 wheel carry the front run).
+                            # 87 EVALUATED + REJECTED (2026-07-11 conjugate-tooth
+                            # pass; would stagger the two stations' dead windows by
+                            # a half pitch, sep 155 mod 10 = 5): the M3 wall pair
+                            # would land 65.1..68.3 INSIDE the y-64 vent (61.5..
+                            # 66.5) and the can tail 34.4 crosses the ULN-post line
+                            # (<=36). Moot anyway: conjugate teeth give each
+                            # sprocket tip-circle contact ratio 1.37 (13.71 > the
+                            # 10 pitch), so there is no dead window left to stagger.
     "spr_y": -68.0,         # drive sprocket station on the ground run (center z = pin
                             # line + pin circle = 25.32). THE derivation (all failed
                             # spots documented 2026-07-11): the TT envelope ys-12..
