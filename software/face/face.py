@@ -307,11 +307,13 @@ VISION_JSON = "/dev/shm/parviz_vision.json"   # written by perception
 
 
 class CamPreview:
-    """Tiny live camera window for the HUD. The face does NOT own the
-    camera: the perception daemon does, and shares 160x120 JPEG frames
-    via /dev/shm. Stale/absent frames -> window hidden, CAM slot '--'."""
+    """Live camera window for the HUD, ghost-feed style (user): grayscale,
+    alpha-blended into the black background, scanlines drawn on top. The
+    face does NOT own the camera: the perception daemon does, and shares
+    160x120 JPEG frames via /dev/shm. Stale/absent -> hidden, CAM '--'."""
 
-    SIZE = (96, 72)
+    SIZE = (144, 108)
+    ALPHA = 110
 
     def __init__(self):
         self.ok = False
@@ -323,10 +325,13 @@ class CamPreview:
             self._t = now
             try:
                 self.ok = (time.time() -
-                           os.path.getmtime(PREVIEW_JPG)) < 3.0
+                           os.path.getmtime(PREVIEW_JPG)) < 4.0
                 if self.ok:
                     img = pygame.image.load(PREVIEW_JPG)
-                    self._img = pygame.transform.scale(img, self.SIZE)
+                    img = pygame.transform.scale(img, self.SIZE)
+                    img = pygame.transform.grayscale(img)
+                    img.set_alpha(self.ALPHA)
+                    self._img = img
             except (OSError, pygame.error):
                 self.ok = False
         return self._img if self.ok else None
@@ -351,7 +356,7 @@ class VisionGaze:
         self.present = False
         self.raw = None
         try:
-            if time.time() - os.path.getmtime(VISION_JSON) > 1.5:
+            if time.time() - os.path.getmtime(VISION_JSON) > 2.5:
                 return
             with open(VISION_JSON) as f:
                 st = json.load(f)
@@ -813,13 +818,16 @@ class FaceRenderer:
             surf.blit(dimg, ((SCREEN_W - dimg.get_width()) // 2,
                              SCREEN_H - m - dimg.get_height() - 30))
 
-        # --- right edge: live camera window + raw model output
+        # --- bottom-left: ghost camera feed + raw model output
         cimg = self.campre.surface(pg, now)
         if cimg is not None:
             cw, chh = CamPreview.SIZE
-            cx0, cy0 = SCREEN_W - m - cw - 4, (SCREEN_H - chh) // 2
+            cx0 = m + 12
+            cy0 = SCREEN_H - m - 26 - chh   # sits just above the status line
             surf.blit(cimg, (cx0, cy0))
-            pg.draw.rect(surf, HUD_DIM,
+            for sy in range(cy0, cy0 + chh, 3):   # scanlines: tech feed
+                pg.draw.line(surf, BG, (cx0, sy), (cx0 + cw - 1, sy), 1)
+            pg.draw.rect(surf, HUD_FAINT,
                          pg.Rect(cx0 - 1, cy0 - 1, cw + 2, chh + 2), 1)
             lab = self._text("CAM ●" if self.vision.present else "CAM",
                              HUD_DIM, tiny=True)
@@ -833,7 +841,7 @@ class FaceRenderer:
                         cx0 + int(bx * cw / 320), cy0 + int(by * chh / 240),
                         max(2, int(bw * cw / 320)),
                         max(2, int(bh * chh / 240))), 1)
-                # raw numbers, faintest text under the window
+                # raw numbers, faintest text right of the window
                 if raw.get("person_present"):
                     l1 = (f'f{raw["n_faces"]} {raw["conf"]:.2f} '
                           f'x{raw["cx"]:+.2f} y{raw["cy"]:+.2f} '
@@ -844,8 +852,8 @@ class FaceRenderer:
                       f'{raw.get("infer_ms", 0):.0f}ms')
                 for i, s in enumerate((l1, l2)):
                     img = self._text(s, HUD_FAINT, tiny=True)
-                    surf.blit(img, (cx0 + cw - img.get_width(),
-                                    cy0 + chh + 4 + i * 13))
+                    surf.blit(img, (cx0 + cw + 8,
+                                    cy0 + chh - 30 + i * 14))
 
         # --- bottom-right: sensor slots (fill in as hardware arrives)
         cam_s = "OK" if self.campre.ok else "--"

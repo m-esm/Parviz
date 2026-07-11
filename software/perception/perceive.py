@@ -43,7 +43,7 @@ PREVIEW_JPG = "/dev/shm/parviz_preview.jpg"
 
 CAP_W, CAP_H = 640, 480
 DET_W, DET_H = 320, 240
-LOOP_HZ = 2.0        # detection rate; 2 Hz is plenty for desk presence
+LOOP_HZ = 1.0        # detection rate; 1 Hz per user
 PREVIEW_EVERY_S = 0.5
 # imx708 video-mode FOV, approximate; refine when the head is mounted.
 FOV_X_DEG, FOV_Y_DEG = 62.0, 48.0
