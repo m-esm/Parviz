@@ -319,11 +319,26 @@ def build_tracks():
         hw = []                                        # (name, mesh) per FASTENER so
         for bi, ry in enumerate(P["roadwheel_ys"], 1): # the viewer can select each one
             rwz = (zc - R) + kr + rr_ + 0.1
-            sh = cyl(1.95, 37.0, axis="x")
-            sh.apply_translation((sx * 93.0, ry, rwz))         # x 74.5..111.5
+            sh = cyl(1.95, 40.0, axis="x")             # TRUE M4x40: 40 under the head
+            sh.apply_translation((sx * 91.4, ry, rwz))         # x 71.4..111.4 -- the
+            # tip protrudes 2.7 past the seated nut's inner face (real thread
+            # stick-out; the old 37 shank STOPPED INSIDE the nut zone), 1.4 clear
+            # of the chassis wall outer face at x 70
             hd = cyl(3.5, 3.5, axis="x")
             hd.apply_translation((sx * 113.15, ry, rwz))       # head on the hub face
             hw.append((f"wheel_bolt_{bi}", trimesh.util.concatenate([sh, hd])))
+            # M4 HEX NUT seated in the beam's slide-up slot (2026-07-11, user:
+            # "wheel bolts not properly connected" -- the pod-rail slots were
+            # modeled EMPTY). AF 7.0 / AC 8.1 corners / 3.2 thick, axis x, FLATS
+            # to +-y (the slot's 7.3 walls), corners up/down like the slot cut:
+            # torque drags it OUTBOARD to the slot's outer wall (x 77.5; modeled
+            # 0.05 shy so the gate sees no face-jam) and its top corner parks on
+            # the slot ceiling z 23.65 = rwz + 4.05, which centres it on the
+            # bore (chassis.py's design). No washer: the nut is captive in the
+            # printed slot by design (CLAUDE.md wheel-beam stack).
+            nt = cyl(4.05, 3.2, axis="x", sections=6)
+            nt.apply_translation((sx * 75.85, ry, rwz))
+            hw.append((f"wheel_nut_{bi}", nt))
         for ey_, bnm in ((wb / 2, "end_bolt_front"), (-wb / 2, "end_bolt_rear")):
             sh8 = cyl(4.0, 60.4, axis="x")             # M8 END BOLT-AXLES: shank x 58..
             sh8.apply_translation((sx * 88.2, ey_, za))    # 118.4 through bearings +
