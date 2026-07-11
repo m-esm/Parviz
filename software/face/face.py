@@ -76,11 +76,11 @@ BREATH_PERIOD_S = 4.4        # slow size oscillation
 BREATH_MAG = 0.012
 RIPPLE_LEN_S = 0.35          # touch feedback outline
 
-# Layout scales off the panel size (800x480). Eyes sized down a notch
-# (2026-07-12, user) so the HUD/telemetry reads clearly around them.
-EYE_W = int(SCREEN_W * 0.235)         # 188
-EYE_H = int(SCREEN_H * 0.33)          # 158
-EYE_CX = (int(SCREEN_W * 0.31), int(SCREEN_W * 0.69))   # 248, 552
+# Layout scales off the panel size (800x480). Eyes sized down + pulled
+# together (2026-07-12, user) so the side panels get real room.
+EYE_W = int(SCREEN_W * 0.21)          # 168
+EYE_H = int(SCREEN_H * 0.30)          # 144
+EYE_CX = (int(SCREEN_W * 0.36), int(SCREEN_W * 0.64))   # 288, 512
 EYE_CY = int(SCREEN_H * 0.365)         # eyes ride high; mouth + telemetry below
 MOUTH_CY = int(SCREEN_H * 0.72)
 MOUTH_HALF = 92
