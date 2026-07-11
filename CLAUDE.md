@@ -520,6 +520,16 @@ tubes to y -31, Ø20 pivot bosses, wall flat ends y -54). BOM: F688ZZ 4 -> 8 (tw
 per end idler x4), M4x40 12, hinge pins 128, Ø8 stubs x4 ~50 mm (M8 bolts work).
 PRINT NOTE: 128 track links total -- budget the print time.
 
+**Drive-mechanism review (2026-07-11, task #11):** the wheel beam doubles as the
+ANTI-BUCKLE CAP for the mid-drive: the pushed side of the ground run (rear of the
+active sprocket when driving forward) can only lift 4.5 mm (crowns z 9.5 -> beam
+bottom z 14) before the beam stops it, and beyond +-86 the ramps are held by the
+tensioned end idlers. Run the tracks TENSIONED (the front M8 nuts) -- tension is
+what prevents bunching in the first place. Stall-torque tooth force ~4.1 N lands on
+~1 pin (the straight-run mesh engages one pocket; neighbours sit 2.5 above their
+pins), giving ~19 MPa pin bending = 2.6x margin on PETG. The sprocket takes ~1/7 of
+the robot's weight through the mesh, which preloads engagement closed.
+
 **End-axle + dual-drive pass (2026-07-11, user rounds 9-10):** (1) M8 END BOLT-AXLES
 (user: "two wheels per side not connected to anything" -- the plain Ø8 stubs had no
 axial retention and the idlers showed bare bearing bores outside): each end wheel now
