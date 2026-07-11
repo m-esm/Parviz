@@ -320,7 +320,7 @@ class CamPreview:
     face does NOT own the camera: the perception daemon does, and shares
     160x120 JPEG frames via /dev/shm. Stale/absent -> hidden, CAM '--'."""
 
-    SIZE = (144, 108)
+    SIZE = (128, 96)
     ALPHA = 110
 
     def __init__(self):
@@ -630,7 +630,8 @@ class FaceRenderer:
         self._font_xs = pygame.font.SysFont(
             "dejavusansmono,menlo,consolas,monospace", 11)
         self._eye_gaze = {-1: (0.0, 0.0), 1: (0.0, 0.0)}  # per-eye eased
-        self._dec = None            # latest brain decision line
+        self._dec_obj = None        # latest parsed brain decision
+        self._dec_mt = None
         self._dec_t = -1e9
         self._dec_stale = False     # heartbeat: stale brain -> sleep
         self._dec_applied_mt = 0.0
@@ -742,26 +743,120 @@ class FaceRenderer:
         for execution (self._dec_pending), staleness for the sleep rule."""
         if now - self._dec_t >= 2.0:
             self._dec_t = now
-            self._dec = None
             self._dec_stale = True
             try:
                 mt = os.path.getmtime(DECISION_FILE)
-                age = time.time() - mt
-                self._dec_stale = age > BRAIN_STALE_S
-                if age < 120:
-                    with open(DECISION_FILE) as f:
-                        d = json.load(f)
-                    verbs = "+".join(a.get("do", "?")
-                                     for a in d.get("actions", [])
-                                     if isinstance(a, dict)) or "?"
-                    reason = str(d.get("reason", ""))[:64]
-                    self._dec = f"{verbs} // {reason}"
-                    if mt != self._dec_applied_mt:
-                        self._dec_applied_mt = mt
-                        self._dec_pending = d
+                self._dec_mt = mt
+                self._dec_stale = (time.time() - mt) > BRAIN_STALE_S
+                with open(DECISION_FILE) as f:
+                    self._dec_obj = json.load(f)
+                if mt != self._dec_applied_mt:
+                    self._dec_applied_mt = mt
+                    self._dec_pending = self._dec_obj
             except (OSError, ValueError):
-                pass
-        return self._dec
+                self._dec_obj = None
+
+    @staticmethod
+    def _wrap(s, width, max_lines=5):
+        words, lines, cur = s.split(), [], ""
+        for w in words:
+            if len(cur) + len(w) + 1 > width and cur:
+                lines.append(cur)
+                cur = w
+            else:
+                cur = f"{cur} {w}".strip()
+        if cur:
+            lines.append(cur)
+        if len(lines) > max_lines:
+            lines = lines[:max_lines]
+            lines[-1] = lines[-1][:width - 1] + "…"
+        return lines
+
+    def _header(self, surf, x, y, w, label):
+        img = self._text(label, HUD_DIM, tiny=True)
+        surf.blit(img, (x, y))
+        my = y + img.get_height() // 2 + 1
+        self.pygame.draw.line(surf, HUD_FAINT,
+                              (x + img.get_width() + 6, my), (x + w, my), 1)
+        return y + img.get_height() + 5
+
+    def _panel_vision(self, surf, now):
+        """Left side: everything the vision models see, in one place."""
+        pg = self.pygame
+        x0, w = 16, 130
+        y = self._header(surf, x0, 74, w, "VISION")
+        cimg = self.campre.surface(pg, now)
+        raw = self.vision.raw
+        if cimg is not None:
+            cw, chh = CamPreview.SIZE
+            surf.blit(cimg, (x0, y))
+            for sy in range(y, y + chh, 3):
+                pg.draw.line(surf, BG, (x0, sy), (x0 + cw - 1, sy), 1)
+            pg.draw.rect(surf, HUD_FAINT,
+                         pg.Rect(x0 - 1, y - 1, cw + 2, chh + 2), 1)
+            if raw and raw.get("box"):
+                bx, by, bw, bh = raw["box"]
+                pg.draw.rect(surf, HUD_MID, pg.Rect(
+                    x0 + int(bx * cw / 320), y + int(by * chh / 240),
+                    max(2, int(bw * cw / 320)),
+                    max(2, int(bh * chh / 240))), 1)
+            y += chh + 7
+        lines = []
+        if raw is None:
+            lines.append(("offline", HUD_MID))
+        elif raw.get("person_present"):
+            lines.append((f'face {raw["n_faces"]}  conf {raw["conf"]:.2f}',
+                          HUD_FAINT))
+            lines.append((f'x {raw["cx"]:+.2f}  y {raw["cy"]:+.2f}',
+                          HUD_FAINT))
+            lines.append((f'size {raw["size"]:.2f}', HUD_FAINT))
+            lines.append((f'facing '
+                          f'{"yes" if raw.get("facing_camera") else "no"}',
+                          HUD_FAINT))
+            if "visible_expression" in raw:
+                lines.append((f'looks {raw["visible_expression"]}',
+                              HUD_MID))
+                lines.append((f'smile {raw.get("smile", 0):.2f}  ear '
+                              f'{raw.get("ear", 0):.2f}', HUD_FAINT))
+            lines.append((f'{raw.get("infer_ms", 0):.0f}ms det  '
+                          f'{raw.get("lm_ms", 0):.0f}ms lmk', HUD_FAINT))
+        else:
+            lines.append(("no face", HUD_MID))
+            lines.append((f'{raw.get("infer_ms", 0):.0f}ms det', HUD_FAINT))
+        for s, col in lines:
+            surf.blit(self._text(s, col, tiny=True), (x0, y))
+            y += 13
+
+    def _panel_brain(self, surf, now):
+        """Right side: what the LLM decided, clearly labeled as such."""
+        x0, w = 652, 132
+        y = self._header(surf, x0, 74, w, "BRAIN")
+        if self._dec_stale:
+            state, col = "STALE -> sleep", HUD_BAD
+        else:
+            state, col = "LIVE", HUD_MID
+        age = (f'  {int(time.time() - self._dec_mt)}s'
+               if self._dec_mt else "")
+        surf.blit(self._text(f"{state}{age}", col, tiny=True), (x0, y))
+        y += 16
+        d = self._dec_obj
+        if not d:
+            return
+        for a in d.get("actions", [])[:4]:
+            if not isinstance(a, dict):
+                continue
+            do = a.get("do", "?")
+            arg = (a.get("name") or a.get("text") or a.get("note")
+                   or a.get("task") or "")
+            if do == "look_at":
+                arg = f'{a.get("pan_deg", 0)},{a.get("tilt_deg", 0)}'
+            s = f'{do} {str(arg)[:11]}'.rstrip()
+            surf.blit(self._text(s, HUD_MID, tiny=True), (x0, y))
+            y += 13
+        y += 4
+        for line in self._wrap(str(d.get("reason", "")), 20):
+            surf.blit(self._text(line, HUD_FAINT, tiny=True), (x0, y))
+            y += 12
 
     def _apply_brain(self, now):
         """Execute the LLM's decision: the brain is the ONLY source of
@@ -855,53 +950,10 @@ class FaceRenderer:
                 m + 16 + img.get_width(),
                 SCREEN_H - m - img.get_height() - 4, 9, img.get_height() - 4))
 
-        # --- top-center (under PWR): the brain's decision, whisper-quiet
-        dec = self._decision_line(now)
-        if dec:
-            dimg = self._text(dec, HUD_FAINT, tiny=True)
-            surf.blit(dimg, ((SCREEN_W - dimg.get_width()) // 2, m + 52))
-
-        # --- bottom-left: ghost camera feed + raw model output
-        cimg = self.campre.surface(pg, now)
-        if cimg is not None:
-            cw, chh = CamPreview.SIZE
-            cx0 = m + 12
-            cy0 = SCREEN_H - m - 26 - chh   # sits just above the status line
-            surf.blit(cimg, (cx0, cy0))
-            for sy in range(cy0, cy0 + chh, 3):   # scanlines: tech feed
-                pg.draw.line(surf, BG, (cx0, sy), (cx0 + cw - 1, sy), 1)
-            pg.draw.rect(surf, HUD_FAINT,
-                         pg.Rect(cx0 - 1, cy0 - 1, cw + 2, chh + 2), 1)
-            lab = self._text("CAM ●" if self.vision.present else "CAM",
-                             HUD_DIM, tiny=True)
-            surf.blit(lab, (cx0, cy0 - lab.get_height() - 3))
-            raw = self.vision.raw
-            if raw:
-                # detection box over the preview (det 320x240 -> window)
-                if raw.get("box"):
-                    bx, by, bw, bh = raw["box"]
-                    pg.draw.rect(surf, HUD_MID, pg.Rect(
-                        cx0 + int(bx * cw / 320), cy0 + int(by * chh / 240),
-                        max(2, int(bw * cw / 320)),
-                        max(2, int(bh * chh / 240))), 1)
-                # raw numbers, faintest text right of the window
-                if raw.get("person_present"):
-                    l1 = (f'f{raw["n_faces"]} {raw["conf"]:.2f} '
-                          f'x{raw["cx"]:+.2f} y{raw["cy"]:+.2f} '
-                          f's{raw["size"]:.2f}')
-                    if "visible_expression" in raw:
-                        l1 += (f'  {raw["visible_expression"]} '
-                               f'sm{raw.get("smile", 0):.2f}')
-                else:
-                    l1 = "no face"
-                l2 = (f'yunet {raw.get("fps", 0):.0f}fps '
-                      f'{raw.get("infer_ms", 0):.0f}ms')
-                if "lm_ms" in raw:
-                    l2 += f'  lmk {raw["lm_ms"]:.0f}ms'
-                for i, s in enumerate((l1, l2)):
-                    img = self._text(s, HUD_FAINT, tiny=True)
-                    surf.blit(img, (cx0 + cw + 8,
-                                    cy0 + chh - 30 + i * 14))
+        # --- side panels: provenance-labeled VISION (left) / BRAIN (right)
+        self._decision_line(now)   # refresh heartbeat + pending decision
+        self._panel_vision(surf, now)
+        self._panel_brain(surf, now)
 
         # --- bottom-right: sensor slots (fill in as hardware arrives)
         cam_s = "OK" if self.campre.ok else "--"

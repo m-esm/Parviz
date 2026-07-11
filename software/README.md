@@ -374,3 +374,13 @@ restarts (rides the 500/503s). Eyes sized down (188x158) so the HUD
 reads clearly. THERMAL NOTE: sustained brain ticking holds the SoC near
 80-85C on the bare board - a heatsink/active cooler belongs on the buy
 list before longer runs.
+
+HUD layout v2 (2026-07-12, user: use the sides, label provenance): the
+side bands are now PANELS with hairline headers -- left "VISION" (ghost
+cam feed + detection box + every model value stacked: faces/conf, x/y,
+size, facing, looks+smile+ear, model timings), right "BRAIN" (LIVE/STALE
++ decision age, the LLM's action list, reason word-wrapped with
+ellipsis). Top row stays system (SYS/PWR/NET), bottom stays robot
+(status line, sensor slots, pip). The old scattered decision line +
+bottom-left cam block are gone; cam is 128x96 to fit the panel column.
+Self-reviewed via frame dumps; fixed text/eye clipping and truncation.
