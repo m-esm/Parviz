@@ -9,7 +9,13 @@ orange (src/geo.py COLORS["accent"] = 232,116,34) on black. Expressions
 are carried by lid height, top-corner tilt and pupil position, every
 stroke is a straight line. TOUCH: while a finger is on the panel the
 pupils track it (eyes widen slightly); lifting it blinks and returns
-to the current expression.
+to the current expression; each press spawns a fading chamfered ripple.
+
+Modern-UX layer (2026-07-12): micro-saccades + slow breathing so the
+face never freezes, a 1.6 s power-on curtain reveal with a typed
+"PARVIZ // BOOT" line, and DIM-orange HUD chrome (corner viewfinder
+brackets, "PARVIZ // <EXPRESSION>" status line with blinking cursor,
+a breathing heartbeat pip bottom-right). Same hue only, eyes stay king.
 
 Display target: 800x480 (official RPi 7" touchscreen, DSI).
 
@@ -44,8 +50,17 @@ import time
 SCREEN_W, SCREEN_H = 800, 480
 
 # Single-color palette: body safety orange (src/geo.py COLORS["accent"]).
+# DIM is the same hue at 40%: HUD chrome must never compete with the eyes.
 BG = (0, 0, 0)
 ORANGE = (232, 116, 34)
+DIM = (93, 46, 14)
+
+BOOT_LEN_S = 1.6             # power-on reveal
+SACCADE_EVERY_S = (1.2, 3.5)  # micro gaze jumps (life between blinks)
+SACCADE_MAG = 0.07
+BREATH_PERIOD_S = 4.4        # slow size oscillation
+BREATH_MAG = 0.012
+RIPPLE_LEN_S = 0.35          # touch feedback outline
 
 # Layout scales off the panel size (800x480): big eyes that own the screen.
 EYE_W = int(SCREEN_W * 0.28)          # 224
@@ -94,6 +109,10 @@ class FaceState:
         self.expression = "neutral"
         self._blink_t0 = None
         self._next_blink = now + random.uniform(*BLINK_EVERY_S)
+        # micro-life: saccade offset (decays fast) + breathing size factor
+        self.sacc = (0.0, 0.0)
+        self.breath = 1.0
+        self._next_sacc = now + random.uniform(*SACCADE_EVERY_S)
 
     def set_expression(self, name):
         if name not in EXPRESSIONS:
@@ -123,6 +142,17 @@ class FaceState:
         self.pose["gaze"] = (_ease(gx, tx, dt), _ease(gy, ty, dt))
         for k in ("lid", "tilt", "size"):
             self.pose[k] = _ease(self.pose[k], self.target[k], dt)
+
+        # Micro-life. Saccade: a small instant gaze offset that eases back
+        # to zero; breathing: slow sine on eye size. Both are subliminal.
+        if now >= self._next_sacc:
+            self._next_sacc = now + random.uniform(*SACCADE_EVERY_S)
+            self.sacc = (random.uniform(-SACCADE_MAG, SACCADE_MAG),
+                         random.uniform(-SACCADE_MAG, SACCADE_MAG))
+        self.sacc = (_ease(self.sacc[0], 0.0, dt, speed=3.0),
+                     _ease(self.sacc[1], 0.0, dt, speed=3.0))
+        self.breath = 1.0 + BREATH_MAG * math.sin(
+            now * 2.0 * math.pi / BREATH_PERIOD_S)
 
         # Idle blink: brief triangular lid pulse layered over the pose.
         if self._blink_t0 is None and now >= self._next_blink:
@@ -226,6 +256,11 @@ class FaceRenderer:
         self.clock = pygame.time.Clock()
         self.state = FaceState(now=time.monotonic())
         self._dump_req = False
+        self._boot_t0 = time.monotonic()
+        self._ripples = []          # [(x, y, t0)] touch feedback
+        self._font = pygame.font.SysFont(
+            "dejavusansmono,menlo,consolas,monospace", 17)
+        self._text_cache = {}       # str -> rendered Surface
         signal.signal(signal.SIGUSR1, self._on_usr1)
 
     def _on_usr1(self, _sig, _frm):
@@ -239,8 +274,11 @@ class FaceRenderer:
     def _eye(self, surf, cx, cy, side, lid):
         pg = self.pygame
         st = self.state.pose
-        outer, inner, pupil = eye_geometry(cx, cy, side, st["gaze"], lid,
-                                           st["tilt"], st["size"])
+        gaze = (st["gaze"][0] + self.state.sacc[0],
+                st["gaze"][1] + self.state.sacc[1])
+        outer, inner, pupil = eye_geometry(cx, cy, side, gaze, lid,
+                                           st["tilt"],
+                                           st["size"] * self.state.breath)
         if outer is None:
             pg.draw.polygon(surf, ORANGE, shut_bar(cx, cy))
             return
@@ -250,11 +288,72 @@ class FaceRenderer:
         if pupil is not None:
             pg.draw.polygon(surf, ORANGE, pupil)
 
+    def _text(self, s):
+        if s not in self._text_cache:
+            if len(self._text_cache) > 64:
+                self._text_cache.clear()
+            self._text_cache[s] = self._font.render(s, True, DIM)
+        return self._text_cache[s]
+
+    def _hud(self, surf, now):
+        """Static tech chrome: corner brackets, status line, heartbeat pip.
+        All DIM so the eyes stay the face."""
+        pg = self.pygame
+        m, ln, wd = 14, 26, 3
+        for cx, sx in ((m, 1), (SCREEN_W - m, -1)):
+            for cy, sy in ((m, 1), (SCREEN_H - m, -1)):
+                pg.draw.line(surf, DIM, (cx, cy), (cx + sx * ln, cy), wd)
+                pg.draw.line(surf, DIM, (cx, cy), (cx, cy + sy * ln), wd)
+        label = f"PARVIZ // {self.state.expression.upper()}"
+        img = self._text(label)
+        surf.blit(img, (m + 12, SCREEN_H - m - img.get_height() - 6))
+        if int(now * 2) % 2 == 0:  # blinking block cursor
+            pg.draw.rect(surf, DIM, pg.Rect(
+                m + 16 + img.get_width(),
+                SCREEN_H - m - img.get_height() - 4, 9, img.get_height() - 4))
+        # heartbeat pip: breathes with the eyes (proof of life, bottom-right)
+        k = (self.state.breath - 1.0) / BREATH_MAG  # -1..1
+        r = 5 + 2 * k
+        pg.draw.rect(surf, ORANGE, pg.Rect(
+            int(SCREEN_W - m - 12 - r), int(SCREEN_H - m - 12 - r),
+            int(2 * r), int(2 * r)))
+
+    def _draw_ripples(self, surf, now):
+        pg = self.pygame
+        keep = []
+        for (x, y, t0) in self._ripples:
+            ph = (now - t0) / RIPPLE_LEN_S
+            if ph >= 1.0:
+                continue
+            keep.append((x, y, t0))
+            half = 14 + 46 * ph
+            col = tuple(int(c * (1.0 - ph)) for c in ORANGE)
+            rect = [(x - half, y - half), (x + half, y - half),
+                    (x + half, y + half), (x - half, y + half)]
+            pg.draw.polygon(surf, col, chamfer(rect, half * 0.35), 2)
+        self._ripples = keep
+
     def draw(self, lid):
         surf = self.screen
+        now = time.monotonic()
         surf.fill(BG)
+        boot_ph = (now - self._boot_t0) / BOOT_LEN_S
+        self._hud(surf, now)
         for side, ex in ((-1, EYE_CX[0]), (1, EYE_CX[1])):
             self._eye(surf, ex, EYE_CY, side, lid)
+        if boot_ph < 1.0:
+            # power-on: curtains sweep open from the center line outward,
+            # and the status line types itself out.
+            f = 1.0 - (1.0 - max(0.0, boot_ph)) ** 3  # ease-out cubic
+            w_open = int((SCREEN_W / 2) * f)
+            surf.fill(BG, self.pygame.Rect(0, 0, SCREEN_W // 2 - w_open,
+                                           SCREEN_H))
+            surf.fill(BG, self.pygame.Rect(SCREEN_W // 2 + w_open, 0,
+                                           SCREEN_W, SCREEN_H))
+            boot_label = "PARVIZ // BOOT"
+            img = self._text(boot_label[:max(1, int(len(boot_label) * f))])
+            surf.blit(img, (26, SCREEN_H - 14 - img.get_height() - 6))
+        self._draw_ripples(surf, now)
         if self._dump_req:
             self._dump_req = False
             try:
@@ -287,6 +386,9 @@ class FaceRenderer:
                 # the duplicate state updates are idempotent.)
                 if ev.type in (pg.FINGERDOWN, pg.FINGERMOTION):
                     self.state.touch((ev.x * 2 - 1, ev.y * 2 - 1))
+                    if ev.type == pg.FINGERDOWN:
+                        self._ripples.append((ev.x * SCREEN_W,
+                                              ev.y * SCREEN_H, now))
                 elif ev.type == pg.FINGERUP:
                     self.state.touch(None)
                 elif ev.type == pg.MOUSEBUTTONDOWN or \
@@ -294,6 +396,8 @@ class FaceRenderer:
                     x, y = ev.pos
                     self.state.touch((x / SCREEN_W * 2 - 1,
                                       y / SCREEN_H * 2 - 1))
+                    if ev.type == pg.MOUSEBUTTONDOWN:
+                        self._ripples.append((x, y, now))
                 elif ev.type == pg.MOUSEBUTTONUP:
                     self.state.touch(None)
             if demo:
@@ -316,6 +420,10 @@ def main(argv=None):
     ap.add_argument("--demo", action="store_true",
                     help="cycle through all expressions every 2 s")
     args = ap.parse_args(argv)
+
+    # A SIGUSR1 (frame-dump request) arriving before the renderer installs
+    # its handler must not kill the process (default disposition is TERM).
+    signal.signal(signal.SIGUSR1, signal.SIG_IGN)
 
     # Headless console (SSH, no desktop): default SDL to KMS/DRM.
     if not os.environ.get("DISPLAY") and not os.environ.get("WAYLAND_DISPLAY") \

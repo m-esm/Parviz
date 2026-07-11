@@ -241,3 +241,10 @@ anchoring), qwen3-1.7b 3P->5P. But NO model ever chooses `escalate`, even
 with an explicit escalate example: tiny models cannot tell "answerable
 from digest" from "needs outside capability". That is a capability gap,
 not a prompt gap, and the headline metric for model selection.
+
+Face UX v3 (2026-07-12): micro-saccades + breathing (never freezes),
+1.6 s boot curtain reveal with typed "PARVIZ // BOOT", DIM-orange HUD
+(corner brackets, "PARVIZ // <EXPRESSION>" + blinking cursor, breathing
+heartbeat pip), chamfered touch ripples. Same 10% of one core. SIGUSR1
+is ignored until the renderer's handler is up (a dump request during
+pygame init used to KILL the process, default USR1 disposition).
