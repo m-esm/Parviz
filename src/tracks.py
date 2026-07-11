@@ -335,6 +335,22 @@ def build_tracks():
             nt8.apply_translation((sx * 58.0, ey_, za))    # to +-y: the 13.8 nut channel holds the
             # flats while the bolt is torqued from the outboard head (x 55.5..60.5)
             hw.append((bnm, trimesh.util.concatenate([sh8, hd8, ws8, nt8])))
+            # F688ZZ placeholders (2026-07-11, user: "bolt not properly connected
+            # to the idler" -- the Ø8 shank floated in the Ø16 seat where the
+            # bought bearings live): one flanged ring per idler face (ring Ø8.1/
+            # Ø15.8 x 5 in the 7.97 seat, Ø18.2 flange in the wheel's Ø18.5
+            # recess). Bought parts: never printed, export None like the bolts.
+            end_tag = "front" if ey_ > 0 else "rear"
+            rot_zx = trimesh.transformations.rotation_matrix(np.pi / 2, (0, 1, 0))
+            for x_face, drn, seat in ((117.4, -1.0, "o"), (87.4, 1.0, "i")):
+                ring = trimesh.creation.annulus(4.05, 7.9, 5.0)
+                ring.apply_transform(rot_zx)
+                ring.apply_translation((sx * (x_face + drn * 2.5), ey_, za))
+                flg = trimesh.creation.annulus(4.05, 9.1, 0.95)   # recess is 1.0 deep
+                flg.apply_transform(rot_zx)
+                flg.apply_translation((sx * (x_face + drn * 0.475), ey_, za))
+                hw.append((f"end_brg_{end_tag}_{seat}",
+                           trimesh.util.concatenate([ring, flg])))
         side = "L" if sx < 0 else "R"
         # GRANULAR SCENE NODES (2026-07-11, user: "select every little component"):
         # each link / wheel / fastener becomes its own dotted child node
