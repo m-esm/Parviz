@@ -248,3 +248,14 @@ Face UX v3 (2026-07-12): micro-saccades + breathing (never freezes),
 heartbeat pip), chamfered touch ripples. Same 10% of one core. SIGUSR1
 is ignored until the renderer's handler is up (a dump request during
 pygame init used to KILL the process, default USR1 disposition).
+
+Demo mode (2026-07-12): `--demo` now loops 11 scripted SCENES on timed
+intervals (idle scan, person detected -> track -> hello, wake word ->
+listening, thinking, speaking, escalate "ASKING BIG BRAIN", cliff alert
+flash, petted, low power, sleep with shut-bar eyes + ZZZ, wake), each
+driving expression + the HUD status line ("SCENE // STATE" with animated
+dots). DEMO_SCENES/DemoDirector in face.py; the renderer's `status`
+field is the same hook the brain loop will use later. Run on the Pi:
+`sudo systemctl stop parviz-face && cd parviz-sw &&
+SDL_VIDEODRIVER=kmsdrm python3 face/face.py --demo --seconds 45;
+sudo systemctl start parviz-face`

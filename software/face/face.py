@@ -168,6 +168,75 @@ class FaceState:
         return max(self.pose["lid"], blink)  # effective lid closure this frame
 
 
+# Demo mode: scripted scenes of what the screen shows in real situations
+# (the states the brain loop will drive later). Each scene = (NAME, steps),
+# each step = (duration_s, expression|"shut"|None, status_text|None).
+# "{dots}" in a status animates; status None shows the scene name.
+DEMO_SCENES = [
+    ("IDLE", [(2.2, "neutral", None), (1.6, "look_left", "SCANNING"),
+              (1.6, "look_right", "SCANNING"), (1.2, "neutral", None)]),
+    ("PERSON DETECTED", [(0.7, "surprised", "MOTION // LEFT"),
+                         (1.5, "look_left", "TRACKING"),
+                         (2.2, "happy", "HELLO")]),
+    ("LISTENING", [(0.6, "surprised", "WAKE WORD"),
+                   (3.0, "look_up", "LISTENING{dots}")]),
+    ("THINKING", [(3.0, "look_down", "THINKING{dots}")]),
+    ("SPEAKING", [(2.6, "happy", "SPEAKING")]),
+    ("ESCALATE", [(3.2, "look_up", "ASKING BIG BRAIN{dots}")]),
+    ("ALERT", [(0.5, "surprised", "!! CLIFF"), (0.5, "surprised", "CLIFF !!"),
+               (0.5, "surprised", "!! CLIFF"),
+               (1.8, "neutral", "REFLEX STOP OK")]),
+    ("PETTED", [(2.8, "happy", "<3")]),
+    ("LOW POWER", [(2.2, "sleepy", "LOW POWER"),
+                   (1.6, "sleepy", "SLEEP SOON")]),
+    ("SLEEP", [(1.2, "sleepy", None), (2.4, "shut", "ZZZ{dots}")]),
+    ("WAKE", [(1.2, "surprised", "GOOD MORNING"), (2.0, "neutral", None)]),
+]
+
+
+class DemoDirector:
+    """Steps through DEMO_SCENES on wall-clock intervals, driving the
+    renderer's expression + HUD status line. Loops forever."""
+
+    def __init__(self, scenes=None):
+        self.scenes = scenes or DEMO_SCENES
+        self._i = 0        # scene index
+        self._j = 0        # step index
+        self._t0 = None    # current step start
+
+    def _step(self):
+        name, steps = self.scenes[self._i]
+        return name, steps[self._j]
+
+    def _apply(self, face):
+        _, (_, expr, _) = self._step()
+        if expr == "shut":
+            face.state.target = dict(face.state.target)
+            face.state.target["lid"] = 1.0
+        elif expr:
+            face.set_expression(expr)
+
+    def tick(self, now, face):
+        if self._t0 is None:
+            self._t0 = now
+            self._apply(face)
+        name, (dur, _, status) = self._step()
+        if now - self._t0 >= dur:
+            self._j += 1
+            _, steps = self.scenes[self._i]
+            if self._j >= len(steps):
+                self._j = 0
+                self._i = (self._i + 1) % len(self.scenes)
+            self._t0 = now
+            self._apply(face)
+            name, (dur, _, status) = self._step()
+        if status:
+            dots = "." * (1 + int(now * 2.5) % 3)
+            face.status = f"{name} // {status}".replace("{dots}", dots)
+        else:
+            face.status = f"DEMO // {name}"
+
+
 def chamfer(poly, c):
     """Cut every corner of a convex polygon with a straight facet: each
     vertex becomes two points, one along each adjacent edge at distance c
@@ -258,6 +327,7 @@ class FaceRenderer:
         self._dump_req = False
         self._boot_t0 = time.monotonic()
         self._ripples = []          # [(x, y, t0)] touch feedback
+        self.status = None          # HUD status override (demo / brain)
         self._font = pygame.font.SysFont(
             "dejavusansmono,menlo,consolas,monospace", 17)
         self._text_cache = {}       # str -> rendered Surface
@@ -304,7 +374,7 @@ class FaceRenderer:
             for cy, sy in ((m, 1), (SCREEN_H - m, -1)):
                 pg.draw.line(surf, DIM, (cx, cy), (cx + sx * ln, cy), wd)
                 pg.draw.line(surf, DIM, (cx, cy), (cx, cy + sy * ln), wd)
-        label = f"PARVIZ // {self.state.expression.upper()}"
+        label = self.status or f"PARVIZ // {self.state.expression.upper()}"
         img = self._text(label)
         surf.blit(img, (m + 12, SCREEN_H - m - img.get_height() - 6))
         if int(now * 2) % 2 == 0:  # blinking block cursor
@@ -368,7 +438,7 @@ class FaceRenderer:
     def run(self, seconds=None, demo=False):
         pg = self.pygame
         t_start = time.monotonic()
-        demo_seq = list(EXPRESSIONS)
+        director = DemoDirector() if demo else None
         last = t_start
         while True:
             now = time.monotonic()
@@ -400,10 +470,8 @@ class FaceRenderer:
                         self._ripples.append((x, y, now))
                 elif ev.type == pg.MOUSEBUTTONUP:
                     self.state.touch(None)
-            if demo:
-                idx = int((now - t_start) / 2.0) % len(demo_seq)
-                if demo_seq[idx] != self.state.expression:
-                    self.set_expression(demo_seq[idx])
+            if director is not None and now - self._boot_t0 > BOOT_LEN_S:
+                director.tick(now, self)
             lid = self.state.tick(now, dt)
             self.draw(lid)
             self.clock.tick(30)
@@ -418,7 +486,8 @@ def main(argv=None):
     ap.add_argument("--expression", default="neutral",
                     choices=sorted(EXPRESSIONS), help="initial expression")
     ap.add_argument("--demo", action="store_true",
-                    help="cycle through all expressions every 2 s")
+                    help="loop scripted scenes (person detected, listening, "
+                         "thinking, alert, sleep, ...) on timed intervals")
     args = ap.parse_args(argv)
 
     # A SIGUSR1 (frame-dump request) arriving before the renderer installs
