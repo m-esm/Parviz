@@ -41,20 +41,28 @@ testable) on machines without pygame.
 """
 
 import argparse
+import collections
 import math
 import os
 import random
 import signal
+import socket
 import sys
 import time
 
 SCREEN_W, SCREEN_H = 800, 480
 
-# Single-color palette: body safety orange (src/geo.py COLORS["accent"]).
-# DIM is the same hue at 40%: HUD chrome must never compete with the eyes.
+# Palette. ORANGE is the FACE's color (eyes + mouth) and only the face's.
+# The HUD lives in cool muted tones so telemetry never competes with the
+# expression (user 2026-07-12: orange is just for the face).
 BG = (0, 0, 0)
 ORANGE = (232, 116, 34)
-DIM = (93, 46, 14)
+DIM = (93, 46, 14)            # legacy dim orange (boot label)
+HUD_FG = (148, 163, 178)      # slate: values
+HUD_DIM = (71, 85, 99)        # slate dark: labels, brackets
+HUD_ACC = (56, 180, 205)      # cyan: graphs, cursor
+HUD_OK = (74, 180, 110)
+HUD_BAD = (220, 80, 64)
 
 BOOT_LEN_S = 1.6             # power-on reveal
 SACCADE_EVERY_S = (1.2, 3.5)  # micro gaze jumps (life between blinks)
@@ -128,8 +136,11 @@ class FaceState:
         self._blink_t0 = None
         self._next_blink = now + random.uniform(*BLINK_EVERY_S)
         # micro-life: saccade offset (decays fast) + breathing size factor
+        # + pupil hippus (tiny dilation twitches alongside the saccades)
         self.sacc = (0.0, 0.0)
         self.breath = 1.0
+        self.pupil_jit = 0.0
+        self.touch_pt = None     # (-1..1, -1..1) screen point while touched
         self._next_sacc = now + random.uniform(*SACCADE_EVERY_S)
 
     def set_expression(self, name):
@@ -141,18 +152,26 @@ class FaceState:
         self.target = dict(EXPRESSIONS[name])
 
     def touch(self, gaze):
-        """Touchscreen hook: gaze=(-1..1, -1..1) while a finger is down
-        (pupils track it, eyes widen a little), None on release (back to
-        the current expression + an acknowledging blink)."""
+        """Touchscreen hook: each eye aims at the finger INDEPENDENTLY
+        (renderer reads touch_pt), so a touch between the eyes goes
+        cross-eyed; that also opens a small silly 'o' mouth. None on
+        release restores the expression + an acknowledging blink."""
         if gaze is None:
+            self.touch_pt = None
             self.target = dict(EXPRESSIONS[self.expression])
             self._blink_t0 = None
             self._next_blink = 0.0     # blink on the next tick
             return
         gx = max(-1.0, min(1.0, gaze[0]))
         gy = max(-1.0, min(1.0, gaze[1]))
+        self.touch_pt = (gx, gy)
         self.target = dict(self.target)
-        self.target.update(gaze=(gx, gy), lid=0.0, size=1.1, pupil=1.3)
+        self.target.update(lid=0.0, size=1.1, pupil=1.3)
+        if abs(gx) < 0.28 and gy < 0.35:   # poked between the eyes
+            self.target.update(open=0.55, mouth=0.15)
+        else:
+            base = EXPRESSIONS[self.expression]
+            self.target.update(open=base["open"], mouth=base["mouth"])
 
     def tick(self, now, dt):
         gx, gy = self.pose["gaze"]
@@ -167,8 +186,10 @@ class FaceState:
             self._next_sacc = now + random.uniform(*SACCADE_EVERY_S)
             self.sacc = (random.uniform(-SACCADE_MAG, SACCADE_MAG),
                          random.uniform(-SACCADE_MAG, SACCADE_MAG))
+            self.pupil_jit = random.uniform(-0.06, 0.09)
         self.sacc = (_ease(self.sacc[0], 0.0, dt, speed=3.0),
                      _ease(self.sacc[1], 0.0, dt, speed=3.0))
+        self.pupil_jit = _ease(self.pupil_jit, 0.0, dt, speed=1.8)
         self.breath = 1.0 + BREATH_MAG * math.sin(
             now * 2.0 * math.pi / BREATH_PERIOD_S)
 
@@ -255,6 +276,87 @@ class DemoDirector:
             face.status = f"DEMO // {name}"
 
 
+class Telemetry:
+    """Cheap system/sensor sampling for the HUD. Fast items every 2 s
+    (CPU temp -> history for the sparkline, load, memory), slow items
+    every 30 s (IP, uptime, wifi signal). Every read is a tiny procfs /
+    sysfs file; failures degrade to '--', never raise."""
+
+    def __init__(self):
+        self.temp_hist = collections.deque(maxlen=48)
+        self.temp = None
+        self.load_pct = None
+        self.mem_pct = None
+        self.net_dev = "--"
+        self.ip = "--"
+        self.sig = None          # 0..1 wifi link quality
+        self.uptime = "--"
+        self._t_fast = -1e9
+        self._t_slow = -1e9
+
+    @staticmethod
+    def _read(path):
+        with open(path) as f:
+            return f.read()
+
+    def sample(self, now):
+        if now - self._t_fast >= 2.0:
+            self._t_fast = now
+            try:
+                self.temp = int(self._read(
+                    "/sys/class/thermal/thermal_zone0/temp").strip()) / 1000
+                self.temp_hist.append(self.temp)
+            except OSError:
+                self.temp = None
+            try:
+                self.load_pct = min(100, int(float(
+                    self._read("/proc/loadavg").split()[0])
+                    / (os.cpu_count() or 4) * 100))
+            except OSError:
+                self.load_pct = None
+            try:
+                mi = {}
+                for line in self._read("/proc/meminfo").splitlines()[:3]:
+                    k, v = line.split(":")
+                    mi[k] = int(v.split()[0])
+                self.mem_pct = int(100 - mi["MemAvailable"] /
+                                   mi["MemTotal"] * 100)
+            except (OSError, KeyError, ValueError):
+                self.mem_pct = None
+        if now - self._t_slow >= 30.0:
+            self._t_slow = now
+            self.net_dev = "--"
+            for dev in ("wlan0", "eth0"):
+                try:
+                    if self._read(
+                            f"/sys/class/net/{dev}/operstate").strip() == "up":
+                        self.net_dev = dev.upper()
+                        break
+                except OSError:
+                    pass
+            try:
+                s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                s.connect(("10.255.255.255", 1))  # no packet actually sent
+                self.ip = s.getsockname()[0]
+                s.close()
+            except OSError:
+                self.ip = "--"
+            self.sig = None
+            try:
+                for line in self._read("/proc/net/wireless").splitlines()[2:]:
+                    if line.split(":")[0].strip() == "wlan0":
+                        self.sig = min(1.0, float(
+                            line.split()[2].rstrip(".")) / 70.0)
+            except (OSError, ValueError, IndexError):
+                pass
+            try:
+                up = float(self._read("/proc/uptime").split()[0])
+                self.uptime = (f"{int(up // 3600)}h{int(up % 3600 // 60):02d}"
+                               if up >= 3600 else f"{int(up // 60)}m")
+            except OSError:
+                self.uptime = "--"
+
+
 def chamfer(poly, c):
     """Cut every corner of a convex polygon with a straight facet: each
     vertex becomes two points, one along each adjacent edge at distance c
@@ -309,20 +411,37 @@ def eye_geometry(cx, cy, side, gaze, lid, tilt, size, squint=0.0,
     else:
         inner = chamfer(iquad, max(2.0, c - GAP * 0.414))
 
-    pw = w * 0.30 * pupil_k
-    ph_full = h * 0.42 * pupil_k
-    px = cx + gaze[0] * (w / 2.0 - pw / 2.0 - GAP - 6)
-    py = cy + gaze[1] * (hh - ph_full / 2.0 - GAP - 6)
-    # clamp the pupil inside the (tilted/lidded/squinted) opening
+    # Pupil = iris ring (thin chamfered outline) + filled octagon core +
+    # a BG glint notch top-left of the core (the highlight that makes it
+    # read as an eye and not a button).
+    base = min(w, h) * 0.36 * pupil_k     # core side
+    ir = base * 1.42                      # iris ring side
+    px = cx + gaze[0] * (w / 2.0 - ir / 2.0 - GAP - 4)
+    py = cy + gaze[1] * (hh - ir / 2.0 - GAP - 4)
+    # clamp the iris box inside the (tilted/lidded/squinted) opening
     top_at_px = tl + (tr - tl) * ((px - l) / (r - l))
-    p_top = max(py - ph_full / 2.0, top_at_px + 8)
-    p_bot = min(py + ph_full / 2.0, b - 8)
-    if p_bot - p_top < 10:
+    i_top = max(py - ir / 2.0, top_at_px + 6)
+    i_bot = min(py + ir / 2.0, b - 6)
+    if i_bot - i_top < 14:
         return outer, inner, None
-    prect = [(px - pw / 2, p_top), (px + pw / 2, p_top),
-             (px + pw / 2, p_bot), (px - pw / 2, p_bot)]
-    pupil = chamfer(prect, 0.28 * min(pw, p_bot - p_top))
-    return outer, inner, pupil
+    ibox = [(px - ir / 2, i_top), (px + ir / 2, i_top),
+            (px + ir / 2, i_bot), (px - ir / 2, i_bot)]
+    iris = chamfer(ibox, 0.29 * min(ir, i_bot - i_top))
+    pad = (ir - base) / 2.0
+    c_l, c_t = px - ir / 2 + pad, i_top + pad
+    c_r, c_b = px + ir / 2 - pad, i_bot - pad
+    if c_b - c_t < 8:
+        return outer, inner, {"iris": iris, "core": None, "glint": None}
+    cbox = [(c_l, c_t), (c_r, c_t), (c_r, c_b), (c_l, c_b)]
+    core = chamfer(cbox, 0.29 * min(c_r - c_l, c_b - c_t))
+    glint = None
+    g = base * 0.32
+    if c_b - c_t > g * 2.0:
+        g_l, g_t = c_l + base * 0.13, c_t + base * 0.13
+        gbox = [(g_l, g_t), (g_l + g, g_t), (g_l + g, g_t + g),
+                (g_l, g_t + g)]
+        glint = chamfer(gbox, 0.3 * g)
+    return outer, inner, {"iris": iris, "core": core, "glint": glint}
 
 
 def shut_bar(cx, cy, w=EYE_W):
@@ -350,11 +469,10 @@ class FaceRenderer:
         self._boot_t0 = time.monotonic()
         self._ripples = []          # [(x, y, t0)] touch feedback
         self.status = None          # HUD status override (demo / brain)
-        self._tele = ""             # telemetry summary line
-        self._tele_t = 0.0
+        self.tele = Telemetry()
         self._font_sm = pygame.font.SysFont(
             "dejavusansmono,menlo,consolas,monospace", 14)
-        self._tele_cache = {}
+        self._eye_gaze = {-1: (0.0, 0.0), 1: (0.0, 0.0)}  # per-eye eased
         self._font = pygame.font.SysFont(
             "dejavusansmono,menlo,consolas,monospace", 17)
         self._text_cache = {}       # str -> rendered Surface
@@ -368,32 +486,51 @@ class FaceRenderer:
 
     # ------------------------------------------------------------- drawing
 
-    def _eye(self, surf, cx, cy, side, lid):
+    def _eye(self, surf, cx, cy, side, lid, dt):
         pg = self.pygame
         st = self.state.pose
-        gaze = (st["gaze"][0] + self.state.sacc[0],
-                st["gaze"][1] + self.state.sacc[1])
+        if self.state.touch_pt is not None:
+            # aim THIS eye at the finger: between the eyes -> cross-eyed
+            tx = (self.state.touch_pt[0] + 1) / 2 * SCREEN_W
+            ty = (self.state.touch_pt[1] + 1) / 2 * SCREEN_H
+            want = (max(-1.0, min(1.0, (tx - cx) / (EYE_W * 0.75))),
+                    max(-1.0, min(1.0, (ty - cy) / (EYE_H * 0.75))))
+        else:
+            want = st["gaze"]
+        eg = self._eye_gaze[side]
+        eg = (_ease(eg[0], want[0], dt, speed=12.0),
+              _ease(eg[1], want[1], dt, speed=12.0))
+        self._eye_gaze[side] = eg
+        gaze = (eg[0] + self.state.sacc[0], eg[1] + self.state.sacc[1])
         outer, inner, pupil = eye_geometry(cx, cy, side, gaze, lid,
                                            st["tilt"],
                                            st["size"] * self.state.breath,
                                            squint=st["squint"],
-                                           pupil_k=st["pupil"])
+                                           pupil_k=st["pupil"] *
+                                           (1.0 + self.state.pupil_jit))
         if outer is None:
             pg.draw.polygon(surf, ORANGE, shut_bar(cx, cy))
             return
-        # Two thin outlines (outer + inset echo), then the filled pupil.
+        # Two thin outlines (outer + inset echo), then the layered pupil:
+        # iris ring outline, filled core, BG glint notch.
         pg.draw.polygon(surf, ORANGE, outer, STROKE)
         if inner is not None:
             pg.draw.polygon(surf, ORANGE, inner, STROKE_IN)
         if pupil is not None:
-            pg.draw.polygon(surf, ORANGE, pupil)
+            pg.draw.polygon(surf, ORANGE, pupil["iris"], STROKE_IN)
+            if pupil["core"] is not None:
+                pg.draw.polygon(surf, ORANGE, pupil["core"])
+            if pupil["glint"] is not None:
+                pg.draw.polygon(surf, BG, pupil["glint"])
 
-    def _text(self, s):
-        if s not in self._text_cache:
-            if len(self._text_cache) > 64:
+    def _text(self, s, color=HUD_FG, small=False):
+        key = (s, color, small)
+        if key not in self._text_cache:
+            if len(self._text_cache) > 96:
                 self._text_cache.clear()
-            self._text_cache[s] = self._font.render(s, True, DIM)
-        return self._text_cache[s]
+            font = self._font_sm if small else self._font
+            self._text_cache[key] = font.render(s, True, color)
+        return self._text_cache[key]
 
     def _mouth(self, surf):
         pg = self.pygame
@@ -414,58 +551,75 @@ class FaceRenderer:
                (400 + 34, ym), (400 + MOUTH_HALF, ye)]
         pg.draw.lines(surf, ORANGE, False, pts, STROKE)
 
-    def _telemetry(self, now):
-        """Sensor/system summary line, resampled every 5 s. Real values
-        where the hardware exists today; '--' for sensors not wired yet."""
-        if now - self._tele_t < 5.0 and self._tele:
-            return self._tele
-        self._tele_t = now
-        try:
-            with open("/sys/class/thermal/thermal_zone0/temp") as f:
-                cpu = f"{int(f.read().strip()) // 1000}C"
-        except OSError:
-            cpu = "--"
-        net = "--"
-        for dev in ("wlan0", "eth0"):
-            try:
-                with open(f"/sys/class/net/{dev}/operstate") as f:
-                    if f.read().strip() == "up":
-                        net = dev[:1].upper() + "OK"  # WOK / EOK
-                        break
-            except OSError:
-                pass
-        self._tele = (f"CPU {cpu}  NET {net}  PWR AC  "
-                      f"MIC --  CAM --  RDR --")
-        return self._tele
-
     def _hud(self, surf, now):
-        """Static tech chrome: corner brackets, status line, heartbeat pip.
-        All DIM so the eyes stay the face."""
+        """Corner telemetry blocks in cool HUD tones (orange belongs to the
+        face): SYS + temp sparkline top-left, NET top-right, status line
+        bottom-left, sensor slots + heartbeat pip bottom-right."""
         pg = self.pygame
+        self.tele.sample(now)
+        te = self.tele
         m, ln, wd = 14, 26, 3
         for cx, sx in ((m, 1), (SCREEN_W - m, -1)):
             for cy, sy in ((m, 1), (SCREEN_H - m, -1)):
-                pg.draw.line(surf, DIM, (cx, cy), (cx + sx * ln, cy), wd)
-                pg.draw.line(surf, DIM, (cx, cy), (cx, cy + sy * ln), wd)
+                pg.draw.line(surf, HUD_DIM, (cx, cy), (cx + sx * ln, cy), wd)
+                pg.draw.line(surf, HUD_DIM, (cx, cy), (cx, cy + sy * ln), wd)
+
+        # --- top-left: SYS block + CPU temp sparkline
+        x0, y0 = m + 12, m + 6
+        t = f"{te.temp:.0f}C" if te.temp is not None else "--"
+        ld = f"{te.load_pct}%" if te.load_pct is not None else "--"
+        mem = f"{te.mem_pct}%" if te.mem_pct is not None else "--"
+        surf.blit(self._text("SYS", HUD_DIM, small=True), (x0, y0))
+        surf.blit(self._text(f"CPU {t} {ld}  MEM {mem}", HUD_FG, small=True),
+                  (x0 + 38, y0))
+        if len(te.temp_hist) >= 2:
+            gw, gh, gy = 100, 20, y0 + 22
+            lo, hi = min(te.temp_hist), max(te.temp_hist)
+            span = max(3.0, hi - lo)
+            pts = [(x0 + i * gw / (len(te.temp_hist) - 1),
+                    gy + gh - (v - lo) / span * gh)
+                   for i, v in enumerate(te.temp_hist)]
+            pg.draw.lines(surf, HUD_ACC, False, pts, 2)
+            pg.draw.line(surf, HUD_DIM, (x0, gy + gh + 3),
+                         (x0 + gw, gy + gh + 3), 1)
+
+        # --- top-right: NET block (right-aligned)
+        line1 = f"NET {te.net_dev}  {te.ip}"
+        img = self._text(line1, HUD_FG, small=True)
+        surf.blit(img, (SCREEN_W - m - 12 - img.get_width(), m + 6))
+        # signal bar: 5 segments
+        bx = SCREEN_W - m - 12 - 5 * 14
+        by = m + 28
+        for i in range(5):
+            r = pg.Rect(bx + i * 14, by, 10, 12)
+            if te.sig is not None and te.sig >= (i + 1) / 5.0 - 0.001:
+                pg.draw.rect(surf, HUD_ACC, r)
+            else:
+                pg.draw.rect(surf, HUD_DIM, r, 1)
+        up = self._text(f"UP {te.uptime}", HUD_DIM, small=True)
+        surf.blit(up, (bx - up.get_width() - 12, by - 1))
+
+        # --- bottom-left: status line
         label = self.status or f"PARVIZ // {self.state.expression.upper()}"
         img = self._text(label)
         surf.blit(img, (m + 12, SCREEN_H - m - img.get_height() - 6))
         if int(now * 2) % 2 == 0:  # blinking block cursor
-            pg.draw.rect(surf, DIM, pg.Rect(
+            pg.draw.rect(surf, HUD_ACC, pg.Rect(
                 m + 16 + img.get_width(),
                 SCREEN_H - m - img.get_height() - 4, 9, img.get_height() - 4))
-        # telemetry summary, right-aligned before the heartbeat pip
-        tele = self._telemetry(now)
-        if tele not in self._tele_cache:
-            self._tele_cache.clear()
-            self._tele_cache[tele] = self._font_sm.render(tele, True, DIM)
-        timg = self._tele_cache[tele]
-        surf.blit(timg, (SCREEN_W - m - 34 - timg.get_width(),
-                         SCREEN_H - m - timg.get_height() - 8))
-        # heartbeat pip: breathes with the eyes (proof of life, bottom-right)
+
+        # --- bottom-right: sensor slots (fill in as hardware arrives)
+        sens = self._text("MIC --  CAM --  RDR --  IMU --", HUD_DIM,
+                          small=True)
+        sx = SCREEN_W - m - 34 - sens.get_width()
+        sy = SCREEN_H - m - sens.get_height() - 8
+        surf.blit(sens, (sx, sy))
+        pwr = self._text("PWR AC", HUD_OK, small=True)
+        surf.blit(pwr, (sx - pwr.get_width() - 14, sy))
+        # heartbeat pip: breathes with the eyes (proof of life)
         k = (self.state.breath - 1.0) / BREATH_MAG  # -1..1
         r = 5 + 2 * k
-        pg.draw.rect(surf, ORANGE, pg.Rect(
+        pg.draw.rect(surf, HUD_ACC, pg.Rect(
             int(SCREEN_W - m - 12 - r), int(SCREEN_H - m - 12 - r),
             int(2 * r), int(2 * r)))
 
@@ -484,14 +638,14 @@ class FaceRenderer:
             pg.draw.polygon(surf, col, chamfer(rect, half * 0.35), 2)
         self._ripples = keep
 
-    def draw(self, lid):
+    def draw(self, lid, dt=1.0 / 30):
         surf = self.screen
         now = time.monotonic()
         surf.fill(BG)
         boot_ph = (now - self._boot_t0) / BOOT_LEN_S
         self._hud(surf, now)
         for side, ex in ((-1, EYE_CX[0]), (1, EYE_CX[1])):
-            self._eye(surf, ex, EYE_CY, side, lid)
+            self._eye(surf, ex, EYE_CY, side, lid, dt)
         self._mouth(surf)
         if boot_ph < 1.0:
             # power-on: curtains sweep open from the center line outward,
@@ -503,7 +657,8 @@ class FaceRenderer:
             surf.fill(BG, self.pygame.Rect(SCREEN_W // 2 + w_open, 0,
                                            SCREEN_W, SCREEN_H))
             boot_label = "PARVIZ // BOOT"
-            img = self._text(boot_label[:max(1, int(len(boot_label) * f))])
+            img = self._text(boot_label[:max(1, int(len(boot_label) * f))],
+                             DIM)
             surf.blit(img, (26, SCREEN_H - 14 - img.get_height() - 6))
         self._draw_ripples(surf, now)
         if self._dump_req:
@@ -555,7 +710,7 @@ class FaceRenderer:
             if director is not None and now - self._boot_t0 > BOOT_LEN_S:
                 director.tick(now, self)
             lid = self.state.tick(now, dt)
-            self.draw(lid)
+            self.draw(lid, dt)
             self.clock.tick(30)
 
 

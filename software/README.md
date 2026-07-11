@@ -270,3 +270,15 @@ surprise/speaking) at 0.72*H. Bottom TELEMETRY bar refreshed every 5 s:
 CPU temp + NET (wlan/eth operstate) + PWR AC real today, MIC/CAM/RDR
 show `--` until the hardware is wired (AWARENESS.md suite). All still
 one hue, straight strokes, ~10% CPU.
+
+Face v5 (2026-07-12): PUPILS rebuilt as iris ring + filled octagon core
++ BG glint notch, with hippus (dilation twitches on saccades). HUD got
+its own cool palette (user: ORANGE IS FACE-ONLY now): slate text, cyan
+graphs/accents, green/red states. Corner blocks: SYS top-left (CPU temp
++ load + mem, 48-sample cyan temp sparkline @2 s), NET top-right (dev,
+IP, uptime, 5-segment wifi signal bar from /proc/net/wireless), status
+line bottom-left (cyan cursor), sensor slots + green PWR AC + cyan
+heartbeat pip bottom-right. Telemetry class samples procfs/sysfs fast
+items @2 s, slow @30 s, degrades to '--'. TOUCH: per-eye gaze, each eye
+aims at the finger independently (renderer eases per eye), so a poke
+BETWEEN THE EYES goes cross-eyed + opens a silly o-mouth (user todo).
