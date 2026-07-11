@@ -134,3 +134,43 @@ then run the first live coil test:
 `python3 -c "from steppers import PanStepper; PanStepper(pins=(17,18,27,22)).move_to(30)"`.
 After that: pin map into a `pins.py` (or config), and a supervisor that
 ties face + camera + motion together.
+
+## LLM on the Pi (measured 2026-07-12)
+
+The Pi 5 2GB runs small LLMs fine, CPU-only. Runtime: **llama.cpp**,
+built natively on the Pi (`~/llama.cpp/build/bin`, Cortex-A76 dotprod
+kernels; `cmake -B build -DCMAKE_BUILD_TYPE=Release -DLLAMA_CURL=ON`).
+Use **Q4_0** quants: llama.cpp runtime-repacks Q4_0 for the ARM dotprod
+path, so it beats Q4_K_M on this CPU. Ollama was rejected: it wraps
+llama.cpp anyway and its resident Go server wastes RAM the 2GB board
+does not have. Models live in `~/models/`.
+
+Measured with `llama-bench -t 4` (pp = prompt tokens/s, tg = generation
+tokens/s), face service running throughout:
+
+| model (Q4_0)        | weights  | pp256 | tg64  | verdict |
+|---------------------|----------|-------|-------|---------|
+| Qwen3-0.6B          | 403 MiB  | 204   | 21.4  | daily driver |
+| LFM2-1.2B           | 661 MiB  |  94   | 11.0  | quality alt |
+| Llama-3.2-1B        | 730 MiB  |  84   |  9.0  | slower than LFM2, skip |
+| Qwen3-1.7B          | 1002 MiB |  55   |  6.5  | fits, sluggish; ceiling |
+
+End-to-end serving check (Qwen3-0.6B, `llama-server -t 4 -c 2048`):
+short persona reply in **0.94 s** wall clock cold; server RSS 937 MB;
+face + server coexist with 1.17 GB still available. Qwen3 is a thinking
+model, append `/no_think` to the system prompt for latency.
+
+Serve command:
+
+```sh
+~/llama.cpp/build/bin/llama-server -m ~/models/Qwen3-0.6B-Q4_0.gguf \
+    -t 4 -c 2048 --host 127.0.0.1 --port 8081
+# OpenAI-compatible: POST localhost:8081/v1/chat/completions
+```
+
+Honest quality note: 0.6B-1.7B models handle persona lines, command
+parsing and simple Q&A; they are not good conversationalists. For real
+conversation quality the right architecture is a remote brain (API or a
+bigger box) with the local model as the offline/latency fallback.
+Budget rule: keep model + KV under ~1.2 GB so the face, camera and
+supervisor never fight the OOM killer.
