@@ -96,15 +96,17 @@ SWEEP_POSES = [
 def load_meshes(path):
     """GLB -> {node_name: world-space Trimesh}, EXCLUDE dropped."""
     scene = trimesh.load(path, force="scene")
-    meshes = {}
+    grouped = {}
     for node in scene.graph.nodes_geometry:
         T, geom_name = scene.graph[node]
         if geom_name in EXCLUDE:
             continue
         g = scene.geometry[geom_name].copy()
         g.apply_transform(T)
-        meshes[geom_name] = g
-    return meshes
+        # granular children ("parent.child", 2026-07-11) re-group under their parent
+        grouped.setdefault(geom_name.split(".")[0], []).append(g)
+    return {k: (v[0] if len(v) == 1 else trimesh.util.concatenate(v))
+            for k, v in grouped.items()}
 
 
 def bbox_overlap(a, b):

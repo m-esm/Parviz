@@ -548,3 +548,14 @@ and ULN2 moved (-38,45) -> (0,80) -- its posts sat inside the flipped TT_L envel
 and the pedestal blocks every left-side alternative. BOM: 4x M8x60 + nuts (Bag 13
 "Machine Bolts" may cover it -- verify), M4x40 12 -> 10, TT motors: 2 required
 (own 1, buy 1) + 2 OPTIONAL for twin drive.
+
+**Granular scene nodes (2026-07-11, user: "select every little component"):** multi-body
+parts now emit DOTTED CHILD nodes into the GLB -- `track_L.link_00_master`,
+`drivewheels_R.sprocket_front`, `axle_hw_L.end_bolt_rear`, `track_keeper_L.bar_1` (224
+scene parts) -- so the viewer can toggle each link/wheel/fastener. CONVENTION: the gates
+(assembly_check + fitmap) re-group by the prefix before the first `.` and stay at 67
+part-level nodes with unchanged whitelists; the print export gets one multi-body ghost
+mesh per parent (`metadata scene=False`, export-only; build.py's add() skips it from the
+scene). The viewer nests dotted children as a collapsed 3rd tree level under their
+parent, and fit-map pair names (parent-level) resolve to children by prefix. When adding
+new multi-body parts, follow tracks.py's `emit()` pattern.

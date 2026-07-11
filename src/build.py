@@ -63,6 +63,11 @@ def build():
                                             # live pan/tilt sliders (web/pose.json)
 
     def add(mesh, M, export_name=None):
+        if mesh.metadata.get("scene") is False:      # export-only ghost (granular
+            if EXPORT and export_name:               # children carry the scene; the
+                g = mesh.copy(); g.apply_transform(M)  # ghost is the multi-body STL)
+                g.export(stlp(export_name))
+            return
         g = mesh.copy()
         g.apply_transform(M)
         scene.add_geometry(g, node_name=mesh.metadata["name"])

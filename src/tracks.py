@@ -261,10 +261,10 @@ def build_tracks():
         # bottom run rack-style -- the robot's weight presses the run into the teeth,
         # so ground reaction guarantees the 2-3-pin bite. TT stays direct on the
         # double-D shaft, dropped with it to z 25.32.
-        for sy_ in (P["spr_y"], P["spr_y2"]):          # two stations (2026-07-11: the
-            spr = _sprocket(sx)                        # front sprocket rides the
-            spr.apply_translation((cx, sy_, (zc - R) + R))   # OPTIONAL second TT's
-            wheel_pieces.append(spr)                   # shaft; fittings all present)
+        for sy_, snm in ((P["spr_y"], "sprocket_rear"), (P["spr_y2"], "sprocket_front")):
+            spr = _sprocket(sx)                        # two stations (the front one
+            spr.apply_translation((cx, sy_, (zc - R) + R))   # rides the OPTIONAL 2nd
+            wheel_pieces.append((snm, spr))            # TT's shaft)
         # END WHEELS (both ends are now FREE IDLERS on Ø8 stubs in the deck-overhang
         # pylons; the front pair tensions): rides the knuckle crowns with 0.12 running
         # clearance; TWO
@@ -285,9 +285,10 @@ def build_tracks():
             idl = sub(idl, dsh)
         # 30-wide idler grows OUTBOARD only: inner face stays at |cx|-9, 0.1 clear of
         # the deck pylon face (symmetric growth once swallowed the old tension plate)
-        for ey_ in (wb / 2, -wb / 2):
+        for ey_, inm in ((wb / 2, "end_idler_front"), (-wb / 2, "end_idler_rear")):
             idl2 = idl.copy()
-            idl2.apply_translation((cx + sx * 6.0, ey_, za)); wheel_pieces.append(idl2)
+            idl2.apply_translation((cx + sx * 6.0, ey_, za))
+            wheel_pieces.append((inm, idl2))
         # road wheels (tank-ref style): dense dished row riding the bottom-run knuckle
         # crowns (0.1 running clearance). Rim ring + recessed dish + raised hub with a
         # 5-hole bolt circle on each face; Ø4.2 center bore = slip fit on the M4 x 40
@@ -309,53 +310,52 @@ def build_tracks():
                     rw = sub(rw, bh)
             rw = sub(rw, cyl(2.1, 34.0, axis="x"))
             rw.apply_translation((cx, ry, (zc - R) + kr + rr_ + 0.1))
-            wheel_pieces.append(rw)
+            wheel_pieces.append((f"road_wheel_{len(wheel_pieces) - 3}", rw))
         # VISIBLE AXLE HARDWARE (2026-07-11): silver placeholder node per side, NOT
         # print-exported. 6x M4x40 bolt-axles (shank through the rail-beam bore and
         # the wheel, hex head = the hubcap) + TWO Ø8 end stubs (mid-drive pass:
         # each cantilevers from its deck pylon through an end idler's F688ZZ pair;
         # the front pylon's slot tensions).
-        hw = []
-        for ry in P["roadwheel_ys"]:
+        hw = []                                        # (name, mesh) per FASTENER so
+        for bi, ry in enumerate(P["roadwheel_ys"], 1): # the viewer can select each one
             rwz = (zc - R) + kr + rr_ + 0.1
             sh = cyl(1.95, 37.0, axis="x")
             sh.apply_translation((sx * 93.0, ry, rwz))         # x 74.5..111.5
             hd = cyl(3.5, 3.5, axis="x")
             hd.apply_translation((sx * 113.15, ry, rwz))       # head on the hub face
-            hw += [sh, hd]
-        for ey_ in (wb / 2, -wb / 2):                  # M8 END BOLT-AXLES (2026-07-11
-            sh8 = cyl(4.0, 60.4, axis="x")             # fix: plain stubs had no axial
-            sh8.apply_translation((sx * 88.2, ey_, za))    # retention): shank x 58..
-            hd8 = cyl(6.5, 5.3, axis="x")              # 118.4 through bearings + pylon,
-            hd8.apply_translation((sx * 121.05, ey_, za))  # head = the outboard hubcap
-            nt8 = cyl(7.2, 6.5, axis="x")              # (base 118.4 = wheel face + 1
-            nt8.apply_translation((sx * 58.75, ey_, za))   # washer), M8 nut against the
-            hw += [sh8, hd8, nt8]                      # pylon inboard face (62); front
-            # nut clamps the tension slot = the tensioner, no set screw needed
-        hwn = trimesh.util.concatenate(hw)
-        _color(hwn, "motor")
-        hwn.metadata["name"] = "axle_hw_%s" % ("L" if sx < 0 else "R")
-        hwn.metadata["export"] = None                  # bought hardware, never printed
-        out.append(hwn)
+            hw.append((f"wheel_bolt_{bi}", trimesh.util.concatenate([sh, hd])))
+        for ey_, bnm in ((wb / 2, "end_bolt_front"), (-wb / 2, "end_bolt_rear")):
+            sh8 = cyl(4.0, 60.4, axis="x")             # M8 END BOLT-AXLES: shank x 58..
+            sh8.apply_translation((sx * 88.2, ey_, za))    # 118.4 through bearings +
+            hd8 = cyl(6.5, 5.3, axis="x")              # pylon, head = outboard hubcap
+            hd8.apply_translation((sx * 121.05, ey_, za))
+            nt8 = cyl(7.2, 6.5, axis="x")              # M8 nut against the pylon inboard
+            nt8.apply_translation((sx * 58.75, ey_, za))   # face; the front nut clamps
+            hw.append((bnm, trimesh.util.concatenate([sh8, hd8, nt8])))   # the slot
         side = "L" if sx < 0 else "R"
-        pod = trimesh.util.concatenate(pieces)                 # links only (rubber-black)
-        _color(pod, "track")
-        pod.metadata["name"] = f"track_{side}"
-        pod.metadata["export"] = f"track_{side}.stl"
-        out.append(pod)
-        # running gear as its OWN node so it renders as exposed silver metal through the
-        # links (design ref: big visible wheel-gears). Same geometry as before, just split.
-        wheels = trimesh.util.concatenate(wheel_pieces)
-        _color(wheels, "motor")
-        wheels.metadata["name"] = f"drivewheels_{side}"
-        wheels.metadata["export"] = f"track_wheels_{side}.stl"
-        out.append(wheels)
-        # master-link keeper bars: the removable service bits, their own (orange) node
-        keep = trimesh.util.concatenate(keeper_pieces)
-        _color(keep, "accent")
-        keep.metadata["name"] = f"track_keeper_{side}"
-        keep.metadata["export"] = f"track_keeper_{side}.stl"
-        out.append(keep)
+        # GRANULAR SCENE NODES (2026-07-11, user: "select every little component"):
+        # each link / wheel / fastener becomes its own dotted child node
+        # ("parent.child"); the gates re-group by the prefix before the dot, and the
+        # print export gets ONE multi-body ghost per parent (scene=False).
+        def emit(parent, color, children, export=None):
+            for cn, cm in children:
+                _color(cm, color)
+                cm.metadata["name"] = f"{parent}.{cn}"
+                cm.metadata["export"] = None
+                out.append(cm)
+            if export:
+                gh = trimesh.util.concatenate([cm.copy() for _, cm in children])
+                gh.metadata["name"] = f"__export__{parent}"
+                gh.metadata["export"] = export
+                gh.metadata["scene"] = False
+                out.append(gh)
+        emit(f"axle_hw_{side}", "motor", hw)           # bought hardware, never printed
+        links = [(f"link_{i:02d}" + ("_master" if i == 0 else ""), lk)
+                 for i, lk in enumerate(pieces)]
+        emit(f"track_{side}", "track", links, f"track_{side}.stl")
+        emit(f"drivewheels_{side}", "motor", wheel_pieces, f"track_wheels_{side}.stl")
+        keeps = [(f"bar_{i+1}", k) for i, k in enumerate(keeper_pieces)]
+        emit(f"track_keeper_{side}", "accent", keeps, f"track_keeper_{side}.stl")
     return out
 
 

@@ -54,6 +54,8 @@
   .cgrp{margin:2px 0}
   .cgrp.sub{margin:1px 0 1px 14px;border-left:1px solid rgba(255,255,255,.08);padding-left:6px}
   .cgrp.sub .chead .cname{font-size:11px;opacity:.85}
+  .cgrp.sub2{margin-left:12px}
+  .cgrp.sub2 .chead .cname{font-size:10.5px;opacity:.7}
   .chead{display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:8px;
     cursor:pointer;user-select:none;font:600 11px/1 var(--mono);letter-spacing:.08em;
     text-transform:uppercase;color:var(--ink-dim)}
@@ -375,8 +377,8 @@ new GLTFLoader().load(MODEL, (gltf)=>{
     ]],
     ['Drive', [
       ['Motors',        /^drive2?_[LR]$/],
-      ['Track L',       /^(track_L$|track_keeper_L)/],
-      ['Track R',       /^(track_R$|track_keeper_R)/],
+      ['Track L',       /^(track_L(\.|$)|track_keeper_L)/],
+      ['Track R',       /^(track_R(\.|$)|track_keeper_R)/],
       ['Running gear',  /^drivewheels_/],
       ['Rails & axles', /^(pod_rail_|axle_hw_)/],
     ]],
@@ -442,11 +444,21 @@ new GLTFLoader().load(MODEL, (gltf)=>{
     D.visible=false; g.dim=D; g.dimHome=D.position.clone(); g.labels=D.labels; dimsRoot.add(D);
 
     const [top, sub] = catFor(name);
-    const cat = top + '/' + sub;
-    const rec = catUI(top, sub);
+    let cat = top + '/' + sub;
+    let rec = catUI(top, sub);
+    let label = name;
+    if(name.includes('.')){                            // granular child: nest a 3rd
+      const [pfx, cname] = [name.slice(0, name.indexOf('.')), name.slice(name.indexOf('.')+1)];
+      const pk = cat + '/' + pfx;                      // level under its parent part
+      if(!catBodies.has(pk)){
+        const r = mkGroup(pfx, rec.body, 'cgrp sub sub2', pk, cat);
+        r.body.parentElement.classList.add('closed');  // start collapsed (up to 64 rows)
+      }
+      rec = catBodies.get(pk); cat = pk; label = cname;
+    }
     const row = document.createElement('label'); row.className='part';
     row.innerHTML = `<span class="sw" style="background:${hex(name)}"></span>`+
-                    `<span class="nm">${name}</span><input type="checkbox" checked>`;
+                    `<span class="nm">${label}</span><input type="checkbox" checked>`;
     row.querySelector('input').addEventListener('change',e=>{
       g.meshes.forEach(o=>o.visible=e.target.checked);
       row.classList.toggle('off', !e.target.checked);
@@ -659,10 +671,13 @@ function focusFitPair(idx){ if(!fitDots) return;
   Object.entries(fitDots.userData.byPair).forEach(([i,m])=>{
     m.material.opacity=(idx==null||+i===idx)?.95:.07;
     m.material.size=(+i===idx)?2.6:1.5; }); }
+// fit pairs name PARENT parts; granular children resolve via prefix (2026-07-11)
+const fitGroupsFor = n => groups[n] ? [groups[n]] :
+  Object.entries(groups).filter(([k])=>k.startsWith(n+'.')).map(([,g])=>g);
 function clearFitSel(){
-  if(fitSelNames) fitSelNames.forEach(n=>{ const g=groups[n]; if(!g) return;
+  if(fitSelNames) fitSelNames.forEach(n=> fitGroupsFor(n).forEach(g=>
     g.meshes.forEach(o=>{ if(o.userData._em!==undefined){
-      o.material.emissive.setHex(o.userData._em); o.material.emissiveIntensity=o.userData._ei; } }); });
+      o.material.emissive.setHex(o.userData._em); o.material.emissiveIntensity=o.userData._ei; } })));
   fitSelNames=null;
   document.querySelectorAll('#fits .fr.on').forEach(e=>e.classList.remove('on'));
 }
@@ -670,10 +685,10 @@ function pickFit(r,el,idx){
   const same=el.classList.contains('on');
   clearFitSel(); if(same){ focusFitPair(null); return; }
   fitSelNames=[r.a,r.b];
-  fitSelNames.forEach(n=>{ const g=groups[n]; if(!g) return;
+  fitSelNames.forEach(n=> fitGroupsFor(n).forEach(g=>
     g.meshes.forEach(o=>{ if(o.userData._em===undefined){
         o.userData._em=o.material.emissive.getHex(); o.userData._ei=o.material.emissiveIntensity; }
-      o.material.emissive.setHex(0x5cc7d4); o.material.emissiveIntensity=.55; }); });
+      o.material.emissive.setHex(0x5cc7d4); o.material.emissiveIntensity=.55; })));
   focusFitPair(idx); el.classList.add('on');
 }
 async function openFits(){

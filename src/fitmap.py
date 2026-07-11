@@ -86,6 +86,15 @@ def _fit_report(geo):
         frozenset(("head_back", "head_bezel")),      # bolted seam at the split plane (y=2)
         frozenset(("screen_tray", "head_back")),     # pillar ends bolted to the back wall
     }
+    # granular children ("parent.child", 2026-07-11) re-group under their parent so
+    # the pair names, whitelists, and the viewer's fit map stay at the part level
+    import trimesh as _tm
+    grouped = {}
+    for n, m in geo.items():
+        if m is None:
+            continue
+        grouped.setdefault(n.split(".")[0], []).append(m)
+    geo = {k: (v[0] if len(v) == 1 else _tm.util.concatenate(v)) for k, v in grouped.items()}
     names = sorted(n for n, m in geo.items() if m is not None and not any(k in n for k in SKIP))
     rows = []
     for i in range(len(names)):
