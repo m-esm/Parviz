@@ -6,6 +6,11 @@
 
 <p align="center"><b>Your desk AI.</b> A 3D-printed tank-tracked robot with a real face.</p>
 
+<p align="center">
+  <a href="https://m-esm.github.io/Parviz/viewer_glb.html"><b>&#9654; Spin the full assembly in your browser</b></a>
+  &mdash; live 3D viewer with pan/tilt pose sliders, per-part toggles and the fit map
+</p>
+
 Parviz is a small tank-tracked robot that lives on a desk. A Raspberry Pi 5 drives
 the official 7" touchscreen as an animated face, a Camera Module 3 sits behind the
 forehead as an eye, and a pan/tilt neck lets the head look around. Two motor-driven
