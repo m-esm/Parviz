@@ -669,8 +669,12 @@ class FaceRenderer:
                 ty = (tp[1] + 1) / 2 * SCREEN_H
                 want = (max(-1.0, min(1.0, (tx - cx) / (EYE_W * 0.75))),
                         max(-1.0, min(1.0, (ty - cy) / (EYE_H * 0.75))))
+        elif self.vision.want is not None:
+            # TRACKING BYPASS (user): person-following is a fast reflex
+            # again; the LLM decides everything else but not gaze.
+            want = self.vision.want
         else:
-            want = st["gaze"]   # gaze targets come from the brain only
+            want = st["gaze"]
         eg = self._eye_gaze[side]
         eg = (_ease(eg[0], want[0], dt, speed=12.0),
               _ease(eg[1], want[1], dt, speed=12.0))
@@ -711,6 +715,18 @@ class FaceRenderer:
         pg = self.pygame
         st = self.state.pose
         m, op = st["mouth"], st["open"]
+        # THE mustache (user: much bigger): two grand tapered swooshes,
+        # tips curling up high -- dapper, rigid lines only
+        my = MOUTH_CY - 30
+        for side in (-1, 1):
+            pts = [(400 + side * 6, my),
+                   (400 + side * 78, my - 16),
+                   (400 + side * 116, my - 34),
+                   (400 + side * 124, my - 46),
+                   (400 + side * 112, my - 24),
+                   (400 + side * 70, my - 2),
+                   (400 + side * 8, my + 13)]
+            pg.draw.polygon(surf, ORANGE, pts)
         if op > 0.25:
             # open mouth: small chamfered O outline, height grows with open
             hw, hh = 26.0, 7.0 + 20.0 * op
@@ -818,14 +834,17 @@ class FaceRenderer:
                               HUD_MID))
                 lines.append((f'smile {raw.get("smile", 0):.2f}  ear '
                               f'{raw.get("ear", 0):.2f}', HUD_FAINT))
+            if raw.get("gesture") and raw["gesture"] != "none":
+                lines.append((f'gesture {raw["gesture"]}', HUD_MID))
             lines.append((f'{raw.get("infer_ms", 0):.0f}ms det  '
-                          f'{raw.get("lm_ms", 0):.0f}ms lmk', HUD_FAINT))
+                          f'{raw.get("lm_ms", 0):.0f}ms lmk '
+                          f'{raw.get("hand_ms", 0):.0f}ms hnd', HUD_FAINT))
         else:
             lines.append(("no face", HUD_MID))
             lines.append((f'{raw.get("infer_ms", 0):.0f}ms det', HUD_FAINT))
         for s, col in lines:
             surf.blit(self._text(s, col, tiny=True), (x0, y))
-            y += 13
+            y += 14
 
     def _panel_brain(self, surf, now):
         """Right side: what the LLM decided, clearly labeled as such."""
@@ -842,6 +861,14 @@ class FaceRenderer:
         d = self._dec_obj
         if not d:
             return
+        # cycle latency, prominent (user): how long the brain thought
+        if d.get("latency_s") is not None:
+            lat = f'cycle {d["latency_s"]:.1f}s'
+            if d.get("prompt_ms") is not None:
+                lat += (f'  ({d["prompt_ms"] / 1000:.1f}+'
+                        f'{d.get("gen_ms", 0) / 1000:.1f})')
+            surf.blit(self._text(lat, HUD_FG, small=True), (x0, y))
+            y += 19
         for a in d.get("actions", [])[:4]:
             if not isinstance(a, dict):
                 continue
@@ -871,14 +898,7 @@ class FaceRenderer:
                 if do == "set_expression" and a.get("name") in EXPRESSIONS:
                     self.set_expression(a["name"])
                 elif do == "look_at":
-                    # +-35 deg = full eye deflection: camera-frame angles
-                    # are small, so /88 made tracking invisible.
-                    try:
-                        gx = float(a.get("pan_deg", 0)) / 35.0
-                        gy = -float(a.get("tilt_deg", 0)) / 20.0
-                    except (TypeError, ValueError):
-                        continue
-                    self.state.set_gaze(gx, gy)
+                    pass   # gaze is a tracking reflex now (user); ignore
                 elif do == "say" and a.get("text"):
                     self.status = f'"{str(a["text"])[:56]}"'
                     self._status_until = now + 6.0
@@ -943,6 +963,9 @@ class FaceRenderer:
         up = self._text(f"UP {te.uptime}", HUD_DIM, small=True)
         surf.blit(up, (bx - up.get_width() - 12, by - 1))
 
+        # --- bottom band: hairline separator ties status + sensors together
+        pg.draw.line(surf, HUD_FAINT, (m + 12, SCREEN_H - 40),
+                     (SCREEN_W - m - 12, SCREEN_H - 40), 1)
         # --- bottom-left: status line
         label = self.status or f"PARVIZ // {self.state.expression.upper()}"
         img = self._text(label)

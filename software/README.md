@@ -400,3 +400,23 @@ mirror through the LLM. Face executor gain fixed: +-35 deg = full eye
 deflection (/88 made tracking invisible). KNOWN TRADEOFF: LLM-only gaze
 tracking has the tick latency (10-15 s); smooth fast tracking would
 need a reflex, which the user explicitly removed in favor of LLM truth.
+
+Gestures + tracking bypass + latency (2026-07-12, user round):
+- TRACKING BYPASS: person-following eyes are a fast reflex again;
+  look_at REMOVED from the LLM vocabulary (v3 prompt states "you do NOT
+  control gaze"), executor ignores stray look_at. LLM keeps expressions,
+  say, log, escalate, move.
+- GESTURES: hands.py runs the gesture_recognizer.task internals via
+  LiteRT (no mediapipe wheel): palm detector (192x192 SSD, anchors
+  generated + decoded by hand), rotated crop, 21-pt hand landmarks,
+  GEOMETRIC classification (open_palm/fist/thumbs_up/thumbs_down/
+  pointing/victory). Validated 3/3 on mediapipe reference images; ~85 ms
+  per tick when a person is present. Gesture flows into the digest +
+  VISION panel; v3 rule 1 maps gestures to reactions (wave -> happy +
+  greeting). Verified live: "Person is neutral; showing victory."
+- LATENCY: cache_prompt=True keeps the ~1400-token system+few-shot
+  prefix in llama-server KV cache -- cycles dropped 10-25 s to ~6-8 s
+  (prompt ~2.5 s + gen ~4 s); reasons capped at 10 words; the BRAIN
+  panel now shows "cycle X.Xs (prompt+gen)" prominently.
+- FACE: a grand rigid-line MUSTACHE (user: much bigger), bottom-band
+  hairline separator, panel line spacing 14 px.

@@ -185,6 +185,15 @@ def run(bench_s=None, hz=LOOP_HZ):
     except Exception as e:      # LiteRT missing -> detection-only mode
         print(f"landmarker unavailable ({e}); detection only", flush=True)
         lmk = None
+    try:
+        from hands import HandGesture
+        hnd = HandGesture(os.path.join(HERE, "models",
+                                       "hand_detector.tflite"),
+                          os.path.join(HERE, "models",
+                                       "hand_landmarks_detector.tflite"))
+    except Exception as e:
+        print(f"hand gestures unavailable ({e})", flush=True)
+        hnd = None
     period = 1.0 / hz
     last_prev = 0.0
     lat = []
@@ -218,6 +227,15 @@ def run(bench_s=None, hz=LOOP_HZ):
                 sig["visible_expression"] = classify(sig)
                 sig["lm_ms"] = round((time.monotonic() - t2) * 1000, 1)
                 st.update(sig)
+        if hnd is not None and faces:
+            t3 = time.monotonic()
+            try:
+                gesture, gconf = hnd.run(bgr)
+                st["gesture"] = gesture
+                st["gesture_conf"] = round(float(gconf), 2)
+                st["hand_ms"] = round((time.monotonic() - t3) * 1000, 1)
+            except Exception:
+                pass
         write_atomic(VISION_JSON, json.dumps(st))
         if t0 - last_prev >= PREVIEW_EVERY_S:
             last_prev = t0

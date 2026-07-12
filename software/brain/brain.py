@@ -117,8 +117,8 @@ def build_digest(vis, sy, events, last_actions, cur_expr):
                        f'{", EYES CLOSED" if vis.get("eyes_closed") else ""}'
                        f', mouth_open {vis.get("mouth_open", 0)}, brow_gap '
                        f'{vis.get("brow_gap", 0)})')
-        person += (f'; head-aim suggestion pan {vis.get("pan_deg", 0)} '
-                   f'tilt {vis.get("tilt_deg", 0)}')
+        if vis.get("gesture"):
+            person += f'; gesture {vis["gesture"]}'
     elif vis:
         person = "none visible"
     else:
@@ -126,11 +126,11 @@ def build_digest(vis, sy, events, last_actions, cur_expr):
     # EVENT leads with the CURRENT salient situation (tiny models act on
     # the top line); the ring history follows inside it.
     if vis and vis.get("person_present"):
+        ges = (f', gesture {vis["gesture"]}'
+               if vis.get("gesture") and vis["gesture"] != "none" else "")
         ev = (f'person present: looks '
-              f'{vis.get("visible_expression", "unknown")}, '
-              f'{"FACING the robot" if vis.get("facing_camera") else "not facing"}, '
-              f'head-aim pan {vis.get("pan_deg", 0)} tilt '
-              f'{vis.get("tilt_deg", 0)}')
+              f'{vis.get("visible_expression", "unknown")}{ges}, '
+              f'{"FACING the robot" if vis.get("facing_camera") else "not facing"}')
     else:
         ev = events.line()
     acted = (", ".join(last_actions[-3:])) if last_actions else "none yet"
@@ -140,8 +140,7 @@ def build_digest(vis, sy, events, last_actions, cur_expr):
         "sound: mics not wired yet",
         f'env: cpu {sy.get("temp_c", "?")}C load {sy.get("load_pct", "?")}% '
         f'mem {sy.get("mem_pct", "?")}% | wall power ok',
-        "sonar: not wired | tracks: not wired | look_at moves the EYES "
-        "only for now",
+        "sonar: not wired | tracks: not wired",
         f'time {time.strftime("%H:%M %a")} | current face expression: '
         f'{cur_expr} | my recent actions: {acted}',
     ])
@@ -196,6 +195,11 @@ def main():
                     journal(f"move (no motors yet): {a}")
             payload = dict(parsed)
             payload["ts"] = time.time()
+            payload["latency_s"] = round(dt, 1)
+            tm = (usage or {}).get("timings") or {}
+            if tm:
+                payload["prompt_ms"] = round(tm.get("prompt_ms", 0))
+                payload["gen_ms"] = round(tm.get("predicted_ms", 0))
             tmp = DECISION_FILE + ".tmp"
             with open(tmp, "w") as f:
                 json.dump(payload, f)

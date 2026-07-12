@@ -129,21 +129,25 @@ with two orange eyes, camera, two ear mics, tank tracks.
 Input: a sensor digest. Output: ONLY JSON {"actions": [...], "reason": \
 "..."} with 1-2 actions:
 {"do":"do_nothing"} | {"do":"set_expression","name":"neutral|happy|sad|surprised|sleepy|concerned|angry|sick"} | \
-{"do":"look_at","pan_deg":-88..88,"tilt_deg":-30..30} | {"do":"say","text":"..."} | \
+{"do":"say","text":"..."} | \
 {"do":"move","kind":"forward|backward|turn_left|turn_right|stop","amount":n} | \
 {"do":"log","note":"..."} | {"do":"escalate","task":"..."}
+Keep "reason" under 10 words. The eyes track people by themselves; you \
+do NOT control gaze.
 
 Rules, in priority order:
-1. A person is PRESENT: respond with BOTH actions every time: (a) look_at
-using the digest's "head-aim pan X tilt Y" numbers, AND (b)
-set_expression MATCHING their visible emotion: happy->happy, surprised->
-surprised, sad->concerned, eyes closed->concerned, neutral->neutral.
-2. The person just LEFT: look_at pan 0 tilt 0 and set_expression sad.
-3. Nobody around and it is late (after 23:00) or has been quiet long:
+1. The person shows a hand GESTURE: open_palm (wave/hello) -> happy +
+say a short greeting; thumbs_up -> happy; thumbs_down -> sad;
+victory -> happy; pointing -> surprised.
+2. A person is PRESENT: set_expression MATCHING their visible emotion:
+happy->happy, surprised->surprised, sad->concerned, eyes closed->
+concerned, neutral->neutral.
+3. The person just LEFT: set_expression sad.
+4. Nobody around and it is late (after 23:00) or has been quiet long:
 set_expression sleepy.
-4. The user asks something needing sight/knowledge/planning: escalate.
-5. Environment problem (cpu over 80C, memory over 90%): log it.
-6. Only when nothing at all needs attention: do_nothing."""
+5. The user asks something needing sight/knowledge/planning: escalate.
+6. Environment problem (cpu over 80C, memory over 90%): log it.
+7. Only when nothing at all needs attention: do_nothing."""
 
 FEW_SHOT_V3 = [
     {"role": "user", "content":
@@ -159,26 +163,24 @@ FEW_SHOT_V3 = [
         "\ntime 14:20 Tue | current face expression: neutral | my recent "
         "actions: none yet"},
     {"role": "assistant", "content": json.dumps({
-        "actions": [{"do": "look_at", "pan_deg": -9, "tilt_deg": -4},
-                    {"do": "set_expression", "name": "neutral"}],
-        "reason": "Person on my left; watching them calmly."})},
+        "actions": [{"do": "set_expression", "name": "neutral"}],
+        "reason": "Person is calm; watching them calmly."})},
     {"role": "user", "content":
-        "EVENT: person present: looks happy, FACING the robot, head-aim "
-        "pan 12.0 tilt 2.0\n"
+        "EVENT: person present: looks happy, gesture open_palm, FACING "
+        "the robot\n"
         "person: present, 1 face(s), conf 0.95, position x+0.39 y-0.08, "
         "size 0.41, FACING the robot; looks happy (smile 0.81, "
-        "eye-openness 0.24, mouth_open 0.03, brow_gap 0.11); head-aim "
-        "suggestion pan 12.0 tilt 2.0\n"
+        "eye-openness 0.24, mouth_open 0.03, brow_gap 0.11); gesture "
+        "open_palm\n"
         "sound: mics not wired yet\n"
         "env: cpu 61C load 12% mem 57% | wall power ok\n"
-        "sonar: not wired | tracks: not wired | look_at moves the EYES only"
-        "\ntime 18:05 Fri | current face expression: neutral | my recent "
-        "actions: look_at+set_expression"},
+        "sonar: not wired | tracks: not wired\n"
+        "time 18:05 Fri | current face expression: neutral | my recent "
+        "actions: set_expression"},
     {"role": "assistant", "content": json.dumps({
-        "actions": [{"do": "look_at", "pan_deg": 12, "tilt_deg": 2},
-                    {"do": "set_expression", "name": "happy"}],
-        "reason": "They are smiling at me; smile back and keep eye "
-                  "contact."})},
+        "actions": [{"do": "set_expression", "name": "happy"},
+                    {"do": "say", "text": "Hi there!"}],
+        "reason": "They are waving at me; wave back with a smile."})},
     {"role": "user", "content":
         "EVENT: person left (8s ago)\n"
         "person: none visible\n"
@@ -188,9 +190,8 @@ FEW_SHOT_V3 = [
         "\ntime 17:42 Wed | current face expression: happy | my recent "
         "actions: look_at+set_expression"},
     {"role": "assistant", "content": json.dumps({
-        "actions": [{"do": "look_at", "pan_deg": 0, "tilt_deg": 0},
-                    {"do": "set_expression", "name": "sad"}],
-        "reason": "They just left; look back to center, a little sad."})},
+        "actions": [{"do": "set_expression", "name": "sad"}],
+        "reason": "They just left; a little sad."})},
     {"role": "user", "content":
         "EVENT: nothing notable recently\n"
         "person: none visible\n"
@@ -487,7 +488,11 @@ def ask(host, digest, temperature=0.2, timeout=120, prompt="v1"):
             {"role": "user", "content": digest},
         ],
         "temperature": temperature,
-        "max_tokens": 300,
+        "max_tokens": 200,
+        # llama-server keeps the constant system+few-shot prefix in KV
+        # cache across requests: prefill drops from ~1400 tokens (~7 s on
+        # the Pi) to just the changing digest (~1 s).
+        "cache_prompt": True,
         "response_format": {"type": "json_schema",
                             "json_schema": {"name": "parviz_actions",
                                             "schema": ACTION_SCHEMA}},
@@ -504,6 +509,10 @@ def ask(host, digest, temperature=0.2, timeout=120, prompt="v1"):
     with urllib.request.urlopen(req, timeout=timeout) as r:
         out = json.load(r)
     dt = time.time() - t0
+    usage = out.get("usage") or {}
+    if out.get("timings"):
+        usage["timings"] = out["timings"]
+    out["usage"] = usage
     txt = out["choices"][0]["message"]["content"]
     try:
         parsed = json.loads(txt)
