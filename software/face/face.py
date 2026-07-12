@@ -328,6 +328,70 @@ class VisionGaze:
             pass
 
 
+class AudioMeters:
+    """Live mic + speaker level history for the HUD sparklines, via
+    parec on the pipewire-pulse layer. IN taps the default source (the
+    AirPods HFP mic), OUT taps the default sink's monitor. Each side is
+    a tiny reader thread: 8 kHz mono s16 = 16 KB/s, RMS per 100 ms
+    chunk mapped -60..0 dBFS -> 0..100. A dead/missing device retries
+    every 3 s, so meters come and go with the bluetooth connection.
+    Keeping the mic stream OPEN is deliberate: Parviz is continuously
+    engaged (user), there is no push-to-talk."""
+
+    def __init__(self):
+        import threading
+        os.environ.setdefault("XDG_RUNTIME_DIR",
+                              f"/run/user/{os.getuid()}")
+        self.hist = {"in": collections.deque(maxlen=36),
+                     "out": collections.deque(maxlen=36)}
+        self.alive = {"in": False, "out": False}
+        for side in ("in", "out"):
+            threading.Thread(target=self._pump, args=(side,),
+                             daemon=True).start()
+
+    def _device(self, side):
+        if side == "in":
+            return "@DEFAULT_SOURCE@"
+        sink = subprocess.run(["pactl", "get-default-sink"],
+                              capture_output=True, text=True,
+                              timeout=3).stdout.strip()
+        return f"{sink}.monitor" if sink else None
+
+    def _pump(self, side):
+        import numpy as _np
+        while True:
+            proc = None
+            try:
+                dev = self._device(side)
+                if dev:
+                    proc = subprocess.Popen(
+                        ["parec", f"--device={dev}", "--format=s16le",
+                         "--rate=8000", "--channels=1", "--latency-msec=100"],
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.DEVNULL)
+                    while True:
+                        buf = proc.stdout.read(1600)   # 100 ms
+                        if len(buf) < 1600:
+                            break
+                        self.alive[side] = True
+                        x = _np.frombuffer(buf, _np.int16).astype(
+                            _np.float32)
+                        rms = float(_np.sqrt(_np.mean(x * x))) + 1e-6
+                        db = 20 * math.log10(rms / 32768.0)
+                        self.hist[side].append(
+                            max(0.0, min(100.0, (db + 60.0) / 60.0 * 100)))
+            except (OSError, ValueError, subprocess.SubprocessError):
+                pass
+            finally:
+                if proc is not None:
+                    try:
+                        proc.kill()
+                    except OSError:
+                        pass
+            self.alive[side] = False
+            time.sleep(3.0)
+
+
 class Telemetry:
     """Cheap system/sensor sampling for the HUD. Fast items every 2 s
     (CPU temp -> history for the sparkline, load, memory), slow items
@@ -349,6 +413,8 @@ class Telemetry:
         self.watts_hist = collections.deque(maxlen=36)
         self.core_v = None
         self.throttled = None    # int from vcgencmd get_throttled
+        self.bt_name = None      # first connected bluetooth audio device
+        self.bt_batt = None      # its battery %, if it reports one
         self._t_fast = -1e9
         self._t_slow = -1e9
         self._t_pwr = -1e9
@@ -413,6 +479,27 @@ class Telemetry:
                 self.throttled = None
         if now - self._t_slow >= 30.0:
             self._t_slow = now
+            # connected bluetooth device (AirPods etc.) + battery
+            self.bt_name = self.bt_batt = None
+            try:
+                macs = subprocess.run(
+                    ["bluetoothctl", "devices", "Connected"],
+                    capture_output=True, text=True, timeout=3).stdout
+                mac = macs.split()[1] if macs.startswith("Device") else None
+                if mac:
+                    info = subprocess.run(
+                        ["bluetoothctl", "info", mac], capture_output=True,
+                        text=True, timeout=3).stdout
+                    for line in info.splitlines():
+                        line = line.strip()
+                        if line.startswith("Alias:"):
+                            self.bt_name = line.split(":", 1)[1].strip()
+                        elif line.startswith("Battery Percentage:"):
+                            self.bt_batt = int(
+                                line.split("(")[1].rstrip(")"))
+            except (OSError, ValueError, IndexError,
+                    subprocess.SubprocessError):
+                pass
             self.net_dev = "--"
             for dev in ("wlan0", "eth0"):
                 try:
@@ -576,6 +663,7 @@ class FaceRenderer:
         self.tele = Telemetry()
         self.campre = CamPreview()
         self.vision = VisionGaze()
+        self.audio = AudioMeters()
         self._font_sm = pygame.font.SysFont(
             "dejavusansmono,menlo,consolas,monospace", 14)
         self._font_xs = pygame.font.SysFont(
@@ -1045,6 +1133,13 @@ class FaceRenderer:
                 pg.draw.rect(surf, HUD_DIM, r, 1)
         up = self._text(f"UP {te.uptime}", HUD_DIM, small=True)
         surf.blit(up, (bx - up.get_width() - 12, by - 1))
+        # connected bluetooth audio device + its battery, under NET
+        bt = (f"BT {te.bt_name}"
+              + (f" {te.bt_batt}%" if te.bt_batt is not None else "")
+              if te.bt_name else "BT --")
+        bimg = self._text(bt[:30], HUD_FG if te.bt_name else HUD_DIM,
+                          tiny=True)
+        surf.blit(bimg, (SCREEN_W - m - 12 - bimg.get_width(), m + 50))
 
         # --- bottom band: hairline separator ties status + sensors together
         pg.draw.line(surf, HUD_FAINT, (m + 12, SCREEN_H - 48),
@@ -1064,10 +1159,20 @@ class FaceRenderer:
         self._panel_vision(surf, now)
         self._panel_brain(surf, now)
 
+        # --- bottom-left: live audio meters (mic in / speaker out)
+        for i, side in enumerate(("in", "out")):
+            ry = SCREEN_H - 88 + i * 18
+            col = HUD_FG if self.audio.alive[side] else HUD_DIM
+            surf.blit(self._text("IN " if side == "in" else "OUT",
+                                 col, tiny=True), (m + 8, ry))
+            self._spark(surf, m + 36, ry + 2, 96, 10,
+                        self.audio.hist[side])
+
         # --- bottom-right: sensor slots (fill in as hardware arrives)
         cam_s = "OK" if self.campre.ok else "--"
-        sens = self._text(f"MIC --  CAM {cam_s}  RDR --  IMU --", HUD_FAINT,
-                          tiny=True)
+        mic_s = "OK" if self.audio.alive["in"] else "--"
+        sens = self._text(f"MIC {mic_s}  CAM {cam_s}  RDR --  IMU --",
+                          HUD_FAINT, tiny=True)
         sx = SCREEN_W - m - 34 - sens.get_width()
         sy = SCREEN_H - m - sens.get_height() - 14
         surf.blit(sens, (sx, sy))
