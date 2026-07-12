@@ -795,7 +795,8 @@ class FaceRenderer:
         """Tiny fixed-scale sparkline (0..100%) with a hairline baseline."""
         pg = self.pygame
         pg.draw.line(surf, HUD_DIM, (x, y + h + 2), (x + w, y + h + 2), 1)
-        if len(hist) < 2:
+        hist = list(hist)   # snapshot: the audio meters append from
+        if len(hist) < 2:   # reader THREADS while we draw (crashed 4x)
             return
         span = max(hi - lo, 1e-6)
         pts = [(x + i * w / (len(hist) - 1),
