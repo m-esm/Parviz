@@ -58,7 +58,27 @@ def cpu_temp():
 TICK_IDLE_S = 1.0    # cycle cadence: re-evaluate inputs every second
 TICK_MIN_S = 1.0     # cooldown after a tick; the skip/cache layer is
                      # what keeps 1 Hz cycles off the LLM (and thermals)
-CACHE_TTL_S = float(os.environ.get("PARVIZ_CACHE_TTL", 3600.0))
+# PERMANENT decision cache (user): never expires by time, persists to
+# disk across restarts, cleared only manually -- touch CACHE_CLEAR (or
+# run brain.py --clear-cache). Size-capped, oldest-first eviction.
+CACHE_FILE = os.path.join(HERE, "decision_cache.json")
+CACHE_CLEAR = "/dev/shm/parviz_cache_clear"
+CACHE_MAX = 4096
+
+
+def cache_load():
+    try:
+        with open(CACHE_FILE) as f:
+            return dict(json.load(f))
+    except (OSError, ValueError):
+        return {}
+
+
+def cache_save(cache):
+    tmp = CACHE_FILE + ".tmp"
+    with open(tmp, "w") as f:
+        json.dump(cache, f)
+    os.replace(tmp, CACHE_FILE)
 
 
 def semantic_key(vis, sy, events, speech_ts=None):
@@ -331,7 +351,18 @@ def main():
     ap.add_argument("--once", action="store_true")
     ap.add_argument("--tick", type=float, default=TICK_IDLE_S,
                     help="idle heartbeat interval (events tick sooner)")
+    ap.add_argument("--clear-cache", action="store_true",
+                    help="empty the permanent decision cache and exit")
     args = ap.parse_args()
+    if args.clear_cache:
+        try:
+            os.remove(CACHE_FILE)
+        except OSError:
+            pass
+        with open(CACHE_CLEAR, "w") as f:   # running daemon clears too
+            f.write("1")
+        print("decision cache cleared")
+        return
 
     events = Events()
     last_actions = []
@@ -339,7 +370,7 @@ def main():
     cur_backend = None
     last_key, last_payload = None, None   # skip layer
     last_speech_ts = None                 # utterances already evented
-    cache, skips = {}, 0                  # 1h decision cache
+    cache, skips = cache_load(), 0        # permanent decision cache
     ticks = llm_calls = hits = skips_total = 0   # HUD stats
     hit_logged = 0.0
     t_up = time.time()
@@ -399,6 +430,18 @@ def main():
         skey = semantic_key(vis, sy, events, last_speech_ts)
         ticks += 1
 
+        # MANUAL cache clear (the only way it empties): also drops the
+        # skip state so the very next tick re-asks the LLM.
+        if os.path.exists(CACHE_CLEAR):
+            try:
+                os.remove(CACHE_CLEAR)
+            except OSError:
+                pass
+            cache = {}
+            cache_save(cache)
+            last_key, last_payload = None, None
+            journal("cache CLEARED manually")
+
         # SKIP: inputs unchanged since the last decision -> no LLM call;
         # re-touch the decision file (marked cached, the face keeps its
         # heartbeat but does not re-speak) and wait for a change.
@@ -416,20 +459,20 @@ def main():
             continue
         skips = 0
 
-        # CACHE: same inputs seen within the TTL -> replay that decision
-        # (never cached: escalate/move). cur_expr still updates so the
-        # digest stays truthful.
+        # CACHE: inputs seen before -> replay that decision, forever
+        # (never cached: escalate/move/read_text). cur_expr still
+        # updates so the digest stays truthful.
         hit = cache.get(skey)
-        if hit is not None and time.time() < hit[0] and not args.once:
+        if hit is not None and not args.once:
             hits += 1
-            parsed = hit[1]
+            parsed = hit[0]
             for a in parsed.get("actions", []):
                 if (isinstance(a, dict) and a.get("do") == "set_expression"
                         and a.get("name")):
                     cur_expr = a["name"]
             payload = dict(parsed)
             payload.update(ts=time.time(), cached=True,
-                           backend=hit[2], latency_s=0.0, **extras())
+                           backend=hit[1], latency_s=0.0, **extras())
             tmp = DECISION_FILE + ".tmp"
             with open(tmp, "w") as f:
                 json.dump(payload, f)
@@ -499,11 +542,10 @@ def main():
             last_actions = last_actions[-6:]
             last_payload, last_key = payload, skey
             if cacheable(parsed):
-                if len(cache) > 512:   # prune expired before it grows
-                    now_t = time.time()
-                    cache = {k: v for k, v in cache.items()
-                             if v[0] > now_t}
-                cache[skey] = (time.time() + CACHE_TTL_S, parsed, backend)
+                while len(cache) >= CACHE_MAX:   # oldest insertion out
+                    cache.pop(next(iter(cache)))
+                cache[skey] = (parsed, backend)
+                cache_save(cache)
             journal(f"{dt:5.1f}s {verbs} :: "
                     f"{str(parsed.get('reason', ''))[:80]}")
         else:
