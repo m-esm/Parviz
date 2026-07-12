@@ -123,7 +123,16 @@ def build_digest(vis, sy, events, last_actions, cur_expr):
         person = "none visible"
     else:
         person = "vision offline"
-    ev = events.line()
+    # EVENT leads with the CURRENT salient situation (tiny models act on
+    # the top line); the ring history follows inside it.
+    if vis and vis.get("person_present"):
+        ev = (f'person present: looks '
+              f'{vis.get("visible_expression", "unknown")}, '
+              f'{"FACING the robot" if vis.get("facing_camera") else "not facing"}, '
+              f'head-aim pan {vis.get("pan_deg", 0)} tilt '
+              f'{vis.get("tilt_deg", 0)}')
+    else:
+        ev = events.line()
     acted = (", ".join(last_actions[-3:])) if last_actions else "none yet"
     return "\n".join([
         f"EVENT: {ev}",
@@ -162,7 +171,7 @@ def main():
                               cur_expr)
         try:
             parsed, ok, dt, usage = ask(HOST, digest, temperature=0.2,
-                                        timeout=60, prompt="v2")
+                                        timeout=60, prompt="v3")
         except Exception as e:
             journal(f"LLM unreachable: {e}")   # no decision write ->
             time.sleep(3)                      # face falls asleep on stale

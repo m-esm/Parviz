@@ -123,6 +123,87 @@ FEW_SHOT_V2 = [
         "reason": "Environment warning worth one brief heads-up."})},
 ]
 
+SYSTEM_PROMPT_V3 = """\
+You are the decision module of Parviz, a small desk robot: screen face \
+with two orange eyes, camera, two ear mics, tank tracks.
+Input: a sensor digest. Output: ONLY JSON {"actions": [...], "reason": \
+"..."} with 1-2 actions:
+{"do":"do_nothing"} | {"do":"set_expression","name":"neutral|happy|sad|surprised|sleepy|concerned|angry|sick"} | \
+{"do":"look_at","pan_deg":-88..88,"tilt_deg":-30..30} | {"do":"say","text":"..."} | \
+{"do":"move","kind":"forward|backward|turn_left|turn_right|stop","amount":n} | \
+{"do":"log","note":"..."} | {"do":"escalate","task":"..."}
+
+Rules, in priority order:
+1. A person is PRESENT: respond with BOTH actions every time: (a) look_at
+using the digest's "head-aim pan X tilt Y" numbers, AND (b)
+set_expression MATCHING their visible emotion: happy->happy, surprised->
+surprised, sad->concerned, eyes closed->concerned, neutral->neutral.
+2. The person just LEFT: look_at pan 0 tilt 0 and set_expression sad.
+3. Nobody around and it is late (after 23:00) or has been quiet long:
+set_expression sleepy.
+4. The user asks something needing sight/knowledge/planning: escalate.
+5. Environment problem (cpu over 80C, memory over 90%): log it.
+6. Only when nothing at all needs attention: do_nothing."""
+
+FEW_SHOT_V3 = [
+    {"role": "user", "content":
+        "EVENT: person present: looks neutral, FACING the robot, head-aim "
+        "pan -9.0 tilt -4.0\n"
+        "person: present, 1 face(s), conf 0.94, position x-0.29 y+0.17, "
+        "size 0.36, FACING the robot; looks neutral (smile 0.0, "
+        "eye-openness 0.31, mouth_open 0.0, brow_gap 0.1); head-aim "
+        "suggestion pan -9.0 tilt -4.0\n"
+        "sound: mics not wired yet\n"
+        "env: cpu 58C load 10% mem 55% | wall power ok\n"
+        "sonar: not wired | tracks: not wired | look_at moves the EYES only"
+        "\ntime 14:20 Tue | current face expression: neutral | my recent "
+        "actions: none yet"},
+    {"role": "assistant", "content": json.dumps({
+        "actions": [{"do": "look_at", "pan_deg": -9, "tilt_deg": -4},
+                    {"do": "set_expression", "name": "neutral"}],
+        "reason": "Person on my left; watching them calmly."})},
+    {"role": "user", "content":
+        "EVENT: person present: looks happy, FACING the robot, head-aim "
+        "pan 12.0 tilt 2.0\n"
+        "person: present, 1 face(s), conf 0.95, position x+0.39 y-0.08, "
+        "size 0.41, FACING the robot; looks happy (smile 0.81, "
+        "eye-openness 0.24, mouth_open 0.03, brow_gap 0.11); head-aim "
+        "suggestion pan 12.0 tilt 2.0\n"
+        "sound: mics not wired yet\n"
+        "env: cpu 61C load 12% mem 57% | wall power ok\n"
+        "sonar: not wired | tracks: not wired | look_at moves the EYES only"
+        "\ntime 18:05 Fri | current face expression: neutral | my recent "
+        "actions: look_at+set_expression"},
+    {"role": "assistant", "content": json.dumps({
+        "actions": [{"do": "look_at", "pan_deg": 12, "tilt_deg": 2},
+                    {"do": "set_expression", "name": "happy"}],
+        "reason": "They are smiling at me; smile back and keep eye "
+                  "contact."})},
+    {"role": "user", "content":
+        "EVENT: person left (8s ago)\n"
+        "person: none visible\n"
+        "sound: mics not wired yet\n"
+        "env: cpu 60C load 9% mem 54% | wall power ok\n"
+        "sonar: not wired | tracks: not wired | look_at moves the EYES only"
+        "\ntime 17:42 Wed | current face expression: happy | my recent "
+        "actions: look_at+set_expression"},
+    {"role": "assistant", "content": json.dumps({
+        "actions": [{"do": "look_at", "pan_deg": 0, "tilt_deg": 0},
+                    {"do": "set_expression", "name": "sad"}],
+        "reason": "They just left; look back to center, a little sad."})},
+    {"role": "user", "content":
+        "EVENT: nothing notable recently\n"
+        "person: none visible\n"
+        "sound: mics not wired yet\n"
+        "env: cpu 55C load 7% mem 52% | wall power ok\n"
+        "sonar: not wired | tracks: not wired | look_at moves the EYES only"
+        "\ntime 00:35 Sun | current face expression: neutral | my recent "
+        "actions: set_expression"},
+    {"role": "assistant", "content": json.dumps({
+        "actions": [{"do": "set_expression", "name": "sleepy"}],
+        "reason": "Late night and nobody around; resting."})},
+]
+
 # Grammar-enforced response shape (llama.cpp compiles this to GBNF, so the
 # model CANNOT emit bare-string actions or truncated JSON).
 ACTION_SCHEMA = {
@@ -396,8 +477,9 @@ SCENARIOS = {
 
 
 def ask(host, digest, temperature=0.2, timeout=120, prompt="v1"):
-    sys_p, shots = ((SYSTEM_PROMPT_V2, FEW_SHOT_V2) if prompt == "v2"
-                    else (SYSTEM_PROMPT, FEW_SHOT))
+    sys_p, shots = {"v2": (SYSTEM_PROMPT_V2, FEW_SHOT_V2),
+                    "v3": (SYSTEM_PROMPT_V3, FEW_SHOT_V3)}.get(
+                        prompt, (SYSTEM_PROMPT, FEW_SHOT))
     body = {
         "messages": [
             {"role": "system", "content": sys_p},
@@ -438,7 +520,7 @@ def main():
                     help="run one scenario (default: all)")
     ap.add_argument("--runs", type=int, default=1)
     ap.add_argument("--temperature", type=float, default=0.2)
-    ap.add_argument("--prompt", choices=("v1", "v2"), default="v1",
+    ap.add_argument("--prompt", choices=("v1", "v2", "v3"), default="v1",
                     help="prompt/digest variant (v2: EVENT-first digest, "
                          "decision-guide prompt, 4 diverse few-shots)")
     ap.add_argument("--tag", default="run",
@@ -454,7 +536,8 @@ def main():
     with open(outpath if not args.digest_only else os.devnull, "a") as outf:
         for name in names:
             sc = SCENARIOS[name]
-            render = build_digest_v2 if args.prompt == "v2" else build_digest
+            render = (build_digest_v2 if args.prompt in ("v2", "v3")
+                      else build_digest)
             digest = render(sc["snapshot"])
             print(f"\n=== {name}: {sc['desc']}")
             if args.digest_only:

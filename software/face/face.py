@@ -871,9 +871,11 @@ class FaceRenderer:
                 if do == "set_expression" and a.get("name") in EXPRESSIONS:
                     self.set_expression(a["name"])
                 elif do == "look_at":
+                    # +-35 deg = full eye deflection: camera-frame angles
+                    # are small, so /88 made tracking invisible.
                     try:
-                        gx = float(a.get("pan_deg", 0)) / 88.0
-                        gy = -float(a.get("tilt_deg", 0)) / 30.0
+                        gx = float(a.get("pan_deg", 0)) / 35.0
+                        gy = -float(a.get("tilt_deg", 0)) / 20.0
                     except (TypeError, ValueError):
                         continue
                     self.state.set_gaze(gx, gy)

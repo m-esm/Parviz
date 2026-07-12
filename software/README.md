@@ -384,3 +384,19 @@ ellipsis). Top row stays system (SYS/PWR/NET), bottom stays robot
 (status line, sensor slots, pip). The old scattered decision line +
 bottom-left cam block are gone; cam is 128x96 to fit the panel column.
 Self-reviewed via frame dumps; fixed text/eye clipping and truncation.
+
+Prompt v3 (2026-07-12, user: "LLM doesn't react to emotion/position"):
+audit found the model never used look_at with real coordinates, never
+mirrored emotion, and ignored person-left/late-night/hot-cpu. v3 fixes
+it with explicit priority rules (person present -> BOTH look_at using
+the digest's head-aim numbers AND set_expression matching their visible
+emotion; person left -> center + sad; late night -> sleepy; cpu >80C ->
+log) and 4 few-shots in the LIVE digest format demonstrating each. The
+digest's EVENT line now leads with the current person state (tiny
+models act on the top line). Verified live: look_at pan -11.6 vs actual
+-11.8 (real numbers, not few-shot copies) and the journal shows "They
+are smiling at me; smile back and keep eye contact" -- the emotion
+mirror through the LLM. Face executor gain fixed: +-35 deg = full eye
+deflection (/88 made tracking invisible). KNOWN TRADEOFF: LLM-only gaze
+tracking has the tick latency (10-15 s); smooth fast tracking would
+need a reflex, which the user explicitly removed in favor of LLM truth.
