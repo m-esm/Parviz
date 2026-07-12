@@ -172,8 +172,15 @@ def drivegear_units():
 
 
 def link_units():
-    """63 plain links/side + 1 master/side, grouser-up (self-supporting -> support off)."""
-    plain = tracks._track_link(); plain.apply_transform(R(X, 180))
+    """63 plain links/side + 1 master/side, support OFF -- orientations SLICE-VERIFIED
+    (2026-07-12, BambuStudio CLI: the old all-grouser-up pose stood every plain link on
+    its round knuckle tangent lines and sliced with 'floating regions' warnings; flat
+    grouser-down = 'floating cantilever'). PLAIN links print STANDING, pin bores
+    vertical (R(Y,90)): clean slice, round bores, knuckle running faces as vertical
+    walls; 44.8 tall on a 9.5x17 foot -- keep the 5 mm brim. MASTER links keep the
+    grouser-up pose: the C-jaw removes exactly the region that floats on plains (clean
+    slice), while standing they cantilever the jaw/keeper bosses."""
+    plain = tracks._track_link(); plain.apply_transform(R(Y, 90))
     master = tracks._track_master_link()[0]; master.apply_transform(R(X, 180))
     n = P["track_links"]
     out = [("track_link", plain.copy(), NOSUP) for _ in range((n - 1) * 2)]

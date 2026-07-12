@@ -533,7 +533,13 @@ sprocket hub crosses it. EARS moved to the head sides' vertical center: (y -40,
 z 157) -- y -40 is the derived clear column (trim rails y +-13, Ø26 tilt clamp
 tubes to y -31, Ø20 pivot bosses, wall flat ends y -54). BOM: F688ZZ 4 -> 8 (two
 per end idler x4), M4x40 12, hinge pins 128, Ø8 stubs x4 ~50 mm (M8 bolts work).
-PRINT NOTE: 128 track links total -- budget the print time.
+PRINT NOTE: 128 track links total -- budget the print time (~23 h / ~294 g across 3
+plates, slice-measured). LINK ORIENTATION IS SLICE-VERIFIED (2026-07-12, BambuStudio
+CLI): plain links print STANDING with pin bores vertical -- the old grouser-up pose
+stood them on round knuckle tangent lines and sliced with 'floating regions' (flat
+grouser-down = 'floating cantilever'); the MASTER links are the opposite (grouser-up
+clean, standing cantilevers the jaw). Both baked into tools/export_bambu.py
+link_units(); keep the 5 mm brim on the 44.8-tall standing links.
 
 **Drive-mechanism review (2026-07-11, task #11):** the wheel beam doubles as the
 ANTI-BUCKLE CAP for the mid-drive: the pushed side of the ground run (rear of the
