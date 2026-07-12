@@ -16,7 +16,8 @@ Output: exports/bambu.3mf (THE canonical name, always reused/overwritten -- user
   Worm drive         worm wheel + worm (real generated teeth)
   Track gear         4 sprockets (2 optional-motor spares), 4 end idlers, 10 road
                      wheels, 2 pod rails, 2 keeper bars
-  Track links        128 articulated links (126 plain + 2 master)
+  Track links        8 PRINT-IN-PLACE strips (4/side: 16+16+16+15 links, integral
+                     Ø2.0 pins, keeled, support OFF) + 2 master links
 
 A category that overflows the 256x256 bed spills to "Cat 1 of N", "Cat 2 of N".
 ONE file, many plates: swap the spool / pick per-plate settings in Studio per plate.
@@ -185,22 +186,36 @@ def drivegear_units():
     return out
 
 
-def link_units():
-    """63 plain links/side + 1 master/side. ORIENTATION HISTORY (all slice-tested):
-    grouser-up NOSUP = 'floating regions' (links stood on round knuckle tangent
-    lines); STANDING bores-vertical NOSUP sliced clean but FAILED ON THE PRINTER
-    (2026-07-12, user: 'the chain itself failed to print' -- 61x 44.8-tall towers
-    on 9.5x17 feet are a topple domino no slice check sees). NOW: plain links lie
-    GROUSER-DOWN with TREE SUPPORT -- 9.5 tall, rock-stable, and every scar lands
-    on the traction face / knuckle outers (the wheel-rolling INNER faces and the
-    pin channel print as clean unsupported top surfaces; grouser-up + support
-    would scar exactly those). Horizontal-bore sag is absorbed by the Ø2.2 print
-    bore (PARAMS track_pin_bore_d). MASTER links keep grouser-up NOSUP (the C-jaw
-    removes exactly the region that floats on plains; verified clean)."""
-    plain = tracks._track_link()                     # local -z = outer face = DOWN
+def strip_units():
+    """PRINT-IN-PLACE STRIPS (2026-07-12, replaced link_units after the chain print
+    failure chain: grouser-up NOSUP = floating regions; standing NOSUP sliced clean
+    but toppled ON the printer; grouser-down + tree printed but scarred and 126
+    loose links still had to be pinned by hand). Per side 4 straight strips of
+    (16,16,16,15) links at pitch, ONE mesh each (CONCATENATED, never boolean-
+    unioned: the 0.35 PIP hinge gaps must survive), lying grouser-down. The 45deg
+    knuckle KEELS make that pose fully self-supporting (bed = grousers + keel
+    feet, web bridges anchored), so support is OFF -- that is the whole point --
+    with the profile's 5 mm brim. Strips ride stl/base/track_strip_*.stl written
+    by EXPORT=1 build (the ghost pattern), so `make export` stays one pipeline.
+    MASTER links stay separate, grouser-up NOSUP as today (C-jaw prints clean;
+    they close the loop at assembly)."""
+    out = []
+    for side in ("L", "R"):
+        for si in (1, 2, 3, 4):
+            nm = f"track_strip_{side}{si}"
+            m = trimesh.load(os.path.join(ROOT, "stl", "base", nm + ".stl"))
+            bodies = m.split(only_watertight=False)
+            expect = 15 if si == 4 else 16           # position 0 is the master
+            if len(bodies) != expect:
+                sys.exit(f"FAIL: {nm} has {len(bodies)} bodies, expected {expect} "
+                         "(PIP gap fused, or a link split?)")
+            e = m.bounds[1] - m.bounds[0]
+            brim = float(PROFILE.get("brim_width", 5))
+            if max(e[0], e[1]) + 2 * brim > 180.0:
+                sys.exit(f"FAIL: {nm} {e[0]:.0f}x{e[1]:.0f} + {brim:.0f} brim "
+                         "exceeds the 180 bed")
+            out.append((nm, m, NOSUP))
     master = tracks._track_master_link()[0]; master.apply_transform(R(X, 180))
-    n = P["track_links"]
-    out = [("track_link", plain.copy(), TREE) for _ in range((n - 1) * 2)]
     out += [("track_master_link", master.copy(), NOSUP) for _ in range(2)]
     for _, m, _ in out:
         m.apply_translation((0, 0, -m.bounds[0][2]))
@@ -238,7 +253,7 @@ def shelf_pack(items, brim_default, gap=6.0):
 def main():
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     brim = float(PROFILE.get("brim_width", 0))
-    tokens = {"@drivegear": drivegear_units, "@links": link_units}
+    tokens = {"@drivegear": drivegear_units, "@links": strip_units}
 
     plates, manifest = [], []
     for cat, members in CATEGORIES:

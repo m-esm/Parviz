@@ -531,22 +531,47 @@ DELETED (deck pylons own tension), and the end stubs press their pylon sockets
 sprocket hub crosses it. EARS moved to the head sides' vertical center: (y -40,
 z 157) -- y -40 is the derived clear column (trim rails y +-13, Ø26 tilt clamp
 tubes to y -31, Ø20 pivot bosses, wall flat ends y -54). BOM: F688ZZ 4 -> 8 (two
-per end idler x4), M4x40 12, hinge pins 128, Ø8 stubs x4 ~50 mm (M8 bolts work).
-PRINT NOTE: 128 track links total, ~19 h / ~313 g across 5 plates (headless-slice
-measured). LINK ORIENTATION (2026-07-12, revised after a REAL printer failure): the
-slice-clean STANDING pose failed on the machine -- 61x 44.8-tall towers on 9.5x17
-feet are a topple domino no slice check catches. Plain links now lie GROUSER-DOWN
-with TREE support: 9.5 tall and stable, scars land on the traction face + knuckle
-outers while the wheel-rolling INNER faces print as clean top surfaces (grouser-up
-+ support would scar those). track_pin_bore_d 2.0 -> 2.2 absorbs horizontal-bore
-roof sag over the Ø1.75 pins. MASTER links stay grouser-up NOSUP (C-jaw removes the
-floating region). Track gear plate: running-gear bodies are ORIENTATION-NORMALIZED
+per end idler x4), M4x40 12, hinge pins 128 (-> 10 since the 2026-07-12 PIP
+strips), Ø8 stubs x4 ~50 mm (M8 bolts work).
+PRINT NOTE (2026-07-12, third revision -- PRINT-IN-PLACE STRIPS): the chain now
+prints as 4 strips of (16,16,16,15) links per side + 1 separate master, hinges
+already assembled. History: standing pose sliced clean but TOPPLED on the printer;
+grouser-down + tree printed but scarred and left 126 loose links to hand-pin. Now
+every knuckle band carries a 45-deg KEEL (chamfered buttress, knuckle cylinder down
+to the grouser plane, outer-face side only -- the sprocket channel +-4.9 and the
+wheel-rolling inner faces stay untouched; keels double as traction teeth), so
+GROUSER-DOWN is fully self-supporting: strips print SUPPORT OFF, 5 mm brim, flat
+~167x44.8x9.5 rows (167+10 brim fits the 180 bed; 16 is the cap). Each link's own
+(y0) pin is an INTEGRAL Ø2.0 rod (PARAMS track_pin_print_d) fused into its A
+knuckles -- the sprocket drives on it -- and the far B bores are Ø2.7 (track_
+bore_pip_d, 0.35 PIP radial gap); strip-first links revert to open Ø2.2 A-bores
+(no pin) and strip-last links to Ø2.2 far bores for the Ø1.75 filament boundary
+pins: per side 59 printed joints + 3 strip filament joints + the master closure
+(master far pin + jaw pin) = 10 loose pins total (was 128). Strips are exported
+as ONE CONCATENATED mesh each (never boolean-union -- it would weld the hinge
+gaps; the exporter asserts 16/15 bodies per strip); the assembly keeps 64
+per-link scene nodes with the correct variant per position, and the baked
+sprockets are conjugate-phase CLOCKED to the pin grid (spr_y -68 = -5.93 deg,
+disc-only rotation so the D-socket stays on the shaft flats). Sprocket envelope
+regenerated for the Ø2.0 pin (r 1.275): probe (tools/probe_track_pip.py) --
+conjugate penetration -0.152 (clearance), numeric skip barrier 2.12 (analytic
+2.18), CR 1.37 unchanged, +-35 deg articulation sweep of every variant pair
+CLEAN (min approach 0.349 = the PIP annulus), 3D tooth-vs-keeled-link sweep 0
+overlap (tooth band +-4.0 vs keel band 4.9). SLACK CAVEAT: 0.35 radial x ~60 PIP
+joints adds ~8 mm chain slack vs the filament chain -- it lands as top-run sag;
+expect the front tension slot to need MORE TRAVEL after the first physical
+chain, budget that before reprinting links. MASTER links stay grouser-up NOSUP
+(C-jaw removes the floating region) and keep the full old Ø2.2 interface (a
+closed far bore can't slide onto a fused pin) + keels (jaw slots re-cut through
+them). Track gear plate: running-gear bodies are ORIENTATION-NORMALIZED
 after the shared R(Y,90) (mirrored L STLs landed sprockets DISC-UP with a ~1050 mm2
 tree forest over the teeth; flip when >45deg overhang above z10 exceeds 200 mm2) and
 sprockets/idlers print SUPPORT-OFF (their only ceilings are 1-2 mm annular bore
 steps that bridge; tree pillars would scar the F688 flange seats + D-socket).
-Keepers roll onto their wide face. ALL 21 PLATES slice 'Success.' (full-project
-headless check 2026-07-12); `make slicecheck` (tools/slice_check.py) is the
+Keepers roll onto their wide face. ALL 19 PLATES (strips consolidated the 5 link
+plates into 3: 2x four-strip plates ~6.8 h each + masters) slice 'Success.'
+(track plates 15-19 re-checked after the strip pass, strips SUPPORT OFF);
+`make slicecheck` (tools/slice_check.py) is the
 permanent gate -- run it after every export change. It catches the SLICER-visible
 class only; physical stability of tall/thin plating still needs a human look.
 

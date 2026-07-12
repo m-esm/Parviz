@@ -87,11 +87,51 @@ def _KNUCKLES(tw):
             ((-8.9, -4.9), (4.9, 8.9)))                # B: far knuckles (next pin)
 
 
-def _track_link():
+# PRINT-IN-PLACE KEEL cross-section (2026-07-12 strip pass), (u, v) about the pin
+# (u = y - pin_y, v = z). Grouser-down printing used to float every knuckle 2.5 over
+# the bed (the 2026-07-12 chain print failure chain); the keel is a chamfered buttress
+# from each knuckle cylinder down to the grouser plane (v -6.0) so the pose is fully
+# self-supporting: bed contact = grousers + keel feet, web/bridge undersides anchor on
+# the keel tops. Shape reasons:
+#   * 45.0-deg chamfer on the PIN side = the knuckle-circle tangent line shifted 0.05
+#     inboard (u = v + 4.85; corner (2.4,-2.45) strictly inside the r3.5 circle, no
+#     coincident-surface sliver) -- exactly self-supporting, and it clears the ±35 deg
+#     articulation sweep of the NEIGHBOR's web/grouser corner (r 5.64 about the pin,
+#     swings to (0.21,-5.64); the vertical face at u -0.3 keeps ~0.5 to it).
+#   * foot runs to u -4.5 where it buries into the grouser (y 4..6) / web (y 3.4..6.6),
+#     so the keel is welded to the pad, and doubles as a traction tooth.
+#   * top edge v -2.0 stays fully buried in web/bridge/knuckle (inner faces untouched:
+#     road wheels roll the knuckle crowns, the ±4.9 sprocket channel stays empty).
+# A keel (own pin y0, neighbor approaches from -y) = the mirror of the B keel
+# (far pin y=pitch, neighbor from +y): chamfer faces the neighbor, foot faces own web.
+_KEEL_UV_B = ((-4.5, -6.0), (-0.3, -6.0), (-0.3, -5.15),
+              (2.4, -2.45), (2.4, -2.0), (-4.5, -2.0))
+
+
+def _keel(x0, x1, py, kind):
+    """Keel prism for one knuckle x-band [x0,x1] at pin y=py; kind 'A' (own pin,
+    mirrored) or 'B' (far pin). Built in the extrusion plane then rotated so the
+    extrusion axis is X (same trick as _sprocket_disc)."""
+    s = -1.0 if kind == "A" else 1.0
+    poly = sg.Polygon([(-v, s * u) for (u, v) in _KEEL_UV_B])
+    m = extrude_polygon(poly, x1 - x0)                 # (a,b,c) -> (c, b, -a): a=-v, b=u
+    m.apply_transform(R(TAU / 4, (0, 1, 0)))
+    m.apply_translation((x0, py, 0))
+    return m
+
+
+def _track_link(open_a=False, open_b=False):
     """One articulated track link (local frame: own pin axis = X axis, next pin at y=+pitch,
-    OUTER face toward -z). Pad web + grouser + interleaved pin knuckles with Ø2.0 bores for
-    Ø1.75 filament pins + 45deg inner-face draft chamfers at the web ends. Adjacent copies on
-    the loop never touch: knuckle sets are X-disjoint and the pads splay apart on the arcs."""
+    OUTER face toward -z). Pad web + grouser + interleaved pin knuckles + 45deg keels under
+    every knuckle band (print-in-place strips 2026-07-12: grouser-down is self-supporting)
+    + 45deg inner-face draft chamfers at the web ends. Adjacent copies on the loop never
+    touch: knuckle sets are X-disjoint and the pads splay apart on the arcs.
+
+    Default = strip MID link: the own (y0) pin is an INTEGRAL Ø2.0 rod fused into the A
+    knuckles (no bore), the far (y=pitch) B bores are Ø2.7 print-in-place clearance around
+    the neighbor's rod. open_a: strip-FIRST link -- no integral pin, old Ø2.2 A bores for
+    a Ø1.75 filament boundary pin. open_b: strip-LAST link -- far bores revert to Ø2.2
+    (the next strip's first link + filament pin land there). Master = both open + jaw."""
     pitch, tw = P["track_pitch"], P["track_width"]
     kr = 3.5                                           # knuckle radius about the pin
     parts = [box(tw, 3.2, 2.7), box(tw, 2.0, 1.5)]     # web z -4.5..-1.8, grouser z -6.0..-4.5
@@ -101,13 +141,25 @@ def _track_link():
     for (x0, x1) in ka:                                # near knuckles (own pin) + bridge to web
         k = cyl(kr, x1 - x0, axis="x"); k.apply_translation(((x0 + x1) / 2, 0, 0)); parts.append(k)
         b = box(x1 - x0, 3.1, 2.7); b.apply_translation(((x0 + x1) / 2, 2.05, -3.15)); parts.append(b)
+        parts.append(_keel(x0, x1, 0.0, "A"))
     for (x0, x1) in kb:                                # far knuckles (next pin) + bridge to web
         k = cyl(kr, x1 - x0, axis="x"); k.apply_translation(((x0 + x1) / 2, pitch, 0)); parts.append(k)
         b = box(x1 - x0, 2.6, 2.7); b.apply_translation(((x0 + x1) / 2, 7.7, -3.15)); parts.append(b)
-    link = uni(parts)
-    for py in (0.0, pitch):                            # Ø2.0 hinge-pin bores (audit corr. 3)
-        d = cyl(P["track_pin_bore_d"] / 2, tw + 4, axis="x"); d.apply_translation((0, py, 0))
-        link = sub(link, d)
+        parts.append(_keel(x0, x1, pitch, "B"))
+    if not open_a:                                     # INTEGRAL own pin: solid Ø2.0 rod
+        pr = cyl(P["track_pin_print_d"] / 2, tw - 0.5, axis="x")   # across the link
+        parts.append(pr)                               # width, ends recessed 0.25 INSIDE
+        # the A knuckles: a flush end face is coincident with the knuckle side wall
+        # and leaves a degenerate zero-volume shell in the union (STL round-trip
+        # split 16 -> 31 bodies). Functionally identical: the ends are buried solid.
+    link = uni(parts)                                  # (sprocket drives on the rod in
+    if open_a:                                         # the central channel; neighbor's
+        # Ø2.7 B bores ride it print-in-place
+        d = cyl(P["track_pin_bore_d"] / 2, tw + 4, axis="x")
+        link = sub(link, d)                            # boundary A bores (filament pin)
+    far_d = P["track_pin_bore_d"] if open_b else P["track_bore_pip_d"]
+    d = cyl(far_d / 2, tw + 4, axis="x"); d.apply_translation((0, pitch, 0))
+    link = sub(link, d)
     for ye in (3.4, 6.6):                              # inner-face draft: 45deg chamfer, web ends
         c = box(tw + 4, 1.4, 1.4); c.apply_transform(R_x(TAU / 8)); c.apply_translation((0, ye, -1.8))
         link = sub(link, c)
@@ -125,9 +177,14 @@ def _track_master_link():
     Two printed KEEPER bars then slide into the jaw slot from the side faces -- each locked
     by one M2 self-tap into a side-face pilot -- and seat the pin: belt tension is carried
     by the jaw walls (same section as a plain bore), the keepers only block pin drop-out.
-    Returns (body, [keeper_L_local, keeper_R_local]) in link-local coords."""
+    Returns (body, [keeper_L_local, keeper_R_local]) in link-local coords.
+    Strip pass 2026-07-12: the master keeps the FULL old interface (open both ends:
+    Ø2.2 A bores under the jaw cut, Ø2.2 far bores, NO integral pin -- a closed far
+    bore can never slide onto a neighbor's fused rod, so both master joints are
+    assembly joints) and gains the keels like every link; the jaw slots re-cut
+    through the A keels so the drop-on mouth stays open."""
     pitch, tw = P["track_pitch"], P["track_width"]
-    body = _track_link()
+    body = _track_link(open_a=True, open_b=True)
     ka, _ = _KNUCKLES(tw)
     # keeper-screw BOSSES first, then the jaw slots re-cut THROUGH them, then the pilots.
     # Printability review: the bare pilot at y 2.2 broke out of the knuckle (edge 3.05 >
@@ -203,12 +260,19 @@ def _sprocket_profile():
     from shapely.ops import unary_union
     import shapely.affinity as sa
     rp = P["track_wheel_r"]
+    # 2026-07-12 print-in-place strips: the driven pin is now the links' INTEGRAL
+    # Ø2.0 printed rod (track_pin_print_d), so the swept envelope radius is
+    # 1.0 + 0.275 running clearance = 1.275 (was 1.15 for the Ø1.75 filament pin).
+    # Re-probed (tools/probe_track_pip.py): numbers in the report/docs; boundary
+    # Ø1.75 filament pins get 0.4 extra radial slack in the same gap -- they seat
+    # ~0.14 deeper at BDC, well inside the chain's 0.45 bore slop budget.
+    env_r = P["track_pin_print_d"] / 2 + 0.275
     blank = sg.Point(0, 0).buffer(P["sprocket_outer_d"] / 2, resolution=96)
     swept = []
     for th in np.arange(-40.0, 40.01, 0.5) * (np.pi / 180.0):
         c, s = np.cos(th), np.sin(th)
         u, v = rp, rp * th                             # pin in rack coords at angle th
-        swept.append(sg.Point(c * u + s * v, -s * u + c * v).buffer(1.15, resolution=24))
+        swept.append(sg.Point(c * u + s * v, -s * u + c * v).buffer(env_r, resolution=24))
     gap = unary_union(swept)
     gaps = unary_union([sa.rotate(gap, 360.0 * k / P["sprocket_teeth"], origin=(0, 0))
                         for k in range(P["sprocket_teeth"])])
@@ -226,19 +290,28 @@ def _sprocket_disc(width):
     return disc
 
 
-def _sprocket(sx):
+def _sprocket(sx, phase=0.0):
     """Drive sprocket + inboard hub tube reaching the TT shaft through the chassis-wall web.
     Disc (tip r 20.5, conjugate teeth -- see _sprocket_profile) at the pod centre (96.4 at
     chassis_w 140 / tw 44.8; hub local -28.1 --
     values are chassis_w/track_width-derived); hub OD12 runs inboard to where the D-socket
     (bore Ø5.65, flat gap 3.85 print clearance, 8.0 deep = TT flat length) grips the shaft flats.
     Outer face: Ø9 x 1.5 counterbore for the M2 retaining screw + washer into the shaft tip's
-    Ø2 axial hole. Built for the +X pod, spun 180deg about Z for -X."""
+    Ø2 axial hole. Built for the +X pod, spun 180deg about Z for -X.
+
+    `phase` (2026-07-12, integral-pin pass): world tooth clocking (rad about +X) that
+    meshes the baked chain -- applied to the TOOTHED DISC ONLY, before the hub/D-socket
+    features, so the socket stays on the shaft flats (physically the free part is the
+    chain phase, not the shaft clocking; pins self-seat on tension). The -X pod's final
+    Rz(180) conjugates Rx(p) to Rx(-p) and the 12-fold profile maps onto itself, so the
+    disc is pre-spun by -phase there to land at +phase in world."""
     tw = P["track_width"]
     cx = P["chassis_w"] / 2 + P["track_gap"] + tw / 2              # pod centre (96.4)
     hub_in = (P["chassis_w"] / 2 - 2.0 + 0.3) - cx                 # world 68.3 -> local -28.1
     # band pinned to 8 (the links' open +-4.9 sprocket channel), NOT tw-derived
     spr = _sprocket_disc(8.0)
+    if phase:
+        spr.apply_transform(R_x(phase if sx > 0 else -phase))
     hub = cyl(6.0, -hub_in - 3.5, axis="x")                        # inboard of the toothed rim
     hub.apply_translation(((hub_in - 3.5) / 2, 0, 0))
     spr = uni([spr, hub])
@@ -260,24 +333,54 @@ def _sprocket(sx):
     return spr
 
 
+def _strip_plan(n):
+    """Print-in-place strip sizes for one track side (2026-07-12): position 0 is the
+    master (separate print), positions 1..n-1 fill strips of up to 16 links ->
+    (16, 16, 16, 15) at n=64. 16 is the bed cap: a straight 16-link strip spans
+    167 mm + 2x5 brim = 177 <= the 180 print bed."""
+    sizes, rem = [], n - 1
+    while rem > 0:
+        s = min(16, rem)
+        sizes.append(s); rem -= s
+    return tuple(sizes)
+
+
 def build_tracks():
-    """Two positive-drive track pods: 45 articulated links (Ø1.75 filament hinge pins) wrapping a
-    12T pin-pocket sprocket (rear, TT double-D hub) + idler on TWO F688ZZ flanged bearings
-    (front, tensioned via the chassis-arm slot) + road wheels riding the knuckle crowns on
-    M4 bolt-axles off the pod-rail wheel beam (build_pod_rails). Bottom-run grouser face =
-    ground (z=0). Each pod is a concatenation of separate printed pieces, not one solid."""
+    """Two positive-drive track pods: 64 articulated links per side (2026-07-12: 4
+    PRINT-IN-PLACE strips with integral Ø2.0 pins + Ø2.7 PIP bores, master + boundary
+    joints on Ø1.75 filament pins) wrapping two ground-run conjugate sprockets (TT
+    double-D hub, phase-clocked to the pin grid) + end idlers on TWO F688ZZ flanged
+    bearings each (front pair tensions in the deck pylons) + road wheels riding the
+    knuckle crowns on M4 bolt-axles off the pod-rail wheel beam (build_pod_rails).
+    Bottom-run grouser face = ground (z=0). Each pod is a concatenation of separate
+    printed pieces, not one solid."""
     R, tw, wb = P["track_wheel_r"], P["track_width"], P["track_wheelbase"]
     zc = _track_zc()
     kr = 3.5
-    plain = _track_link()
+    # PRINT-IN-PLACE STRIP VARIANTS (2026-07-12): master = position 0 (separate
+    # print, closes the loop); positions 1..63 fill 4 strips of (16,16,16,15).
+    # Inside a strip every joint is integral-pin + Ø2.7 PIP bore; a strip's FIRST
+    # link opens its A end (Ø2.2, no pin) and its LAST link opens its far end
+    # (Ø2.2) for the Ø1.75 filament boundary pins. Per side: 59 printed-in-place
+    # joints, 3 strip-to-strip filament joints, 1 master closure (master far
+    # filament pin + jaw drop-on).
+    mid = _track_link()
+    first = _track_link(open_a=True)
+    last = _track_link(open_b=True)
     mbody, mkeepers = _track_master_link()             # link 0 = the loop-closing master
+    sizes = _strip_plan(P["track_links"])
+    starts, ends, idx = set(), set(), 1
+    for s_n in sizes:
+        starts.add(idx); ends.add(idx + s_n - 1); idx += s_n
     out = []
     for sx in (-1, 1):
         cx = sx * (P["chassis_w"] / 2 + P["track_gap"] + tw / 2)
         pieces = []
         keeper_pieces = []
         for i, (y, z, ang) in enumerate(_track_link_poses(wb, R, zc, P["track_links"])):
-            lk = (mbody if i == 0 else plain).copy()   # master seam on the bottom straight run
+            src = (mbody if i == 0 else               # master seam on the bottom straight run
+                   first if i in starts else last if i in ends else mid)
+            lk = src.copy()
             lk.apply_transform(R_x(ang))               # tangent to the loop, outer face outward
             lk.apply_translation((cx, y, z))
             pieces.append(lk)
@@ -295,9 +398,15 @@ def build_tracks():
         # so ground reaction guarantees the 2-3-pin bite. TT stays direct on the
         # double-D shaft, dropped with it to z 25.32.
         for sy_, snm in ((P["spr_y"], "sprocket_rear"), (P["spr_y2"], "sprocket_front")):
-            spr = _sprocket(sx)                        # two stations (the front one
-            spr.apply_translation((cx, sy_, (zc - R) + R))   # rides the OPTIONAL 2nd
-            wheel_pieces.append((snm, spr))            # TT's shaft)
+            # CONJUGATE PHASE (2026-07-12): the links' integral Ø2.0 pins are real
+            # geometry now, so the baked disc must be clocked to the chain. Ground
+            # pins sit at y = -track_ground_hy + 10k (grid = 0 mod pitch); clock by
+            # (nearest pin offset)/rp about +X (probe convention: pin at +s <-> disc
+            # +s/rp). spr_y -68 -> -2/19.32 = -5.93 deg; spr_y2 +90 is on-grid (0).
+            s_rel = ((-sy_ + P["track_pitch"] / 2) % P["track_pitch"]) - P["track_pitch"] / 2
+            spr = _sprocket(sx, s_rel / P["track_wheel_r"])  # two stations (the front
+            spr.apply_translation((cx, sy_, (zc - R) + R))   # one rides the OPTIONAL
+            wheel_pieces.append((snm, spr))                  # 2nd TT's shaft)
         # END WHEELS (both ends are now FREE IDLERS on Ø8 stubs in the deck-overhang
         # pylons; the front pair tensions): rides the knuckle crowns with 0.12 running
         # clearance; TWO
@@ -423,6 +532,29 @@ def build_tracks():
         emit(f"drivewheels_{side}", "motor", wheel_pieces, f"track_wheels_{side}.stl")
         keeps = [(f"bar_{i+1}", k) for i, k in enumerate(keeper_pieces)]
         emit(f"track_keeper_{side}", "accent", keeps, f"track_keeper_{side}.stl")
+    # PRINT-IN-PLACE STRIP EXPORTS (2026-07-12): straight rows at pitch, grouser-down
+    # local frame (outer face -z; the exporter just drops them z-min to the bed), ONE
+    # mesh per strip by CONCATENATION -- boolean-unioning link bodies would weld the
+    # 0.35 PIP hinge gaps shut. export-only ghosts (scene=False): the loop's per-link
+    # scene nodes above carry the viewer. Links are x-mirror-symmetric, so L and R
+    # strips are identical meshes under both names.
+    for si, s_n in enumerate(sizes, 1):
+        row = []
+        for j in range(s_n):
+            v = first if j == 0 else last if j == s_n - 1 else mid
+            c = v.copy()
+            c.apply_translation((0, j * P["track_pitch"], 0))
+            row.append(c)
+        sm = trimesh.util.concatenate(row)
+        bodies = sm.split(only_watertight=False)
+        assert len(bodies) == s_n, \
+            f"strip {si}: {len(bodies)} bodies != {s_n} links (PIP gap fused or link split?)"
+        for side in ("L", "R"):
+            gh = sm.copy()
+            gh.metadata["name"] = f"__export__track_strip_{side}{si}"
+            gh.metadata["export"] = f"track_strip_{side}{si}.stl"
+            gh.metadata["scene"] = False
+            out.append(gh)
     return out
 
 

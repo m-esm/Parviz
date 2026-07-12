@@ -255,14 +255,32 @@ P = {
     "track_links": 64,      # 64 x 10 = 640 mm loop (36->45->52->53->64 stretches)
     "track_pad_th": 4.5,    # pin axis -> pad OUTER face (link overall 8: knuckle r3.5 inward)
     "track_grouser_h": 1.5, # tread lug (print grousers in TPU or add pads)
-    "track_pin_bore_d": 2.2,    # link hinge bore for Ø1.75 filament pins. 2.0 -> 2.2
-                            # (2026-07-12 print pass): links now print LYING (grouser-
-                            # down + tree, the standing plate failed on the printer),
-                            # so the bores are HORIZONTAL and the roof sags 0.1-0.2 --
+    "track_pin_bore_d": 2.2,    # BOUNDARY-joint hinge bore for Ø1.75 filament pins
+                            # (strip-to-strip + master closure only since the
+                            # 2026-07-12 print-in-place strips; was every joint).
+                            # 2.0 -> 2.2 (2026-07-12 print pass): bores print
+                            # HORIZONTAL (grouser-down) and the roof sags 0.1-0.2 --
                             # at 2.0 that ate most of the 0.25 pin clearance (sticky
-                            # hinges x256). 0.45 slop on a chained hinge is harmless
+                            # hinges). 0.45 slop on a chained hinge is harmless
                             # (track tension owns the geometry) and the sprocket's
                             # conjugate envelope already budgets bore slop.
+    "track_pin_print_d": 2.0,   # INTEGRAL printed hinge pin (2026-07-12 print-in-place
+                            # strips, after the chain print failure): each link's own
+                            # (y0) pin is a solid Ø2.0 rod fused into its A knuckles,
+                            # spanning the full link width -- the sprocket drives on
+                            # it in the central channel exactly like the old filament
+                            # pin (envelope regenerated in _sprocket_profile). Ø2.0
+                            # not 1.75: a printed horizontal rod needs >= 2 perimeters
+                            # of section to survive the 18.8 mm bridge between the A
+                            # anchors, and pin bending margin grows with it (~19 MPa
+                            # at stall on Ø1.75 -> ~13 MPa on Ø2.0).
+    "track_bore_pip_d": 2.7,    # print-in-place far-bore (B knuckles) around the
+                            # NEIGHBOR link's Ø2.0 integral pin: 0.35 radial air gap,
+                            # the proven PIP hinge clearance at 0.2 mm layers -- big
+                            # enough that horizontal-bore roof sag + rod sag can't
+                            # fuse the joint, small enough that the sprocket's 1.275
+                            # conjugate envelope still swallows the slop. Strip-end
+                            # (boundary) far bores revert to track_pin_bore_d.
     "sprocket_teeth": 12,
     "sprocket_outer_d": 41.0,   # TIP r 20.5 = pin circle 19.32 + 1.18 ADDENDUM (2026-07-11
                             # conjugate-tooth fix; the old 37.6 tip sat BELOW the pin

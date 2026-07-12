@@ -56,7 +56,7 @@ Owned quantities cross-checked against a personal parts inventory (2026-07-07).
 | M3 screws + hex nuts | captive-nut joints everywhere; incl. M3x35 x8 bezel↔back | lots | 540pc M3 stainless kit + 175pc M3 30–50 mm kit + 600pc M2-M5 kit + 1263pc M2-M4 kit (all Tray 1) |, |
 | M2 screws | camera board (2 screwed + 2 locating pads) + cam_cover (2) + track master-link keepers (2/pod, **M2×8 pan head**, sunk in the tab counterbores) + PD-trigger mount (2) | 8+ | in the 600pc M2-M5 and 1263pc M2-M4 kits |, (CLAUDE.md's "buy M2" is stale) |
 | M3 nylon standoffs | ULN2003 / driver mounts | few | 380pc kit (Tray 1) |, |
-| Track hinge pins | Ø1.75 filament, bore 2.0. 64 links x 2 pods = **128 pins x ~46 mm** (track_width 44.8 + trim) ≈ 5.9 m, cut from an owned spool (the black CR-PETG is tougher than PLA for pins) | 128 | spooled (Tray 1) |, |
+| Track hinge pins | Ø1.75 filament, Ø2.2 boundary bores only (2026-07-12 print-in-place strips: the 59 in-strip joints/side ride INTEGRAL printed Ø2.0 pins). Per pod: 3 strip-to-strip + 2 at the master (its far-end pin + the jaw closure pin) = **10 pins x ~46 mm** ≈ 0.5 m, cut from an owned spool (the black CR-PETG is tougher than PLA for pins) | 10 | spooled (Tray 1) |, |
 | Ø4 dowel pins | body-to-pod join (2 per side), Ø4x12: modeled (wall slip holes + rail press sockets) | 4 | 0 | **4** |
 | HC-SR04 ultrasonic | x4: forward + REAR obstacle (front/rear walls, inside the twin grille rings) + front/rear cliff (flush in the deck slopes, boards behind the 5-thick skin). **Inventory has ZERO** (checked 2026-07-10) | 4 | 0 | **4** |
 | M4x40 + nuts | road-wheel bolt-axles (2026-07-10 fix: wheels were mounted to nothing): head = outer hubcap, shank in the Ø4.2 wheel bore, nut captive in the rail wheel-beam slot. Prefer partially threaded (shank bearing surface); 40 mm exceeds the owned kits | 10+10 | nuts maybe in the 1263pc M2-M4 kit (verify) | **10x M4x40 (+nuts if absent)** |
@@ -69,7 +69,8 @@ Owned quantities cross-checked against a personal parts inventory (2026-07-07).
   three plates (seams y 66/-52, half-laps + 2x M3 down through each strip into shelf
   pilots); the center carries the whole pan seat + its own 4 hold-downs; the corner
   hold-downs live in the strips
-- `track_L` / `track_R`: tank track pods: 64 links/side on Ø1.75 filament pins, 12T
+- `track_L` / `track_R`: tank track pods: 64 links/side (4 print-in-place strips +
+  master; integral Ø2.0 pins in-strip, Ø1.75 filament pins at the 5 boundaries), 12T
   pin-pocket sprocket (real circular pin seats since 2026-07-10, r 1.15 on the 19.32
   pin circle), 2 end idlers on 2x F688ZZ each (30 wide; front tensions in its deck pylon), a ground-run
   TWO ground-run drive sprockets (spr_y rear + spr_y2 front; the front motor is
@@ -155,12 +156,20 @@ tray killed the 88.5 mm blind channels, 2026-07-08.)
    TT shafts (they mesh the ground run under the hull; the robot's weight seats them). Drop an M4 nut up each wheel-beam slot (do this BEFORE mounting the
    rails if access is tight), then bolt each road wheel with its M4x40 from outboard --
    snug, then back off 1/8 turn so the wheel spins free.
-5. **Thread the tracks (master-link close).** On the bench, chain all 64 links per pod
-   (link 0 is the master: its pitch-end pins to link 1 normally NOW) and drive the Ø1.75
-   filament hinge pins along X. Wrap the open chain around the pod with the idler retracted.
-   Seat the final pin in link 63's inner knuckles, swing the master's open jaws down onto it,
-   slide the two `track_keeper` bars into the jaw slot from the side faces, and lock each
-   with its M2 into the side-face pilot. Tension the idler. Track removal forever after:
+5. **Join the strips + close with the master (print-in-place chain, 2026-07-12).**
+   Each pod is 4 PRINT-IN-PLACE strips (16+16+16+15 links, hinges already free off
+   the printer -- flex every joint once to crack any sag bonds) + 1 separate master.
+   On the bench: pin the strips end-to-end with 3 Ø1.75 filament pins (each boundary
+   = one strip's Ø2.2 open A-bores interleaving the previous strip's Ø2.2 far bores),
+   then pin the MASTER's far end to strip 1's first link (4th filament pin). Wrap the
+   open chain around the pod with the front idler retracted. Seat the last filament
+   pin (5th) in strip 4's final-link far bores, swing the master's open jaws down
+   onto it, slide the two `track_keeper` bars into the jaw slot from the side faces,
+   and lock each with its M2 into the side-face pilot. Tension the idler -- run the
+   chain TENSIONED: the PIP joints carry 0.35 radial slop (~8 mm of loop slack vs
+   the old filament chain) that otherwise lands as top-run sag; if the front
+   tension slot runs out of travel on the physical chain, that is the expected
+   first fix (more slot travel), not a link redesign. Track removal forever after:
    2 M2s out, slide the keepers, lift the master off its pin.
 
 ### Pan joint
