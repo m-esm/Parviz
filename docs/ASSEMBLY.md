@@ -11,8 +11,9 @@ pod rails thread-form (no buried nuts), and power is a 12 V PD-trigger + dual-bu
 
 ## Bill of materials
 
-Owned quantities cross-checked against a personal parts inventory (2026-07-07).
-"Need" is per robot.
+Owned quantities cross-checked against a personal parts inventory (2026-07-07; re-audited
+2026-07-13 with bag-label photo reads: TT motors, M8, 608zz, F688 candidates, fuses all
+settled below). "Need" is per robot.
 
 ### Electronics
 
@@ -26,15 +27,15 @@ Owned quantities cross-checked against a personal parts inventory (2026-07-07).
 | XL4015-class 5A buck | Pi rail (trim to 5.25V); 40x20 post grid on the belly-plate tray | 1 | 0 | **1** |
 | MP1584-class mini buck | motor rail 5V; zip anchors beside the main buck | 1 | 0 | **1** |
 | JST-XH kit + crimper | every joint-crossing / board run is a keyed XH plug | 1 | 0 | **1** |
-| 18 AWG silicone pair + 5A blade fuse | Pi-rail run + inline fuse at the tray | 1 m | 0 | **1** |
+| 18 AWG silicone pair + 5A blade fuse + inline holder | Pi-rail run + inline fuse at the tray | 1 m | fuse: OWNED (ATC/ATO blade assortment, settled 2026-07-13); wire + holder: 0 | **1 m wire + 1 holder** |
 | 28BYJ-48 stepper | 5V, pan + tilt + 2x antenna drives | 4 | 6 (Bag 14) |, |
 | ULN2003 driver | one per stepper | 4 | 9 (3 Bag 14 + 6 Bag 5) |, |
-| TT gearmotor 1:120 | track drive, one per pod, shaft on X into the sprocket | 2 | 1 (Bag 5) | **1** (match the owned one; or swap both for 2x N20 metal-gear for a lower CoM) |
+| TT gearmotor 1:120 | track drive, one per pod, shaft on X into the sprocket; +2 OPTIONAL for the twin-drive front stations | 2 (+2 opt) | **3 (Bag 5, re-audited 2026-07-13; the old "own 1" was stale)** | , (**1** only if the optional 4th station is populated) |
 | MX1588 dual H-bridge | drives both TT motors, skid steer | 1 | 5 (Bag 7) |, |
 | WS2812 forehead segment | 8 LEDs in the `led_slot` recess: **42 x 5 mm, 1.5 deep** (model dot pitch 4.6). A standard 8x5050 stick is 53.3 x 10.2, it does NOT fit. Buy a narrow (4–5 mm wide) addressable strip (SK6805-2427 / WS2812-2020, ≥160 LED/m) and cut an 8-LED segment, or widen `led_slot` to ~54 x 11 for the common stick | 1 seg | 0 | **1 m narrow strip** (also covers the front strip, next row) |
 | Front white strip | 7 dots at 5 mm pitch in a 36 x 2.5 lip (`fled_*`): either 7x 3 mm white LEDs or a second segment cut from the same narrow WS2812 strip | 1 | 0 | covered by the strip above (or 10x 3 mm white LED) |
 | Amber indicator LEDs | 2 corner lamps, 12 x 7 windows (`lamp_*`): 2 rectangular amber LEDs (2x5x7) or 5 mm amber behind a printed lens | 2 | 0 | **2–5** |
-| HC-SR04 ultrasonic (optional) | front fascia: Ø16 barrel passes at 26 mm c-c (`us_dx`=±13, `us_d`=16). Buy the **HC-SR04P** (3.3V) variant, the 5V original needs a divider on ECHO for Pi GPIO | 1 | 0 | **1** (optional) |
+| HC-SR04 ultrasonic | x4 since the 2026-07-10/11 sensor passes (this row used to say "optional x1", stale): forward + rear obstacle (grille rings, Ø16 barrel passes at 26 mm c-c, `us_dx`=±13) + 2 cliff (deck slopes). With the Arduino I/O plane (docs/AWARENESS.md) plain 5V HC-SR04 is fine; HC-SR04P (3.3V) only needed if wired straight to Pi GPIO | 4 | 0 | **4** |
 | Rear pod audio | rear Ø14 cylinder pod (`rear_cyl_*`): an owned Ø12 active buzzer fits for beeps. For real audio, buy a **MAX98357A I2S amp** and drive the owned 8Ω 0.5W mini speaker (Bag 15) from inside the chassis, the speaker is ~40–50 mm and can't live in the pod; the pod becomes the grille | 1 | buzzers: 5x active 5V (Bag 1) + 4x ~12 mm (Bag 16); speaker: 1 (Bag 15) | **1x MAX98357A** (only if speech/audio wanted) |
 | Arm actuation | placeholder arms, TBD pending the arm mechanism pass. If actuated: 9x 9g servos owned (5x T-8090, 3x SG90, 1x MG90S) | TBD | 9 servos | nothing yet |
 
@@ -43,11 +44,11 @@ Owned quantities cross-checked against a personal parts inventory (2026-07-07).
 | Part | Spec | Need | Owned | Buy |
 |---|---|---|---|---|
 | 695-2RS | 5x13x4, tilt-axle cheeks | 2 | 30 (Bag 13) |, |
-| F688ZZ flanged | 8x16x5, flange Ø18; END idlers (both loop ends are free idlers since the 2026-07-11 mid-drive), **2 per wheel x 4 wheels** (one pressed at each face, Ø15.95 through-seat + Ø18.5x1.0 flange recess both sides) | 8 | 0 | **8** |
+| F688ZZ flanged | 8x16x5, flange Ø18; END idlers (both loop ends are free idlers since the 2026-07-11 mid-drive), **2 per wheel x 4 wheels** (one pressed at each face, Ø15.95 through-seat + Ø18.5x1.0 flange recess both sides). The Bag 13 "Miniature Ball Bearings" were checked as a candidate 2026-07-13: label reads **10pcs MR105 ZZ** (5x10x4, unflanged) -- wrong part | 8 | 0 | **8** |
 | 6 mm airsoft BBs | pan race, Ø80 circle, `pan_race_n`=18 | 18 | 0 | **smallest bag (100+)** |
 | Ø5 SOLID rod | tilt axle, ~100 mm silver steel (**NOT tube**: a 1.0 flat on a Ø5/Ø2.5 tube leaves a 0.25 wall). **File a 1.0-deep flat** from the insertion end to ~15 past center (D-key for the worm wheel's hub ledge); only the ~6 mm under the hub needs a clean 1.0 ±0.1 depth. The flat crosses the +X 695 seat, so that inner race rides a D-profile (fine, the spacer tubes clamp it). Print a D-bore coupon first, starting at **+0.05** clearance (+0.15 measured as ±4.4° of head backlash) | 1 | 0 | **1** |
-| M8x60 bolts + NYLOC nuts | END BOLT-AXLES (2026-07-11: plain stubs had no retention): head = outboard hubcap, shank through the F688 pair + pylon, nut inboard; front nuts CLAMP the tension slots (no set screws). NYLOC required: the nut lives in the prow-cheek clearance pocket with no wrench access after the deck drops on -- torque on the bench, retension from the outboard head only. +4 washers | 4+4 | the Bag 13 "Machine Bolts" bag may have M8; verify | **4x M8x60 + nuts if absent** |
-| 608zz | **not used** in the current design. The "608zz x30" Bag 13 entry is still flagged: photos look like white plastic rings/spacers, NEEDS ID. Don't design around them | 0 | 30? (unverified) |, |
+| M8x60 bolts + NYLOC nuts | END BOLT-AXLES (2026-07-11: plain stubs had no retention): head = outboard hubcap, shank through the F688 pair + pylon, nut inboard; front nuts CLAMP the tension slots (no set screws). NYLOC required: the nut lives in the prow-cheek clearance pocket with no wrench access after the deck drops on -- torque on the bench, retension from the outboard head only. +4 washers | 4+4 | 0 -- **SETTLED 2026-07-13: the Bag 13 "Machine Bolts" bag label reads 30PCS M3-30** (plain M3x30 pan heads), no M8 anywhere in inventory | **4x M8x60 + 4 NYLOC + 4 washers** |
+| 608zz | **not used** in the current design. SETTLED 2026-07-13: the bag label reads **"10pcs-608ZZ"** -- real 608ZZ bearings under translucent shrink wrap, not plastic rings. Still don't design around them | 0 | ~10-30 (608ZZ, confirmed by label) |, |
 
 ### Fasteners and pins
 
@@ -59,9 +60,19 @@ Owned quantities cross-checked against a personal parts inventory (2026-07-07).
 | Track hinge pins | Ø1.75 filament, Ø2.2 boundary bores only (2026-07-12 print-in-place strips: the 59 in-strip joints/side ride INTEGRAL printed Ø2.0 pins). Per pod: 3 strip-to-strip + 2 at the master (its far-end pin + the jaw closure pin) = **10 pins x ~46 mm** ≈ 0.5 m, cut from an owned spool (the black CR-PETG is tougher than PLA for pins) | 10 | spooled (Tray 1) |, |
 | Ø4 dowel pins | body-to-pod join (2 per side), Ø4x12: modeled (wall slip holes + rail press sockets) | 4 | 0 | **4** |
 | HC-SR04 ultrasonic | x4: forward + REAR obstacle (front/rear walls, inside the twin grille rings) + front/rear cliff (flush in the deck slopes, boards behind the 5-thick skin). **Inventory has ZERO** (checked 2026-07-10) | 4 | 0 | **4** |
-| M4x40 + nuts | road-wheel bolt-axles (2026-07-10 fix: wheels were mounted to nothing): head = outer hubcap, shank in the Ø4.2 wheel bore, nut captive in the rail wheel-beam slot. Prefer partially threaded (shank bearing surface); 40 mm exceeds the owned kits | 10+10 | nuts maybe in the 1263pc M2-M4 kit (verify) | **10x M4x40 (+nuts if absent)** |
+| M4x40 + nuts | road-wheel bolt-axles (2026-07-10 fix: wheels were mounted to nothing): head = outer hubcap, shank in the Ø4.2 wheel bore, nut captive in the rail wheel-beam slot. Prefer partially threaded (shank bearing surface); 40 mm exceeds the owned kits | 10+10 | nuts: OWNED (the 600pc M2-M5 kit lists **M4 nuts x40**, settled 2026-07-13); bolts: 0 | **10x M4x40** |
 
 ### Printed parts (watertight; tank base + split head)
+
+**Materials:** print `head_back` (all four pieces), `screen_tray` and `head_door` in
+**PETG, not PLA**. The Pi 5 lives in the closed head and sustains 70-80 C bursts under
+brain load (measured, see CLAUDE.md thermal notes); PLA creeps from ~60 C, so a PLA tray
+would slowly sag under the screen+Pi module and a PLA back wall would relax its snap
+tongues and tray pilots. The head_door shares the same hot bay, so it goes PETG too
+(its snap tongues also live longer in PETG). Everything else on the robot -- chassis,
+tracks, bezel, neck, pan parts, cosmetics -- can stay PLA. The black CR-PETG spool
+(Tray 1) covers the PETG set.
+
 - `chassis_lower_front` / `chassis_lower_rear`: the open-top tub, split at y=+26 for
   print speed; join with 2x M3x12 (axis Y, heads in the front pads, thread-form rear)
   + 2x Ø4 dowels in the floor pads at x +-61, then the deck + pod rails bridge it
@@ -104,6 +115,29 @@ Owned quantities cross-checked against a personal parts inventory (2026-07-07).
   `led_strip`, `antenna_stub` (pure print, no hardware, a real telescopic antenna is owned
   in Bag 15 if ever wanted), `camera_pod` eye shell, rear `trim_hatch_frame`, chassis
   `trim_fascia` + `trim_rear`, and the placeholder gripper arms (mechanism TBD)
+
+## Verify on arrival (caliper before printing)
+
+The CAD models several bought parts from datasheet/typical dims, not measurements. The
+rule for every row: **caliper the real part -> update the named param(s) -> `make build`
+-> `make check` + `make fits` -> only then print the dependent parts.** Clone boards
+vary: barrel/jack spacings tend to be stable across clones, mounting-hole patterns are
+not. Printing a seat before its part has arrived is how reprints happen.
+
+| Arriving part | Caliper this | CAD that depends on it (do not print first) |
+|---|---|---|
+| XL4015 5A buck | board LxW, mounting-hole pattern (40x20 assumed) + hole Ø, tallest component height | belly power tray posts (Ø6x6, Ø2.5 pilots, `build_belly_plate` in src/chassis.py); board must clear the z14 ballast ribs |
+| MP1584 mini buck | board LxW only (zip-mounted, no holes) | zip-anchor pair spacing (x 20/34, y -58) on the belly plate |
+| 12V PD trigger | board LxW, jack position + height above board, mounting-hole spread | rear-wall USB-C slot (14x8 at x -38, z0+24) + the 2x Ø1.7 M2 pilots at x -38±9 |
+| HC-SR04 x4 | barrel c-c (26.0 assumed -- stable), barrel Ø (16.0/16.6 bores), board LxW, **mounting-hole positions (vary by clone!)** | front/rear grille recesses + fascia pilots; both cliff recesses in the deck slopes (1.2 skin-back recess + 4x Ø1.6 M2 pilots each, `sensor_cliff*`) |
+| Gooseneck mic windscreen | foam Ø (17 assumed) + gooseneck stem Ø | ear grommet Ø15 compress-fit bores + Ø19/Ø15 trim rings in the head_back side walls (`ear_*` params) |
+| LD2410 / BME688 / IMU / SW-420 / TTP223 | board LxW + hole pattern each | chassis sensor seats (being added parametrized -- treat every one as VERIFY_ON_ARRIVAL, exact modules not yet chosen) |
+| M8x60 + NYLOC | nut across-flats (13.0 nom) + nut height, washer OD | prow-cheek nut channels (walls 13.8 apart grip the flats) + Ø14.4 washer slice |
+| M8 shank / Ø8 stubs | actual shank Ø | pylon Ø8.4 through holes + F688 8 mm bores (a fat zinc bolt binds) |
+| F688ZZ | flange Ø (18) + width (5) + OD (16) | idler Ø15.95 press seats + Ø18.5x1.0 flange recesses |
+| Narrow LED strip | strip width + dot pitch | 42x5x1.5 `led_slot` + the 36x2.5 front lip (widen `led_slot` to ~54x11 only if forced onto 8x5050 sticks) |
+| Ø5 rod | actual Ø (silver steel is -0/-0.01; generic rod varies) | 695-2RS 5 mm bore slip fit, head clamp bores, and the D-key coupon clearance (+0.05 start) |
+| XH connectors | crimped-head width | 16x8 platform obround + neck channel passes (sized for a 5-pos XH head) |
 
 ## Assembly order (verified)
 
@@ -207,10 +241,11 @@ tray killed the 88.5 mm blind channels, 2026-07-08.)
     the open rear bay: the worm passes the bracket plate's Ø12.2 bore, its tail lands in
     the open-top cradle groove, the can registers in the Ø29 pocket, and the carrier's 4
     bosses land on the plate/column rear faces. Drive 4× M3×16 from the rear into the
-    thread-form pilots. (Extraction reverses this; sliding the worm axially spins the free
-    wheel, nodding the head down ~46° over the pull -- so with the head hung and grubbed,
-    **drive the head fully UP first** to bank the travel against the ~34° stop, or loosen
-    the two head-clamp grubs. Before the head is hung, extraction is unconditional.) Route
+    thread-form pilots. (Extraction reverses this and is UNCONDITIONAL since the 2026-07-12
+    3-start worm: the mesh back-drives, so with a dead motor just hand-nod the head while
+    pulling and the worm screws itself out. The old rule -- drive the head fully UP first
+    because the single-start pull needed ~46° of nod against ~34° of stop travel -- is
+    retired, 2026-07-13.) Route
     the tilt ULN wiring on the column back standoffs, board centered at z 93, below the
     carrier (motor + driver both ride the pan group, so no leads cross a joint).
 12. **Hang the head on the axle.** Lower `head_back` so its side hubs take the axle ends, then
@@ -314,17 +349,21 @@ bundle; DSI and CSI ribbons never leave the head.
 
 1. **8x F688ZZ flanged bearings** (8x16x5, flange Ø18): most specific part, slowest to source;
    the end-idler seats are modeled around them (2 per wheel x 4 since the mid-drive).
-1b. **10x M4x40 + 10 M4 nuts** (road-wheel bolt-axles; partially threaded preferred)
-    + **4x M8x60 + nuts + washers** (end bolt-axles; verify Bag 13 first).
-2. **1x TT gearmotor 1:120** matching the owned one (blocks the drive train), plus an
-   OPTIONAL 2nd pair for the twin-drive stations (all fittings already modeled).
+1b. **10x M4x40** (road-wheel bolt-axles; partially threaded preferred; M4 nuts are owned)
+    + **4x M8x60 + 4 NYLOC nuts + 4 washers** (end bolt-axles; SETTLED 2026-07-13, Bag 13
+    has no M8).
+2. **4x HC-SR04** (forward + rear obstacle + 2 cliff; zero owned; plain 5V is fine on the
+   Arduino I/O plane). TT gearmotors are COVERED (own 3); buy 1 more only for the optional
+   twin-drive 4th station.
 3. **Power electronics** (firmware/WIRING.md): a 30W+ USB-C PD brick (the official 27W
    works), 12V PD trigger, XL4015-class 5A buck, MP1584 mini buck, JST-XH kit + crimper,
-   1 m 18 AWG silicone pair, 5A blade fuse + holder.
+   1 m 18 AWG silicone pair, inline blade-fuse holder (the 5A blade fuse itself is owned).
 4. **1 m narrow addressable LED strip** (4–5 mm wide, SK6805-2427 / WS2812-2020, ≥160 LED/m),
    one purchase covers the forehead 8-LED segment and the front 7-dot strip. (Alternative:
    widen `led_slot` to ~54x11 and buy two common 8x5050 sticks.)
-5. **Ø5 rod ~100 mm** (tilt axle) + **2x M8x20** stub axles if the Bag 13 bolt bag has no M8.
+5. **Ø5 SOLID rod ~100 mm** (tilt axle; NOT tube) + **Ø4x12 dowels x4** (body-to-pod join).
 6. **6 mm airsoft BBs** (bag of 100+; need 18): cheap, everywhere.
-7. Optional: **HC-SR04P** (3.3V variant) x1, **MAX98357A I2S amp** x1 (pairs with the owned
-   8Ω speaker), **amber LEDs** x2–5.
+7. Optional: **MAX98357A I2S amp** x1 (pairs with the owned 8Ω speaker), **amber LEDs** x2–5.
+
+Every board/hardware item above lands in the "Verify on arrival" table -- caliper before
+printing its seat.

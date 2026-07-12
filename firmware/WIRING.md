@@ -94,25 +94,52 @@ the Pi. Then the pan loop shrinks to: Pi-rail pair + 5V/GND + SDA/SCL (or TX/RX)
 - Wire gauges: Pi-rail pair 18 AWG silicone; 12 V input 22 AWG; everything else
   24-26 AWG.
 
-## Mechanical seats (modeled 2026-07-08)
+## Mechanical seats (modeled 2026-07-08; coords refreshed 2026-07-13 against src/)
 
 - **Rear jack + PD trigger:** 2x Ø1.7 M2 self-tap pilots flank the USB slot on the
-  rear wall's interior face (x +-9, z 19); the trigger's jack aligns with the slot.
+  rear wall's interior face at **x -38 +-9, z0+24** (slot + pilots moved off wall
+  center 2026-07-11, the rear HC-SR04 owns x 0; old "(x +-9, z 19)" is stale); the
+  trigger's jack aligns with the slot through the rear-left prow-cheek corridor.
 - **Strain relief:** 2x Ø3.2 zip anchors through the floor rim behind the belly
   opening (x +-6, y -68). Zip the incoming cable BEFORE the jack: a yanked tether
   loads the tie, not the board.
 - **Power tray:** Buck A mounts on a 40x20 Ø2.5-pilot grid on the belly plate's
   rear bay; Buck B zip-ties to the 2x Ø3.2 anchors beside it (x 20/34, y -58).
   Dropping the belly plate (6x M3) drops the whole power stage for service --
-  leave 60 mm of harness slack on every tray run.
+  leave 60 mm of harness slack on every tray run. Buck A sits component-side-up on
+  the posts, so with the plate bolted shut its trimpot faces the closed chassis
+  interior: ALL voltage adjustment happens with the plate dropped (see Bringup).
 - **Driver mounts:** ULN#1 on the chassis standoffs at (38, 20); MX1588 on the
-  `uln2_c` standoffs at (-38, 45); tilt ULN on the neck-column standoffs, board
-  centered at z 93 (dropped from 110: the tilt_carrier occupies z 113..153 in the
-  same y band; rides the pan frame).
+  `uln2_c` standoffs at **(0, 80)** (moved 2026-07-11, dual-drive pass; old (-38, 45)
+  is stale); tilt ULN on the neck-column standoffs, board centered at z 93 (dropped
+  from 110: the tilt_carrier occupies z 113..153 in the same y band; rides the pan
+  frame).
+
+## Bringup order (first power)
+
+Do this in sequence; the trimpot access constraint above makes the order load-bearing.
+
+1. **PD trigger alone:** plug the brick in and meter the trigger output BEFORE wiring
+   anything downstream. Confirm 12 V, not a 5/9/15/20 V misconfiguration.
+2. **Set Buck A with the Pi rail DISCONNECTED.** Belly plate dropped and hanging on
+   its harness slack (trimpot face-up toward you), power up and trim to 5.25 V
+   unloaded. Never trim with the Pi attached; a slipped trimpot sweep can cross 6 V+.
+3. **Verify under load:** put a ~2 A dummy load (power resistor or USB load tester on
+   a spare pigtail) on Buck A and confirm it still reads >= 5.15 V at the tray.
+   XL4015 clones vary; a board that droops here browns the Pi later under camera +
+   display load.
+4. **Set Buck B to 5.0 V** the same way, steppers and MX1588 unplugged.
+5. **Only now connect the Pi-rail pair** (5 A fuse inline) and boot. Check
+   `vcgencmd get_throttled` returns 0x0 with display + camera running.
+6. **Motors last:** steppers first, then TTs, watching the rails on a meter during
+   the first moves. Then bolt the belly plate shut.
 
 ## Buy list delta
 
 PD trigger board set to 12 V (or solder-jumper type), XL4015 5 A buck module,
 MP1584 mini buck, JST-XH kit + crimper, 18 AWG silicone wire (1 m red/black),
-5 A blade fuse + inline holder. The official 27 W supply stays on the list (any
-30 W+ PD brick also works now).
+inline blade-fuse holder (the 5 A blade fuse itself is owned -- ATC/ATO assortment,
+inventory re-audit 2026-07-13). The official 27 W supply stays on the list (any
+30 W+ PD brick also works now). The owned LM2596 / selectable-output bucks are
+2-3 A class: not a Buck A substitute, but a selectable-5V module can stand in for
+the MP1584 as Buck B.

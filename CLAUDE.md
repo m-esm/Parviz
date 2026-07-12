@@ -289,16 +289,20 @@ the target axis, don't fight the offset with an eccentric coupler.**
   flats drive snug, round arcs loose -- mini-Oldham, the race locates). No reduction. Rides the
   lazy-Susan BB race (see Mechanical intent). **Homing:** stall against the deck stop posts at
   ±93.3° (lug az 225 on the platform underside, posts az 118/332), back off, call it ±90.
-- **Tilt (self-locking worm, CARTRIDGE):** the worm sits on the motor's D-shaft (shaft +Y,
-  right-angle to the axle), meshing a 12T `worm_wheel` **D-keyed to the flatted Ø5 axle** (hub
-  ledge on a filed 1.0-deep flat, 2026-07-08; the old M3 grub was blind and friction-only).
-  Single-start → self-locks, so the head holds ±30° with the driver OFF. Motor + worm ride the
-  removable **`tilt_carrier`** (ears bolted on the bench, 4× M3×16 from the open rear bay; the
-  worm extracts axially through the plate's Ø12.2 bore, spinning the free wheel as it goes --
-  BUT with the head hung + grubbed, DRIVE THE HEAD FULLY UP first: clearing mesh needs ~46° of
-  worm-as-rack nod and the stops only allow ~34° from neutral, review 2026-07-08) -- a dead
-  28BYJ swaps without touching the head. **Homing:** stall the head's ±55° clamp-tube fins
-  against the cheek posts at ±33.8°. Real generated teeth per docs/WORM.md.
+- **Tilt (3-START worm since 2026-07-12, CARTRIDGE):** the worm sits on the motor's D-shaft
+  (shaft +Y, right-angle to the axle), meshing a 12T `worm_wheel` **D-keyed to the flatted Ø5
+  axle** (hub ledge on a filed 1.0-deep flat, 2026-07-08; the old M3 grub was blind and
+  friction-only). The 3-start worm (4:1, lead ~23°) BACK-DRIVES -- the old single-start
+  self-locking is gone, see the fast pan/tilt pass + the tilt-holding decision below. Motor +
+  worm ride the removable **`tilt_carrier`** (ears bolted on the bench, 4× M3×16 from the open
+  rear bay; the worm extracts axially through the plate's Ø12.2 bore, spinning the free wheel
+  as it goes). Extraction with the head hung is unconditional now: with a dead motor, hand-nod
+  the head while pulling -- the back-drivable mesh spins the worm out. (The old rule, DRIVE THE
+  HEAD FULLY UP first because clearing mesh needed ~46° of worm-as-rack nod against ~34° of
+  stop travel, applied only to the single-start worm, where the stalled head locked the worm;
+  retired 2026-07-13.) A dead 28BYJ swaps without touching the head. **Homing:** stall the
+  head's ±55° clamp-tube fins against the cheek posts at ±33.8°. Real generated teeth per
+  docs/WORM.md.
 - **Axle + bearings:** Ø5 SOLID rod (flat filed 1.0 deep from the insertion end to ~15 past
   center; a tube dies under the flat -- 0.25 wall; D-key ledge fit +0.05, coupon first, the
   old +0.15 was ±4.4° of head backlash; the +X 695 inner race rides the D-profile, fine
@@ -308,17 +312,25 @@ the target axis, don't fight the offset with an eccentric coupler.**
 - **ULN2003 mounts / motor pockets:** the base has a pan-motor pad + ULN standoffs; the tilt
   motor's Ø29 can pocket doubles as the cartridge's mesh lead-in.
 
-**Buy list (gaps; full inventory-checked BOM in docs/ASSEMBLY.md, 2026-07-08):** a 2nd track
-drive motor (see below), 4× F688ZZ flanged bearings 8×16×5 (2 per idler since the 2026-07-10
-fix; one bearing let the 30-wide wheel tilt), 14× M4×40 + nuts (road-wheel bolt-axles,
-partially threaded preferred; 40 mm exceeds the owned kits), 4× HC-SR04 (forward +
-rear obstacle + 2 cliff; NONE owned), 6 mm airsoft BBs (pan
-race), Ø5 SOLID rod for the tilt axle (gets a filed D-flat; no tube), the power set from firmware/WIRING.md
+**Buy list (gaps; inventory re-audited 2026-07-13, full BOM in docs/ASSEMBLY.md):** 8× F688ZZ
+flanged bearings 8×16×5 (2 per end idler ×4; the owned Bag 13 "Miniature Ball Bearings" are
+labeled 10pcs MR105 ZZ = 5×10×4, wrong part), 4× M8×60 + NYLOC nuts + washers (end bolt-axles;
+SETTLED: the Bag 13 "Machine Bolts" bag label reads **30PCS M3-30** -- no M8 owned), 10× M4×40
+(road-wheel bolt-axles, partially threaded preferred; 40 mm exceeds the owned kits -- M4 NUTS
+are covered, the 600pc kit lists 40), 4× HC-SR04 (forward + rear obstacle + 2 cliff; NONE
+owned), 6 mm airsoft BBs (pan race), Ø5 SOLID rod for the tilt axle (gets a filed D-flat; no
+tube -- the old wishlist "Ø5 tube" entry is stale), the power set from firmware/WIRING.md
 (30W+ PD brick, 12V PD trigger, XL4015 5A buck, MP1584 mini buck, JST-XH kit + crimper,
-18 AWG pair, 5A fuse), Ø4×12 dowels ×4, 1 m of NARROW (4–5 mm) addressable strip
-(SK6805-2427/WS2812-2020, a standard 8×5050 stick is 53.3×10.2 and does NOT fit the 42×5
-`led_slot`). M2/M3 screws are covered by the owned kits. The "608zz ×30" are unused in the
-design and still unverified (may be plastic rings).
+18 AWG pair, inline blade-fuse HOLDER -- the 5A blade fuse itself is OWNED in the ATC/ATO
+assortment; the owned LM2596/selectable bucks are 2-3 A class, no Pi-rail substitute, though
+a selectable-5V module could stand in for the MP1584 motor rail), Ø4×12 dowels ×4, 1 m of
+NARROW (4–5 mm) addressable strip (SK6805-2427/WS2812-2020, a standard 8×5050 stick is
+53.3×10.2 and does NOT fit the 42×5 `led_slot`). TT gearmotors SETTLED: inventory shows
+**3× TT 1:120 (Bag 5)** -- both required stations covered, buy 1 only if the optional
+twin-drive is populated. Arduino Uno R3 ×3 (Bag 6) confirmed. Gooseneck mics + CM108: ordered,
+NOT yet in inventory (verify the Ø17 windscreen on arrival, docs/ASSEMBLY.md). M2/M3 screws
+are covered by the owned kits. The "608zz ×30" SETTLED: bag label reads "10pcs-608ZZ" (real
+bearings under shrink wrap, not plastic rings); still unused in the design.
 
 **Buy-list additions (software side, 2026-07-12, inventory-checked):**
 - **Pi 5 active cooler — downgraded to NICE-TO-HAVE (2026-07-12): the user added a
@@ -368,8 +380,9 @@ one edge of a 30-wide wheel was a wobble hinge). Rail print orientation: bed pla
 the beam's outer face; support the two block bands above z 26.
 
 - **Drive:** `drive_L`/`drive_R` = 2× TT gearmotor placeholders (`motor_tt`), one per pod, shaft on X
-  into the sprocket. **You own only 1 TT + bare 130-size cans (no gearbox); BUY 1 more TT 1:120 (or
-  2× N20 metal-gear for a lower CoM).** One MX1588 (own ×5) drives both. Skid/differential steer.
+  into the sprocket. **You own 3× TT 1:120 (Bag 5, re-audited 2026-07-13) + bare 130-size cans;
+  both required stations are covered, buy 1 more only for the optional twin-drive 4th station.**
+  One MX1588 (own ×5) drives both. Skid/differential steer.
 - Params: `chassis_w/l`, `track_wheel_r`, `track_wheelbase`, `track_width`, `track_pitch`,
   `track_links`, `sprocket_teeth`, `idler_bore_d`, `roadwheel_*`, `track_gap`, `chassis_clear`.
 - **Body-to-pod join (modeled):** 2× M3×12 thread-forming into the rail's blind Ø2.5 pilots
@@ -600,9 +613,10 @@ station is empty and the end idler + 57.5 wheel carry the front run). Knock-ons:
 road wheels 6 -> 5 stations (57.5, +-33.5, +-11.5; both sprockets get 28.8+ axle
 gaps), beam gets a second hub notch, the y80 vent left the row for the front nub,
 and ULN2 moved (-38,45) -> (0,80) -- its posts sat inside the flipped TT_L envelope
-and the pedestal blocks every left-side alternative. BOM: 4x M8x60 + nuts (Bag 13
-"Machine Bolts" may cover it -- verify), M4x40 12 -> 10, TT motors: 2 required
-(own 1, buy 1) + 2 OPTIONAL for twin drive.
+and the pedestal blocks every left-side alternative. BOM: 4x M8x60 + NYLOC nuts
+(SETTLED 2026-07-13: Bag 13 "Machine Bolts" is 30PCS M3-30, no M8 -- buy), M4x40
+12 -> 10, TT motors: 2 required + 2 OPTIONAL for twin drive (own 3 per the
+2026-07-13 re-audit; buy 1 only for the 4th).
 
 **Granular scene nodes (2026-07-11, user: "select every little component"):** multi-body
 parts now emit DOTTED CHILD nodes into the GLB -- `track_L.link_00_master`,
@@ -727,6 +741,15 @@ and a power-off head may slowly nod.** Placeholders: pan spur pair + the 3-start
 single-start; regenerate per docs/WORM.md). Gates re-whitelisted: (pan_gears,
 motor_pan)+(pan_gears, pan_platform) replaced (pan_platform, motor_pan); viewer PAL
 silver rule grew |gears.
+
+**Tilt holding (decision, 2026-07-13):** with self-locking gone, the rule is FIRMWARE
+HOLD: energize the tilt coils whenever the head sits off its balance point, and PARK AT
+THE BALANCE POINT before any long idle or power-down (there the worm is unloaded and
+28BYJ detent + gear friction suffice; elsewhere a powered-off head may slowly nod). A
+mechanical neutral detent (spring ball on the wheel hub) is a possible future addition,
+deliberately NOT modeled now -- prove the need on the physical head first. Upside of
+the trade: the back-drivable mesh makes worm-cartridge extraction unconditional (see
+the tilt bullet above).
 
 **Arduino I/O plane (2026-07-12, user):** most elec components (sonars, IMU, BME688,
 mmWave, touch, vibration, LEDs, possibly motors) wire to an ARDUINO dev board, which
