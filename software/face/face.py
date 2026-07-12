@@ -281,6 +281,7 @@ class VisionGaze:
         self._t = -1e9
         self.want = None      # (gx, gy) in gaze space, or None
         self.present = False
+        self.online = False   # vision daemon delivering frames right now
         self.raw = None       # last parsed state dict (raw model output)
 
     def poll(self, now):
@@ -289,6 +290,7 @@ class VisionGaze:
         self._t = now
         self.want = None
         self.present = False
+        self.online = False
         self.raw = None
         try:
             if time.time() - os.path.getmtime(VISION_JSON) > 2.5:
@@ -296,6 +298,7 @@ class VisionGaze:
             with open(VISION_JSON) as f:
                 st = json.load(f)
             self.raw = st
+            self.online = not st.get("cooling")
             if st.get("person_present"):
                 self.present = True
                 self.want = (max(-1.0, min(1.0, st["cx"] * 1.3)),
@@ -560,6 +563,7 @@ class FaceRenderer:
         self.face_col = ORANGE      # drifts toward RED under stress
         self._brain_ever = False    # any decision applied since start?
         self._cooling = False       # thermal cooldown (sweating)
+        self._blind = 0.0           # vision off -> eyes closed
         self._nobrain = False
         self._dec_obj = None        # latest parsed brain decision
         self._dec_mt = None
@@ -735,8 +739,10 @@ class FaceRenderer:
                     max(2, int(bh * chh / 240))), 1)
             y += chh + 7
         lines = []
-        if raw is None:
-            lines.append(("offline", HUD_MID))
+        if raw is not None and raw.get("cooling"):
+            lines.append(("paused: cooling", HUD_WARN))
+        elif raw is None:
+            lines.append(("OFFLINE, eyes shut", HUD_WARN))
         elif raw.get("person_present"):
             lines.append((f'face {raw["n_faces"]}  conf {raw["conf"]:.2f}',
                           HUD_FAINT))
@@ -1013,6 +1019,11 @@ class FaceRenderer:
         boot_ph = (now - self._boot_t0) / BOOT_LEN_S
         self.vision.poll(now)
         self._stress_tint(dt)
+        # no vision = no sight: close the eyes (eased, reopens on frames)
+        self._blind = _ease(self._blind,
+                            0.0 if self.vision.online else 1.0,
+                            dt, speed=2.5)
+        lid = max(lid, self._blind)
         self._hud(surf, now)
         for side, ex in ((-1, EYE_CX[0]), (1, EYE_CX[1])):
             self._eye(surf, ex, EYE_CY, side, lid, dt)

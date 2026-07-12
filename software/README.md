@@ -483,3 +483,11 @@ marker (visuals) and a lowered-threshold live run (real trigger +
 resume). NOTE: at current bare-board thermals (80-85C under brain load)
 the breaker WILL trip in normal use -- that is its job until the active
 cooler (task #1) arrives.
+
+Eyes = camera (2026-07-12, user): when vision is OFF the face closes
+its eyes. VisionGaze tracks `online` (fresh vision json AND not
+cooling); a blind factor eases the lids fully shut when offline and
+reopens on frames (waking-eyes effect at perception boot). VISION panel
+states: "OFFLINE, eyes shut" (amber) vs "paused: cooling". Composes
+with cooldown: while cooling, vision is paused, so Parviz sweats WITH
+its eyes closed.
