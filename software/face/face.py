@@ -1168,15 +1168,16 @@ class FaceRenderer:
         # --- bottom band: hairline separator ties status + sensors together
         pg.draw.line(surf, HUD_FAINT, (m + 12, SCREEN_H - 48),
                      (SCREEN_W - m - 12, SCREEN_H - 48), 1)
-        # --- bottom-left: status line
-        label = self.status or f"PARVIZ // {self.state.expression.upper()}"
-        img = self._text(label)
-        surf.blit(img, (m + 12, SCREEN_H - m - img.get_height() - 12))
-        if int(now * 2) % 2 == 0:  # blinking block cursor
-            pg.draw.rect(surf, HUD_MID, pg.Rect(
-                m + 16 + img.get_width(),
-                SCREEN_H - m - img.get_height() - 10, 9,
-                img.get_height() - 4))
+        # --- bottom-left: status line (real statuses only; the old
+        # "PARVIZ // MOOD" idle label is gone per user)
+        if self.status:
+            img = self._text(self.status)
+            surf.blit(img, (m + 12, SCREEN_H - m - img.get_height() - 12))
+            if int(now * 2) % 2 == 0:  # blinking block cursor
+                pg.draw.rect(surf, HUD_MID, pg.Rect(
+                    m + 16 + img.get_width(),
+                    SCREEN_H - m - img.get_height() - 10, 9,
+                    img.get_height() - 4))
 
         # --- side panels: provenance-labeled VISION (left) / BRAIN (right)
         self._decision_line(now)   # refresh heartbeat + pending decision

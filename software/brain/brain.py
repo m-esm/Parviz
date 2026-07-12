@@ -33,6 +33,7 @@ import llm
 from scenarios import ask, ask_chain   # prompts + few-shots + schema
 
 VISION_JSON = "/dev/shm/parviz_vision.json"
+SPEECH_JSON = "/dev/shm/parviz_speech.json"
 DECISION_FILE = "/tmp/parviz_decision.json"
 READ_TRIGGER = "/dev/shm/parviz_read_text"   # read_text -> perception OCR
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -60,7 +61,7 @@ TICK_MIN_S = 1.0     # cooldown after a tick; the skip/cache layer is
 CACHE_TTL_S = float(os.environ.get("PARVIZ_CACHE_TTL", 3600.0))
 
 
-def semantic_key(vis, sy, events):
+def semantic_key(vis, sy, events, speech_ts=None):
     """The SEMANTIC inputs of a tick: what should actually change a
     decision. Raw digests always differ (clock, jittering floats), so
     the skip/cache layer keys on this instead: person state, coarse
@@ -76,6 +77,7 @@ def semantic_key(vis, sy, events):
         sorted(v.get("objects") or []),
         v.get("held_object"),
         v.get("ocr_ts"),        # each OCR read is one fresh LLM tick
+        speech_ts,              # each finished utterance likewise
         bool(v.get("facing_camera")),
         bool(v.get("eyes_closed")),
         int((v.get("size") or 0) * 3),   # coarse distance band (flap-shy)
@@ -99,6 +101,17 @@ def read_vision():
         if time.time() - os.path.getmtime(VISION_JSON) > 4.0:
             return None
         with open(VISION_JSON) as f:
+            return json.load(f)
+    except (OSError, ValueError):
+        return None
+
+
+def read_speech():
+    """Voice daemon state, or None if the ears are down/stale."""
+    try:
+        if time.time() - os.path.getmtime(SPEECH_JSON) > 3.0:
+            return None
+        with open(SPEECH_JSON) as f:
             return json.load(f)
     except (OSError, ValueError):
         return None
@@ -168,7 +181,10 @@ class Events:
                          for ts, t in self.ring[-3:])
 
 
-def build_digest(vis, sy, events, last_actions, cur_expr):
+SPEECH_FRESH_S = 12.0   # how long an utterance stays in the digest
+
+
+def build_digest(vis, sy, events, last_actions, cur_expr, speech=None):
     if vis and vis.get("person_present"):
         who = vis.get("person_name")
         who_s = f" ({who})" if who else ""
@@ -200,9 +216,22 @@ def build_digest(vis, sy, events, last_actions, cur_expr):
     if (vis or {}).get("held_object"):
         scene += (f'; a {vis["held_object"].replace("_", " ")} is HELD UP '
                   f'close to the camera')
+    sp = speech or {}
+    heard_age = (time.time() - sp["final_ts"]) if sp.get("final_ts") else 1e9
+    if sp.get("partial"):
+        sound = f'user is speaking right now: "{sp["partial"]}..."'
+    elif sp.get("final") and heard_age < SPEECH_FRESH_S:
+        sound = f'user said ({int(heard_age)}s ago): "{sp["final"]}"'
+    elif speech is not None:
+        sound = "quiet (ears live)"
+    else:
+        sound = "ears offline"
     # EVENT leads with the CURRENT salient situation (tiny models act on
-    # the top line); the ring history follows inside it.
-    if vis and vis.get("person_present"):
+    # the top line); the ring history follows inside it. SPEECH OUTRANKS
+    # everything: being spoken to is the most salient thing there is.
+    if sp.get("final") and heard_age < SPEECH_FRESH_S:
+        ev = f'the user SPOKE to me: "{sp["final"]}"'
+    elif vis and vis.get("person_present"):
         who = vis.get("person_name")
         ges = (f', gesture {vis["gesture"]}'
                if vis.get("gesture") and vis["gesture"] != "none" else "")
@@ -224,7 +253,7 @@ def build_digest(vis, sy, events, last_actions, cur_expr):
             if vis.get("ocr_text")
             else f"text: OCR ran {age}s ago, no readable text found")
     return "\n".join(lines + [
-        "sound: mics not wired yet",
+        f"sound: {sound}",
         f'env: cpu {sy.get("temp_c", "?")}C load {sy.get("load_pct", "?")}% '
         f'mem {sy.get("mem_pct", "?")}% | wall power ok',
         "sonar: not wired | tracks: not wired",
@@ -309,6 +338,7 @@ def main():
     cur_expr = "neutral"
     cur_backend = None
     last_key, last_payload = None, None   # skip layer
+    last_speech_ts = None                 # utterances already evented
     cache, skips = {}, 0                  # 1h decision cache
     ticks = llm_calls = hits = skips_total = 0   # HUD stats
     hit_logged = 0.0
@@ -358,8 +388,15 @@ def main():
         vis = read_vision()
         events.update_from_vision(vis)
         sy = read_sys()
-        digest = build_digest(vis, sy, events, last_actions, cur_expr)
-        skey = semantic_key(vis, sy, events)
+        speech = read_speech()
+        if (speech and speech.get("final_ts")
+                and speech["final_ts"] != last_speech_ts
+                and time.time() - speech["final_ts"] < SPEECH_FRESH_S):
+            last_speech_ts = speech["final_ts"]
+            events.add(f'user said: "{speech["final"][:60]}"')
+        digest = build_digest(vis, sy, events, last_actions, cur_expr,
+                              speech)
+        skey = semantic_key(vis, sy, events, last_speech_ts)
         ticks += 1
 
         # SKIP: inputs unchanged since the last decision -> no LLM call;
