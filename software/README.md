@@ -491,3 +491,22 @@ reopens on frames (waking-eyes effect at perception boot). VISION panel
 states: "OFFLINE, eyes shut" (amber) vs "paused: cooling". Composes
 with cooldown: while cooling, vision is paused, so Parviz sweats WITH
 its eyes closed.
+
+## AirPods audio (paired 2026-07-12)
+
+"Mohsen's AirPods" (14:98:77:F0:ED:40) are paired/trusted -> auto-
+reconnect. Default sink: bluez_output.14_98_77_F0_ED_40.1. Stack:
+pipewire+wireplumber user services with `loginctl enable-linger moshe`
+(survive reboot/no-SSH), `libspa-0.2-bluetooth` (A2DP; NOT installed by
+default), pulseaudio-utils for pactl.
+
+THE lesson: on a busy-RF desk, BlueZ's default dual-mode discovery
+NEVER saw the AirPods (btmon showed zero packets from them during scans)
+while raw classic inquiry (`hcitool scan`) saw them fine. Fix =
+`ControllerMode = bredr` in /etc/bluetooth/main.conf + restart: classic-
+only discovery found them in 18 s. NOTE this disables BLE on the Pi
+(fine: sensors go through the Arduino). bluetoothd also runs with -E
+(experimental drop-in) from debugging; harmless, can be removed. Pairing
+UX: hold the case button (lid open) ~10 s PAST the green/amber status
+blink until the light PULSES WHITE; iPhone Bluetooth must be OFF or iOS
+re-captures them. audio/pair_airpods.sh re-pairs after a factory reset.
