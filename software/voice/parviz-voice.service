@@ -1,0 +1,22 @@
+# Parviz voice daemon stage 1: always-open mic -> streaming local ASR ->
+# /dev/shm/parviz_speech.json (live captions on the face; brain hook next).
+#
+# Install (from ~/parviz-sw on the Pi):
+#   sudo cp voice/parviz-voice.service /etc/systemd/system/
+#   sudo systemctl daemon-reload && sudo systemctl enable --now parviz-voice
+
+[Unit]
+Description=Parviz voice (mic -> streaming ASR -> speech state)
+After=bluetooth.target sound.target
+
+[Service]
+User=moshe
+WorkingDirectory=/home/moshe/parviz-sw/voice
+Environment=XDG_RUNTIME_DIR=/run/user/1000
+ExecStart=/usr/bin/python3 /home/moshe/parviz-sw/voice/voice.py
+Restart=always
+RestartSec=5
+MemoryMax=400M
+
+[Install]
+WantedBy=multi-user.target

@@ -73,6 +73,7 @@ RED = (225, 45, 38)   # stress tint target: the face reddens as the
                       # system heats/loads up (user 2026-07-12)
 
 DECISION_FILE = "/tmp/parviz_decision.json"   # brain writes, face EXECUTES
+SPEECH_JSON = "/dev/shm/parviz_speech.json"   # voice daemon's live ears
 BRAIN_STALE_S = 45.0   # no fresh decision for this long -> face sleeps
 
 BOOT_LEN_S = 1.6             # power-on reveal
@@ -683,6 +684,8 @@ class FaceRenderer:
         self._status_until = None
         self._say = None            # spoken line, drawn big under mouth
         self._say_until = None
+        self._sp = None             # voice daemon state (live caption)
+        self._sp_t = -1e9
         self._font = pygame.font.SysFont(
             "dejavusansmono,menlo,consolas,monospace", 17)
         self._font_lg = pygame.font.SysFont(
@@ -798,6 +801,27 @@ class FaceRenderer:
                 y + h - min(1.0, max(0.0, (v - lo) / span)) * h)
                for i, v in enumerate(hist)]
         pg.draw.lines(surf, HUD_MID, False, pts, 2)
+
+    def _speech_state(self, now):
+        """Live caption from the voice daemon: ('text', color) or None.
+        Polls /dev/shm/parviz_speech.json at 4 Hz."""
+        if now - self._sp_t >= 0.25:
+            self._sp_t = now
+            self._sp = None
+            try:
+                if time.time() - os.path.getmtime(SPEECH_JSON) < 3.0:
+                    with open(SPEECH_JSON) as f:
+                        self._sp = json.load(f)
+            except (OSError, ValueError):
+                pass
+        sp = self._sp
+        if not sp:
+            return None
+        if sp.get("partial"):
+            return f'hearing: {sp["partial"]}', HUD_FG
+        if sp.get("final") and time.time() - sp.get("final_ts", 0) < 8.0:
+            return f'heard: "{sp["final"]}"', HUD_MID
+        return None
 
     def _decision_line(self, now):
         """Poll DECISION_FILE every 2 s: display line, NEW decisions queued
@@ -1167,6 +1191,13 @@ class FaceRenderer:
                                  col, tiny=True), (m + 8, ry))
             self._spark(surf, m + 36, ry + 2, 96, 10,
                         self.audio.hist[side])
+        # --- what the EARS hear: live caption above the meters (partial
+        # bright while you speak, the finished utterance lingers dim)
+        sp = self._speech_state(now)
+        if sp:
+            line, col = sp
+            img = self._text(line[:76], col, tiny=True)
+            surf.blit(img, (m + 8, SCREEN_H - 106))
 
         # --- bottom-right: sensor slots (fill in as hardware arrives)
         cam_s = "OK" if self.campre.ok else "--"
