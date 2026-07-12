@@ -46,7 +46,6 @@ POSE_MODEL = os.path.join(HERE, "models", "movenet_lightning_int8.tflite")
 FACES_DIR = os.path.join(HERE, "faces")     # enrolled identities (*.npy)
 ENROLL_TRIGGER = "/dev/shm/parviz_enroll"   # write a name here to enroll
 READ_TRIGGER = "/dev/shm/parviz_read_text"  # brain's read_text action
-OCR_KEEP_S = 45.0                           # how long a read stays in state
 VISION_JSON = "/dev/shm/parviz_vision.json"
 PREVIEW_JPG = "/dev/shm/parviz_preview.jpg"
 COOL_ENTER = float(os.environ.get("PARVIZ_COOL_ENTER", 80.0))
@@ -222,23 +221,104 @@ class Pose:
 
 
 class OCR:
-    """RapidOCR (PP-OCR via onnxruntime), triggered by the brain's
-    read_text action: one full-frame pass (~1-2 s) per trigger, never
-    continuous. LAZY init: ~80 MB of models only load on first use."""
+    """RapidOCR (PP-OCR via onnxruntime). LAZY init: ~80 MB of models
+    only load on first use."""
 
     def __init__(self):
         self._ocr = None
 
-    def run(self, bgr):
+    def _model(self):
         if self._ocr is None:
             from rapidocr_onnxruntime import RapidOCR
             self._ocr = RapidOCR()
-        res, _ = self._ocr(bgr)
+        return self._ocr
+
+    def detect(self, bgr):
+        """Cheap detection-only pass: are there text boxes at all?"""
+        res, _ = self._model()(bgr, use_det=True, use_cls=False,
+                               use_rec=False)
+        return bool(res)
+
+    def run(self, bgr):
+        res, _ = self._model()(bgr)
         if not res:
             return ""
         # top-to-bottom reading order, joined into one line per box
         rows = sorted(res, key=lambda r: min(p[1] for p in r[0]))
         return " / ".join(r[1].strip() for r in rows if r[1].strip())
+
+
+class AmbientOCR:
+    """CONTINUOUS reading (user: 'read every second'), off the main
+    loop so gaze/expression never stutter. Every second: a 32x24
+    gray frame-diff decides if anything changed (static scene = the
+    text simply persists, zero OCR cost); on change, detection-only
+    first (~0.2 s), full recognition (~1 s) only when boxes exist.
+    ocr_ts bumps ONLY when the TEXT changes, so the brain gets exactly
+    one fresh tick per new text, not one per second. The read_text
+    trigger file forces an immediate full pass (the brain's action
+    still works and bypasses the diff gate). Text clears after 3
+    consecutive no-text passes."""
+
+    DIFF_THR = 4.0
+    MISSES = 3
+
+    def __init__(self, ocr, latest):
+        import threading
+        self.ocr = ocr
+        self.latest = latest        # [bgr] holder the main loop updates
+        self.state = {}             # ocr_text / ocr_ts / ocr_ms
+        self._gray = None
+        self._miss = 0
+        threading.Thread(target=self._loop, daemon=True).start()
+
+    def _loop(self):
+        while True:
+            t0 = time.monotonic()
+            bgr = self.latest[0]
+            if bgr is not None:
+                try:
+                    self._cycle(bgr)
+                except Exception as e:
+                    print(f"ambient ocr failed: {e}", flush=True)
+            time.sleep(max(0.0, 1.0 - (time.monotonic() - t0)))
+
+    def _cycle(self, bgr):
+        forced = os.path.exists(READ_TRIGGER)
+        if forced:
+            try:
+                os.remove(READ_TRIGGER)
+            except OSError:
+                pass
+        gray = cv2.resize(
+            cv2.cvtColor(bgr, cv2.COLOR_BGR2GRAY), (32, 24)).astype(int)
+        changed = (self._gray is None
+                   or np.abs(gray - self._gray).mean() > self.DIFF_THR)
+        if not (changed or forced):
+            return
+        self._gray = gray
+        t0 = time.monotonic()
+        if forced or self.ocr.detect(bgr):
+            text = self.ocr.run(bgr)
+        else:
+            text = ""
+        ms = round((time.monotonic() - t0) * 1000)
+        if text:
+            self._miss = 0
+            if text != self.state.get("ocr_text"):
+                self.state = {"ocr_text": text,
+                              "ocr_ts": round(time.time(), 2),
+                              "ocr_ms": ms}
+                print(f"ocr ({ms}ms): {text[:70]!r}", flush=True)
+        else:
+            self._miss += 1
+            if forced and not self.state:
+                # an explicit read that found nothing is an answer too
+                self.state = {"ocr_text": "", "ocr_ts": round(
+                    time.time(), 2), "ocr_ms": ms}
+            elif self._miss >= self.MISSES and self.state:
+                self.state = {}
+                print("ocr: text gone", flush=True)
 
 
 class FaceID:
@@ -429,14 +509,14 @@ def run(bench_s=None, hz=LOOP_HZ):
         fid = FaceID()                  # 1 fps, when a face is present
     except Exception as e:
         print(f"face-id unavailable ({e})", flush=True)
-    ocr = OCR()                         # trigger-only, lazy model load
+    latest = [None]                     # newest full frame, for OCR
+    ambient = AmbientOCR(OCR(), latest)   # 1 Hz reader (own thread)
     period = 1.0 / hz
     last_prev = 0.0
     loop_n = 0
     last_hand = None
     last_yolo_t, yolo_res = 0.0, ([], 0, None)
     last_sface_t, name_res = 0.0, None
-    ocr_res = None
     lat = []
     t_start = time.monotonic()
     fps_t0, fps_n, fps = t_start, 0, 0.0
@@ -545,24 +625,9 @@ def run(bench_s=None, hz=LOOP_HZ):
             st["objects"], st["yolo_persons"] = yolo_res[:2]
             if yolo_res[2]:
                 st["held_object"] = yolo_res[2]
-        # READ_TEXT: brain-triggered one-shot OCR (blocks ~1-2 s; that is
-        # fine, it is a deliberate act, not an ambient stage)
-        if os.path.exists(READ_TRIGGER):
-            try:
-                os.remove(READ_TRIGGER)
-            except OSError:
-                pass
-            t5 = time.monotonic()
-            try:
-                txt = ocr.run(bgr)
-            except Exception as e:
-                print(f"ocr failed: {e}", flush=True)
-                txt = ""
-            ocr_res = (txt, round(time.time(), 2),
-                       round((time.monotonic() - t5) * 1000))
-            print(f"ocr ({ocr_res[2]}ms): {txt[:80]!r}", flush=True)
-        if ocr_res and time.time() - ocr_res[1] <= OCR_KEEP_S:
-            st["ocr_text"], st["ocr_ts"], st["ocr_ms"] = ocr_res
+        # OCR: the ambient 1 Hz reader owns its lifecycle; merge here
+        latest[0] = bgr
+        st.update(ambient.state)
         loop_n += 1
         write_atomic(VISION_JSON, json.dumps(st))
         if t0 - last_prev >= PREVIEW_EVERY_S:

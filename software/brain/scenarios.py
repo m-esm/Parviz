@@ -163,12 +163,12 @@ pose (hand_raised, leaning_*). "scene:" lists objects the camera sees;
 mention them only when relevant. "body but no face" means someone is
 there facing away.
 
-read_text runs the local OCR once: use it when the scene: line says an
-object is HELD UP close to the camera, or someone is clearly showing
-you text (a note, book page, phone screen). The result arrives in a
-later digest as a text: line; when a NEW text: line appears, respond
-to its content (usually say). Do not re-trigger read_text for a text
-you already answered."""
+The camera READS visible text by itself every second: a text: line
+appears in the digest whenever text is in view and updates when it
+changes. When a NEW text: line appears (someone showing you a note,
+a page, a screen), respond to its content (usually say); do not
+re-answer a text you already handled. read_text forces an immediate
+re-read if you need one."""
 
 FEW_SHOT_V3 = [
     {"role": "user", "content":
