@@ -792,6 +792,10 @@ class FaceRenderer:
                              for o in raw["objects"][:4])
             for ln in self._wrap(f'see: {objs}', 19, max_lines=2):
                 lines.append((ln, HUD_FAINT))
+        if raw is not None and raw.get("ocr_text"):
+            for ln in self._wrap(f'read: {raw["ocr_text"]}', 19,
+                                 max_lines=3):
+                lines.append((ln, HUD_MID))
         for s, col in lines:
             surf.blit(self._text(s, col, tiny=True), (x0, y))
             y += 14

@@ -45,6 +45,8 @@ SFACE_MODEL = os.path.join(HERE, "models", "sface.onnx")
 POSE_MODEL = os.path.join(HERE, "models", "movenet_lightning_int8.tflite")
 FACES_DIR = os.path.join(HERE, "faces")     # enrolled identities (*.npy)
 ENROLL_TRIGGER = "/dev/shm/parviz_enroll"   # write a name here to enroll
+READ_TRIGGER = "/dev/shm/parviz_read_text"  # brain's read_text action
+OCR_KEEP_S = 45.0                           # how long a read stays in state
 VISION_JSON = "/dev/shm/parviz_vision.json"
 PREVIEW_JPG = "/dev/shm/parviz_preview.jpg"
 COOL_ENTER = float(os.environ.get("PARVIZ_COOL_ENTER", 80.0))
@@ -141,12 +143,21 @@ class Objects:
         out = self.sess.run(None, {"images": x})[0][0]
         best = {}
         n_person = 0
+        held = None
         for d in out[out[:, 4] > self.conf]:
             name = COCO[int(d[5])]
             if name == "person":
                 n_person += 1
                 continue          # people are covered by the face stack
             best[name] = max(best.get(name, 0.0), float(d[4]))
+            # a text-bearing object filling the middle of the view is
+            # being HELD UP to the camera -- the brain's read_text cue
+            if name in ("book", "cell_phone", "laptop"):
+                x1, y1, x2, y2 = d[:4]
+                area = (x2 - x1) * (y2 - y1) / float(nw * nh)
+                cx = (x1 + x2) / 2
+                if area > 0.10 and 0.25 * nw < cx < 0.75 * nw:
+                    held = name
         # 2-frame hysteresis: an object must be seen twice in a row to
         # appear, and missed twice to drop -- keeps the brain's semantic
         # key (and its LLM calls) from churning on detector flicker
@@ -160,7 +171,7 @@ class Objects:
             self._streak.setdefault(name, 1)
         stable = [n for n in sorted(best, key=best.get, reverse=True)
                   if self._streak.get(n, 0) >= 2]
-        return stable[:6], n_person
+        return stable[:6], n_person, held
 
 
 class Pose:
@@ -208,6 +219,26 @@ class Pose:
                 "body_conf": round(float(np.mean(
                     [k[n][2] for n in ("l_shoulder", "r_shoulder",
                                        "nose")])), 2)}
+
+
+class OCR:
+    """RapidOCR (PP-OCR via onnxruntime), triggered by the brain's
+    read_text action: one full-frame pass (~1-2 s) per trigger, never
+    continuous. LAZY init: ~80 MB of models only load on first use."""
+
+    def __init__(self):
+        self._ocr = None
+
+    def run(self, bgr):
+        if self._ocr is None:
+            from rapidocr_onnxruntime import RapidOCR
+            self._ocr = RapidOCR()
+        res, _ = self._ocr(bgr)
+        if not res:
+            return ""
+        # top-to-bottom reading order, joined into one line per box
+        rows = sorted(res, key=lambda r: min(p[1] for p in r[0]))
+        return " / ".join(r[1].strip() for r in rows if r[1].strip())
 
 
 class FaceID:
@@ -398,12 +429,14 @@ def run(bench_s=None, hz=LOOP_HZ):
         fid = FaceID()                  # 1 fps, when a face is present
     except Exception as e:
         print(f"face-id unavailable ({e})", flush=True)
+    ocr = OCR()                         # trigger-only, lazy model load
     period = 1.0 / hz
     last_prev = 0.0
     loop_n = 0
     last_hand = None
-    last_yolo_t, yolo_res = 0.0, ([], 0)
+    last_yolo_t, yolo_res = 0.0, ([], 0, None)
     last_sface_t, name_res = 0.0, None
+    ocr_res = None
     lat = []
     t_start = time.monotonic()
     fps_t0, fps_n, fps = t_start, 0, 0.0
@@ -508,8 +541,28 @@ def run(bench_s=None, hz=LOOP_HZ):
                     yolo_res = obj.run(bgr)
                     st["obj_ms"] = round((time.monotonic() - t4) * 1000, 1)
                 except Exception:
-                    yolo_res = ([], 0)
-            st["objects"], st["yolo_persons"] = yolo_res
+                    yolo_res = ([], 0, None)
+            st["objects"], st["yolo_persons"] = yolo_res[:2]
+            if yolo_res[2]:
+                st["held_object"] = yolo_res[2]
+        # READ_TEXT: brain-triggered one-shot OCR (blocks ~1-2 s; that is
+        # fine, it is a deliberate act, not an ambient stage)
+        if os.path.exists(READ_TRIGGER):
+            try:
+                os.remove(READ_TRIGGER)
+            except OSError:
+                pass
+            t5 = time.monotonic()
+            try:
+                txt = ocr.run(bgr)
+            except Exception as e:
+                print(f"ocr failed: {e}", flush=True)
+                txt = ""
+            ocr_res = (txt, round(time.time(), 2),
+                       round((time.monotonic() - t5) * 1000))
+            print(f"ocr ({ocr_res[2]}ms): {txt[:80]!r}", flush=True)
+        if ocr_res and time.time() - ocr_res[1] <= OCR_KEEP_S:
+            st["ocr_text"], st["ocr_ts"], st["ocr_ms"] = ocr_res
         loop_n += 1
         write_atomic(VISION_JSON, json.dumps(st))
         if t0 - last_prev >= PREVIEW_EVERY_S:

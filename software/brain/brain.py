@@ -34,6 +34,7 @@ from scenarios import ask, ask_chain   # prompts + few-shots + schema
 
 VISION_JSON = "/dev/shm/parviz_vision.json"
 DECISION_FILE = "/tmp/parviz_decision.json"
+READ_TRIGGER = "/dev/shm/parviz_read_text"   # read_text -> perception OCR
 HERE = os.path.dirname(os.path.abspath(__file__))
 JOURNAL = os.path.join(HERE, "journal.log")
 # Comma-separated FAILOVER CHAIN of backend specs (llm.py): e.g.
@@ -73,6 +74,8 @@ def semantic_key(vis, sy, events):
         v.get("pose"),
         bool(v.get("body_present")),
         sorted(v.get("objects") or []),
+        v.get("held_object"),
+        v.get("ocr_ts"),        # each OCR read is one fresh LLM tick
         bool(v.get("facing_camera")),
         bool(v.get("eyes_closed")),
         int((v.get("size") or 0) * 3),   # coarse distance band (flap-shy)
@@ -85,9 +88,9 @@ def semantic_key(vis, sy, events):
 
 def cacheable(parsed):
     """Only pure decisions (expression/say/log/nothing) may be replayed;
-    escalate and move have side effects and must re-run for real."""
-    return not any(isinstance(a, dict) and a.get("do") in ("escalate",
-                                                           "move")
+    escalate, move and read_text have side effects, must re-run for real."""
+    return not any(isinstance(a, dict)
+                   and a.get("do") in ("escalate", "move", "read_text")
                    for a in parsed.get("actions", []))
 
 
@@ -194,6 +197,9 @@ def build_digest(vis, sy, events, last_actions, cur_expr):
         person = "vision offline"
     objs = (vis or {}).get("objects") or []
     scene = ", ".join(o.replace("_", " ") for o in objs) or "nothing notable"
+    if (vis or {}).get("held_object"):
+        scene += (f'; a {vis["held_object"].replace("_", " ")} is HELD UP '
+                  f'close to the camera')
     # EVENT leads with the CURRENT salient situation (tiny models act on
     # the top line); the ring history follows inside it.
     if vis and vis.get("person_present"):
@@ -206,10 +212,18 @@ def build_digest(vis, sy, events, last_actions, cur_expr):
     else:
         ev = events.line()
     acted = (", ".join(last_actions[-3:])) if last_actions else "none yet"
-    return "\n".join([
+    lines = [
         f"EVENT: {ev}",
         f"person: {person}",
         f"scene: {scene}",
+    ]
+    if (vis or {}).get("ocr_ts"):
+        age = int(time.time() - vis["ocr_ts"])
+        lines.append(
+            f'text (read {age}s ago): "{vis["ocr_text"][:200]}"'
+            if vis.get("ocr_text")
+            else f"text: OCR ran {age}s ago, no readable text found")
+    return "\n".join(lines + [
         "sound: mics not wired yet",
         f'env: cpu {sy.get("temp_c", "?")}C load {sy.get("load_pct", "?")}% '
         f'mem {sy.get("mem_pct", "?")}% | wall power ok',
@@ -423,6 +437,14 @@ def main():
                     tier3(str(a.get("task", "")), digest, journal, events)
                 elif do == "move":
                     journal(f"move (no motors yet): {a}")
+                elif do == "read_text":
+                    try:
+                        with open(READ_TRIGGER, "w") as f:
+                            f.write("1")
+                        journal("read_text -> OCR triggered")
+                        events.add("I am reading the text shown to me")
+                    except OSError as e:
+                        journal(f"read_text trigger failed: {e}")
             payload = dict(parsed)
             payload["ts"] = time.time()
             payload["latency_s"] = round(dt, 1)

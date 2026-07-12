@@ -132,7 +132,8 @@ Input: a sensor digest. Output: ONLY JSON {"actions": [...], "reason": \
 {"do":"do_nothing"} | {"do":"set_expression","name":"neutral|happy|sad|surprised|sleepy|concerned|angry|sick"} | \
 {"do":"say","text":"..."} | \
 {"do":"move","kind":"forward|backward|turn_left|turn_right|stop","amount":n} | \
-{"do":"log","note":"..."} | {"do":"escalate","task":"..."}
+{"do":"log","note":"..."} | {"do":"escalate","task":"..."} | \
+{"do":"read_text"}
 Keep "reason" under 10 words. The eyes track people by themselves; you \
 do NOT control gaze.
 
@@ -154,7 +155,14 @@ The person line may name WHO it is (enrolled identity; "stranger" =
 unrecognized face -- be politely curious, never hostile) and their body
 pose (hand_raised, leaning_*). "scene:" lists objects the camera sees;
 mention them only when relevant. "body but no face" means someone is
-there facing away."""
+there facing away.
+
+read_text runs the local OCR once: use it when the scene: line says an
+object is HELD UP close to the camera, or someone is clearly showing
+you text (a note, book page, phone screen). The result arrives in a
+later digest as a text: line; when a NEW text: line appears, respond
+to its content (usually say). Do not re-trigger read_text for a text
+you already answered."""
 
 FEW_SHOT_V3 = [
     {"role": "user", "content":
@@ -225,7 +233,7 @@ ACTION_SCHEMA = {
                 "properties": {
                     "do": {"type": "string", "enum": [
                         "do_nothing", "set_expression", "look_at", "say",
-                        "move", "log", "escalate"]},
+                        "move", "log", "escalate", "read_text"]},
                     "name": {"type": "string", "enum": [
                         "neutral", "happy", "sad", "surprised", "sleepy",
                         "concerned", "angry", "sick",
