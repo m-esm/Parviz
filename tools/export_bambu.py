@@ -94,8 +94,8 @@ PARTS = {  # name: (subsystem, [rotations], obj_settings)
     "tilt_worm_real":  ("neck", [(X, 90)],   TREE),     # stand on shaft end (H 14)
     "track_pod_rail_L": ("base", [(Y, 90)],  TREE),     # outer face -> bed (H 8)
     "track_pod_rail_R": ("base", [(Y, 90)],  TREE),
-    "track_keeper_L":  ("base", [],          NOSUP),    # tiny bars flat (H 5.5)
-    "track_keeper_R":  ("base", [],          NOSUP),
+    "track_keeper_L":  ("base", [(X, 90)],   NOSUP),    # rolled onto the wide face
+    "track_keeper_R":  ("base", [(X, 90)],   NOSUP),    # (bed 14->29 mm2, overhang halved)
 }
 
 # category -> ordered part names (or generated-unit tokens); each becomes 1+ named plates
@@ -157,13 +157,27 @@ def drivegear_units():
             if abs(b_.bounds[0][2]) < 12 and b_.bounds[0][2] < 10:  # dips to the pin line
                 pass
             if min(abs(cy - P["spr_y"]), abs(cy - P["spr_y2"])) < 5:
-                ns += 1; nm, ob = f"sprocket_{side}{ns}", TREE
+                ns += 1; nm, ob = f"sprocket_{side}{ns}", NOSUP
             elif abs(abs(cy) - P["track_wheelbase"] / 2) < 5:
-                ni += 1; nm, ob = f"end_idler_{side}{ni}", TREE
+                ni += 1; nm, ob = f"end_idler_{side}{ni}", NOSUP
             else:
                 nw += 1; nm, ob = f"road_wheel_{side}{nw}", NOSUP
             b_ = b_.copy()
             b_.apply_transform(R(Y, 90))
+            # ORIENTATION-NORMALIZE (2026-07-12 print pass): the L/R STLs are
+            # mirrored, so one uniform rotation lands L sprockets DISC-UP -- a
+            # ~1050 mm2 tree-forest ceiling over the toothed disc at z 24 (the R
+            # side lands disc-down with ~28 mm2 residual). Data-driven fix: if the
+            # high half carries big >45deg down-facing area, flip 180. With the
+            # disc down, the only ceilings left on sprockets/idlers are 1-2 mm
+            # annular bore steps (counterbore, F688 flange recess) that BRIDGE
+            # cleanly -- so support is OFF above: tree pillars inside press bores
+            # scar the very faces the bearings/D-shaft seat on.
+            b_.apply_translation((0, 0, -b_.bounds[0][2]))
+            fn_, fc_, fa_ = b_.face_normals, b_.triangles_center, b_.area_faces
+            high_ov = fa_[(fn_[:, 2] < -0.707) & (fc_[:, 2] > 10.0)].sum()
+            if high_ov > 200.0:
+                b_.apply_transform(R(X, 180))
             out.append((nm, b_, ob))
         assert (ns, ni, nw) == (2, 2, 5), f"unexpected running gear split {side}: {(ns, ni, nw)}"
     for _, m, _ in out:
@@ -172,18 +186,21 @@ def drivegear_units():
 
 
 def link_units():
-    """63 plain links/side + 1 master/side, support OFF -- orientations SLICE-VERIFIED
-    (2026-07-12, BambuStudio CLI: the old all-grouser-up pose stood every plain link on
-    its round knuckle tangent lines and sliced with 'floating regions' warnings; flat
-    grouser-down = 'floating cantilever'). PLAIN links print STANDING, pin bores
-    vertical (R(Y,90)): clean slice, round bores, knuckle running faces as vertical
-    walls; 44.8 tall on a 9.5x17 foot -- keep the 5 mm brim. MASTER links keep the
-    grouser-up pose: the C-jaw removes exactly the region that floats on plains (clean
-    slice), while standing they cantilever the jaw/keeper bosses."""
-    plain = tracks._track_link(); plain.apply_transform(R(Y, 90))
+    """63 plain links/side + 1 master/side. ORIENTATION HISTORY (all slice-tested):
+    grouser-up NOSUP = 'floating regions' (links stood on round knuckle tangent
+    lines); STANDING bores-vertical NOSUP sliced clean but FAILED ON THE PRINTER
+    (2026-07-12, user: 'the chain itself failed to print' -- 61x 44.8-tall towers
+    on 9.5x17 feet are a topple domino no slice check sees). NOW: plain links lie
+    GROUSER-DOWN with TREE SUPPORT -- 9.5 tall, rock-stable, and every scar lands
+    on the traction face / knuckle outers (the wheel-rolling INNER faces and the
+    pin channel print as clean unsupported top surfaces; grouser-up + support
+    would scar exactly those). Horizontal-bore sag is absorbed by the Ø2.2 print
+    bore (PARAMS track_pin_bore_d). MASTER links keep grouser-up NOSUP (the C-jaw
+    removes exactly the region that floats on plains; verified clean)."""
+    plain = tracks._track_link()                     # local -z = outer face = DOWN
     master = tracks._track_master_link()[0]; master.apply_transform(R(X, 180))
     n = P["track_links"]
-    out = [("track_link", plain.copy(), NOSUP) for _ in range((n - 1) * 2)]
+    out = [("track_link", plain.copy(), TREE) for _ in range((n - 1) * 2)]
     out += [("track_master_link", master.copy(), NOSUP) for _ in range(2)]
     for _, m, _ in out:
         m.apply_translation((0, 0, -m.bounds[0][2]))

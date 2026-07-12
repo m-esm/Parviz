@@ -532,13 +532,21 @@ sprocket hub crosses it. EARS moved to the head sides' vertical center: (y -40,
 z 157) -- y -40 is the derived clear column (trim rails y +-13, Ø26 tilt clamp
 tubes to y -31, Ø20 pivot bosses, wall flat ends y -54). BOM: F688ZZ 4 -> 8 (two
 per end idler x4), M4x40 12, hinge pins 128, Ø8 stubs x4 ~50 mm (M8 bolts work).
-PRINT NOTE: 128 track links total -- budget the print time (~23 h / ~294 g across 3
-plates, slice-measured). LINK ORIENTATION IS SLICE-VERIFIED (2026-07-12, BambuStudio
-CLI): plain links print STANDING with pin bores vertical -- the old grouser-up pose
-stood them on round knuckle tangent lines and sliced with 'floating regions' (flat
-grouser-down = 'floating cantilever'); the MASTER links are the opposite (grouser-up
-clean, standing cantilevers the jaw). Both baked into tools/export_bambu.py
-link_units(); keep the 5 mm brim on the 44.8-tall standing links.
+PRINT NOTE: 128 track links total, ~19 h / ~313 g across 5 plates (headless-slice
+measured). LINK ORIENTATION (2026-07-12, revised after a REAL printer failure): the
+slice-clean STANDING pose failed on the machine -- 61x 44.8-tall towers on 9.5x17
+feet are a topple domino no slice check catches. Plain links now lie GROUSER-DOWN
+with TREE support: 9.5 tall and stable, scars land on the traction face + knuckle
+outers while the wheel-rolling INNER faces print as clean top surfaces (grouser-up
++ support would scar those). track_pin_bore_d 2.0 -> 2.2 absorbs horizontal-bore
+roof sag over the Ø1.75 pins. MASTER links stay grouser-up NOSUP (C-jaw removes the
+floating region). Track gear plate: running-gear bodies are ORIENTATION-NORMALIZED
+after the shared R(Y,90) (mirrored L STLs landed sprockets DISC-UP with a ~1050 mm2
+tree forest over the teeth; flip when >45deg overhang above z10 exceeds 200 mm2) and
+sprockets/idlers print SUPPORT-OFF (their only ceilings are 1-2 mm annular bore
+steps that bridge; tree pillars would scar the F688 flange seats + D-socket).
+Keepers roll onto their wide face. All 7 track plates slice 'Success.' with zero
+floating-region warnings; slice-check plates headlessly after export changes.
 
 **Drive-mechanism review (2026-07-11, task #11):** the wheel beam doubles as the
 ANTI-BUCKLE CAP for the mid-drive: the pushed side of the ground run (rear of the

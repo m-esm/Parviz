@@ -255,7 +255,14 @@ P = {
     "track_links": 64,      # 64 x 10 = 640 mm loop (36->45->52->53->64 stretches)
     "track_pad_th": 4.5,    # pin axis -> pad OUTER face (link overall 8: knuckle r3.5 inward)
     "track_grouser_h": 1.5, # tread lug (print grousers in TPU or add pads)
-    "track_pin_bore_d": 2.0,    # link hinge bore for Ø1.75 filament pins (ref uses ~2.0 drafted)
+    "track_pin_bore_d": 2.2,    # link hinge bore for Ø1.75 filament pins. 2.0 -> 2.2
+                            # (2026-07-12 print pass): links now print LYING (grouser-
+                            # down + tree, the standing plate failed on the printer),
+                            # so the bores are HORIZONTAL and the roof sags 0.1-0.2 --
+                            # at 2.0 that ate most of the 0.25 pin clearance (sticky
+                            # hinges x256). 0.45 slop on a chained hinge is harmless
+                            # (track tension owns the geometry) and the sprocket's
+                            # conjugate envelope already budgets bore slop.
     "sprocket_teeth": 12,
     "sprocket_outer_d": 41.0,   # TIP r 20.5 = pin circle 19.32 + 1.18 ADDENDUM (2026-07-11
                             # conjugate-tooth fix; the old 37.6 tip sat BELOW the pin
