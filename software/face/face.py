@@ -66,6 +66,9 @@ HUD_DIM = (88, 91, 95)        # dark gray: labels, brackets
 HUD_FAINT = (62, 64, 68)      # faintest: raw model output, secondary lines
 HUD_BAD = (220, 80, 64)       # reserved for alerts
 
+RED = (225, 45, 38)   # stress tint target: the face reddens as the
+                      # system heats/loads up (user 2026-07-12)
+
 DECISION_FILE = "/tmp/parviz_decision.json"   # brain writes, face EXECUTES
 BRAIN_STALE_S = 45.0   # no fresh decision for this long -> face sleeps
 
@@ -545,6 +548,7 @@ class FaceRenderer:
         self._font_xs = pygame.font.SysFont(
             "dejavusansmono,menlo,consolas,monospace", 11)
         self._eye_gaze = {-1: (0.0, 0.0), 1: (0.0, 0.0)}  # per-eye eased
+        self.face_col = ORANGE      # drifts toward RED under stress
         self._dec_obj = None        # latest parsed brain decision
         self._dec_mt = None
         self._dec_t = -1e9
@@ -600,17 +604,17 @@ class FaceRenderer:
                                            pupil_k=st["pupil"] *
                                            (1.0 + self.state.pupil_jit))
         if outer is None:
-            pg.draw.polygon(surf, ORANGE, shut_bar(cx, cy))
+            pg.draw.polygon(surf, self.face_col, shut_bar(cx, cy))
             return
         # Two thin outlines (outer + inset echo), then the layered pupil:
         # iris ring outline, filled core, BG glint notch.
-        pg.draw.polygon(surf, ORANGE, outer, STROKE)
+        pg.draw.polygon(surf, self.face_col, outer, STROKE)
         if inner is not None:
-            pg.draw.polygon(surf, ORANGE, inner, STROKE_IN)
+            pg.draw.polygon(surf, self.face_col, inner, STROKE_IN)
         if pupil is not None:
-            pg.draw.polygon(surf, ORANGE, pupil["iris"], STROKE_IN)
+            pg.draw.polygon(surf, self.face_col, pupil["iris"], STROKE_IN)
             if pupil["core"] is not None:
-                pg.draw.polygon(surf, ORANGE, pupil["core"])
+                pg.draw.polygon(surf, self.face_col, pupil["core"])
             if pupil["glint"] is not None:
                 pg.draw.polygon(surf, BG, pupil["glint"])
 
@@ -633,7 +637,7 @@ class FaceRenderer:
             hw, hh = 26.0, 7.0 + 20.0 * op
             rect = [(400 - hw, MOUTH_CY - hh), (400 + hw, MOUTH_CY - hh),
                     (400 + hw, MOUTH_CY + hh), (400 - hw, MOUTH_CY + hh)]
-            pg.draw.polygon(surf, ORANGE, chamfer(rect, min(hw, hh) * 0.5),
+            pg.draw.polygon(surf, self.face_col, chamfer(rect, min(hw, hh) * 0.5),
                             STROKE)
             return
         # closed mouth: rigid 3-segment polyline, ends swing with the mood
@@ -641,7 +645,7 @@ class FaceRenderer:
         ym = MOUTH_CY + m * 9.0
         pts = [(400 - MOUTH_HALF, ye), (400 - 34, ym),
                (400 + 34, ym), (400 + MOUTH_HALF, ye)]
-        pg.draw.lines(surf, ORANGE, False, pts, STROKE)
+        pg.draw.lines(surf, self.face_col, False, pts, STROKE)
 
     def _spark(self, surf, x, y, w, h, hist, lo=0.0, hi=100.0):
         """Tiny fixed-scale sparkline (0..100%) with a hairline baseline."""
@@ -792,7 +796,12 @@ class FaceRenderer:
         sleep until decisions flow again."""
         d, self._dec_pending = self._dec_pending, None
         if d:
-            for a in d.get("actions", []):
+            acts = [a for a in d.get("actions", []) if isinstance(a, dict)]
+            seen_expr = [a for a in acts if a.get("do") == "set_expression"]
+            if len(seen_expr) > 1:   # contradictory duplicates: last wins
+                acts = [a for a in acts if a.get("do") != "set_expression"
+                        ] + [seen_expr[-1]]
+            for a in acts:
                 if not isinstance(a, dict):
                     continue
                 do = a.get("do")
@@ -823,7 +832,7 @@ class FaceRenderer:
                 pg.draw.line(surf, HUD_DIM, (cx, cy), (cx, cy + sy * ln), wd)
 
         # --- top-left: SYS block, one labeled sparkline row per metric
-        x0, y0 = m + 12, m + 6
+        x0, y0 = m + 12, m + 12
         t = f"{te.temp:.0f}C" if te.temp is not None else "--"
         ld = f"{te.load_pct:2d}%" if te.load_pct is not None else "--"
         mem = f"{te.mem_pct:2d}%" if te.mem_pct is not None else "--"
@@ -843,18 +852,18 @@ class FaceRenderer:
             ptxt = self._text(f"PWR {te.watts:.1f}W {cv} {state}",
                               HUD_BAD if uv_now else HUD_FG, small=True)
             px0 = 268   # fixed slot between the SYS and NET blocks
-            surf.blit(ptxt, (px0, m + 6))
-            self._spark(surf, px0 + ptxt.get_width() + 12, m + 9, 46, 10,
+            surf.blit(ptxt, (px0, m + 12))
+            self._spark(surf, px0 + ptxt.get_width() + 12, m + 15, 46, 10,
                         te.watts_hist, lo=0.0, hi=12.0)
 
         # --- top-right: NET block (right-aligned)
         ssid = f" {te.ssid}" if te.ssid else ""
         line1 = f"NET {te.net_dev}{ssid}  {te.ip}"
         img = self._text(line1, HUD_FG, small=True)
-        surf.blit(img, (SCREEN_W - m - 12 - img.get_width(), m + 6))
+        surf.blit(img, (SCREEN_W - m - 12 - img.get_width(), m + 12))
         # signal bar: 5 segments
         bx = SCREEN_W - m - 12 - 5 * 14
-        by = m + 28
+        by = m + 34
         for i in range(5):
             r = pg.Rect(bx + i * 14, by, 10, 12)
             if te.sig is not None and te.sig >= (i + 1) / 5.0 - 0.001:
@@ -865,16 +874,17 @@ class FaceRenderer:
         surf.blit(up, (bx - up.get_width() - 12, by - 1))
 
         # --- bottom band: hairline separator ties status + sensors together
-        pg.draw.line(surf, HUD_FAINT, (m + 12, SCREEN_H - 40),
-                     (SCREEN_W - m - 12, SCREEN_H - 40), 1)
+        pg.draw.line(surf, HUD_FAINT, (m + 12, SCREEN_H - 48),
+                     (SCREEN_W - m - 12, SCREEN_H - 48), 1)
         # --- bottom-left: status line
         label = self.status or f"PARVIZ // {self.state.expression.upper()}"
         img = self._text(label)
-        surf.blit(img, (m + 12, SCREEN_H - m - img.get_height() - 6))
+        surf.blit(img, (m + 12, SCREEN_H - m - img.get_height() - 12))
         if int(now * 2) % 2 == 0:  # blinking block cursor
             pg.draw.rect(surf, HUD_MID, pg.Rect(
                 m + 16 + img.get_width(),
-                SCREEN_H - m - img.get_height() - 4, 9, img.get_height() - 4))
+                SCREEN_H - m - img.get_height() - 10, 9,
+                img.get_height() - 4))
 
         # --- side panels: provenance-labeled VISION (left) / BRAIN (right)
         self._decision_line(now)   # refresh heartbeat + pending decision
@@ -886,13 +896,13 @@ class FaceRenderer:
         sens = self._text(f"MIC --  CAM {cam_s}  RDR --  IMU --", HUD_FAINT,
                           tiny=True)
         sx = SCREEN_W - m - 34 - sens.get_width()
-        sy = SCREEN_H - m - sens.get_height() - 8
+        sy = SCREEN_H - m - sens.get_height() - 14
         surf.blit(sens, (sx, sy))
         # heartbeat pip: breathes with the eyes (proof of life)
         k = (self.state.breath - 1.0) / BREATH_MAG  # -1..1
         r = 5 + 2 * k
         pg.draw.rect(surf, HUD_MID, pg.Rect(
-            int(SCREEN_W - m - 12 - r), int(SCREEN_H - m - 12 - r),
+            int(SCREEN_W - m - 12 - r), int(SCREEN_H - m - 18 - r),
             int(2 * r), int(2 * r)))
 
     def _draw_ripples(self, surf, now):
@@ -904,11 +914,29 @@ class FaceRenderer:
                 continue
             keep.append((x, y, t0))
             half = 14 + 46 * ph
-            col = tuple(int(c * (1.0 - ph)) for c in ORANGE)
+            col = tuple(int(c * (1.0 - ph)) for c in self.face_col)
             rect = [(x - half, y - half), (x + half, y - half),
                     (x + half, y + half), (x - half, y + half)]
             pg.draw.polygon(surf, col, chamfer(rect, half * 0.35), 2)
         self._ripples = keep
+
+    def _stress_tint(self, dt):
+        """Face color: orange -> red as the WORST of temp/cpu/mem climbs.
+        Eased so the hue breathes instead of flickering."""
+        te = self.tele
+
+        def norm(v, lo, hi):
+            return 0.0 if v is None else max(0.0, min(1.0,
+                                                      (v - lo) / (hi - lo)))
+        stress = max(norm(te.temp, 60.0, 85.0),
+                     norm(te.load_pct, 50.0, 100.0),
+                     norm(te.mem_pct, 60.0, 95.0))
+        want = tuple(ORANGE[i] + (RED[i] - ORANGE[i]) * stress
+                     for i in range(3))
+        self.face_col = tuple(
+            min(255, max(0, int(round(_ease(self.face_col[i], want[i], dt,
+                                            speed=1.2)))))
+            for i in range(3))
 
     def draw(self, lid, dt=1.0 / 30):
         surf = self.screen
@@ -916,6 +944,7 @@ class FaceRenderer:
         surf.fill(BG)
         boot_ph = (now - self._boot_t0) / BOOT_LEN_S
         self.vision.poll(now)
+        self._stress_tint(dt)
         self._hud(surf, now)
         for side, ex in ((-1, EYE_CX[0]), (1, EYE_CX[1])):
             self._eye(surf, ex, EYE_CY, side, lid, dt)

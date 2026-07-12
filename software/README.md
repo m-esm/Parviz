@@ -449,3 +449,11 @@ off-screen), panel margins widened. NOTE the demo removal initially
 deleted Telemetry/CamPreview/VisionGaze with it (face crash-looped;
 restored from git HEAD) -- deletion by text-range needs the range
 checked against class boundaries.
+
+Stress tint + polish (2026-07-12): the FACE COLOR is now a health
+indicator -- orange drifts toward RED with the WORST of cpu temp
+(60-85C), load (50-100%) and mem (60-95%), eased at 1.2/s so it
+breathes. Verified live: at 85C throttle the whole face runs deep red.
+Executor de-dupes contradictory duplicate set_expression actions in one
+decision (last wins). HUD margins equalized: content sits 26 px from
+ALL four edges (top/bottom rows were 6 px tighter than the sides).
