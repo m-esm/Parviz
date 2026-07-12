@@ -3,6 +3,7 @@
 Split out of the original monolithic build.py (2026-07-10); see
 build.py for the assembly entry point and the overall design notes.
 """
+import os
 import numpy as np
 import trimesh
 import shapely.geometry as sg
@@ -10,7 +11,7 @@ from trimesh.creation import extrude_polygon
 from trimesh.transformations import rotation_matrix as R
 from params import DEG, P, TAU
 from geo import _color, box, cyl, sub, uni
-from gears import gear_disc
+from gears import gear_disc, load_gear_stl, pan_real_ok
 
 
 def _pan_stack():
@@ -49,13 +50,19 @@ def build_pan_platform():
     # FAST-PAN 2:1 gear-up (2026-07-12; see PARAMS pan_gear_*): the old on-axis D-bore hub
     # is GONE -- the motor moved off-axis and its 32T gear (build.py pan_gears) drives this
     # integral 16T PINION hub on the platform underside. The race still locates radially
-    # (that job never belonged to the shaft); the teeth only drive. Placeholder gear_disc
-    # teeth, real generated pass later (antenna convention).
+    # (that job never belonged to the shaft); the teeth only drive. REAL generated involute
+    # teeth (tools/gears/gen_pan_spurs.py: m0.8 / PA 20 / CD 19.2 with the 32T, blank
+    # width 5.5 centered, tooth centered on +X -- build.py's 32T clocking assumes that
+    # phase); pan_real_ok() falls back to gear_disc on any PARAMS mismatch and
+    # PLACEHOLDER_GEARS=1 forces it (worm-pair convention, src/gears.py).
     gz0, gz1 = P["pan_gear_z"]                       # tooth band 45..50 (under seat floor 51)
     pin_r = P["pan_gear_m"] * P["pan_gear_pinion_t"] / 2         # 6.4
     shank = cyl(6.5, plate_bot - gz1 + 1.0)          # hub shank, buried 1.0 into the plate
     shank.apply_translation((0, 0, (gz1 + plate_bot + 1.0) / 2))
-    pin = gear_disc(pin_r, P["pan_gear_pinion_t"], gz1 - gz0 + 0.5, 2.0, axis="z")
+    if os.environ.get("PLACEHOLDER_GEARS") == "1" or not pan_real_ok():
+        pin = gear_disc(pin_r, P["pan_gear_pinion_t"], gz1 - gz0 + 0.5, 2.0, axis="z")
+    else:
+        pin = load_gear_stl("pan_pinion_real.stl")   # solid 16T blank, axis Z
     pin.apply_translation((0, 0, (gz0 + gz1) / 2))   # +0.5 width: roots fuse into the shank
     plate = uni([plate, shank, pin])
 

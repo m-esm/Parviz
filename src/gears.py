@@ -3,6 +3,7 @@
 Split out of the original monolithic build.py (2026-07-10); see
 build.py for the assembly entry point and the overall design notes.
 """
+import json
 import os
 import numpy as np
 import trimesh
@@ -74,6 +75,52 @@ def worm(pitch_r, length, starts=1, axis="y"):
     return uni(ribs)
 
 
+def _meta_ok(meta_name, expect):
+    """Honesty gate for generated-teeth STLs: the generator writes a sidecar JSON
+    recording what it generated; the build compares it to PARAMS and falls back to
+    placeholders on ANY mismatch (missing file included). This replaced the hard-coded
+    `worm_starts != 1` rule when the 3-start pair landed -- a params change without a
+    regen can never silently ship stale teeth."""
+    path = stlp(meta_name)
+    if not os.path.exists(path):
+        return False
+    with open(path) as f:
+        meta = json.load(f)
+    for k, v in expect.items():
+        got = meta.get(k)
+        if got is None:
+            return False
+        if isinstance(v, (int, float)):
+            if abs(float(got) - float(v)) > 1e-9:
+                return False
+        elif got != v:
+            return False
+    return True
+
+
+def worm_real_ok():
+    """True when the committed worm pair (stl/neck/*_real.stl) matches PARAMS."""
+    return _meta_ok("worm_real_meta.json", {
+        "starts": P["worm_starts"], "module": P["worm_module"],
+        "wheel_teeth": P["worm_wheel_teeth"], "worm_pitch_r": P["worm_pitch_r"],
+        "face_w": P["worm_wheel_w"], "worm_len": P["worm_len"]})
+
+
+def pan_real_ok():
+    """True when the committed pan spur pair matches PARAMS pan_gear_*."""
+    return _meta_ok("pan_gears_real_meta.json", {
+        "module": P["pan_gear_m"], "gear_teeth": P["pan_gear_motor_t"],
+        "pinion_teeth": P["pan_gear_pinion_t"],
+        "gear_w": P["pan_gear_z"][1] - P["pan_gear_z"][0]})
+
+
+def pan_gear_mesh_deg():
+    """The 32T's zero-backlash-window center measured by tools/gears/gen_pan_spurs.py
+    (both blanks tooth-centered on +X, gear at azimuth 180 from the pan axis)."""
+    with open(stlp("pan_gears_real_meta.json")) as f:
+        return float(json.load(f)["gear32_mesh_deg"])
+
+
 def load_gear_stl(name):
     """Load a generated real-tooth gear blank (tools/gears/gen_worm_drive.py, docs/WORM.md).
     Both blanks are committed under stl/neck/; hard-fail with the regen pointer if one is
@@ -82,9 +129,9 @@ def load_gear_stl(name):
     if not os.path.exists(path):
         raise SystemExit(
             f"build.py: missing real gear mesh {path}\n"
-            "  Regenerate with tools/gears/gen_worm_drive.py (docs/WORM.md 'How to "
-            "regenerate'), or set PLACEHOLDER_GEARS=1 to build with the readable "
-            "gear_disc/worm placeholders.")
+            "  Regenerate with tools/gears/gen_worm_drive.py or gen_pan_spurs.py "
+            "(docs/WORM.md 'How to regenerate'), or set PLACEHOLDER_GEARS=1 to build "
+            "with the readable gear_disc/worm placeholders.")
     m = trimesh.load(path, force="mesh")
     if not m.is_volume:
         raise SystemExit(f"build.py: {path} is not watertight -- regenerate it (docs/WORM.md)")

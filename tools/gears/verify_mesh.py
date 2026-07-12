@@ -62,7 +62,7 @@ def main():
     worm_p.apply_translation((0, 0, -g.CD))
     fig, ax = plt.subplots(figsize=(8, 9))
     for mesh, col, lab in ((w, "tab:blue", "wheel (12T helical)"),
-                           (worm_p, "tab:red", "worm (1-start)")):
+                           (worm_p, "tab:red", f"worm ({g.STARTS}-start)")):
         sec = mesh.section(plane_origin=(0, 0, 0), plane_normal=(1, 0, 0))
         if sec is None:
             continue
