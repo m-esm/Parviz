@@ -22,7 +22,8 @@ import copy
 import json
 import os
 import time
-import urllib.request
+
+import llm
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
@@ -477,49 +478,25 @@ SCENARIOS = {
 }
 
 
+def _prompt(prompt):
+    return {"v2": (SYSTEM_PROMPT_V2, FEW_SHOT_V2),
+            "v3": (SYSTEM_PROMPT_V3, FEW_SHOT_V3)}.get(
+                prompt, (SYSTEM_PROMPT, FEW_SHOT))
+
+
 def ask(host, digest, temperature=0.2, timeout=120, prompt="v1"):
-    sys_p, shots = {"v2": (SYSTEM_PROMPT_V2, FEW_SHOT_V2),
-                    "v3": (SYSTEM_PROMPT_V3, FEW_SHOT_V3)}.get(
-                        prompt, (SYSTEM_PROMPT, FEW_SHOT))
-    body = {
-        "messages": [
-            {"role": "system", "content": sys_p},
-            *shots,
-            {"role": "user", "content": digest},
-        ],
-        "temperature": temperature,
-        "max_tokens": 120,
-        # llama-server keeps the constant system+few-shot prefix in KV
-        # cache across requests: prefill drops from ~1400 tokens (~7 s on
-        # the Pi) to just the changing digest (~1 s).
-        "cache_prompt": True,
-        "response_format": {"type": "json_schema",
-                            "json_schema": {"name": "parviz_actions",
-                                            "schema": ACTION_SCHEMA}},
-        # Qwen3: kill the thinking pass at the template level; a /no_think
-        # string clashes with grammar-constrained decoding (empty replies).
-        "chat_template_kwargs": {"enable_thinking": False},
-    }
-    req = urllib.request.Request(
-        f"http://{host}/v1/chat/completions",
-        data=json.dumps(body).encode(),
-        headers={"Content-Type": "application/json"},
-    )
-    t0 = time.time()
-    with urllib.request.urlopen(req, timeout=timeout) as r:
-        out = json.load(r)
-    dt = time.time() - t0
-    usage = out.get("usage") or {}
-    if out.get("timings"):
-        usage["timings"] = out["timings"]
-    out["usage"] = usage
-    txt = out["choices"][0]["message"]["content"]
-    try:
-        parsed = json.loads(txt)
-        ok = isinstance(parsed.get("actions"), list)
-    except (json.JSONDecodeError, AttributeError):
-        parsed, ok = {"raw": txt}, False
-    return parsed, ok, dt, out.get("usage", {})
+    """Route a digest to the backend named by host (see llm.py specs)."""
+    sys_p, shots = _prompt(prompt)
+    return llm.ask(host, digest, sys_p, shots, ACTION_SCHEMA,
+                   temperature, timeout)
+
+
+def ask_chain(chain, digest, temperature=0.2, timeout=120, prompt="v1"):
+    """Failover chain (comma-separated specs); see llm.ask_chain."""
+    sys_p, shots = _prompt(prompt)
+    return llm.ask_chain(chain, digest, sys_p, shots, ACTION_SCHEMA,
+                         temperature, timeout)
+
 
 
 def main():

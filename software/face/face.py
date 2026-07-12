@@ -572,8 +572,12 @@ class FaceRenderer:
         self._dec_applied_mt = 0.0
         self._dec_pending = None
         self._status_until = None
+        self._say = None            # spoken line, drawn big under mouth
+        self._say_until = None
         self._font = pygame.font.SysFont(
             "dejavusansmono,menlo,consolas,monospace", 17)
+        self._font_lg = pygame.font.SysFont(
+            "dejavusansmono,menlo,consolas,monospace", 24)
         self._text_cache = {}       # str -> rendered Surface
         signal.signal(signal.SIGUSR1, self._on_usr1)
 
@@ -634,13 +638,14 @@ class FaceRenderer:
             if pupil["glint"] is not None:
                 pg.draw.polygon(surf, BG, pupil["glint"])
 
-    def _text(self, s, color=HUD_FG, small=False, tiny=False):
-        key = (s, color, small, tiny)
+    def _text(self, s, color=HUD_FG, small=False, tiny=False, big=False):
+        key = (s, color, small, tiny, big)
         if key not in self._text_cache:
             if len(self._text_cache) > 96:
                 self._text_cache.clear()
             font = (self._font_xs if tiny
-                    else self._font_sm if small else self._font)
+                    else self._font_sm if small
+                    else self._font_lg if big else self._font)
             self._text_cache[key] = font.render(s, True, color)
         return self._text_cache[key]
 
@@ -662,6 +667,16 @@ class FaceRenderer:
         pts = [(400 - MOUTH_HALF, ye), (400 - 34, ym),
                (400 + 34, ym), (400 + MOUTH_HALF, ye)]
         pg.draw.lines(surf, self.face_col, False, pts, STROKE)
+
+    def _speech(self, surf):
+        """What Parviz is SAYING, big and centered under the mouth."""
+        if not self._say:
+            return
+        y = MOUTH_CY + 34
+        for line in self._wrap(self._say, 34, max_lines=2):
+            img = self._text(line, self.face_col, big=True)
+            surf.blit(img, (400 - img.get_width() // 2, y))
+            y += img.get_height() + 2
 
     def _spark(self, surf, x, y, w, h, hist, lo=0.0, hi=100.0):
         """Tiny fixed-scale sparkline (0..100%) with a hairline baseline."""
@@ -787,8 +802,23 @@ class FaceRenderer:
         d = self._dec_obj
         if not d:
             return
+        # WHICH MODEL decided (user): friendly label from the backend
+        # spec the brain stamps into every decision; tier-3 stands out.
+        be = d.get("backend")
+        if be:
+            label = self._model_label(be)
+            if d.get("tier") == 3:
+                surf.blit(self._text(f"T3 {label}"[:15], HUD_WARN,
+                                     small=True), (x0, y))
+            else:
+                surf.blit(self._text(label[:15], HUD_FG, small=True),
+                          (x0, y))
+            y += 17
         # cycle latency, prominent (user): how long the brain thought
-        if d.get("latency_s") is not None:
+        if d.get("cached"):
+            surf.blit(self._text("cached", HUD_DIM, tiny=True), (x0, y))
+            y += 15
+        elif d.get("latency_s") is not None:
             lat = f'cycle {d["latency_s"]:.1f}s'
             if d.get("prompt_ms") is not None:
                 lat += (f' {d["prompt_ms"] / 1000:.0f}+'
@@ -807,9 +837,25 @@ class FaceRenderer:
             surf.blit(self._text(s, HUD_MID, tiny=True), (x0, y))
             y += 13
         y += 4
+        # WHAT IT'S THINKING (user): the decision reason, labeled
+        surf.blit(self._text("THINKING", HUD_DIM, tiny=True), (x0, y))
+        y += 13
         for line in self._wrap(str(d.get("reason", "")), 20):
-            surf.blit(self._text(line, HUD_FAINT, tiny=True), (x0, y))
+            surf.blit(self._text(line, HUD_MID, tiny=True), (x0, y))
             y += 12
+
+    @staticmethod
+    def _model_label(be):
+        """Backend spec -> short human label for the BRAIN panel."""
+        if be.startswith("claude-live:"):
+            return (be[12:] or "sonnet") + " cloud"
+        if be.startswith("claude:"):
+            return (be[7:] or "sonnet") + " cloud"
+        if be.startswith("grok:"):
+            return (be[5:] or "composer").replace("grok-", "") + " grok"
+        if "://" in be:
+            return "api " + be.split("://")[1][:10]
+        return "qwen local"
 
     def _apply_brain(self, now):
         """Execute the LLM's decision: the brain is the ONLY source of
@@ -852,12 +898,20 @@ class FaceRenderer:
                     self.set_expression(a["name"])
                 elif do == "look_at":
                     pass   # gaze is a tracking reflex now (user); ignore
-                elif do == "say" and a.get("text"):
-                    self.status = f'"{str(a["text"])[:56]}"'
-                    self._status_until = now + 6.0
+                elif do == "say" and a.get("text") and not d.get("cached"):
+                    # spoken line goes BIG under the mouth (user), not
+                    # into the corner status; linger scales with length.
+                    # cached replays (skip/cache layer) never re-speak.
+                    self._say = str(a["text"])[:120]
+                    self._say_until = now + max(4.0,
+                                                min(10.0,
+                                                    0.09 * len(self._say)))
         if self._status_until is not None and now > self._status_until:
             self.status = None
             self._status_until = None
+        if self._say_until is not None and now > self._say_until:
+            self._say = None
+            self._say_until = None
         if d:
             self._brain_ever = True
         if self._dec_stale:
@@ -1025,6 +1079,7 @@ class FaceRenderer:
                             dt, speed=2.5)
         lid = max(lid, self._blind)
         self._hud(surf, now)
+        self._speech(surf)
         for side, ex in ((-1, EYE_CX[0]), (1, EYE_CX[1])):
             self._eye(surf, ex, EYE_CY, side, lid, dt)
         self._mouth(surf)

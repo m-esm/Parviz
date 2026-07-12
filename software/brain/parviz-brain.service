@@ -13,6 +13,13 @@ Wants=parviz-llm.service
 [Service]
 User=moshe
 WorkingDirectory=/home/moshe/parviz-sw/brain
+# Tier-2 failover chain (llm.py specs): cloud sonnet session first,
+# local Qwen when offline. Tier-3 escalations go to fable (PARVIZ_BIG).
+# Cloud auth = Claude subscription: `claude setup-token` once, token in
+# the gitignored llm.env as CLAUDE_CODE_OAUTH_TOKEN.
+Environment=PARVIZ_LLM=claude-live:,127.0.0.1:8081
+Environment=PARVIZ_BIG=claude:fable
+EnvironmentFile=-/home/moshe/parviz-sw/brain/llm.env
 ExecStart=/usr/bin/python3 /home/moshe/parviz-sw/brain/brain.py
 Restart=always
 RestartSec=5

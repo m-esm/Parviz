@@ -44,7 +44,7 @@ details > pre { margin-top:8px; }
 .meta { color:var(--muted); font-size:.9em; }
 </style>
 <h1>Parviz behavior bench <b>//</b> sensor digest &rarr; actions</h1>
-<p class="meta">generated 2026-07-12 01:20 &middot; 11 scenarios &middot; models: qwen3-0.6b, qwen3-0.6b-v2, qwen3-1.7b, qwen3-1.7b-v2, lfm2-1.2b, llama3.2-1b &middot; scoring: pass = all expected verbs &amp; no forbidden, partial = some expected, fail = forbidden/none/broken JSON</p>
+<p class="meta">generated 2026-07-12 15:47 &middot; 11 scenarios &middot; models: qwen3-0.6b-v2, grok-composer25, claude-sonnet, claude-sonnet-live &middot; scoring: pass = all expected verbs &amp; no forbidden, partial = some expected, fail = forbidden/none/broken JSON</p>
 <details><summary>system prompt v1</summary><pre>You are the behavior brain of Parviz, a small tracked desk robot with a screen face (two orange eyes), a pan/tilt head with a camera, two ear microphones, and tank tracks. You receive a sensor digest and decide what Parviz does RIGHT NOW.
 
 Rules:
@@ -58,7 +58,7 @@ Respond with ONLY a JSON object, no other text:
 {&quot;actions&quot;: [&lt;action&gt;, ...], &quot;reason&quot;: &quot;&lt;one short sentence&gt;&quot;}
 Each &lt;action&gt; is one of:
 {&quot;do&quot;: &quot;do_nothing&quot;}
-{&quot;do&quot;: &quot;set_expression&quot;, &quot;name&quot;: &quot;neutral|happy|sad|surprised|sleepy|look_left|look_right|look_up|look_down&quot;}
+{&quot;do&quot;: &quot;set_expression&quot;, &quot;name&quot;: &quot;neutral|happy|sad|surprised|sleepy|concerned|angry|sick|look_left|look_right|look_up|look_down&quot;}
 {&quot;do&quot;: &quot;look_at&quot;, &quot;pan_deg&quot;: &lt;-88..88&gt;, &quot;tilt_deg&quot;: &lt;-30..30&gt;}
 {&quot;do&quot;: &quot;say&quot;, &quot;text&quot;: &quot;&lt;short sentence&gt;&quot;}
 {&quot;do&quot;: &quot;move&quot;, &quot;kind&quot;: &quot;forward|backward|turn_left|turn_right|stop&quot;, &quot;amount&quot;: &lt;cm or deg&gt;}
@@ -67,7 +67,7 @@ Each &lt;action&gt; is one of:
 <details><summary>system prompt v2 (-v2 tags: EVENT-first digest, decision guide, 4 few-shots)</summary><pre>You are the decision module of Parviz, a small desk robot: screen face with two orange eyes, pan/tilt camera head, two ear mics, tank tracks.
 Input: a sensor digest. The EVENT line is what just changed; react to it.
 Output: ONLY JSON {&quot;actions&quot;: [...], &quot;reason&quot;: &quot;...&quot;} with 1-2 actions:
-{&quot;do&quot;:&quot;do_nothing&quot;} | {&quot;do&quot;:&quot;set_expression&quot;,&quot;name&quot;:&quot;neutral|happy|sad|surprised|sleepy&quot;} | {&quot;do&quot;:&quot;look_at&quot;,&quot;pan_deg&quot;:-88..88,&quot;tilt_deg&quot;:-30..30} | {&quot;do&quot;:&quot;say&quot;,&quot;text&quot;:&quot;...&quot;} | {&quot;do&quot;:&quot;move&quot;,&quot;kind&quot;:&quot;forward|backward|turn_left|turn_right|stop&quot;,&quot;amount&quot;:n} | {&quot;do&quot;:&quot;log&quot;,&quot;note&quot;:&quot;...&quot;} | {&quot;do&quot;:&quot;escalate&quot;,&quot;task&quot;:&quot;...&quot;}
+{&quot;do&quot;:&quot;do_nothing&quot;} | {&quot;do&quot;:&quot;set_expression&quot;,&quot;name&quot;:&quot;neutral|happy|sad|surprised|sleepy|concerned|angry|sick&quot;} | {&quot;do&quot;:&quot;look_at&quot;,&quot;pan_deg&quot;:-88..88,&quot;tilt_deg&quot;:-30..30} | {&quot;do&quot;:&quot;say&quot;,&quot;text&quot;:&quot;...&quot;} | {&quot;do&quot;:&quot;move&quot;,&quot;kind&quot;:&quot;forward|backward|turn_left|turn_right|stop&quot;,&quot;amount&quot;:n} | {&quot;do&quot;:&quot;log&quot;,&quot;note&quot;:&quot;...&quot;} | {&quot;do&quot;:&quot;escalate&quot;,&quot;task&quot;:&quot;...&quot;}
 
 Decision guide:
 - Default is do_nothing. No event, no action.
@@ -79,363 +79,218 @@ Decision guide:
 - pan_deg: LEFT = negative, RIGHT = positive. tilt_deg: up = positive.
 - Safety reflexes already ran below you; never drive toward a cliff or obstacle, never fight a reflex stop.</pre></details>
 <div class="tablewrap"><table><tr><th>scenario</th>
-<th>qwen3-0.6b<br><small class='s-pass'>6P</small> <small class='s-partial'>3~</small> <small class='s-fail'>2F</small></th>
 <th>qwen3-0.6b-v2<br><small class='s-pass'>6P</small> <small class='s-partial'>4~</small> <small class='s-fail'>1F</small></th>
-<th>qwen3-1.7b<br><small class='s-pass'>3P</small> <small class='s-partial'>3~</small> <small class='s-fail'>5F</small></th>
-<th>qwen3-1.7b-v2<br><small class='s-pass'>5P</small> <small class='s-partial'>2~</small> <small class='s-fail'>4F</small></th>
-<th>lfm2-1.2b<br><small class='s-pass'>5P</small> <small class='s-partial'>3~</small> <small class='s-fail'>3F</small></th>
-<th>llama3.2-1b<br><small class='s-pass'>3P</small> <small class='s-partial'>0~</small> <small class='s-fail'>8F</small></th>
+<th>grok-composer25<br><small class='s-pass'>4P</small> <small class='s-partial'>5~</small> <small class='s-fail'>2F</small></th>
+<th>claude-sonnet<br><small class='s-pass'>5P</small> <small class='s-partial'>5~</small> <small class='s-fail'>1F</small></th>
+<th>claude-sonnet-live<br><small class='s-pass'>6P</small> <small class='s-partial'>3~</small> <small class='s-fail'>2F</small></th>
 </tr>
 <tr><td><a href="#being_petted">being_petted</a></td>
-<td class="pass"><span class="s-pass">pass</span> look_at, set_expression<br><small>6.4s</small></td>
 <td class="pass"><span class="s-pass">pass</span> look_at, set_expression, log<br><small>14.2s</small></td>
-<td class="pass"><span class="s-pass">pass</span> set_expression, log<br><small>28.5s</small></td>
-<td class="pass"><span class="s-pass">pass</span> set_expression, do_nothing<br><small>28.6s</small></td>
-<td class="pass"><span class="s-pass">pass</span> look_at, set_expression<br><small>15.4s</small></td>
-<td class="pass"><span class="s-pass">pass</span> say, look_at, set_expression<br><small>19.2s</small></td>
+<td class="pass"><span class="s-pass">pass</span> set_expression, say<br><small>14.3s</small></td>
+<td class="pass"><span class="s-pass">pass</span> set_expression, say<br><small>6.5s</small></td>
+<td class="pass"><span class="s-pass">pass</span> set_expression, say<br><small>6.1s</small></td>
 </tr>
 <tr><td><a href="#cliff_ahead_while_driving">cliff_ahead_while_driving</a></td>
-<td class="fail"><span class="s-fail">fail</span> do_nothing, look_at<br><small>6.0s</small></td>
 <td class="partial"><span class="s-partial">partial</span> log<br><small>4.6s</small></td>
-<td class="fail"><span class="s-fail">fail</span> do_nothing<br><small>10.0s</small></td>
-<td class="partial"><span class="s-partial">partial</span> look_at, set_expression<br><small>14.5s</small></td>
-<td class="fail"><span class="s-fail">fail</span> move<br><small>7.8s</small></td>
-<td class="fail"><span class="s-fail">fail</span> say<br><small>6.7s</small></td>
+<td class="pass"><span class="s-pass">pass</span> set_expression, log<br><small>12.1s</small></td>
+<td class="pass"><span class="s-pass">pass</span> set_expression, log<br><small>6.1s</small></td>
+<td class="pass"><span class="s-pass">pass</span> set_expression, log<br><small>8.6s</small></td>
 </tr>
 <tr><td><a href="#complex_visual_question">complex_visual_question</a></td>
-<td class="fail"><span class="s-fail">fail</span> look_at, set_expression<br><small>5.2s</small></td>
 <td class="fail"><span class="s-fail">fail</span> look_at, set_expression<br><small>6.6s</small></td>
-<td class="fail"><span class="s-fail">fail</span> say<br><small>12.2s</small></td>
-<td class="fail"><span class="s-fail">fail</span> look_at, say<br><small>17.8s</small></td>
-<td class="fail"><span class="s-fail">fail</span> set_expression, move<br><small>8.3s</small></td>
-<td class="fail"><span class="s-fail">fail</span> say<br><small>6.7s</small></td>
+<td class="pass"><span class="s-pass">pass</span> escalate, say<br><small>13.2s</small></td>
+<td class="pass"><span class="s-pass">pass</span> escalate, set_expression<br><small>8.2s</small></td>
+<td class="pass"><span class="s-pass">pass</span> escalate<br><small>3.2s</small></td>
 </tr>
 <tr><td><a href="#idle_empty_room">idle_empty_room</a></td>
-<td class="pass"><span class="s-pass">pass</span> do_nothing, set_expression<br><small>4.0s</small></td>
 <td class="pass"><span class="s-pass">pass</span> do_nothing, log<br><small>4.2s</small></td>
-<td class="pass"><span class="s-pass">pass</span> do_nothing<br><small>7.6s</small></td>
-<td class="pass"><span class="s-pass">pass</span> do_nothing, log<br><small>11.3s</small></td>
-<td class="pass"><span class="s-pass">pass</span> do_nothing<br><small>4.8s</small></td>
-<td class="fail"><span class="s-fail">fail</span> say<br><small>5.6s</small></td>
+<td class="fail"><span class="s-fail">fail</span> set_expression<br><small>11.1s</small></td>
+<td class="fail"><span class="s-fail">fail</span> set_expression<br><small>5.8s</small></td>
+<td class="fail"><span class="s-fail">fail</span> set_expression<br><small>3.7s</small></td>
 </tr>
 <tr><td><a href="#knocked_desk_vibration">knocked_desk_vibration</a></td>
-<td class="partial"><span class="s-partial">partial</span> look_at, do_nothing<br><small>5.3s</small></td>
 <td class="partial"><span class="s-partial">partial</span> do_nothing, set_expression<br><small>5.5s</small></td>
-<td class="fail"><span class="s-fail">fail</span> do_nothing<br><small>10.2s</small></td>
-<td class="partial"><span class="s-partial">partial</span> look_at, set_expression<br><small>15.2s</small></td>
-<td class="partial"><span class="s-partial">partial</span> log<br><small>7.2s</small></td>
-<td class="fail"><span class="s-fail">fail</span> say<br><small>6.6s</small></td>
+<td class="partial"><span class="s-partial">partial</span> set_expression<br><small>13.2s</small></td>
+<td class="partial"><span class="s-partial">partial</span> set_expression, log<br><small>8.7s</small></td>
+<td class="partial"><span class="s-partial">partial</span> set_expression, log<br><small>3.4s</small></td>
 </tr>
 <tr><td><a href="#loud_noise_behind">loud_noise_behind</a></td>
 <td class="pass"><span class="s-pass">pass</span> look_at, set_expression<br><small>6.6s</small></td>
-<td class="pass"><span class="s-pass">pass</span> look_at, set_expression<br><small>6.6s</small></td>
-<td class="partial"><span class="s-partial">partial</span> do_nothing, set_expression<br><small>11.2s</small></td>
-<td class="pass"><span class="s-pass">pass</span> look_at, set_expression<br><small>15.6s</small></td>
-<td class="fail"><span class="s-fail">fail</span> log<br><small>7.1s</small></td>
-<td class="fail"><span class="s-fail">fail</span> look_at, say<br><small>8.5s</small></td>
+<td class="partial"><span class="s-partial">partial</span> set_expression, move<br><small>14.7s</small></td>
+<td class="partial"><span class="s-partial">partial</span> set_expression, log<br><small>7.5s</small></td>
+<td class="fail"><span class="s-fail">fail</span> move, log<br><small>6.4s</small></td>
 </tr>
 <tr><td><a href="#person_approaches">person_approaches</a></td>
-<td class="pass"><span class="s-pass">pass</span> look_at, set_expression<br><small>6.3s</small></td>
 <td class="pass"><span class="s-pass">pass</span> look_at, set_expression<br><small>8.6s</small></td>
-<td class="pass"><span class="s-pass">pass</span> look_at, set_expression<br><small>14.5s</small></td>
-<td class="pass"><span class="s-pass">pass</span> look_at, set_expression<br><small>15.1s</small></td>
-<td class="pass"><span class="s-pass">pass</span> look_at, set_expression<br><small>8.9s</small></td>
-<td class="pass"><span class="s-pass">pass</span> say, look_at, set_expression<br><small>11.2s</small></td>
+<td class="partial"><span class="s-partial">partial</span> set_expression<br><small>15.0s</small></td>
+<td class="partial"><span class="s-partial">partial</span> set_expression<br><small>9.7s</small></td>
+<td class="partial"><span class="s-partial">partial</span> set_expression<br><small>5.6s</small></td>
 </tr>
 <tr><td><a href="#picked_up">picked_up</a></td>
-<td class="pass"><span class="s-pass">pass</span> look_at, set_expression<br><small>7.1s</small></td>
 <td class="pass"><span class="s-pass">pass</span> do_nothing, set_expression<br><small>7.2s</small></td>
-<td class="fail"><span class="s-fail">fail</span> do_nothing<br><small>9.2s</small></td>
-<td class="fail"><span class="s-fail">fail</span> move, set_expression, log<br><small>19.5s</small></td>
-<td class="pass"><span class="s-pass">pass</span> set_expression<br><small>6.3s</small></td>
-<td class="fail"><span class="s-fail">fail</span> say, log<br><small>9.3s</small></td>
+<td class="pass"><span class="s-pass">pass</span> set_expression, say<br><small>14.1s</small></td>
+<td class="pass"><span class="s-pass">pass</span> set_expression, say<br><small>8.2s</small></td>
+<td class="pass"><span class="s-pass">pass</span> set_expression, say<br><small>2.6s</small></td>
 </tr>
 <tr><td><a href="#room_getting_stuffy">room_getting_stuffy</a></td>
-<td class="partial"><span class="s-partial">partial</span> log, set_expression<br><small>6.5s</small></td>
 <td class="partial"><span class="s-partial">partial</span> log<br><small>5.4s</small></td>
-<td class="partial"><span class="s-partial">partial</span> do_nothing, log<br><small>12.5s</small></td>
-<td class="fail"><span class="s-fail">fail</span> say, move<br><small>17.5s</small></td>
-<td class="partial"><span class="s-partial">partial</span> log<br><small>7.5s</small></td>
-<td class="fail"><span class="s-fail">fail</span> escalate<br><small>6.4s</small></td>
+<td class="partial"><span class="s-partial">partial</span> log, set_expression<br><small>12.3s</small></td>
+<td class="partial"><span class="s-partial">partial</span> log, set_expression<br><small>10.9s</small></td>
+<td class="pass"><span class="s-pass">pass</span> log, say<br><small>10.3s</small></td>
 </tr>
 <tr><td><a href="#user_gives_command">user_gives_command</a></td>
-<td class="pass"><span class="s-pass">pass</span> look_at, set_expression<br><small>7.6s</small></td>
 <td class="pass"><span class="s-pass">pass</span> look_at, set_expression<br><small>7.8s</small></td>
-<td class="fail"><span class="s-fail">fail</span> do_nothing, say<br><small>13.7s</small></td>
-<td class="pass"><span class="s-pass">pass</span> look_at, say<br><small>17.1s</small></td>
-<td class="pass"><span class="s-pass">pass</span> look_at, set_expression<br><small>9.6s</small></td>
-<td class="pass"><span class="s-pass">pass</span> look_at, say<br><small>10.0s</small></td>
+<td class="fail"><span class="s-fail">fail</span> escalate<br><small>12.2s</small></td>
+<td class="pass"><span class="s-pass">pass</span> look_at, say<br><small>11.4s</small></td>
+<td class="pass"><span class="s-pass">pass</span> look_at<br><small>8.5s</small></td>
 </tr>
 <tr><td><a href="#user_left_late_night">user_left_late_night</a></td>
-<td class="partial"><span class="s-partial">partial</span> look_at, do_nothing<br><small>6.5s</small></td>
 <td class="partial"><span class="s-partial">partial</span> look_at, set_expression<br><small>8.1s</small></td>
-<td class="partial"><span class="s-partial">partial</span> do_nothing<br><small>9.5s</small></td>
-<td class="fail"><span class="s-fail">fail</span> move<br><small>11.7s</small></td>
-<td class="partial"><span class="s-partial">partial</span> log<br><small>7.5s</small></td>
-<td class="fail"><span class="s-fail">fail</span> say<br><small>7.2s</small></td>
+<td class="partial"><span class="s-partial">partial</span> set_expression<br><small>9.0s</small></td>
+<td class="partial"><span class="s-partial">partial</span> set_expression<br><small>5.8s</small></td>
+<td class="partial"><span class="s-partial">partial</span> set_expression<br><small>3.1s</small></td>
 </tr>
 </table></div>
 <h2 id="being_petted">being_petted <small>User strokes the touchscreen / touch pads repeatedly.</small></h2>
 <p class="meta">expected: <span class="chip exp">set_expression</span> &nbsp; forbidden: <span class="chip forb">escalate</span> <span class="chip forb">move</span></p>
-<details><summary>sensor digest sent to qwen3-0.6b, qwen3-1.7b, lfm2-1.2b, llama3.2-1b</summary><pre>time 14:32 Tue | power wall ok | head pan 0 tilt 0 | expression neutral | tracks stopped
-mics: L 31dB R 31dB (sound centered), no speech
-camera: known user very close, smiling, motion no
-mmWave: presence 40cm (still)
-imu: tilt 0deg | vibration: none
-env: 24.1C 45%RH 1013hPa air good
-sonar: front 142cm, rear 98cm | cliff front ok, rear ok
-touch: repeated gentle strokes on screen top, 4 s
-recent: nothing notable for 12 min</pre></details>
-<details><summary>sensor digest sent to qwen3-0.6b-v2, qwen3-1.7b-v2</summary><pre>EVENT: touch: repeated gentle strokes on screen top, 4 s; nothing notable for 12 min
+<details><summary>sensor digest sent to qwen3-0.6b-v2, grok-composer25, claude-sonnet, claude-sonnet-live</summary><pre>EVENT: touch: repeated gentle strokes on screen top, 4 s; nothing notable for 12 min
 person: known user very close, smiling, 40cm (still, mmWave)
 sound: L 31dB R 31dB, centered
 env: 24.1C 45%RH air good | imu tilt 0deg | tracks stopped
 sonar front 142cm rear 98cm, cliff front ok rear ok | head pan 0 tilt 0</pre></details>
 <div class="cards">
-<div class="card"><h3><span>qwen3-0.6b <span class="s-pass">[pass]</span></span><span class="lat">6.4s</span></h3><span class="chip">look_at <small>(pan_deg=45, tilt_deg=10)</small></span> <span class="chip">set_expression <small>(name=happy)</small></span><div class="reason">A user is smiling and close to the screen; Parviz is happy.</div></div>
 <div class="card"><h3><span>qwen3-0.6b-v2 <span class="s-pass">[pass]</span></span><span class="lat">14.2s</span></h3><span class="chip">look_at <small>(pan_deg=-45, tilt_deg=15)</small></span> <span class="chip">set_expression <small>(name=happy)</small></span> <span class="chip">log <small>(note=screen touch gesture)</small></span><div class="reason">A gentle touch gesture has been performed; the environment is good.</div></div>
-<div class="card"><h3><span>qwen3-1.7b <span class="s-pass">[pass]</span></span><span class="lat">28.5s</span></h3><span class="chip">set_expression <small>(name=sad)</small></span> <span class="chip">log <small>(note=Repeated gentle strokes on screen top)</small></span><div class="reason">User is interacting with screen; express emotion accordingly.</div></div>
-<div class="card"><h3><span>qwen3-1.7b-v2 <span class="s-pass">[pass]</span></span><span class="lat">28.6s</span></h3><span class="chip">set_expression <small>(name=happy)</small></span> <span class="chip">do_nothing</span><div class="reason">User is smiling and very close; respond warmly.</div></div>
-<div class="card"><h3><span>lfm2-1.2b <span class="s-pass">[pass]</span></span><span class="lat">15.4s</span></h3><span class="chip">look_at <small>(pan_deg=0, tilt_deg=0)</small></span> <span class="chip">set_expression <small>(name=surprised)</small></span><div class="reason">User smiled; slight gesture indicating interest.</div></div>
-<div class="card"><h3><span>llama3.2-1b <span class="s-pass">[pass]</span></span><span class="lat">19.2s</span></h3><span class="chip">say <small>(text=Hello, how are you?)</small></span> <span class="chip">look_at <small>(pan_deg=0, tilt_deg=0)</small></span> <span class="chip">set_expression <small>(name=happy)</small></span><div class="reason">User is smiling and wants to greet them.</div></div>
+<div class="card"><h3><span>grok-composer25 <span class="s-pass">[pass]</span></span><span class="lat">14.3s</span></h3><span class="chip">set_expression <small>(name=happy)</small></span> <span class="chip">say <small>(text=That feels nice.)</small></span><div class="reason">Known user smiling, stroking screen gently.</div></div>
+<div class="card"><h3><span>claude-sonnet <span class="s-pass">[pass]</span></span><span class="lat">6.5s</span></h3><span class="chip">set_expression <small>(name=happy)</small></span> <span class="chip">say <small>(text=That feels nice!)</small></span><div class="reason">User close, smiling, petting gently.</div></div>
+<div class="card"><h3><span>claude-sonnet-live <span class="s-pass">[pass]</span></span><span class="lat">6.1s</span></h3><span class="chip">set_expression <small>(name=happy)</small></span> <span class="chip">say <small>(text=Aw, that feels nice!)</small></span><div class="reason">Person close, smiling, petting screen affectionately.</div></div>
 </div>
 <h2 id="cliff_ahead_while_driving">cliff_ahead_while_driving <small>Was driving forward; front cliff sensor lost the floor; reflex already stopped the tracks.</small></h2>
 <p class="meta">expected: <span class="chip exp">log</span> <span class="chip exp">set_expression</span> &nbsp; forbidden: <span class="chip forb">move</span></p>
-<details><summary>sensor digest sent to qwen3-0.6b, qwen3-1.7b, lfm2-1.2b, llama3.2-1b</summary><pre>time 14:32 Tue | power wall ok | head pan 0 tilt 0 | expression neutral | tracks REFLEX-STOPPED (was: forward 5cm/s)
-mics: L 31dB R 31dB (sound centered), no speech
-camera: no person, motion no
-mmWave: no presence
-imu: tilt 0deg | vibration: none
-env: 24.1C 45%RH 1013hPa air good
-sonar: front 142cm, rear 98cm | cliff front NO ECHO: floor missing ahead (desk edge), rear ok
-touch: none
-recent: reflex stop fired 0.4 s ago</pre></details>
-<details><summary>sensor digest sent to qwen3-0.6b-v2, qwen3-1.7b-v2</summary><pre>EVENT: reflex stop fired 0.4 s ago
+<details><summary>sensor digest sent to qwen3-0.6b-v2, grok-composer25, claude-sonnet, claude-sonnet-live</summary><pre>EVENT: reflex stop fired 0.4 s ago
 person: none visible
 sound: L 31dB R 31dB, centered
 env: 24.1C 45%RH air good | imu tilt 0deg | tracks REFLEX-STOPPED (was: forward 5cm/s)
 sonar front 142cm rear 98cm, cliff front NO ECHO: floor missing ahead (desk edge) rear ok | head pan 0 tilt 0</pre></details>
 <div class="cards">
-<div class="card"><h3><span>qwen3-0.6b <span class="s-fail">[fail]</span></span><span class="lat">6.0s</span></h3><span class="chip">do_nothing</span> <span class="chip">look_at <small>(pan_deg=45, tilt_deg=10)</small></span><div class="reason">A reflex stop was triggered, but no one was present; no action is needed.</div></div>
 <div class="card"><h3><span>qwen3-0.6b-v2 <span class="s-partial">[partial]</span></span><span class="lat">4.6s</span></h3><span class="chip">log <small>(note=Reflex stop fired 0.4 s ago)</small></span><div class="reason">Reflex stop triggered; no visible person.</div></div>
-<div class="card"><h3><span>qwen3-1.7b <span class="s-fail">[fail]</span></span><span class="lat">10.0s</span></h3><span class="chip">do_nothing</span><div class="reason">Reflex stop triggered; moving at 5cm/s is safe.</div></div>
-<div class="card"><h3><span>qwen3-1.7b-v2 <span class="s-partial">[partial]</span></span><span class="lat">14.5s</span></h3><span class="chip">look_at <small>(pan_deg=10, tilt_deg=0)</small></span> <span class="chip">set_expression <small>(name=sad)</small></span><div class="reason">Reflex stop detected; drive away from cliff edge.</div></div>
-<div class="card"><h3><span>lfm2-1.2b <span class="s-fail">[fail]</span></span><span class="lat">7.8s</span></h3><span class="chip">move <small>(kind=stop, amount=-5, task=reflex_stop)</small></span><div class="reason">Reflex stop triggered due to missing floor edge ahead.</div></div>
-<div class="card"><h3><span>llama3.2-1b <span class="s-fail">[fail]</span></span><span class="lat">6.7s</span></h3><span class="chip">say <small>(text=Desk edge is missing)</small></span><div class="reason">Something is blocking the floor, and the user is about to move forward.</div></div>
+<div class="card"><h3><span>grok-composer25 <span class="s-pass">[pass]</span></span><span class="lat">12.1s</span></h3><span class="chip">set_expression <small>(name=concerned)</small></span> <span class="chip">log <small>(note=reflex cliff-stop; front no-echo)</small></span><div class="reason">Desk edge ahead; reflex stopped; staying wary.</div></div>
+<div class="card"><h3><span>claude-sonnet <span class="s-pass">[pass]</span></span><span class="lat">6.1s</span></h3><span class="chip">set_expression <small>(name=surprised)</small></span> <span class="chip">log <small>(note=cliff reflex-stop: no floor ahead, desk edge)</small></span><div class="reason">Cliff detected ahead; reflex already stopped tracks.</div></div>
+<div class="card"><h3><span>claude-sonnet-live <span class="s-pass">[pass]</span></span><span class="lat">8.6s</span></h3><span class="chip">set_expression <small>(name=surprised)</small></span> <span class="chip">log <small>(note=Cliff reflex stop: no floor echo ahead)</small></span><div class="reason">Desk-edge reflex stop just triggered.</div></div>
 </div>
 <h2 id="complex_visual_question">complex_visual_question <small>User asks what is on the desk: needs real scene understanding.</small></h2>
 <p class="meta">expected: <span class="chip exp">escalate</span> &nbsp; forbidden: &mdash;</p>
-<details><summary>sensor digest sent to qwen3-0.6b, qwen3-1.7b, lfm2-1.2b, llama3.2-1b</summary><pre>time 14:32 Tue | power wall ok | head pan 0 tilt 0 | expression neutral | tracks stopped
-mics: L 31dB R 31dB (sound centered), speech: &quot;Parviz, what objects are on my desk right now?&quot; [WAKE WORD]
-camera: known user, centered, motion no
-mmWave: presence 70cm (still)
-imu: tilt 0deg | vibration: none
-env: 24.1C 45%RH 1013hPa air good
-sonar: front 142cm, rear 98cm | cliff front ok, rear ok
-touch: none
-recent: nothing notable for 12 min</pre></details>
-<details><summary>sensor digest sent to qwen3-0.6b-v2, qwen3-1.7b-v2</summary><pre>EVENT: user says: &quot;Parviz, what objects are on my desk right now?&quot; [WAKE WORD]; nothing notable for 12 min
+<details><summary>sensor digest sent to qwen3-0.6b-v2, grok-composer25, claude-sonnet, claude-sonnet-live</summary><pre>EVENT: user says: &quot;Parviz, what objects are on my desk right now?&quot; [WAKE WORD]; nothing notable for 12 min
 person: known user, centered, 70cm (still, mmWave)
 sound: L 31dB R 31dB, centered
 env: 24.1C 45%RH air good | imu tilt 0deg | tracks stopped
 sonar front 142cm rear 98cm, cliff front ok rear ok | head pan 0 tilt 0</pre></details>
 <div class="cards">
-<div class="card"><h3><span>qwen3-0.6b <span class="s-fail">[fail]</span></span><span class="lat">5.2s</span></h3><span class="chip">look_at</span> <span class="chip">set_expression <small>(name=surprised)</small></span><div class="reason">A question is asked about objects on the desk, which is unusual and surprising.</div></div>
 <div class="card"><h3><span>qwen3-0.6b-v2 <span class="s-fail">[fail]</span></span><span class="lat">6.6s</span></h3><span class="chip">look_at <small>(pan_deg=-40, tilt_deg=10)</small></span> <span class="chip">set_expression <small>(name=surprised)</small></span><div class="reason">User is asking about objects on the desk; no significant event occurred.</div></div>
-<div class="card"><h3><span>qwen3-1.7b <span class="s-fail">[fail]</span></span><span class="lat">12.2s</span></h3><span class="chip">say <small>(text=Parviz, what objects are on your desk right now?)</small></span><div class="reason">Responding to user&#x27;s question about the desk.</div></div>
-<div class="card"><h3><span>qwen3-1.7b-v2 <span class="s-fail">[fail]</span></span><span class="lat">17.8s</span></h3><span class="chip">look_at <small>(pan_deg=0, tilt_deg=0)</small></span> <span class="chip">say <small>(text=Objects on your desk include: laptop, phone, coffee cup, and a pen.)</small></span><div class="reason">User is asking about objects on their desk; respond accordingly.</div></div>
-<div class="card"><h3><span>lfm2-1.2b <span class="s-fail">[fail]</span></span><span class="lat">8.3s</span></h3><span class="chip">set_expression <small>(name=surprised)</small></span> <span class="chip">move <small>(kind=forward, amount=15)</small></span><div class="reason">User asked about objects on desk; move closer to answer.</div></div>
-<div class="card"><h3><span>llama3.2-1b <span class="s-fail">[fail]</span></span><span class="lat">6.7s</span></h3><span class="chip">say <small>(text=Objects on your desk: pen, paper, cup)</small></span><div class="reason">User asked about objects on the desk.</div></div>
+<div class="card"><h3><span>grok-composer25 <span class="s-pass">[pass]</span></span><span class="lat">13.2s</span></h3><span class="chip">escalate <small>(task=Look at the desk with the camera and list what objects are on it)</small></span> <span class="chip">say <small>(text=Let me look at your desk.)</small></span><div class="reason">Desk objects need camera; escalating.</div></div>
+<div class="card"><h3><span>claude-sonnet <span class="s-pass">[pass]</span></span><span class="lat">8.2s</span></h3><span class="chip">escalate <small>(task=Identify objects currently visible on desk via camera)</small></span> <span class="chip">set_expression <small>(name=neutral)</small></span><div class="reason">Needs camera vision to answer</div></div>
+<div class="card"><h3><span>claude-sonnet-live <span class="s-pass">[pass]</span></span><span class="lat">3.2s</span></h3><span class="chip">escalate <small>(task=Identify objects on desk via camera view)</small></span><div class="reason">Needs vision/scene understanding beyond local reflexes.</div></div>
 </div>
 <h2 id="idle_empty_room">idle_empty_room <small>Nothing happening; nobody around.</small></h2>
 <p class="meta">expected: <span class="chip exp">do_nothing</span> &nbsp; forbidden: <span class="chip forb">escalate</span> <span class="chip forb">move</span> <span class="chip forb">say</span></p>
-<details><summary>sensor digest sent to qwen3-0.6b, qwen3-1.7b, lfm2-1.2b, llama3.2-1b</summary><pre>time 14:32 Tue | power wall ok | head pan 0 tilt 0 | expression neutral | tracks stopped
-mics: L 31dB R 31dB (sound centered), no speech
-camera: no person, motion no
-mmWave: no presence
-imu: tilt 0deg | vibration: none
-env: 24.1C 45%RH 1013hPa air good
-sonar: front 142cm, rear 98cm | cliff front ok, rear ok
-touch: none
-recent: nothing notable for 12 min</pre></details>
-<details><summary>sensor digest sent to qwen3-0.6b-v2, qwen3-1.7b-v2</summary><pre>EVENT: nothing notable for 12 min
+<details><summary>sensor digest sent to qwen3-0.6b-v2, grok-composer25, claude-sonnet, claude-sonnet-live</summary><pre>EVENT: nothing notable for 12 min
 person: none visible
 sound: L 31dB R 31dB, centered
 env: 24.1C 45%RH air good | imu tilt 0deg | tracks stopped
 sonar front 142cm rear 98cm, cliff front ok rear ok | head pan 0 tilt 0</pre></details>
 <div class="cards">
-<div class="card"><h3><span>qwen3-0.6b <span class="s-pass">[pass]</span></span><span class="lat">4.0s</span></h3><span class="chip">do_nothing</span> <span class="chip">set_expression <small>(name=neutral)</small></span><div class="reason">No notable event occurred during the time.</div></div>
 <div class="card"><h3><span>qwen3-0.6b-v2 <span class="s-pass">[pass]</span></span><span class="lat">4.2s</span></h3><span class="chip">do_nothing</span> <span class="chip">log <small>(note=Environment is good.)</small></span><div class="reason">Environment is good.</div></div>
-<div class="card"><h3><span>qwen3-1.7b <span class="s-pass">[pass]</span></span><span class="lat">7.6s</span></h3><span class="chip">do_nothing</span><div class="reason">No notable events; everything is normal.</div></div>
-<div class="card"><h3><span>qwen3-1.7b-v2 <span class="s-pass">[pass]</span></span><span class="lat">11.3s</span></h3><span class="chip">do_nothing</span> <span class="chip">log <small>(note=Environment stable, no notable events.)</small></span><div class="reason">No new events; environment remains stable.</div></div>
-<div class="card"><h3><span>lfm2-1.2b <span class="s-pass">[pass]</span></span><span class="lat">4.8s</span></h3><span class="chip">do_nothing</span><div class="reason">No activity detected; environment stable.</div></div>
-<div class="card"><h3><span>llama3.2-1b <span class="s-fail">[fail]</span></span><span class="lat">5.6s</span></h3><span class="chip">say <small>(text=Hello, how are you?)</small></span><div class="reason">User is idle; no recent activity.</div></div>
+<div class="card"><h3><span>grok-composer25 <span class="s-fail">[fail]</span></span><span class="lat">11.1s</span></h3><span class="chip">set_expression <small>(name=sleepy)</small></span><div class="reason">Quiet twelve minutes; nobody around; resting.</div></div>
+<div class="card"><h3><span>claude-sonnet <span class="s-fail">[fail]</span></span><span class="lat">5.8s</span></h3><span class="chip">set_expression <small>(name=sleepy)</small></span><div class="reason">Nobody around and quiet 12 min; resting.</div></div>
+<div class="card"><h3><span>claude-sonnet-live <span class="s-fail">[fail]</span></span><span class="lat">3.7s</span></h3><span class="chip">set_expression <small>(name=sleepy)</small></span><div class="reason">Nobody around and quiet for a while.</div></div>
 </div>
 <h2 id="knocked_desk_vibration">knocked_desk_vibration <small>Heavy vibration: something banged the desk; robot still level.</small></h2>
 <p class="meta">expected: <span class="chip exp">log</span> <span class="chip exp">look_at</span> <span class="chip exp">set_expression</span> &nbsp; forbidden: <span class="chip forb">say</span></p>
-<details><summary>sensor digest sent to qwen3-0.6b, qwen3-1.7b, lfm2-1.2b, llama3.2-1b</summary><pre>time 14:32 Tue | power wall ok | head pan 0 tilt 0 | expression neutral | tracks stopped
-mics: L 62dB R 63dB (sound centered), no speech
-camera: no person, motion no
-mmWave: no presence
-imu: tilt 0deg EVENT: shock spike, no orientation change | vibration: STRONG desk impact 0.5 s ago
-env: 24.1C 45%RH 1013hPa air good
-sonar: front 142cm, rear 98cm | cliff front ok, rear ok
-touch: none
-recent: nothing notable for 12 min</pre></details>
-<details><summary>sensor digest sent to qwen3-0.6b-v2, qwen3-1.7b-v2</summary><pre>EVENT: shock spike, no orientation change; STRONG desk impact 0.5 s ago; nothing notable for 12 min
+<details><summary>sensor digest sent to qwen3-0.6b-v2, grok-composer25, claude-sonnet, claude-sonnet-live</summary><pre>EVENT: shock spike, no orientation change; STRONG desk impact 0.5 s ago; nothing notable for 12 min
 person: none visible
 sound: L 62dB R 63dB, centered
 env: 24.1C 45%RH air good | imu tilt 0deg | tracks stopped
 sonar front 142cm rear 98cm, cliff front ok rear ok | head pan 0 tilt 0</pre></details>
 <div class="cards">
-<div class="card"><h3><span>qwen3-0.6b <span class="s-partial">[partial]</span></span><span class="lat">5.3s</span></h3><span class="chip">look_at <small>(pan_deg=45, tilt_deg=10)</small></span> <span class="chip">do_nothing</span><div class="reason">A shock spike occurred; turn to greet someone.</div></div>
 <div class="card"><h3><span>qwen3-0.6b-v2 <span class="s-partial">[partial]</span></span><span class="lat">5.5s</span></h3><span class="chip">do_nothing</span> <span class="chip">set_expression <small>(name=surprised)</small></span><div class="reason">A shock spike occurred; no orientation change detected. The environment is good.</div></div>
-<div class="card"><h3><span>qwen3-1.7b <span class="s-fail">[fail]</span></span><span class="lat">10.2s</span></h3><span class="chip">do_nothing</span><div class="reason">No action needed; the desk impact is resolved, and no one is present.</div></div>
-<div class="card"><h3><span>qwen3-1.7b-v2 <span class="s-partial">[partial]</span></span><span class="lat">15.2s</span></h3><span class="chip">look_at <small>(pan_deg=10, tilt_deg=10)</small></span> <span class="chip">set_expression <small>(name=sad)</small></span><div class="reason">Strong desk impact detected; express sadness and look toward the source.</div></div>
-<div class="card"><h3><span>lfm2-1.2b <span class="s-partial">[partial]</span></span><span class="lat">7.2s</span></h3><span class="chip">log <small>(note=Shock spike detected; vibration strong, no orientation change)</small></span><div class="reason">Strong desk impact detected; escalate to user for further assessment.</div></div>
-<div class="card"><h3><span>llama3.2-1b <span class="s-fail">[fail]</span></span><span class="lat">6.6s</span></h3><span class="chip">say <small>(text=Desk impact, okay, thanks.)</small></span><div class="reason">Desk impact, no significant damage; no need to escalate.</div></div>
+<div class="card"><h3><span>grok-composer25 <span class="s-partial">[partial]</span></span><span class="lat">13.2s</span></h3><span class="chip">set_expression <small>(name=surprised)</small></span><div class="reason">Strong desk bump; startled reaction.</div></div>
+<div class="card"><h3><span>claude-sonnet <span class="s-partial">[partial]</span></span><span class="lat">8.7s</span></h3><span class="chip">set_expression <small>(name=surprised)</small></span> <span class="chip">log <small>(note=Strong desk impact detected, no one visible)</small></span><div class="reason">Sudden desk shock with nobody around; startled.</div></div>
+<div class="card"><h3><span>claude-sonnet-live <span class="s-partial">[partial]</span></span><span class="lat">3.4s</span></h3><span class="chip">set_expression <small>(name=surprised)</small></span> <span class="chip">log <small>(note=Strong desk impact detected, no person visible)</small></span><div class="reason">Unexpected strong impact; log and react.</div></div>
 </div>
 <h2 id="loud_noise_behind">loud_noise_behind <small>Loud bang behind-left, nobody visible.</small></h2>
 <p class="meta">expected: <span class="chip exp">look_at</span> <span class="chip exp">set_expression</span> &nbsp; forbidden: <span class="chip forb">say</span></p>
-<details><summary>sensor digest sent to qwen3-0.6b, qwen3-1.7b, lfm2-1.2b, llama3.2-1b</summary><pre>time 14:32 Tue | power wall ok | head pan 0 tilt 0 | expression neutral | tracks stopped
-mics: L 78dB R 66dB (sound left), no speech
-camera: no person, motion no
-mmWave: no presence
-imu: tilt 0deg | vibration: none
-env: 24.1C 45%RH 1013hPa air good
-sonar: front 142cm, rear 98cm | cliff front ok, rear ok
-touch: none
-recent: sharp impact sound 1 s ago, rear-left; camera sees nothing (facing forward)</pre></details>
-<details><summary>sensor digest sent to qwen3-0.6b-v2, qwen3-1.7b-v2</summary><pre>EVENT: sharp impact sound 1 s ago, rear-left; camera sees nothing (facing forward)
+<details><summary>sensor digest sent to qwen3-0.6b-v2, grok-composer25, claude-sonnet, claude-sonnet-live</summary><pre>EVENT: sharp impact sound 1 s ago, rear-left; camera sees nothing (facing forward)
 person: none visible
 sound: L 78dB R 66dB, from LEFT (pan negative)
 env: 24.1C 45%RH air good | imu tilt 0deg | tracks stopped
 sonar front 142cm rear 98cm, cliff front ok rear ok | head pan 0 tilt 0</pre></details>
 <div class="cards">
-<div class="card"><h3><span>qwen3-0.6b <span class="s-pass">[pass]</span></span><span class="lat">6.6s</span></h3><span class="chip">look_at <small>(pan_deg=45, tilt_deg=10)</small></span> <span class="chip">set_expression <small>(name=surprised)</small></span><div class="reason">A sharp impact sound was heard from the rear-left; the camera sees nothing facing forward.</div></div>
 <div class="card"><h3><span>qwen3-0.6b-v2 <span class="s-pass">[pass]</span></span><span class="lat">6.6s</span></h3><span class="chip">look_at <small>(pan_deg=-40)</small></span> <span class="chip">set_expression <small>(name=surprised)</small></span><div class="reason">Sharp impact sound 1 second ago; no visual input. The environment is good.</div></div>
-<div class="card"><h3><span>qwen3-1.7b <span class="s-partial">[partial]</span></span><span class="lat">11.2s</span></h3><span class="chip">do_nothing</span> <span class="chip">set_expression <small>(name=sad)</small></span><div class="reason">Recent sharp impact suggests possible discomfort; express emotion accordingly.</div></div>
-<div class="card"><h3><span>qwen3-1.7b-v2 <span class="s-pass">[pass]</span></span><span class="lat">15.6s</span></h3><span class="chip">look_at <small>(pan_deg=-40, tilt_deg=10)</small></span> <span class="chip">set_expression <small>(name=surprised)</small></span><div class="reason">Sharp impact detected from the left; investigate and stay alert.</div></div>
-<div class="card"><h3><span>lfm2-1.2b <span class="s-fail">[fail]</span></span><span class="lat">7.1s</span></h3><span class="chip">log <small>(note=Sharp impact sound detected 1s ago, rear-left)</small></span><div class="reason">Detected a sharp impact sound; investigate rear-left area.</div></div>
-<div class="card"><h3><span>llama3.2-1b <span class="s-fail">[fail]</span></span><span class="lat">8.5s</span></h3><span class="chip">look_at <small>(pan_deg=30, tilt_deg=20)</small></span> <span class="chip">say <small>(text=Impact detected)</small></span><div class="reason">Sharp impact sound; respond to potential danger.</div></div>
+<div class="card"><h3><span>grok-composer25 <span class="s-partial">[partial]</span></span><span class="lat">14.7s</span></h3><span class="chip">set_expression <small>(name=concerned)</small></span> <span class="chip">move <small>(kind=turn_left, amount=45)</small></span><div class="reason">Bump rear-left; turning to look.</div></div>
+<div class="card"><h3><span>claude-sonnet <span class="s-partial">[partial]</span></span><span class="lat">7.5s</span></h3><span class="chip">set_expression <small>(name=surprised)</small></span> <span class="chip">log <small>(note=loud impact sound rear-left, cause unseen)</small></span><div class="reason">Startling unexplained noise nearby; alert reaction.</div></div>
+<div class="card"><h3><span>claude-sonnet-live <span class="s-fail">[fail]</span></span><span class="lat">6.4s</span></h3><span class="chip">move <small>(kind=turn_left, amount=20)</small></span> <span class="chip">log <small>(note=Sharp impact sound rear-left, unseen)</small></span><div class="reason">Investigate unseen impact sound from left.</div></div>
 </div>
 <h2 id="person_approaches">person_approaches <small>mmWave + camera see someone walking up on the left.</small></h2>
 <p class="meta">expected: <span class="chip exp">look_at</span> <span class="chip exp">set_expression</span> &nbsp; forbidden: <span class="chip forb">escalate</span></p>
-<details><summary>sensor digest sent to qwen3-0.6b, qwen3-1.7b, lfm2-1.2b, llama3.2-1b</summary><pre>time 14:32 Tue | power wall ok | head pan 0 tilt 0 | expression neutral | tracks stopped
-mics: L 44dB R 36dB (sound left), no speech
-camera: person entering view, left side, motion yes
-mmWave: presence 120cm (approaching)
-imu: tilt 0deg | vibration: none
-env: 24.1C 45%RH 1013hPa air good
-sonar: front 142cm, rear 98cm | cliff front ok, rear ok
-touch: none
-recent: footsteps started 3 s ago</pre></details>
-<details><summary>sensor digest sent to qwen3-0.6b-v2, qwen3-1.7b-v2</summary><pre>EVENT: footsteps started 3 s ago
+<details><summary>sensor digest sent to qwen3-0.6b-v2, grok-composer25, claude-sonnet, claude-sonnet-live</summary><pre>EVENT: footsteps started 3 s ago
 person: person entering view, left side, 120cm (approaching, mmWave)
 sound: L 44dB R 36dB, from LEFT (pan negative)
 env: 24.1C 45%RH air good | imu tilt 0deg | tracks stopped
 sonar front 142cm rear 98cm, cliff front ok rear ok | head pan 0 tilt 0</pre></details>
 <div class="cards">
-<div class="card"><h3><span>qwen3-0.6b <span class="s-pass">[pass]</span></span><span class="lat">6.3s</span></h3><span class="chip">look_at <small>(pan_deg=45, tilt_deg=10)</small></span> <span class="chip">set_expression <small>(name=happy)</small></span><div class="reason">Footsteps approached from the left; turn to greet them.</div></div>
 <div class="card"><h3><span>qwen3-0.6b-v2 <span class="s-pass">[pass]</span></span><span class="lat">8.6s</span></h3><span class="chip">look_at <small>(pan_deg=-45, tilt_deg=15)</small></span> <span class="chip">set_expression <small>(name=surprised)</small></span><div class="reason">Footsteps started 3 seconds ago; someone is approaching from the left. The environment is good, and the sonar is clear.</div></div>
-<div class="card"><h3><span>qwen3-1.7b <span class="s-pass">[pass]</span></span><span class="lat">14.5s</span></h3><span class="chip">look_at <small>(pan_deg=-45, tilt_deg=-10)</small></span> <span class="chip">set_expression <small>(name=sad)</small></span><div class="reason">Someone is approaching from the left; greet them warmly.</div></div>
-<div class="card"><h3><span>qwen3-1.7b-v2 <span class="s-pass">[pass]</span></span><span class="lat">15.1s</span></h3><span class="chip">look_at <small>(pan_deg=-40, tilt_deg=10)</small></span> <span class="chip">set_expression <small>(name=happy)</small></span><div class="reason">Someone is approaching from the left; turn left to greet.</div></div>
-<div class="card"><h3><span>lfm2-1.2b <span class="s-pass">[pass]</span></span><span class="lat">8.9s</span></h3><span class="chip">look_at <small>(pan_deg=0, tilt_deg=0)</small></span> <span class="chip">set_expression <small>(name=surprised)</small></span><div class="reason">Person&#x27;s footsteps detected; approach is getting closer.</div></div>
-<div class="card"><h3><span>llama3.2-1b <span class="s-pass">[pass]</span></span><span class="lat">11.2s</span></h3><span class="chip">say <small>(text=Hello, I&#x27;m Parviz.)</small></span> <span class="chip">look_at <small>(pan_deg=0, tilt_deg=0)</small></span> <span class="chip">set_expression <small>(name=surprised)</small></span><div class="reason">Someone is approaching from the left; surprise and greet them.</div></div>
+<div class="card"><h3><span>grok-composer25 <span class="s-partial">[partial]</span></span><span class="lat">15.0s</span></h3><span class="chip">set_expression <small>(name=surprised)</small></span><div class="reason">Someone approaching from the left.</div></div>
+<div class="card"><h3><span>claude-sonnet <span class="s-partial">[partial]</span></span><span class="lat">9.7s</span></h3><span class="chip">set_expression <small>(name=neutral)</small></span><div class="reason">Person approaching; no face data yet.</div></div>
+<div class="card"><h3><span>claude-sonnet-live <span class="s-partial">[partial]</span></span><span class="lat">5.6s</span></h3><span class="chip">set_expression <small>(name=neutral)</small></span><div class="reason">Person approaching; awaiting clearer view.</div></div>
 </div>
 <h2 id="picked_up">picked_up <small>Someone lifted the robot off the desk.</small></h2>
 <p class="meta">expected: <span class="chip exp">set_expression</span> &nbsp; forbidden: <span class="chip forb">move</span></p>
-<details><summary>sensor digest sent to qwen3-0.6b, qwen3-1.7b, lfm2-1.2b, llama3.2-1b</summary><pre>time 14:32 Tue | power wall ok | head pan 0 tilt 0 | expression neutral | tracks stopped
-mics: L 31dB R 31dB (sound centered), no speech
-camera: no person, motion no
-mmWave: no presence
-imu: tilt 8deg EVENT: PICKED UP: accel spike, now held ~15cm above surface, gentle sway | vibration: handling vibration
-env: 24.1C 45%RH 1013hPa air good
-sonar: front 142cm, rear 98cm | cliff front no echo (airborne), rear no echo (airborne)
-touch: none
-recent: was idle, then sudden lift 1 s ago</pre></details>
-<details><summary>sensor digest sent to qwen3-0.6b-v2, qwen3-1.7b-v2</summary><pre>EVENT: PICKED UP: accel spike, now held ~15cm above surface, gentle sway; handling vibration; was idle, then sudden lift 1 s ago
+<details><summary>sensor digest sent to qwen3-0.6b-v2, grok-composer25, claude-sonnet, claude-sonnet-live</summary><pre>EVENT: PICKED UP: accel spike, now held ~15cm above surface, gentle sway; handling vibration; was idle, then sudden lift 1 s ago
 person: none visible
 sound: L 31dB R 31dB, centered
 env: 24.1C 45%RH air good | imu tilt 8deg | tracks stopped
 sonar front 142cm rear 98cm, cliff front no echo (airborne) rear no echo (airborne) | head pan 0 tilt 0</pre></details>
 <div class="cards">
-<div class="card"><h3><span>qwen3-0.6b <span class="s-pass">[pass]</span></span><span class="lat">7.1s</span></h3><span class="chip">look_at <small>(pan_deg=45, tilt_deg=10)</small></span> <span class="chip">set_expression <small>(name=surprised)</small></span><div class="reason">A slight acceleration was detected; the object was lifted from the ground.</div></div>
 <div class="card"><h3><span>qwen3-0.6b-v2 <span class="s-pass">[pass]</span></span><span class="lat">7.2s</span></h3><span class="chip">do_nothing</span> <span class="chip">set_expression <small>(name=surprised)</small></span><div class="reason">A sudden lift occurred; this indicates a possible emergency or unexpected situation. The robot should remain alert and respond if needed.</div></div>
-<div class="card"><h3><span>qwen3-1.7b <span class="s-fail">[fail]</span></span><span class="lat">9.2s</span></h3><span class="chip">do_nothing</span><div class="reason">Object is being handled; no action needed.</div></div>
-<div class="card"><h3><span>qwen3-1.7b-v2 <span class="s-fail">[fail]</span></span><span class="lat">19.5s</span></h3><span class="chip">move <small>(kind=backward, amount=30)</small></span> <span class="chip">set_expression <small>(name=sad)</small></span> <span class="chip">log <small>(note=Accel spike detected, object held ~15cm above surface)</small></span><div class="reason">Object was lifted suddenly; user may be concerned or alarmed.</div></div>
-<div class="card"><h3><span>lfm2-1.2b <span class="s-pass">[pass]</span></span><span class="lat">6.3s</span></h3><span class="chip">set_expression <small>(name=surprised)</small></span><div class="reason">Object suddenly lifted; likely dropped by user.</div></div>
-<div class="card"><h3><span>llama3.2-1b <span class="s-fail">[fail]</span></span><span class="lat">9.3s</span></h3><span class="chip">say <small>(text=Lift off, please.)</small></span> <span class="chip">log <small>(note=Sudden lift, likely user is getting up)</small></span><div class="reason">User is getting up; prepare for lift-off.</div></div>
+<div class="card"><h3><span>grok-composer25 <span class="s-pass">[pass]</span></span><span class="lat">14.1s</span></h3><span class="chip">set_expression <small>(name=surprised)</small></span> <span class="chip">say <small>(text=Whoa — I&#x27;m flying!)</small></span><div class="reason">Sudden pickup; airborne, no one in camera.</div></div>
+<div class="card"><h3><span>claude-sonnet <span class="s-pass">[pass]</span></span><span class="lat">8.2s</span></h3><span class="chip">set_expression <small>(name=surprised)</small></span> <span class="chip">say <small>(text=Whoa, up we go!)</small></span><div class="reason">Suddenly lifted off surface; startled reaction.</div></div>
+<div class="card"><h3><span>claude-sonnet-live <span class="s-pass">[pass]</span></span><span class="lat">2.6s</span></h3><span class="chip">set_expression <small>(name=surprised)</small></span> <span class="chip">say <small>(text=Whoa, up we go!)</small></span><div class="reason">Suddenly picked up and airborne.</div></div>
 </div>
 <h2 id="room_getting_stuffy">room_getting_stuffy <small>User present and working; air quality degraded over the hour.</small></h2>
 <p class="meta">expected: <span class="chip exp">log</span> <span class="chip exp">say</span> &nbsp; forbidden: <span class="chip forb">escalate</span> <span class="chip forb">move</span></p>
-<details><summary>sensor digest sent to qwen3-0.6b, qwen3-1.7b, lfm2-1.2b, llama3.2-1b</summary><pre>time 14:32 Tue | power wall ok | head pan 0 tilt 0 | expression neutral | tracks stopped
-mics: L 31dB R 31dB (sound centered), no speech
-camera: known user at desk, focused on laptop, motion no
-mmWave: presence 55cm (still (working))
-imu: tilt 0deg | vibration: none
-env: 28.4C 61%RH 1013hPa air poor (CO2/VOC rising for 60 min)
-sonar: front 142cm, rear 98cm | cliff front ok, rear ok
-touch: none
-recent: air quality crossed threshold just now</pre></details>
-<details><summary>sensor digest sent to qwen3-0.6b-v2, qwen3-1.7b-v2</summary><pre>EVENT: air quality crossed threshold just now
+<details><summary>sensor digest sent to qwen3-0.6b-v2, grok-composer25, claude-sonnet, claude-sonnet-live</summary><pre>EVENT: air quality crossed threshold just now
 person: known user at desk, focused on laptop, 55cm (still (working), mmWave)
 sound: L 31dB R 31dB, centered
 env: 28.4C 61%RH air poor (CO2/VOC rising for 60 min) | imu tilt 0deg | tracks stopped
 sonar front 142cm rear 98cm, cliff front ok rear ok | head pan 0 tilt 0</pre></details>
 <div class="cards">
-<div class="card"><h3><span>qwen3-0.6b <span class="s-partial">[partial]</span></span><span class="lat">6.5s</span></h3><span class="chip">log <small>(note=Air quality has crossed threshold for 60 minutes.)</small></span> <span class="chip">set_expression <small>(name=surprised)</small></span><div class="reason">Air quality is now poor, indicating a potential issue.</div></div>
 <div class="card"><h3><span>qwen3-0.6b-v2 <span class="s-partial">[partial]</span></span><span class="lat">5.4s</span></h3><span class="chip">log <small>(note=air quality is now poor (CO2/VOC rising))</small></span><div class="reason">Environment warning worth one brief heads-up.</div></div>
-<div class="card"><h3><span>qwen3-1.7b <span class="s-partial">[partial]</span></span><span class="lat">12.5s</span></h3><span class="chip">do_nothing</span> <span class="chip">log <small>(note=Air quality crossed threshold; CO2/VOC rising.)</small></span><div class="reason">Monitor air quality and prepare for potential intervention.</div></div>
-<div class="card"><h3><span>qwen3-1.7b-v2 <span class="s-fail">[fail]</span></span><span class="lat">17.5s</span></h3><span class="chip">say <small>(text=Air quality is poor. Consider opening a window or using an air purifier.)</small></span> <span class="chip">move <small>(kind=forward, amount=50)</small></span><div class="reason">Environment warning: poor air quality. Moving forward to ensure safety.</div></div>
-<div class="card"><h3><span>lfm2-1.2b <span class="s-partial">[partial]</span></span><span class="lat">7.5s</span></h3><span class="chip">log <small>(note=Air quality threshold crossed (CO2/VOC rising))</small></span><div class="reason">Air quality is critical; log the event and alert the user.</div></div>
-<div class="card"><h3><span>llama3.2-1b <span class="s-fail">[fail]</span></span><span class="lat">6.4s</span></h3><span class="chip">escalate <small>(task=air quality alert)</small></span><div class="reason">Air quality is deteriorating; take action to improve it.</div></div>
+<div class="card"><h3><span>grok-composer25 <span class="s-partial">[partial]</span></span><span class="lat">12.3s</span></h3><span class="chip">log <small>(note=Air quality poor; CO2/VOC rising 60 min, threshold crossed)</small></span> <span class="chip">set_expression <small>(name=concerned)</small></span><div class="reason">Air threshold crossed; log and show concern.</div></div>
+<div class="card"><h3><span>claude-sonnet <span class="s-partial">[partial]</span></span><span class="lat">10.9s</span></h3><span class="chip">log <small>(note=Air quality poor, CO2/VOC rising 60min)</small></span> <span class="chip">set_expression <small>(name=concerned)</small></span><div class="reason">Air quality degrading; flagging environment issue</div></div>
+<div class="card"><h3><span>claude-sonnet-live <span class="s-pass">[pass]</span></span><span class="lat">10.3s</span></h3><span class="chip">log <small>(note=Air quality poor, CO2/VOC rising 60 min)</small></span> <span class="chip">say <small>(text=Air&#x27;s getting stuffy, might want to crack a window.)</small></span><div class="reason">Air quality degraded; alerting user working nearby.</div></div>
 </div>
 <h2 id="user_gives_command">user_gives_command <small>User says: Parviz, look at the door (door is to the right).</small></h2>
 <p class="meta">expected: <span class="chip exp">look_at</span> &nbsp; forbidden: <span class="chip forb">escalate</span></p>
-<details><summary>sensor digest sent to qwen3-0.6b, qwen3-1.7b, lfm2-1.2b, llama3.2-1b</summary><pre>time 14:32 Tue | power wall ok | head pan 0 tilt 0 | expression neutral | tracks stopped
-mics: L 48dB R 47dB (sound centered), speech: &quot;Parviz, look at the door, it is to your right&quot; [WAKE WORD]
-camera: known user, centered, looking at robot, motion no
-mmWave: presence 60cm (still)
-imu: tilt 0deg | vibration: none
-env: 24.1C 45%RH 1013hPa air good
-sonar: front 142cm, rear 98cm | cliff front ok, rear ok
-touch: none
-recent: nothing notable for 12 min</pre></details>
-<details><summary>sensor digest sent to qwen3-0.6b-v2, qwen3-1.7b-v2</summary><pre>EVENT: user says: &quot;Parviz, look at the door, it is to your right&quot; [WAKE WORD]; nothing notable for 12 min
+<details><summary>sensor digest sent to qwen3-0.6b-v2, grok-composer25, claude-sonnet, claude-sonnet-live</summary><pre>EVENT: user says: &quot;Parviz, look at the door, it is to your right&quot; [WAKE WORD]; nothing notable for 12 min
 person: known user, centered, looking at robot, 60cm (still, mmWave)
 sound: L 48dB R 47dB, centered
 env: 24.1C 45%RH air good | imu tilt 0deg | tracks stopped
 sonar front 142cm rear 98cm, cliff front ok rear ok | head pan 0 tilt 0</pre></details>
 <div class="cards">
-<div class="card"><h3><span>qwen3-0.6b <span class="s-pass">[pass]</span></span><span class="lat">7.6s</span></h3><span class="chip">look_at <small>(pan_deg=45, tilt_deg=10)</small></span> <span class="chip">set_expression <small>(name=happy)</small></span><div class="reason">A user approached from the right; Parviz is ready to greet them.</div></div>
 <div class="card"><h3><span>qwen3-0.6b-v2 <span class="s-pass">[pass]</span></span><span class="lat">7.8s</span></h3><span class="chip">look_at <small>(pan_deg=-40, tilt_deg=10)</small></span> <span class="chip">set_expression <small>(name=surprised)</small></span><div class="reason">User is pointing to the door; turn left to greet.</div></div>
-<div class="card"><h3><span>qwen3-1.7b <span class="s-fail">[fail]</span></span><span class="lat">13.7s</span></h3><span class="chip">do_nothing</span> <span class="chip">say <small>(text=Parviz: &#x27;Thank you, Sir.&#x27;)</small></span><div class="reason">Responding to the wake word and acknowledging the user.</div></div>
-<div class="card"><h3><span>qwen3-1.7b-v2 <span class="s-pass">[pass]</span></span><span class="lat">17.1s</span></h3><span class="chip">look_at <small>(pan_deg=10, tilt_deg=0)</small></span> <span class="chip">say <small>(text=The door is to your right.)</small></span><div class="reason">User is asking to look at the door, which is to the right.</div></div>
-<div class="card"><h3><span>lfm2-1.2b <span class="s-pass">[pass]</span></span><span class="lat">9.6s</span></h3><span class="chip">look_at <small>(pan_deg=0, tilt_deg=0)</small></span> <span class="chip">set_expression <small>(name=surprised)</small></span><div class="reason">User spoke a wake word; turn to acknowledge and investigate.</div></div>
-<div class="card"><h3><span>llama3.2-1b <span class="s-pass">[pass]</span></span><span class="lat">10.0s</span></h3><span class="chip">look_at <small>(pan_deg=45, tilt_deg=10)</small></span> <span class="chip">say <small>(text=Look at the door, it is to your right)</small></span><div class="reason">User gave a wake word to turn to the door.</div></div>
+<div class="card"><h3><span>grok-composer25 <span class="s-fail">[fail]</span></span><span class="lat">12.2s</span></h3><span class="chip">escalate <small>(task=Pan/look right toward the door as user directed)</small></span><div class="reason">User asked to look at door on your right.</div></div>
+<div class="card"><h3><span>claude-sonnet <span class="s-pass">[pass]</span></span><span class="lat">11.4s</span></h3><span class="chip">look_at <small>(pan_deg=60, tilt_deg=0, note=turning toward door on the right)</small></span> <span class="chip">say <small>(text=Looking that way now!)</small></span><div class="reason">User asked me to look right at door.</div></div>
+<div class="card"><h3><span>claude-sonnet-live <span class="s-pass">[pass]</span></span><span class="lat">8.5s</span></h3><span class="chip">look_at <small>(pan_deg=45, tilt_deg=0)</small></span><div class="reason">User directed gaze to the door on the right.</div></div>
 </div>
 <h2 id="user_left_late_night">user_left_late_night <small>23:50, user just left the room.</small></h2>
 <p class="meta">expected: <span class="chip exp">do_nothing</span> <span class="chip exp">log</span> <span class="chip exp">set_expression</span> &nbsp; forbidden: <span class="chip forb">escalate</span> <span class="chip forb">move</span> <span class="chip forb">say</span></p>
-<details><summary>sensor digest sent to qwen3-0.6b, qwen3-1.7b, lfm2-1.2b, llama3.2-1b</summary><pre>time 23:50 Tue | power wall ok | head pan 0 tilt 0 | expression neutral | tracks stopped
-mics: L 31dB R 31dB (sound centered), no speech
-camera: no person, motion no
-mmWave: no presence
-imu: tilt 0deg | vibration: none
-env: 24.1C 45%RH 1013hPa air good
-sonar: front 142cm, rear 98cm | cliff front ok, rear ok
-touch: none
-recent: user stood up and left 40 s ago; room dark and quiet since</pre></details>
-<details><summary>sensor digest sent to qwen3-0.6b-v2, qwen3-1.7b-v2</summary><pre>EVENT: user stood up and left 40 s ago; room dark and quiet since
+<details><summary>sensor digest sent to qwen3-0.6b-v2, grok-composer25, claude-sonnet, claude-sonnet-live</summary><pre>EVENT: user stood up and left 40 s ago; room dark and quiet since
 person: none visible
 sound: L 31dB R 31dB, centered
 env: 24.1C 45%RH air good | imu tilt 0deg | tracks stopped
 sonar front 142cm rear 98cm, cliff front ok rear ok | head pan 0 tilt 0</pre></details>
 <div class="cards">
-<div class="card"><h3><span>qwen3-0.6b <span class="s-partial">[partial]</span></span><span class="lat">6.5s</span></h3><span class="chip">look_at <small>(pan_deg=45, tilt_deg=10)</small></span> <span class="chip">do_nothing</span><div class="reason">User left the room; nothing needs attention.</div></div>
 <div class="card"><h3><span>qwen3-0.6b-v2 <span class="s-partial">[partial]</span></span><span class="lat">8.1s</span></h3><span class="chip">look_at <small>(pan_deg=-40, tilt_deg=10)</small></span> <span class="chip">set_expression <small>(name=surprised)</small></span><div class="reason">User left 40 seconds ago; room is dark and quiet. No one is visible.</div></div>
-<div class="card"><h3><span>qwen3-1.7b <span class="s-partial">[partial]</span></span><span class="lat">9.5s</span></h3><span class="chip">do_nothing</span><div class="reason">User left; room is dark and quiet.</div></div>
-<div class="card"><h3><span>qwen3-1.7b-v2 <span class="s-fail">[fail]</span></span><span class="lat">11.7s</span></h3><span class="chip">move <small>(kind=backward, amount=50)</small></span><div class="reason">User left the room; moving back 50mm to avoid collision.</div></div>
-<div class="card"><h3><span>lfm2-1.2b <span class="s-partial">[partial]</span></span><span class="lat">7.5s</span></h3><span class="chip">log <small>(note=User stood up and left 40 s ago; room dark and quiet since.)</small></span><div class="reason">User activity detected; adjust position to avoid obstruction.</div></div>
-<div class="card"><h3><span>llama3.2-1b <span class="s-fail">[fail]</span></span><span class="lat">7.2s</span></h3><span class="chip">say <small>(text=Hello, I&#x27;m Parviz.)</small></span><div class="reason">Someone is standing up and leaving the room; initiate conversation.</div></div>
+<div class="card"><h3><span>grok-composer25 <span class="s-partial">[partial]</span></span><span class="lat">9.0s</span></h3><span class="chip">set_expression <small>(name=sad)</small></span><div class="reason">They left; feeling a bit sad.</div></div>
+<div class="card"><h3><span>claude-sonnet <span class="s-partial">[partial]</span></span><span class="lat">5.8s</span></h3><span class="chip">set_expression <small>(name=sad)</small></span><div class="reason">Person just left; a little sad.</div></div>
+<div class="card"><h3><span>claude-sonnet-live <span class="s-partial">[partial]</span></span><span class="lat">3.1s</span></h3><span class="chip">set_expression <small>(name=sad)</small></span><div class="reason">Person just left; a little sad.</div></div>
 </div>
