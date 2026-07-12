@@ -825,6 +825,30 @@ class FaceRenderer:
                         f'{d.get("gen_ms", 0) / 1000:.0f}')
             surf.blit(self._text(lat[:19], HUD_FG, tiny=True), (x0, y))
             y += 15
+        # live brain internals (user: "much more informative")
+        if d.get("t3") == "busy":
+            surf.blit(self._text("T3 thinking...", HUD_WARN, tiny=True),
+                      (x0, y))
+            y += 14
+        for spec in (d.get("broken") or [])[:2]:
+            surf.blit(self._text(f"DOWN {self._model_label(spec)}"[:19],
+                                 HUD_BAD, tiny=True), (x0, y))
+            y += 14
+        s = d.get("stats")
+        if s:
+            saved = 100 * (1 - s["llm"] / max(1, s["ticks"]))
+            up = d.get("brain_up_s", 0)
+            up_s = (f"{up // 3600}h{up % 3600 // 60:02d}" if up >= 3600
+                    else f"{up // 60}m{up % 60:02d}")
+            for line in (f'up {up_s}  1Hz',
+                         f'llm {s["llm"]}/{s["ticks"]} tk',
+                         f'{saved:.0f}% saved',
+                         f'hit {s["hits"]} skip {s["skips"]}',
+                         f'cache q{s["cache"]}'):
+                surf.blit(self._text(line[:19], HUD_FAINT, tiny=True),
+                          (x0, y))
+                y += 12
+            y += 3
         for a in d.get("actions", [])[:4]:
             if not isinstance(a, dict):
                 continue

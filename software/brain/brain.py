@@ -29,6 +29,7 @@ import os
 import threading
 import time
 
+import llm
 from scenarios import ask, ask_chain   # prompts + few-shots + schema
 
 VISION_JSON = "/dev/shm/parviz_vision.json"
@@ -52,8 +53,9 @@ def cpu_temp():
             return int(f.read()) / 1000
     except OSError:
         return None
-TICK_IDLE_S = 20.0   # heartbeat tick when nothing changes
-TICK_MIN_S = 4.0     # cooldown after a tick (thermals; fanless Pi)
+TICK_IDLE_S = 1.0    # cycle cadence: re-evaluate inputs every second
+TICK_MIN_S = 1.0     # cooldown after a tick; the skip/cache layer is
+                     # what keeps 1 Hz cycles off the LLM (and thermals)
 CACHE_TTL_S = float(os.environ.get("PARVIZ_CACHE_TTL", 3600.0))
 
 
@@ -269,6 +271,20 @@ def main():
     cur_backend = None
     last_key, last_payload = None, None   # skip layer
     cache, skips = {}, 0                  # 1h decision cache
+    ticks = llm_calls = hits = skips_total = 0   # HUD stats
+    hit_logged = 0.0
+    t_up = time.time()
+
+    def extras():
+        """Live brain internals, refreshed into every published
+        decision; the face's BRAIN panel renders these."""
+        return {
+            "stats": {"ticks": ticks, "llm": llm_calls, "hits": hits,
+                      "skips": skips_total, "cache": len(cache)},
+            "broken": llm.broken(),
+            "t3": "busy" if _TIER3_BUSY.locked() else None,
+            "brain_up_s": int(time.time() - t_up),
+        }
     jf = open(JOURNAL, "a")
 
     def journal(line):
@@ -305,12 +321,14 @@ def main():
         sy = read_sys()
         digest = build_digest(vis, sy, events, last_actions, cur_expr)
         skey = semantic_key(vis, sy, events)
+        ticks += 1
 
         # SKIP: inputs unchanged since the last decision -> no LLM call;
         # re-touch the decision file (marked cached, the face keeps its
         # heartbeat but does not re-speak) and wait for a change.
         if skey == last_key and last_payload is not None and not args.once:
-            last_payload.update(ts=time.time(), cached=True)
+            skips_total += 1
+            last_payload.update(ts=time.time(), cached=True, **extras())
             tmp = DECISION_FILE + ".tmp"
             with open(tmp, "w") as f:
                 json.dump(last_payload, f)
@@ -327,6 +345,7 @@ def main():
         # digest stays truthful.
         hit = cache.get(skey)
         if hit is not None and time.time() < hit[0] and not args.once:
+            hits += 1
             parsed = hit[1]
             for a in parsed.get("actions", []):
                 if (isinstance(a, dict) and a.get("do") == "set_expression"
@@ -334,16 +353,20 @@ def main():
                     cur_expr = a["name"]
             payload = dict(parsed)
             payload.update(ts=time.time(), cached=True,
-                           backend=hit[2], latency_s=0.0)
+                           backend=hit[2], latency_s=0.0, **extras())
             tmp = DECISION_FILE + ".tmp"
             with open(tmp, "w") as f:
                 json.dump(payload, f)
             os.replace(tmp, DECISION_FILE)
             last_payload, last_key = payload, skey
-            journal(f"cache hit :: {str(parsed.get('reason', ''))[:60]}")
+            if time.time() - hit_logged > 30:   # 1 Hz flaps: log sparsely
+                hit_logged = time.time()
+                journal(f"cache hit :: "
+                        f"{str(parsed.get('reason', ''))[:60]}")
             _event_wait(args.tick, t0, vis)
             continue
 
+        llm_calls += 1
         try:
             parsed, ok, dt, usage, backend, note = ask_chain(
                 HOST, digest, temperature=0.2, timeout=60, prompt="v3")
@@ -379,6 +402,7 @@ def main():
             payload["ts"] = time.time()
             payload["latency_s"] = round(dt, 1)
             payload["backend"] = backend
+            payload.update(**extras())
             tm = (usage or {}).get("timings") or {}
             if tm:
                 payload["prompt_ms"] = round(tm.get("prompt_ms", 0))

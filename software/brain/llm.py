@@ -300,6 +300,12 @@ def ask(spec, digest, sys_p, shots, schema, temperature=0.2, timeout=120):
                      timeout)
 
 
+def broken():
+    """Backend specs currently circuit-broken (chains skip them)."""
+    now = time.time()
+    return [s for s, t in _BREAKER.items() if t > now]
+
+
 def _is_cloud(spec):
     return not (spec.startswith("127.") or spec.startswith("localhost"))
 
