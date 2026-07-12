@@ -337,7 +337,10 @@ bearings under shrink wrap, not plastic rings); still unused in the design.
   passive heatsink** and the soak test improved from clocks PINNED at 1.5 GHz to
   2.1-2.4 GHz sustained (85 °C peaks, recovers 85→70 °C in <1 min off-load). The 80 °C
   thermal breaker still trips briefly under long brain bursts; an active cooler would
-  eliminate that entirely. If bought, CAD must confirm head-bay clearance (+~15 mm).
+  eliminate that entirely. **CAD clearance CONFIRMED MARGINAL-FAIL (2026-07-13, see
+  the head-thermal pass below): the official keep-out fits statically but the tilt
+  sweep eats ~2.7 mm into it nose-down -- don't buy until the worm-stub/cradle
+  retreat is designed or a physical cooler measures out.**
 - ~~USB-A→USB-B cable~~ COVERED: user has one cable per Uno (3× Uno R3 compatible in
   Bag 6; no board purchase needed either). The Arduino I/O plane is fully stocked.
 - **Sensor suite (AWARENESS.md; decide exact parts with the wiring pass, NONE owned):**
@@ -761,3 +764,29 @@ can live in-firmware below the Pi. Full rationale: docs/AWARENESS.md "Arduino I/
 plane". Board choice + motor placement open — check the parts inventory first. CAD
 knock-on: the electronics bay needs a mounting spot for the Arduino + one internal USB
 run to the Pi.
+
+**Head-thermal pass (2026-07-13, Pi 5 Active Cooler keep-out):** the buy-list "CAD must
+confirm head-bay clearance" question is answered with measured geometry, not guesses.
+The official cooler envelope (63.5 x 42.5 x 13.7, product brief RP-008188 + mechanical
+drawing RP-008187) was seated on the Pi 5's two dedicated Ø3 heatsink holes (board
+(3.5, 9.5) / (61.5, 46.5), each 6.0 off its M2.5 corner hole, pin pattern dead-centered
+in the envelope), and the board frame was measured off the reference mesh's corner-hole
+pattern (58.000 x 49.000 exact at world x -34.652/23.348, z 130.766/179.766 -> board
+origin (-38.152, 127.266), component face y 5.98). World envelope: x -37.4..26.1,
+y -7.72..5.98, z 134..176.5 -- PARAMS "pi5_cooler_*", part `build_pi5_cooler()`
+(silver keep-out, never printed), added by **COOLER=1 only (default OFF)**.
+VERDICT (tools/probe_cooler.py, re-runnable): STATIC fit OK -- worst neutral
+clearances neck_clevis 0.78 / worm_wheel 1.22 / clamp-tube frames 3.3 -- but the
+TILT SWEEP fails nose-down: first envelope contact ~-19 deg, worst ~+2.7 mm
+(tilt_worm TAIL STUB) and ~+1.8 mm (neck_clevis cradle post) at the -33.8 homing
+stall, contact zone x -6..+4 / y ~-12.5 / z ~138.5. The real part's fin/slab tops sit
+1-2.5 below the envelope face there, so the physical cooler is a 0..1 mm coin flip at
+the stall: NOT integrable as-is. Clean unblock = retreat the worm tail stub + clevis
+cradle ~3 mm in +y reach (local tilt_worm/neck_clevis pass); capping nose-down tilt at
+~-15 deg was rejected (kills the +-30 spec and stall homing). AIRFLOW is a non-issue:
+the fan's own intake window is ~Ø21 (~268 mm^2 net, measured center board (41.7,
+33.7) = world (3.5, 161.0)) and the head already offers 684 mm^2 of louvres directly
+above it + the 255 mm^2 I/O slot + the open bottom bay -- no new vent slots added.
+Gates: default geometry is byte-identical with COOLER unset (check PASS); COOLER=1
+also passes the static gate at the preview pose (contact starts past -19 deg tilt).
+`pi5_cooler` is registered in HEAD_NODES and the viewer PAL silver rule (|cooler).

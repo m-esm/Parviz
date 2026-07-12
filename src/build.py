@@ -35,7 +35,7 @@ from pan import build_pan_clips, build_pan_platform, build_pan_race
 from neck import build_neck_clevis, build_tilt_carrier, build_trim_neckfoot
 from head import (build_ant_drive, build_antennas, build_arms, build_cam_pod, build_hatch_frame,
                   build_ear_jacks, build_head_parts, build_head_rails, build_led_strip,
-                  build_screen_tray, build_sd_plug)
+                  build_pi5_cooler, build_screen_tray, build_sd_plug)
 from chassis import build_belly_plate, build_chassis_parts, build_fascia, build_pod_rails
 from fitmap import _fit_report
 
@@ -316,6 +316,30 @@ def build():
     screen.apply_transform(screen_pose())            # sit on the leaned front face
     screen.metadata["name"] = "screen_ref"
     add(screen, M_head)
+
+    # Pi 5 ACTIVE COOLER keep-out (2026-07-13, COOLER=1 -- default OFF; PARAMS
+    # "pi5_cooler_*" for the measured placement). FIT VERDICT (tools/probe_cooler.py):
+    # the envelope FITS STATICALLY -- worst neutral clearances neck_clevis 0.78,
+    # worm_wheel 1.22, head_back clamp-tube frames 3.3 -- but the TILT SWEEP eats
+    # into it nose-down: first envelope contact at ~-19 deg, growing to ~+2.7 mm
+    # (tilt_worm TAIL STUB) and ~+1.8 mm (neck_clevis cradle post) at the -33.8
+    # homing stall; contact zone x -6..+4, y ~-12.5, z ~138.5 = the worm's +y end
+    # support cluster vs the envelope's swung bottom-rear corner. Against the REAL
+    # part that corner is fin-field / logo-slab top, which sits 1-2.5 BELOW the
+    # envelope face (see PARAMS depth note), so the physical cooler is a 0..1 mm
+    # coin flip at the stall -- NOT integrable as-is; default stays OFF so the
+    # gates keep guarding the shipping geometry. Unblock candidates: retreat the
+    # worm tail stub + clevis cradle ~3 mm in +y reach (local tilt_worm/neck_clevis
+    # redesign, the clean fix), or cap nose-down tilt at ~-15 deg (kills the spec
+    # and stall homing -- rejected), or measure a physical cooler's assembled
+    # fin-top height and re-probe before committing. AIRFLOW is NOT a blocker:
+    # the fan moves 1.09 CFM (0.51 L/s) through its own ~Ø21 window (~268 mm^2
+    # net); the head already offers 684 mm^2 of louvres DIRECTLY above the window
+    # (band z 171..187 vs window top ~171.5) + the 255 mm^2 right-wall I/O slot +
+    # the open bottom motor bay (>2000 mm^2) -- >3x the fan's own opening, so no
+    # new intake slots are needed.
+    if os.environ.get("COOLER") == "1":
+        add(build_pi5_cooler(), M_head)
 
     # camera: CM3 placeholder at the REAL stack dims, board FRONT plane on the M2 boss tips
     # (the old 12-deep box was centered 6 behind the wall and punched the bosses).

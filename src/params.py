@@ -515,6 +515,30 @@ P = {
     # (axle y 0 z 178, clamp tubes x 27..99, centered worm/wheel, neck cheek overshoots).
     # See docs/FIXES.md Stage 3: unresolvable in head geometry alone.)
 
+    # --- Pi 5 ACTIVE COOLER keep-out (2026-07-13; bought part, buy-list NICE-TO-HAVE) ---
+    # Official envelope 63.5 x 42.5 x 13.7 (product brief RP-008188 + mechanical drawing
+    # RP-008187, both pulled 2026-07-13). The cooler push-pins land in the Pi 5's two
+    # DEDICATED Ø3 heatsink holes (Pi 5 mechanical drawing): board (3.5, 9.5) and
+    # (61.5, 46.5) -- each exactly 6.0 off its adjacent M2.5 corner hole -- and the pin
+    # pattern (58 x 37) sits DEAD-CENTERED in the cooler envelope (measured off the
+    # drawing raster: pins 2.5-2.9 from every envelope edge = caps' own radius), so the
+    # envelope center in board coords is the hole-pattern midpoint (32.5, 28.0).
+    # BOARD FRAME measured from the reference mesh, not guessed: the Pi's M2.5 corner
+    # holes were circle-fit in the posed mesh at world x -34.652/23.348, z 130.766/
+    # 179.766 (pattern 58.000 x 49.000 exact) -> board origin (x=0 SD edge, y=0 HDMI
+    # edge) = world (-38.152, 127.266); component-side face plane y=5.98 (slab scan).
+    # DEPTH: the keep-out takes the FULL official 13.7 off the component face.
+    # Assembled, the base plate rides the pre-applied pads on the BCM2712/RP1 lids
+    # (~2-2.6 up) and the fin/fan tops sit ~9.1 above the plate bottom, so the real
+    # metal tops out 1-2.5 SHY of this face; 13.7-off-the-board is the honest worst
+    # case (it also covers the sprung pin caps). COOLER=1 adds the placeholder --
+    # default OFF: see the fit VERDICT comment in build.py + tools/probe_cooler.py.
+    "pi5_cooler_wdh": (63.5, 13.7, 42.5),  # envelope, world X x Y(depth) x Z
+    "pi5_board_org": (-38.152, 127.266),   # world (x, z) of Pi board coord origin
+    "pi5_comp_face_y": 5.98,               # component-side board surface plane (world y)
+    "pi5_cooler_board_c": (32.5, 28.0),    # envelope center, board coords (= heatsink
+                                           # hole-pattern midpoint, see above)
+
     # --- Design-ref styling (reference/design/*.jpg): orange side rails on the head ---
     "rail_t": 5.0,          # rail stands this proud of the head side wall
     "rail_d": 26.0,         # rail depth (Y); stays on the wall's FLAT band (|y|<15, corner r16)

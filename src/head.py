@@ -878,6 +878,36 @@ def build_ear_jacks():
     return out
 
 
+def build_pi5_cooler():
+    """Pi 5 ACTIVE COOLER keep-out placeholder (COOLER=1; bought part, NEVER printed).
+    The official 63.5 x 42.5 x 13.7 envelope seated on the Pi 5's dedicated heatsink
+    holes -- all position/depth derivation lives in PARAMS "pi5_cooler_*", the fit
+    VERDICT in build.py where it is added. Cosmetic only: shallow (0.8) fin grooves on
+    the intake face over the fin field + a fan-window ring groove at the measured
+    window spot (board ~(41.7, 33.7), Ø~21), so the part reads as the cooler in the
+    viewer without giving up keep-out volume anywhere that matters (the envelope is
+    conservative by 1-2.5 there, see PARAMS)."""
+    w, d, h = P["pi5_cooler_wdh"]
+    bcx, bcz = P["pi5_cooler_board_c"]
+    X0, Z0 = P["pi5_board_org"]
+    yc = P["pi5_comp_face_y"]
+    cx, cz = X0 + bcx, Z0 + bcz                      # envelope center (world x, z)
+    m = box(w, d, h)
+    m.apply_translation((cx, yc - d / 2, cz))
+    # fin grooves across the fin field (board x ~7..27.5 measured off the drawing)
+    for i in range(7):
+        g = box(2.0, 1.6, h - 5.0)
+        g.apply_translation((X0 + 8.5 + i * 3.1, yc - d, cz))
+        m = sub(m, g)
+    # fan-window ring groove (measured center board (41.7, 33.7), opening Ø~21)
+    ring = sub(cyl(11.6, 1.6, axis="y"), cyl(10.2, 2.2, axis="y"))
+    ring.apply_translation((X0 + 41.7, yc - d, Z0 + 33.7))
+    m = sub(m, ring)
+    _color(m, "motor")                               # anodised aluminium -> silver
+    m.metadata["name"] = "pi5_cooler"
+    return m
+
+
 def build_cam_pod():
     """Cosmetic raised eye-pod over the recessed camera aperture (design-ref front.jpg).
     Separate charcoal print on the bezel face; 45 deg flared bore clears the CM3 FoV."""
