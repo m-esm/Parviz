@@ -19,6 +19,7 @@ Test:  python3 voice.py --wav f.wav   decode a 16 kHz mono wav, print
 """
 
 import argparse
+import collections
 import json
 import math
 import os
@@ -33,6 +34,8 @@ import numpy as np
 HERE = os.path.dirname(os.path.abspath(__file__))
 MODEL_DIR = os.path.join(
     HERE, "models", "sherpa-onnx-streaming-zipformer-en-20M-2023-02-17")
+MOONSHINE_DIR = os.path.join(
+    HERE, "models", "sherpa-onnx-moonshine-base-en-int8")
 PIPER_MODEL = os.path.join(HERE, "models", "piper",
                            "en_US-lessac-medium.onnx")
 SPEECH_JSON = "/dev/shm/parviz_speech.json"
@@ -68,6 +71,53 @@ def write_atomic(path, obj):
     with open(tmp, "w") as f:
         json.dump(obj, f)
     os.replace(tmp, path)
+
+
+class QualityPass:
+    """Second ASR pass: the 20M streaming model is fast but mangles
+    words (user verdict: not good enough), so each FINISHED utterance
+    is re-decoded by Moonshine base (proper casing/punctuation, far
+    better vocabulary; still 100% local). The streaming result stays
+    on screen as the live caption and becomes the fallback if this
+    pass fails. Runs in its own thread; a 4 s utterance costs ~1 s."""
+
+    def __init__(self, shared):
+        import sherpa_onnx
+        self.rec = sherpa_onnx.OfflineRecognizer.from_moonshine(
+            preprocessor=os.path.join(MOONSHINE_DIR, "preprocess.onnx"),
+            encoder=os.path.join(MOONSHINE_DIR, "encode.int8.onnx"),
+            uncached_decoder=os.path.join(MOONSHINE_DIR,
+                                          "uncached_decode.int8.onnx"),
+            cached_decoder=os.path.join(MOONSHINE_DIR,
+                                        "cached_decode.int8.onnx"),
+            tokens=os.path.join(MOONSHINE_DIR, "tokens.txt"),
+            num_threads=2,
+        )
+        self.q = queue.Queue()
+        self.shared = shared
+        threading.Thread(target=self._loop, daemon=True).start()
+
+    def submit(self, samples, fallback):
+        self.q.put((samples, fallback))
+
+    def _loop(self):
+        while True:
+            samples, fallback = self.q.get()
+            t0 = time.time()
+            text = ""
+            try:
+                s = self.rec.create_stream()
+                s.accept_waveform(RATE, samples)
+                self.rec.decode_stream(s)
+                text = s.result.text.strip()
+            except Exception as e:
+                print(f"quality pass failed: {e}", flush=True)
+            text = text or fallback
+            if text:
+                self.shared["final"] = text
+                self.shared["final_ts"] = time.time()
+                print(f"heard ({time.time() - t0:.1f}s): {text!r}",
+                      flush=True)
 
 
 def _pactl_names(kind):
@@ -202,10 +252,29 @@ def decode_wav(path):
 def run():
     rec = make_recognizer()
     spk = Speaker()
+    shared = {"final": "", "final_ts": 0.0}   # QualityPass writes here
+    try:
+        qp = QualityPass(shared)
+        print("voice: quality pass up (moonshine base)", flush=True)
+    except Exception as e:
+        qp = None
+        print(f"quality pass unavailable ({e}); streaming text only",
+              flush=True)
     print("voice: recognizer + speaker up, capturing", flush=True)
     stream = rec.create_stream()
-    final, final_ts = "", 0.0
     nbytes = int(RATE * CHUNK_S) * 2
+    preroll = collections.deque(maxlen=3)   # 0.3 s before the gate opens
+    utt = []                                # current utterance samples
+
+    def finish(fallback, now):
+        """Endpoint/gate-close: hand the utterance to the quality pass
+        (or publish the streaming text directly without one)."""
+        if qp is not None and utt:
+            qp.submit(np.concatenate(utt), fallback)
+        elif fallback:
+            shared["final"], shared["final_ts"] = fallback, now
+            print(f"heard: {fallback!r}", flush=True)
+        del utt[:]
     # ENERGY GATE: the zipformer encoder costs ~40% of a core if it runs
     # on silence too. Only decode while the room is louder than GATE_DB
     # or within HANG_S of the last loud chunk (sentence tails, pauses).
@@ -244,30 +313,36 @@ def run():
                         break
                 else:
                     zero_since = None
+                xf = x / 32768.0
+                preroll.append(xf)
                 if spk.speaking:
                     # HALF-DUPLEX: our own voice is playing; drop any
                     # in-flight partial and keep the gate shut
                     if rec.get_result(stream):
                         rec.reset(stream)
                     loud_until = 0.0
+                    del utt[:]
                     write_atomic(SPEECH_JSON, {
                         "ts": round(now, 2), "partial": "",
-                        "final": final, "final_ts": round(final_ts, 2),
+                        "final": shared["final"],
+                        "final_ts": round(shared["final_ts"], 2),
                         "level_db": round(db, 1), "speaking": True,
                     })
                     continue
                 if db > GATE_DB:
+                    if now >= loud_until:      # gate opening: keep the
+                        utt.extend(preroll)    # 0.3 s that woke it
                     loud_until = now + HANG_S
                 partial = ""
                 if now < loud_until:
-                    stream.accept_waveform(RATE, x / 32768.0)
+                    if len(utt) < 300:         # 30 s hard cap
+                        utt.append(xf)
+                    stream.accept_waveform(RATE, xf)
                     while rec.is_ready(stream):
                         rec.decode_stream(stream)
                     partial = rec.get_result(stream).lower()
                     if rec.is_endpoint(stream):
-                        if partial.strip():
-                            final, final_ts = partial.strip(), now
-                            print(f"heard: {final!r}", flush=True)
+                        finish(partial.strip(), now)
                         rec.reset(stream)
                         partial = ""
                 else:
@@ -276,14 +351,15 @@ def run():
                     # this is the safety net): finalize it
                     pend = rec.get_result(stream).lower().strip()
                     if pend:
-                        final, final_ts = pend, now
-                        print(f"heard (gate): {final!r}", flush=True)
+                        finish(pend, now)
                         rec.reset(stream)
+                    elif utt:
+                        del utt[:]
                 write_atomic(SPEECH_JSON, {
                     "ts": round(now, 2),
                     "partial": partial,
-                    "final": final,
-                    "final_ts": round(final_ts, 2),
+                    "final": shared["final"],
+                    "final_ts": round(shared["final_ts"], 2),
                     "level_db": round(db, 1),
                     "speaking": False,
                 })

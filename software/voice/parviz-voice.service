@@ -16,8 +16,10 @@ Environment=XDG_RUNTIME_DIR=/run/user/1000
 ExecStart=/usr/bin/python3 /home/moshe/parviz-sw/voice/voice.py
 Restart=always
 RestartSec=5
-# ASR ~120M + piper lessac-medium ~250M when it has spoken at least once
-MemoryMax=600M
+# streaming ASR ~120M + moonshine base ~300M + piper ~160M while
+# speaking (piper unloads after 10 idle min; llama-server's idle pages
+# live in zram, which is what makes this fit on the 2GB Pi)
+MemoryMax=750M
 
 [Install]
 WantedBy=multi-user.target
