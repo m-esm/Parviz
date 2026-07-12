@@ -18,6 +18,8 @@ Output: exports/bambu.3mf (THE canonical name, always reused/overwritten -- user
                      wheels, 2 pod rails, 2 keeper bars
   Track links        8 PRINT-IN-PLACE strips (4/side: 16+16+16+15 links, integral
                      Ø2.0 pins, keeled, support OFF) + 2 master links
+  Track coupon       5-link PIP test strip + 1 master + 2 keeper bars (~48 min sliced):
+                     print + measure THIS before the 6.8 h strip plates
 
 A category that overflows the 256x256 bed spills to "Cat 1 of N", "Cat 2 of N".
 ONE file, many plates: swap the spool / pick per-plate settings in Studio per plate.
@@ -111,6 +113,7 @@ CATEGORIES = [
     ("Worm drive",   ["worm_wheel_real", "tilt_worm_real"]),
     ("Track gear",   ["@drivegear"]),
     ("Track links",  ["@links"]),
+    ("Track coupon", ["@coupon"]),
 ]
 
 # single shared profile: Generic PLA @ A1, 0.20 mm standard
@@ -222,6 +225,32 @@ def strip_units():
     return out
 
 
+def coupon_units():
+    """TEST COUPON plate (2026-07-13): a 5-link print-in-place strip + ONE loose
+    master link + its two keeper bars -- the complete joint set (integral-pin PIP
+    hinge, keels, open boundary bores, C-jaw + keeper slide) in ~48 min of plastic,
+    to be printed and measured BEFORE committing to the 6.8 h strip plates. Strip
+    rides stl/base/track_coupon.stl (EXPORT=1 ghost, concatenated like the big
+    strips, grouser-down SUPPORT OFF); master + keepers generate live exactly like
+    the strip-plate master spares / keeper STLs (grouser-up NOSUP, keepers rolled
+    onto the wide face)."""
+    m = trimesh.load(os.path.join(ROOT, "stl", "base", "track_coupon.stl"))
+    n = len(m.split(only_watertight=False))
+    if n != 5:
+        sys.exit(f"FAIL: track_coupon has {n} bodies, expected 5 "
+                 "(PIP gap fused, or a link split?)")
+    out = [("track_coupon_strip", m, NOSUP)]
+    body, keepers = tracks._track_master_link()
+    body.apply_transform(R(X, 180))                    # grouser-up like the spares
+    out.append(("track_master_link", body, NOSUP))
+    for k in keepers:
+        k.apply_transform(R(X, 90))                    # rolled onto the wide face
+        out.append(("track_keeper_bar", k, NOSUP))
+    for _, mm, _ in out:
+        mm.apply_translation((0, 0, -mm.bounds[0][2]))
+    return out
+
+
 def shelf_pack(items, brim_default, gap=6.0):
     """items: (name, mesh, obj). Returns list of plates (each a list of part dicts), brim-aware."""
     sized, seen = [], {}
@@ -253,7 +282,8 @@ def shelf_pack(items, brim_default, gap=6.0):
 def main():
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     brim = float(PROFILE.get("brim_width", 0))
-    tokens = {"@drivegear": drivegear_units, "@links": strip_units}
+    tokens = {"@drivegear": drivegear_units, "@links": strip_units,
+              "@coupon": coupon_units}
 
     plates, manifest = [], []
     for cat, members in CATEGORIES:

@@ -488,9 +488,13 @@ def build_tracks():
             hd8.apply_translation((sx * 121.05, ey_, za))
             ws8 = cyl(7.2, 1.5, axis="x")              # Ø14.4 washer on the pylon
             ws8.apply_translation((sx * 61.25, ey_, za))   # inboard face (x 60.5..62)
-            nt8 = cyl(7.2, 5.0, axis="x", sections=6)  # M8 NYLOC as a true hex, FLATS
-            nt8.apply_translation((sx * 58.0, ey_, za))    # to +-y: the 13.8 nut channel holds the
-            # flats while the bolt is torqued from the outboard head (x 55.5..60.5)
+            nt8 = cyl(7.2, 5.0, axis="x", sections=6)  # M8 NYLOC as a true hex
+            if ey_ > 0:                                # (x 55.5..60.5). FRONT: flats
+                nt8.apply_transform(R_x(TAU / 12))     # to +-Z -- the 2026-07-13
+            # capture duct's floor/roof grip them across the tension stroke. REAR:
+            # flats to +-y, held by the 13.8 nut-channel walls while the bolt is
+            # torqued from the outboard head (see build_chassis_core's sgn branch).
+            nt8.apply_translation((sx * 58.0, ey_, za))
             hw.append((bnm, trimesh.util.concatenate([sh8, hd8, ws8, nt8])))
             # F688ZZ placeholders (2026-07-11, user: "bolt not properly connected
             # to the idler" -- the Ø8 shank floated in the Ø16 seat where the
@@ -538,7 +542,7 @@ def build_tracks():
     # 0.35 PIP hinge gaps shut. export-only ghosts (scene=False): the loop's per-link
     # scene nodes above carry the viewer. Links are x-mirror-symmetric, so L and R
     # strips are identical meshes under both names.
-    for si, s_n in enumerate(sizes, 1):
+    def _strip_mesh(s_n, tag):
         row = []
         for j in range(s_n):
             v = first if j == 0 else last if j == s_n - 1 else mid
@@ -548,13 +552,27 @@ def build_tracks():
         sm = trimesh.util.concatenate(row)
         bodies = sm.split(only_watertight=False)
         assert len(bodies) == s_n, \
-            f"strip {si}: {len(bodies)} bodies != {s_n} links (PIP gap fused or link split?)"
+            f"{tag}: {len(bodies)} bodies != {s_n} links (PIP gap fused or link split?)"
+        return sm
+    for si, s_n in enumerate(sizes, 1):
+        sm = _strip_mesh(s_n, f"strip {si}")
         for side in ("L", "R"):
             gh = sm.copy()
             gh.metadata["name"] = f"__export__track_strip_{side}{si}"
             gh.metadata["export"] = f"track_strip_{side}{si}.stl"
             gh.metadata["scene"] = False
             out.append(gh)
+    # TEST COUPON (2026-07-13): a 5-link print-in-place strip -- one open-A first
+    # link, three integral-pin mids, one open-far last, same variants and keels as
+    # the production strips, concatenated NEVER unioned -- so the 0.35 PIP hinge
+    # gap, the keeled grouser-down pose and every boundary bore get validated in
+    # ~48 min of plastic (sliced) before the 6.8 h strip plates. tools/export_bambu.py puts
+    # it on its own "Track coupon" plate with a loose master + keeper bars.
+    cp = _strip_mesh(5, "coupon")
+    cp.metadata["name"] = "__export__track_coupon"
+    cp.metadata["export"] = "track_coupon.stl"
+    cp.metadata["scene"] = False
+    out.append(cp)
     return out
 
 
