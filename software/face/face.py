@@ -715,18 +715,6 @@ class FaceRenderer:
         pg = self.pygame
         st = self.state.pose
         m, op = st["mouth"], st["open"]
-        # THE mustache (user: much bigger): two grand tapered swooshes,
-        # tips curling up high -- dapper, rigid lines only
-        my = MOUTH_CY - 30
-        for side in (-1, 1):
-            pts = [(400 + side * 6, my),
-                   (400 + side * 78, my - 16),
-                   (400 + side * 116, my - 34),
-                   (400 + side * 124, my - 46),
-                   (400 + side * 112, my - 24),
-                   (400 + side * 70, my - 2),
-                   (400 + side * 8, my + 13)]
-            pg.draw.polygon(surf, ORANGE, pts)
         if op > 0.25:
             # open mouth: small chamfered O outline, height grows with open
             hw, hh = 26.0, 7.0 + 20.0 * op

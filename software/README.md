@@ -420,3 +420,16 @@ Gestures + tracking bypass + latency (2026-07-12, user round):
   panel now shows "cycle X.Xs (prompt+gen)" prominently.
 - FACE: a grand rigid-line MUSTACHE (user: much bigger), bottom-band
   hairline separator, panel line spacing 14 px.
+
+Expressiveness + optimization pass (2026-07-12): mustache removed (user).
+Why the face felt non-expressive: vision under-labeled (smile>0.5 was a
+high bar) and the fixed 15 s tick outlived the user's expressions. Fixes:
+smile threshold 0.4 + more sensitive formula, new "sad" label (corner
+droop), perception rate ADAPTIVE (2 Hz person present / 0.5 Hz empty
+desk), and the brain is EVENT-DRIVEN: polls vision every 1 s and ticks
+IMMEDIATELY on presence/expression/gesture change, 20 s heartbeat
+otherwise, 4 s cooldown floor (thermals). max_tokens 120. Verified live:
+victory sign -> "Person is showing victory; surprised" -> face went
+SURPRISED within one ~9 s cycle. Sustained load still parks the bare
+SoC at ~84 C: the active cooler is now the single biggest optimization
+available for this app.

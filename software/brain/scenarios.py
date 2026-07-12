@@ -488,7 +488,7 @@ def ask(host, digest, temperature=0.2, timeout=120, prompt="v1"):
             {"role": "user", "content": digest},
         ],
         "temperature": temperature,
-        "max_tokens": 200,
+        "max_tokens": 120,
         # llama-server keeps the constant system+few-shot prefix in KV
         # cache across requests: prefill drops from ~1400 tokens (~7 s on
         # the Pi) to just the changing digest (~1 s).

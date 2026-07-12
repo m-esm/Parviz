@@ -35,8 +35,8 @@ DECISION_FILE = "/tmp/parviz_decision.json"
 HERE = os.path.dirname(os.path.abspath(__file__))
 JOURNAL = os.path.join(HERE, "journal.log")
 HOST = os.environ.get("PARVIZ_LLM", "127.0.0.1:8081")
-TICK_S = 15.0   # inference is 7-15 s; shorter ticks ran the LLM at 100%
-                # duty and pushed the (fanless) Pi past 80C
+TICK_IDLE_S = 20.0   # heartbeat tick when nothing changes
+TICK_MIN_S = 4.0     # cooldown after a tick (thermals; fanless Pi)
 
 
 def read_vision():
@@ -149,7 +149,8 @@ def build_digest(vis, sy, events, last_actions, cur_expr):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--once", action="store_true")
-    ap.add_argument("--tick", type=float, default=TICK_S)
+    ap.add_argument("--tick", type=float, default=TICK_IDLE_S,
+                    help="idle heartbeat interval (events tick sooner)")
     args = ap.parse_args()
 
     events = Events()
@@ -214,7 +215,21 @@ def main():
             print(digest)
             print(json.dumps(parsed, indent=1))
             break
-        time.sleep(max(1.0, args.tick - (time.monotonic() - t0)))
+        # EVENT-DRIVEN wait: tick immediately when the person's presence,
+        # expression or gesture changes; heartbeat at --tick otherwise.
+        time.sleep(max(0.5, TICK_MIN_S - (time.monotonic() - t0)))
+        key = ((vis or {}).get("person_present"),
+               (vis or {}).get("visible_expression"),
+               (vis or {}).get("gesture"))
+        waited = time.monotonic() - t0
+        while waited < args.tick:
+            v2 = read_vision()
+            if ((v2 or {}).get("person_present"),
+                    (v2 or {}).get("visible_expression"),
+                    (v2 or {}).get("gesture")) != key:
+                break
+            time.sleep(1.0)
+            waited = time.monotonic() - t0
 
 
 if __name__ == "__main__":

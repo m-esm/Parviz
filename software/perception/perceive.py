@@ -118,13 +118,14 @@ def face_signals(lm):
     # + when the mouth corners sit ABOVE the inner-lip midpoint
     corner_lift = (((lm[13][1] + lm[14][1]) / 2
                     - (lm[61][1] + lm[291][1]) / 2) / face_h)
-    smile = max(0.0, min(1.0, (width_ratio - 0.42) * 4 + corner_lift * 12))
+    smile = max(0.0, min(1.0, (width_ratio - 0.40) * 5 + corner_lift * 14))
     brow_gap = ((lm[159][1] - lm[105][1]) +
                 (lm[386][1] - lm[334][1])) / 2 / face_h
     return {"ear": round(float(ear_l + ear_r) / 2, 3),
             "eyes_closed": bool(ear_l < 0.16 and ear_r < 0.16),
             "mouth_open": round(float(mouth_open), 3),
             "smile": round(float(smile), 2),
+            "corner_lift": round(float(corner_lift), 3),
             "brow_gap": round(float(brow_gap), 3)}
 
 
@@ -134,8 +135,10 @@ def classify(sig):
         return "eyes_closed"
     if sig["mouth_open"] > 0.11 and sig["brow_gap"] > 0.10:
         return "surprised"
-    if sig["smile"] > 0.5:
+    if sig["smile"] > 0.4:
         return "happy"
+    if sig["corner_lift"] < -0.022:
+        return "sad"
     return "neutral"
 
 
@@ -246,6 +249,9 @@ def run(bench_s=None, hz=LOOP_HZ):
                 write_atomic(PREVIEW_JPG, buf.tobytes())
         if bench_s and time.monotonic() - t_start >= bench_s:
             break
+        # adaptive rate: 2 Hz while someone is here (fresh expression /
+        # gesture signals), 0.5 Hz when the desk is empty
+        period = (0.5 if faces else 2.0) if hz == LOOP_HZ else 1.0 / hz
         time.sleep(max(0.0, period - (time.monotonic() - t0)))
     if bench_s:
         rss = 0
