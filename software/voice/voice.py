@@ -36,8 +36,11 @@ MODEL_DIR = os.path.join(
     HERE, "models", "sherpa-onnx-streaming-zipformer-en-20M-2023-02-17")
 MOONSHINE_DIR = os.path.join(
     HERE, "models", "sherpa-onnx-moonshine-base-en-int8")
-PIPER_MODEL = os.path.join(HERE, "models", "piper",
-                           "en_US-lessac-medium.onnx")
+# PARVIZ_VOICE picks the piper voice by name (files live in
+# models/piper/<name>.onnx); the service env is where it is set
+PIPER_MODEL = os.path.join(
+    HERE, "models", "piper",
+    os.environ.get("PARVIZ_VOICE", "en_US-lessac-medium") + ".onnx")
 SPEECH_JSON = "/dev/shm/parviz_speech.json"
 DECISION_FILE = "/tmp/parviz_decision.json"
 TTS_WAV = "/dev/shm/parviz_tts.wav"
