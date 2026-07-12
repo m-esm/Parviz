@@ -120,6 +120,9 @@ EXPRESSIONS = {
                        size=1.0, pupil=0.7, mouth=-0.5, open=0.0),
     "sick":       dict(gaze=(0.0, 0.45), lid=0.45, squint=0.1,  tilt=-0.5,
                        size=0.95, pupil=0.75, mouth=-0.3, open=0.35),
+    # dozing is FACE-INTERNAL (no-brain state); the LLM cannot choose it
+    "dozing":     dict(gaze=(0.0, 0.35), lid=0.6,  squint=0.1,  tilt=-0.25,
+                       size=0.95, pupil=1.15, mouth=0.03, open=0.0),
     "look_left":  dict(gaze=(-0.9, 0.0), lid=0.0,  squint=0.1,  tilt=0.0,
                        size=1.0, pupil=0.9, mouth=0.1, open=0.0),
     "look_right": dict(gaze=(0.9, 0.0),  lid=0.0,  squint=0.1,  tilt=0.0,
@@ -549,6 +552,8 @@ class FaceRenderer:
             "dejavusansmono,menlo,consolas,monospace", 11)
         self._eye_gaze = {-1: (0.0, 0.0), 1: (0.0, 0.0)}  # per-eye eased
         self.face_col = ORANGE      # drifts toward RED under stress
+        self._brain_ever = False    # any decision applied since start?
+        self._nobrain = False
         self._dec_obj = None        # latest parsed brain decision
         self._dec_mt = None
         self._dec_t = -1e9
@@ -756,7 +761,8 @@ class FaceRenderer:
         x0, w = 654, 124
         y = self._header(surf, x0, 76, w, "BRAIN")
         if self._dec_stale:
-            state, col = "STALE -> sleep", HUD_BAD
+            state, col = (("OFFLINE -> dozing", HUD_BAD)
+                          if self._brain_ever else ("WARMING UP", HUD_MID))
         else:
             state, col = "LIVE", HUD_MID
         age = (f'  {int(time.time() - self._dec_mt)}s'
@@ -815,8 +821,23 @@ class FaceRenderer:
         if self._status_until is not None and now > self._status_until:
             self.status = None
             self._status_until = None
-        if self._dec_stale and self.state.expression != "sleepy":
-            self.set_expression("sleepy")   # brain not responding
+        if d:
+            self._brain_ever = True
+        if self._dec_stale:
+            # NO-BRAIN state: dozing face + animated status, two flavors
+            dots = "." * (1 + int(now * 2) % 3)
+            self.status = (f"BRAIN OFFLINE{dots}" if self._brain_ever
+                           else f"BRAIN STARTING{dots}")
+            self._nobrain = True
+            if self.state.expression != "dozing":
+                self.set_expression("dozing")
+            # slow breath of the lids while dozing
+            self.state.target["lid"] = 0.55 + 0.18 * math.sin(now * 0.7)
+        elif self._nobrain:
+            self._nobrain = False
+            self.status = None
+            if self.state.expression == "dozing":
+                self.set_expression("neutral")
 
     def _hud(self, surf, now):
         """Corner telemetry blocks in cool HUD tones (orange belongs to the

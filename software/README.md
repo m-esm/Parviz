@@ -457,3 +457,13 @@ breathes. Verified live: at 85C throttle the whole face runs deep red.
 Executor de-dupes contradictory duplicate set_expression actions in one
 decision (last wins). HUD margins equalized: content sits 26 px from
 ALL four edges (top/bottom rows were 6 px tighter than the sides).
+
+No-brain mode (2026-07-12, user): when the decision file goes stale the
+face enters a proper NO-BRAIN state instead of plain sleepy: new
+face-internal "dozing" expression (near-shut lids with a slow 0.7 Hz
+breathing drift, the LLM cannot select it), animated status "BRAIN
+STARTING..." (never had a decision since face start; LLM warming) vs
+"BRAIN OFFLINE..." (had one, lost it), and the BRAIN panel shows
+WARMING UP vs OFFLINE -> dozing (red). Wakes to neutral the moment
+decisions resume. Verified by killing brain+llm (dozed at 55 s) and
+recovery (caught the user waving within one cycle of restart).
