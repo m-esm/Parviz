@@ -433,3 +433,19 @@ victory sign -> "Person is showing victory; surprised" -> face went
 SURPRISED within one ~9 s cycle. Sustained load still parks the bare
 SoC at ~84 C: the active cooler is now the single biggest optimization
 available for this app.
+
+Cycle/OS optimization audit (2026-07-12, user): found REAL issues --
+(1) ACTIVE THERMAL THROTTLE: throttled=0xf0006, ARM pinned at 1.5 of
+2.4 GHz; every stage runs ~40% slow. Software cannot fix this: BUY THE
+ACTIVE COOLER. (2) Memory pressure: 470 MB into zram swap; fixed with
+llama-server --flash-attn + q8_0 KV cache and service restarts -- used
+1670->1040 MB, zram 470->69 MB, mem 82->51%. (3) Perception 44% of a
+core: hand pipeline now runs every OTHER tick (result carried so the
+brain's event key doesn't flap) -> 24%. (4) Load avg 5.4 on 4 cores:
+reduced by 2+3. DEMO MODE REMOVED entirely per user (DemoDirector,
+scenes, --demo, triple-tap; the brain is the only behavior source now).
+BRAIN panel cycle line + action lines truncate to panel width (text ran
+off-screen), panel margins widened. NOTE the demo removal initially
+deleted Telemetry/CamPreview/VisionGaze with it (face crash-looped;
+restored from git HEAD) -- deletion by text-range needs the range
+checked against class boundaries.

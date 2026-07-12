@@ -225,91 +225,6 @@ class FaceState:
         return max(self.pose["lid"], blink)  # effective lid closure this frame
 
 
-# Demo mode: scripted scenes of what the screen shows in real situations
-# (the states the brain loop will drive later). Each scene = (NAME, steps),
-# each step = (duration_s, expression|"shut"|None, status_text|None).
-# "{dots}" in a status animates; status None shows the scene name.
-DEMO_SCENES = [
-    ("IDLE", [(2.2, "neutral", None), (1.6, "look_left", "SCANNING"),
-              (1.6, "look_right", "SCANNING"), (1.2, "neutral", None)]),
-    ("PERSON DETECTED", [(0.7, "surprised", "MOTION // LEFT"),
-                         (1.5, "look_left", "TRACKING"),
-                         (2.2, "happy", "HELLO")]),
-    ("LISTENING", [(0.6, "surprised", "WAKE WORD"),
-                   (3.0, "look_up", "LISTENING{dots}")]),
-    ("THINKING", [(3.0, "look_down", "THINKING{dots}")]),
-    ("SPEAKING", [(3.0, "talk", "SPEAKING{dots}")]),
-    ("ESCALATE", [(3.2, "look_up", "ASKING BIG BRAIN{dots}")]),
-    ("ALERT", [(0.5, "surprised", "!! CLIFF"), (0.5, "angry", "CLIFF !!"),
-               (0.5, "surprised", "!! CLIFF"),
-               (1.8, "concerned", "REFLEX STOP OK")]),
-    ("INTRUDER", [(0.8, "surprised", "UNKNOWN PERSON"),
-                  (2.2, "angry", "GO AWAY")]),
-    ("PETTED", [(2.8, "happy", "<3")]),
-    ("BOOP", [(0.5, "neutral", "TOUCH INCOMING"),
-              (2.4, "boop", "HEHE")]),
-    ("LOW POWER", [(2.2, "concerned", "LOW POWER"),
-                   (1.8, "sick", "VERY LOW POWER")]),
-    ("SAD", [(2.6, "sad", "USER LEFT")]),
-    ("SLEEP", [(1.2, "sleepy", None), (2.4, "shut", "ZZZ{dots}")]),
-    ("WAKE", [(1.2, "surprised", "GOOD MORNING"), (2.0, "neutral", None)]),
-]
-
-
-class DemoDirector:
-    """Steps through DEMO_SCENES on wall-clock intervals, driving the
-    renderer's expression + HUD status line. Loops forever."""
-
-    def __init__(self, scenes=None):
-        self.scenes = scenes or DEMO_SCENES
-        self._i = 0        # scene index
-        self._j = 0        # step index
-        self._t0 = None    # current step start
-
-    def _step(self):
-        name, steps = self.scenes[self._i]
-        return name, steps[self._j]
-
-    def _apply(self, face, now):
-        _, (_, expr, _) = self._step()
-        if expr == "shut":
-            face.state.target = dict(face.state.target)
-            face.state.target["lid"] = 1.0
-        elif expr == "boop":
-            # synthetic poke between the eyes: derp + o-mouth + ripple
-            face.state.touch((0.0, -0.15))
-            face._ripples.append((SCREEN_W / 2, EYE_CY, now))
-        elif expr == "talk":
-            face.set_expression("happy")
-        elif expr:
-            face.set_expression(expr)
-
-    def tick(self, now, face):
-        if self._t0 is None:
-            self._t0 = now
-            self._apply(face, now)
-        name, (dur, expr, status) = self._step()
-        if now - self._t0 >= dur:
-            if expr == "boop":       # lift the synthetic finger
-                face.state.touch(None)
-            self._j += 1
-            _, steps = self.scenes[self._i]
-            if self._j >= len(steps):
-                self._j = 0
-                self._i = (self._i + 1) % len(self.scenes)
-            self._t0 = now
-            self._apply(face, now)
-            name, (dur, expr, status) = self._step()
-        if expr == "talk":           # mouth flaps while speaking
-            face.state.target["open"] = 0.12 + 0.38 * (
-                0.5 + 0.5 * math.sin(now * 9.0))
-        if status:
-            dots = "." * (1 + int(now * 2.5) % 3)
-            face.status = f"{name} // {status}".replace("{dots}", dots)
-        else:
-            face.status = f"DEMO // {name}"
-
-
 PREVIEW_JPG = "/dev/shm/parviz_preview.jpg"   # written by perception
 VISION_JSON = "/dev/shm/parviz_vision.json"   # written by perception
 
@@ -637,8 +552,6 @@ class FaceRenderer:
         self._dec_applied_mt = 0.0
         self._dec_pending = None
         self._status_until = None
-        self.demo_on = False        # runtime toggle: triple-tap the screen
-        self._taps = []
         self._font = pygame.font.SysFont(
             "dejavusansmono,menlo,consolas,monospace", 17)
         self._text_cache = {}       # str -> rendered Surface
@@ -787,8 +700,8 @@ class FaceRenderer:
     def _panel_vision(self, surf, now):
         """Left side: everything the vision models see, in one place."""
         pg = self.pygame
-        x0, w = 16, 130
-        y = self._header(surf, x0, 74, w, "VISION")
+        x0, w = 22, 124
+        y = self._header(surf, x0, 76, w, "VISION")
         cimg = self.campre.surface(pg, now)
         raw = self.vision.raw
         if cimg is not None:
@@ -836,8 +749,8 @@ class FaceRenderer:
 
     def _panel_brain(self, surf, now):
         """Right side: what the LLM decided, clearly labeled as such."""
-        x0, w = 652, 132
-        y = self._header(surf, x0, 74, w, "BRAIN")
+        x0, w = 654, 124
+        y = self._header(surf, x0, 76, w, "BRAIN")
         if self._dec_stale:
             state, col = "STALE -> sleep", HUD_BAD
         else:
@@ -853,10 +766,10 @@ class FaceRenderer:
         if d.get("latency_s") is not None:
             lat = f'cycle {d["latency_s"]:.1f}s'
             if d.get("prompt_ms") is not None:
-                lat += (f'  ({d["prompt_ms"] / 1000:.1f}+'
-                        f'{d.get("gen_ms", 0) / 1000:.1f})')
-            surf.blit(self._text(lat, HUD_FG, small=True), (x0, y))
-            y += 19
+                lat += (f' {d["prompt_ms"] / 1000:.0f}+'
+                        f'{d.get("gen_ms", 0) / 1000:.0f}')
+            surf.blit(self._text(lat[:19], HUD_FG, tiny=True), (x0, y))
+            y += 15
         for a in d.get("actions", [])[:4]:
             if not isinstance(a, dict):
                 continue
@@ -865,7 +778,7 @@ class FaceRenderer:
                    or a.get("task") or "")
             if do == "look_at":
                 arg = f'{a.get("pan_deg", 0)},{a.get("tilt_deg", 0)}'
-            s = f'{do} {str(arg)[:11]}'.rstrip()
+            s = f'{do} {arg}'.rstrip()[:19]
             surf.blit(self._text(s, HUD_MID, tiny=True), (x0, y))
             y += 13
         y += 4
@@ -1032,24 +945,9 @@ class FaceRenderer:
 
     # ---------------------------------------------------------------- loop
 
-    def _tap(self, now):
-        """Triple-tap within 1 s toggles demo mode (off by default)."""
-        self._taps = [t for t in self._taps if now - t < 1.0] + [now]
-        if len(self._taps) >= 3:
-            self._taps = []
-            self.demo_on = not self.demo_on
-            if not self.demo_on:
-                self.status = None
-                self.state.touch(None)
-                self.set_expression("neutral")
-            return True
-        return False
-
-    def run(self, seconds=None, demo=False):
+    def run(self, seconds=None):
         pg = self.pygame
         t_start = time.monotonic()
-        self.demo_on = demo
-        director = DemoDirector()
         last = t_start
         while True:
             now = time.monotonic()
@@ -1070,8 +968,6 @@ class FaceRenderer:
                     if ev.type == pg.FINGERDOWN:
                         self._ripples.append((ev.x * SCREEN_W,
                                               ev.y * SCREEN_H, now))
-                        if self._tap(now):
-                            director = DemoDirector()  # restart clean
                 elif ev.type == pg.FINGERUP:
                     self.state.touch(None)
                 elif ev.type == pg.MOUSEBUTTONDOWN or \
@@ -1081,13 +977,9 @@ class FaceRenderer:
                                       y / SCREEN_H * 2 - 1))
                     if ev.type == pg.MOUSEBUTTONDOWN:
                         self._ripples.append((x, y, now))
-                        if self._tap(now):
-                            director = DemoDirector()
                 elif ev.type == pg.MOUSEBUTTONUP:
                     self.state.touch(None)
-            if self.demo_on and now - self._boot_t0 > BOOT_LEN_S:
-                director.tick(now, self)
-            elif self.state.touch_pt is None:
+            if self.state.touch_pt is None:
                 # The LLM is the only source of truth for behavior.
                 self._apply_brain(now)
             lid = self.state.tick(now, dt)
@@ -1103,9 +995,6 @@ def main(argv=None):
                     help="auto-exit after N seconds (for SSH smoke tests)")
     ap.add_argument("--expression", default="neutral",
                     choices=sorted(EXPRESSIONS), help="initial expression")
-    ap.add_argument("--demo", action="store_true",
-                    help="loop scripted scenes (person detected, listening, "
-                         "thinking, alert, sleep, ...) on timed intervals")
     args = ap.parse_args(argv)
 
     # A SIGUSR1 (frame-dump request) arriving before the renderer installs
@@ -1128,7 +1017,7 @@ def main(argv=None):
               file=sys.stderr)
         return 1
     face.set_expression(args.expression)
-    face.run(seconds=args.seconds, demo=args.demo)
+    face.run(seconds=args.seconds)
     face.pygame.quit()
     return 0
 

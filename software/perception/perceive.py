@@ -199,6 +199,8 @@ def run(bench_s=None, hz=LOOP_HZ):
         hnd = None
     period = 1.0 / hz
     last_prev = 0.0
+    loop_n = 0
+    last_hand = None
     lat = []
     t_start = time.monotonic()
     fps_t0, fps_n, fps = t_start, 0, 0.0
@@ -231,14 +233,19 @@ def run(bench_s=None, hz=LOOP_HZ):
                 sig["lm_ms"] = round((time.monotonic() - t2) * 1000, 1)
                 st.update(sig)
         if hnd is not None and faces:
-            t3 = time.monotonic()
-            try:
-                gesture, gconf = hnd.run(bgr)
-                st["gesture"] = gesture
-                st["gesture_conf"] = round(float(gconf), 2)
-                st["hand_ms"] = round((time.monotonic() - t3) * 1000, 1)
-            except Exception:
-                pass
+            # hands every OTHER tick (85 ms, the heaviest stage); carry
+            # the last result so the brain's event key doesn't flap
+            if loop_n % 2 == 0:
+                t3 = time.monotonic()
+                try:
+                    g, gc = hnd.run(bgr)
+                    last_hand = (g, round(float(gc), 2),
+                                 round((time.monotonic() - t3) * 1000, 1))
+                except Exception:
+                    last_hand = None
+            if last_hand:
+                st["gesture"], st["gesture_conf"], st["hand_ms"] = last_hand
+        loop_n += 1
         write_atomic(VISION_JSON, json.dumps(st))
         if t0 - last_prev >= PREVIEW_EVERY_S:
             last_prev = t0

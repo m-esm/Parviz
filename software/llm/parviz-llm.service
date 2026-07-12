@@ -16,9 +16,12 @@ Wants=network-online.target
 
 [Service]
 User=moshe
+# flash-attn + q8 KV cache: ~100 MB less RSS (the 2GB board was 470 MB
+# into zram swap with f16 KV)
 ExecStart=/home/moshe/llama.cpp/build/bin/llama-server \
     -m /home/moshe/models/Qwen3-0.6B-Q4_0.gguf \
     -t 4 -c 2048 --jinja \
+    --flash-attn on -ctk q8_0 -ctv q8_0 \
     --host 0.0.0.0 --port 8081
 Restart=always
 RestartSec=3
