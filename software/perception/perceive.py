@@ -42,8 +42,8 @@ MODEL = os.path.join(HERE, "models", "face_detection_yunet_2023mar.onnx")
 LM_MODEL = os.path.join(HERE, "models", "face_landmarks_detector.tflite")
 VISION_JSON = "/dev/shm/parviz_vision.json"
 PREVIEW_JPG = "/dev/shm/parviz_preview.jpg"
-COOL_ENTER = float(os.environ.get("PARVIZ_COOL_ENTER", 84.0))
-COOL_EXIT = float(os.environ.get("PARVIZ_COOL_EXIT", 72.0))
+COOL_ENTER = float(os.environ.get("PARVIZ_COOL_ENTER", 80.0))
+COOL_EXIT = float(os.environ.get("PARVIZ_COOL_EXIT", 70.0))
 
 
 def cpu_temp():

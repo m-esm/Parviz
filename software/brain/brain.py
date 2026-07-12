@@ -35,8 +35,8 @@ DECISION_FILE = "/tmp/parviz_decision.json"
 HERE = os.path.dirname(os.path.abspath(__file__))
 JOURNAL = os.path.join(HERE, "journal.log")
 HOST = os.environ.get("PARVIZ_LLM", "127.0.0.1:8081")
-COOL_ENTER = float(os.environ.get("PARVIZ_COOL_ENTER", 84.0))
-COOL_EXIT = float(os.environ.get("PARVIZ_COOL_EXIT", 72.0))
+COOL_ENTER = float(os.environ.get("PARVIZ_COOL_ENTER", 80.0))
+COOL_EXIT = float(os.environ.get("PARVIZ_COOL_EXIT", 70.0))
 COOLING_MARK = "/dev/shm/parviz_cooling"
 
 

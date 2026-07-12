@@ -469,8 +469,9 @@ decisions resume. Verified by killing brain+llm (dozed at 55 s) and
 recovery (caught the user waving within one cycle of restart).
 
 Thermal cooldown mode (2026-07-12, user): a circuit breaker across all
-three daemons. brain.py and perceive.py watch the SoC temp (enter >=84C,
-resume <=72C hysteresis; PARVIZ_COOL_ENTER/EXIT env overrides for
+three daemons. brain.py and perceive.py watch the SoC temp (enter >=80C = the
+OFFICIAL soft-throttle onset (hard throttle 85C, per raspberrypi.com
+docs); resume <=70C hysteresis; PARVIZ_COOL_ENTER/EXIT env overrides for
 testing): while hot the brain stops ticking the LLM (writes
 /dev/shm/parviz_cooling as the state marker) and perception skips all
 inference (publishes {"cooling":true}). The face sees the marker and
