@@ -82,6 +82,7 @@ class Speaker:
         self.speaking = False
         self.q = queue.Queue()
         self._voice = None
+        self._last_say = time.time()
         try:   # only decisions NEWER than daemon start get a voice
             self._mt = os.path.getmtime(DECISION_FILE)
         except OSError:
@@ -89,8 +90,15 @@ class Speaker:
         threading.Thread(target=self._watch, daemon=True).start()
         threading.Thread(target=self._speak_loop, daemon=True).start()
 
+    IDLE_UNLOAD_S = 600     # drop the ~160 MB piper model between
+                            # conversations; reload costs ~2 s
+
     def _watch(self):
         while True:
+            if (self._voice is not None and not self.speaking
+                    and time.time() - self._last_say > self.IDLE_UNLOAD_S):
+                self._voice = None      # GC frees the onnx session
+                print("tts model unloaded (idle)", flush=True)
             try:
                 mt = os.path.getmtime(DECISION_FILE)
                 if mt != self._mt:
@@ -124,6 +132,7 @@ class Speaker:
         while True:
             text = self.q.get()
             self.speaking = True
+            self._last_say = time.time()
             t0 = time.time()
             try:
                 self.synth(text)
