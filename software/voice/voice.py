@@ -70,6 +70,44 @@ def write_atomic(path, obj):
     os.replace(tmp, path)
 
 
+def _pactl_names(kind):
+    try:
+        out = subprocess.run(["pactl", "list", "short", kind],
+                             capture_output=True, text=True,
+                             timeout=5).stdout
+        return [line.split("\t")[1] for line in out.splitlines()
+                if "\t" in line]
+    except (OSError, subprocess.SubprocessError, IndexError):
+        return []
+
+
+def find_mic_source():
+    """The bluetooth mic, coaxed into existence if needed.
+
+    Freshly reconnected AirPods land in the a2dp profile (output only,
+    NO input node) -- that is why 'out and back in' used to go deaf:
+    @DEFAULT_SOURCE@ resolved to nothing useful and stayed there. If a
+    bluez card exists without its input, flip it to the headset profile
+    and wait for the mic node. Falls back to the default source."""
+    for s in _pactl_names("sources"):
+        if s.startswith("bluez_input"):
+            return s
+    for card in _pactl_names("cards"):
+        if not card.startswith("bluez_card"):
+            continue
+        subprocess.run(["pactl", "set-card-profile", card,
+                        "headset-head-unit"],
+                       capture_output=True, timeout=5)
+        for _ in range(10):
+            time.sleep(0.5)
+            for s in _pactl_names("sources"):
+                if s.startswith("bluez_input"):
+                    print(f"voice: switched {card} to headset profile",
+                          flush=True)
+                    return s
+    return "@DEFAULT_SOURCE@"
+
+
 class Speaker:
     """Parviz's mouth: watches the brain's decision file and speaks NEW
     say actions through Piper into the default sink (the AirPods).
@@ -178,8 +216,10 @@ def run():
     loud_until = 0.0
     zero_since = None   # dead-source watchdog: pure digital silence
     while True:
+        dev = find_mic_source()
+        print(f"voice: capturing from {dev}", flush=True)
         proc = subprocess.Popen(
-            ["parec", "--device=@DEFAULT_SOURCE@", "--format=s16le",
+            ["parec", f"--device={dev}", "--format=s16le",
              f"--rate={RATE}", "--channels=1", "--latency-msec=100"],
             stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
         try:
