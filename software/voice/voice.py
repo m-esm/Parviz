@@ -176,6 +176,7 @@ def run():
     GATE_DB = -48.0
     HANG_S = 2.0
     loud_until = 0.0
+    zero_since = None   # dead-source watchdog: pure digital silence
     while True:
         proc = subprocess.Popen(
             ["parec", "--device=@DEFAULT_SOURCE@", "--format=s16le",
@@ -190,6 +191,19 @@ def run():
                 rms = float(np.sqrt(np.mean(x * x))) + 1e-6
                 db = 20 * math.log10(rms / 32768.0)
                 now = time.time()
+                # WATCHDOG: -120 dB is digital zero, not a quiet room --
+                # the source died under us (bluetooth drop -> parec keeps
+                # streaming silence from a dummy). Respawn so the capture
+                # re-resolves @DEFAULT_SOURCE@ when the device returns.
+                if db < -120.0:
+                    zero_since = zero_since or now
+                    if now - zero_since > 10.0:
+                        print("voice: source is digital-silent, "
+                              "respawning capture", flush=True)
+                        zero_since = None
+                        break
+                else:
+                    zero_since = None
                 if spk.speaking:
                     # HALF-DUPLEX: our own voice is playing; drop any
                     # in-flight partial and keep the gate shut
