@@ -4,7 +4,8 @@ packed onto category-named PLATES inside ONE .3mf project, settings BAKED IN (op
 real Bambu project, not "load geometry data only").
 
 Run `EXPORT=1 python3 src/build.py` first so stl/ is current, then `python3 tools/export_bambu.py`.
-Output: exports/parviz_plates.3mf (gitignored, regenerable) with these plates:
+Output: exports/bambu.3mf (THE canonical name, always reused/overwritten -- user
+2026-07-12: one file, same name every export; gitignored, regenerable) with these plates:
 
   Chassis            lower front/rear + deck front/center/rear + belly plate (2026-07-10
                      print-speed splits; every piece <= 180x180)
