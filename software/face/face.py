@@ -14,9 +14,18 @@ to the current expression; each press spawns a fading chamfered ripple.
 
 Modern-UX layer (2026-07-12): micro-saccades + slow breathing so the
 face never freezes, a 1.6 s power-on curtain reveal with a typed
-"PARVIZ // BOOT" line, and DIM-orange HUD chrome (corner viewfinder
-brackets, "PARVIZ // <EXPRESSION>" status line with blinking cursor,
-a breathing heartbeat pip bottom-right). Same hue only, eyes stay king.
+"PARVIZ // BOOT" line, and a breathing heartbeat pip bottom-right.
+
+Design pass (2026-07-12, skill-reviewed): eyes + mouth pulled together
+into ONE face unit in the center band (eyes y 187, mouth y 316 -- the
+old mouth floated 100 px adrift); the inner eye outline is a true
+anisotropic inset of the outer (the old parallel-quad echo crossed the
+outer polygon at happy tilt); pupil mass and mouth weight up one step
+so the face carries at desk distance; the corner viewfinder brackets
+are DELETED (decoration -- the bezel frames the screen); the VISION
+perf line is compacted so it can't run into the left eye; speech under
+the mouth renders in SANS BOLD (Parviz's voice) while all telemetry
+stays mono (the machine's voice).
 
 Display target: 800x480 (official RPi 7" touchscreen, DSI).
 
@@ -88,9 +97,12 @@ RIPPLE_LEN_S = 0.35          # touch feedback outline
 EYE_W = int(SCREEN_W * 0.21)          # 168
 EYE_H = int(SCREEN_H * 0.30)          # 144
 EYE_CX = (int(SCREEN_W * 0.36), int(SCREEN_W * 0.64))   # 288, 512
-EYE_CY = int(SCREEN_H * 0.365)         # eyes ride high; mouth + telemetry below
-MOUTH_CY = int(SCREEN_H * 0.72)
-MOUTH_HALF = 92
+# Design pass 2026-07-12: eyes + mouth compose as ONE face unit in the
+# center band (the old mouth floated 100 px below the eyes and the
+# composition read as scattered parts, not a face).
+EYE_CY = int(SCREEN_H * 0.39)          # 187
+MOUTH_CY = int(SCREEN_H * 0.66)        # 316
+MOUTH_HALF = 100
 STROKE = 4                             # outer outline width (thin, not bold)
 STROKE_IN = 2                          # inner outline width
 GAP = 11                               # spacing between the two outlines
@@ -591,26 +603,36 @@ def eye_geometry(cx, cy, side, gaze, lid, tilt, size, squint=0.0,
     quad = [(l, tl), (r, tr), (r, b), (l, b)]
     c = CHAMFER * min(w, min(b - tl, b - tr))
     outer = chamfer(quad, c)
-    # inner outline: an inset echo of the outer, parallel facets
-    iquad = [(l + GAP, tl + GAP), (r - GAP, tr + GAP),
-             (r - GAP, b - GAP), (l + GAP, b - GAP)]
-    if min(p[1] for p in iquad[2:]) - max(iquad[0][1], iquad[1][1]) < 10:
+    # inner outline: anisotropic inset of the OUTER polygon about its
+    # centroid, so the echo stays strictly inside at any tilt/lid/squint
+    # (the old parallel-quad construction crossed the outer at happy tilt)
+    h_open = min(b - tl, b - tr)
+    kx = 1.0 - 2.0 * GAP / w
+    ky = 1.0 - 2.0 * GAP / h_open
+    if ky <= 0.2:
         inner = None
     else:
-        inner = chamfer(iquad, max(2.0, c - GAP * 0.414))
+        mx = sum(p[0] for p in outer) / len(outer)
+        my = sum(p[1] for p in outer) / len(outer)
+        inner = [(mx + (px - mx) * kx, my + (py - my) * ky)
+                 for px, py in outer]
 
     # Human-pupil anatomy (user): the orange disc is the IRIS and its size
     # is FIXED; the black dot inside is the PUPIL, it DILATES with pupil_k
     # and rides the gaze. Ring outline frames the iris.
-    base = min(w, h) * 0.36               # iris disc side (constant)
+    base = min(w, h) * 0.40               # iris disc side (constant)
     ir = base * 1.42                      # iris ring side
     px = cx + gaze[0] * (w / 2.0 - ir / 2.0 - GAP - 4)
     py = cy + gaze[1] * (hh - ir / 2.0 - GAP - 4)
-    # clamp the iris box inside the (tilted/lidded/squinted) opening
+    # clamp the iris box inside the INNER echo (not just the outer
+    # opening -- a clipped ring used to collide with the inner outline),
+    # and drop it entirely in a slit: two clean outlines read better
+    # than three squashed ones
+    ins = GAP + 4
     top_at_px = tl + (tr - tl) * ((px - l) / (r - l))
-    i_top = max(py - ir / 2.0, top_at_px + 6)
-    i_bot = min(py + ir / 2.0, b - 6)
-    if i_bot - i_top < 14:
+    i_top = max(py - ir / 2.0, top_at_px + ins)
+    i_bot = min(py + ir / 2.0, b - ins)
+    if i_bot - i_top < 26:
         return outer, inner, None
     ibox = [(px - ir / 2, i_top), (px + ir / 2, i_top),
             (px + ir / 2, i_bot), (px - ir / 2, i_bot)]
@@ -689,8 +711,11 @@ class FaceRenderer:
         self._was_speaking = False  # TTS mouth animation latch
         self._font = pygame.font.SysFont(
             "dejavusansmono,menlo,consolas,monospace", 17)
+        # Two typographic voices (design pass 2026-07-12): mono = machine
+        # telemetry, sans bold = Parviz SPEAKING. The speech line under the
+        # mouth is the robot's own voice, not a terminal readout.
         self._font_lg = pygame.font.SysFont(
-            "dejavusansmono,menlo,consolas,monospace", 24)
+            "dejavusans,helvetica,arial", 25, bold=True)
         self._text_cache = {}       # str -> rendered Surface
         signal.signal(signal.SIGUSR1, self._on_usr1)
 
@@ -767,25 +792,27 @@ class FaceRenderer:
         st = self.state.pose
         m, op = st["mouth"], st["open"]
         if op > 0.25:
-            # open mouth: small chamfered O outline, height grows with open
-            hw, hh = 26.0, 7.0 + 20.0 * op
+            # open mouth: chamfered O outline, height grows with open
+            # (sized to read as a mouth, not a stray pupil)
+            hw, hh = 34.0, 8.0 + 22.0 * op
             rect = [(400 - hw, MOUTH_CY - hh), (400 + hw, MOUTH_CY - hh),
                     (400 + hw, MOUTH_CY + hh), (400 - hw, MOUTH_CY + hh)]
             pg.draw.polygon(surf, self.face_col, chamfer(rect, min(hw, hh) * 0.5),
                             STROKE)
             return
-        # closed mouth: rigid 3-segment polyline, ends swing with the mood
+        # closed mouth: rigid 3-segment polyline, ends swing with the mood;
+        # one weight up from the eye outline so a single line holds its own
         ye = MOUTH_CY - m * 24.0
         ym = MOUTH_CY + m * 9.0
-        pts = [(400 - MOUTH_HALF, ye), (400 - 34, ym),
-               (400 + 34, ym), (400 + MOUTH_HALF, ye)]
-        pg.draw.lines(surf, self.face_col, False, pts, STROKE)
+        pts = [(400 - MOUTH_HALF, ye), (400 - 36, ym),
+               (400 + 36, ym), (400 + MOUTH_HALF, ye)]
+        pg.draw.lines(surf, self.face_col, False, pts, STROKE + 1)
 
     def _speech(self, surf):
         """What Parviz is SAYING, big and centered under the mouth."""
         if not self._say:
             return
-        y = MOUTH_CY + 34
+        y = MOUTH_CY + 40   # clears the tallest open-mouth O
         for line in self._wrap(self._say, 34, max_lines=2):
             img = self._text(line, self.face_col, big=True)
             surf.blit(img, (400 - img.get_width() // 2, y))
@@ -914,14 +941,15 @@ class FaceRenderer:
                 lines.append((f'gesture {raw["gesture"]}', HUD_MID))
             if raw.get("pose") and raw["pose"] != "upright":
                 lines.append((f'pose {raw["pose"]}', HUD_MID))
-            lines.append((f'{raw.get("infer_ms", 0):.0f}ms det  '
-                          f'{raw.get("lm_ms", 0):.0f}ms lmk '
-                          f'{raw.get("hand_ms", 0):.0f}ms hnd', HUD_FAINT))
+            # compact perf line: the long det/lmk/hnd form ran into the eye
+            lines.append((f'inf {raw.get("infer_ms", 0):.0f}/'
+                          f'{raw.get("lm_ms", 0):.0f}/'
+                          f'{raw.get("hand_ms", 0):.0f}ms', HUD_FAINT))
         else:
             lines.append(("no face", HUD_MID))
             if raw is not None and raw.get("body_present"):
                 lines.append(("body (turned away)", HUD_MID))
-            lines.append((f'{raw.get("infer_ms", 0):.0f}ms det', HUD_FAINT))
+            lines.append((f'inf {raw.get("infer_ms", 0):.0f}ms', HUD_FAINT))
         if raw is not None and raw.get("objects"):
             objs = ", ".join(o.replace("_", " ")
                              for o in raw["objects"][:4])
@@ -1123,11 +1151,10 @@ class FaceRenderer:
         pg = self.pygame
         self.tele.sample(now)
         te = self.tele
-        m, ln, wd = 14, 26, 3
-        for cx, sx in ((m, 1), (SCREEN_W - m, -1)):
-            for cy, sy in ((m, 1), (SCREEN_H - m, -1)):
-                pg.draw.line(surf, HUD_DIM, (cx, cy), (cx + sx * ln, cy), wd)
-                pg.draw.line(surf, HUD_DIM, (cx, cy), (cx, cy + sy * ln), wd)
+        m = 14
+        # (the corner viewfinder brackets are gone, design pass 2026-07-12:
+        # the panel's physical bezel already frames the screen; the brackets
+        # were decoration that competed with the face)
 
         # --- top-left: SYS block, one labeled sparkline row per metric
         x0, y0 = m + 12, m + 12
