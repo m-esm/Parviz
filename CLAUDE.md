@@ -321,14 +321,13 @@ race), Ø5 SOLID rod for the tilt axle (gets a filed D-flat; no tube), the power
 design and still unverified (may be plastic rings).
 
 **Buy-list additions (software side, 2026-07-12, inventory-checked):**
-- **Pi 5 ACTIVE COOLER — TOP PRIORITY.** The bare SoC sits at 80-85 °C under brain load,
-  clocks pinned 1.5/2.4 GHz, and the new thermal circuit breaker (software/README.md)
-  duty-cycles the robot (pauses LLM + vision, face sweats) above 80 °C. Every cycle-time
-  number improves ~40% with it. NONE in inventory (no fan/heatsink of any kind). Official
-  Raspberry Pi Active Cooler fits the head's Pi bay; CAD side should confirm clearance.
-- **USB-A→USB-B cable** (short, ~0.5 m) for the Arduino I/O plane: the owned Unos (3×
-  Uno R3 compatible, Bag 6 — board purchase NOT needed) use the old USB-B port; no such
-  cable in inventory.
+- **Pi 5 active cooler — downgraded to NICE-TO-HAVE (2026-07-12): the user added a
+  passive heatsink** and the soak test improved from clocks PINNED at 1.5 GHz to
+  2.1-2.4 GHz sustained (85 °C peaks, recovers 85→70 °C in <1 min off-load). The 80 °C
+  thermal breaker still trips briefly under long brain bursts; an active cooler would
+  eliminate that entirely. If bought, CAD must confirm head-bay clearance (+~15 mm).
+- ~~USB-A→USB-B cable~~ COVERED: user has one cable per Uno (3× Uno R3 compatible in
+  Bag 6; no board purchase needed either). The Arduino I/O plane is fully stocked.
 - **Sensor suite (AWARENESS.md; decide exact parts with the wiring pass, NONE owned):**
   mmWave presence LD2410/LD2450-class, BME688 (or BME280 if gas sensing is dropped),
   IMU (MPU6050/ICM-20948-class), SW-420 vibration module, TTP223 cap-touch pads ×2-4.
