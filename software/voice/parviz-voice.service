@@ -16,7 +16,8 @@ Environment=XDG_RUNTIME_DIR=/run/user/1000
 ExecStart=/usr/bin/python3 /home/moshe/parviz-sw/voice/voice.py
 Restart=always
 RestartSec=5
-MemoryMax=400M
+# ASR ~120M + piper lessac-medium ~250M when it has spoken at least once
+MemoryMax=600M
 
 [Install]
 WantedBy=multi-user.target

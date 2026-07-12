@@ -22,7 +22,9 @@ import argparse
 import json
 import math
 import os
+import queue
 import subprocess
+import threading
 import time
 import wave
 
@@ -31,7 +33,11 @@ import numpy as np
 HERE = os.path.dirname(os.path.abspath(__file__))
 MODEL_DIR = os.path.join(
     HERE, "models", "sherpa-onnx-streaming-zipformer-en-20M-2023-02-17")
+PIPER_MODEL = os.path.join(HERE, "models", "piper",
+                           "en_US-lessac-medium.onnx")
 SPEECH_JSON = "/dev/shm/parviz_speech.json"
+DECISION_FILE = "/tmp/parviz_decision.json"
+TTS_WAV = "/dev/shm/parviz_tts.wav"
 RATE = 16000
 CHUNK_S = 0.1
 
@@ -64,6 +70,72 @@ def write_atomic(path, obj):
     os.replace(tmp, path)
 
 
+class Speaker:
+    """Parviz's mouth: watches the brain's decision file and speaks NEW
+    say actions through Piper into the default sink (the AirPods).
+    While audio plays `speaking` is True and the capture loop keeps the
+    ASR shut, so the robot never transcribes its own voice (half-duplex
+    v0; webrtc AEC barge-in is the v2 upgrade). Cached decision replays
+    never speak -- same rule as the face."""
+
+    def __init__(self):
+        self.speaking = False
+        self.q = queue.Queue()
+        self._voice = None
+        try:   # only decisions NEWER than daemon start get a voice
+            self._mt = os.path.getmtime(DECISION_FILE)
+        except OSError:
+            self._mt = 0.0
+        threading.Thread(target=self._watch, daemon=True).start()
+        threading.Thread(target=self._speak_loop, daemon=True).start()
+
+    def _watch(self):
+        while True:
+            try:
+                mt = os.path.getmtime(DECISION_FILE)
+                if mt != self._mt:
+                    self._mt = mt
+                    with open(DECISION_FILE) as f:
+                        d = json.load(f)
+                    if (not d.get("cached")
+                            and time.time() - d.get("ts", 0) < 15):
+                        for a in d.get("actions", []):
+                            if (isinstance(a, dict)
+                                    and a.get("do") == "say"
+                                    and a.get("text")):
+                                self.q.put(str(a["text"])[:300])
+            except (OSError, ValueError):
+                pass
+            time.sleep(0.3)
+
+    def synth(self, text):
+        if self._voice is None:
+            from piper import PiperVoice
+            self._voice = PiperVoice.load(PIPER_MODEL)
+        with wave.open(TTS_WAV, "wb") as w:
+            try:
+                self._voice.synthesize_wav(text, w)    # piper-tts >= 1.3
+            except AttributeError:
+                self._voice.synthesize(text, w)        # 1.2 api
+        subprocess.run(["paplay", "--device=@DEFAULT_SINK@", TTS_WAV],
+                       timeout=60, stderr=subprocess.DEVNULL)
+
+    def _speak_loop(self):
+        while True:
+            text = self.q.get()
+            self.speaking = True
+            t0 = time.time()
+            try:
+                self.synth(text)
+                print(f"spoke ({time.time() - t0:.1f}s): {text[:60]!r}",
+                      flush=True)
+            except Exception as e:
+                print(f"tts failed: {e}", flush=True)
+            finally:
+                time.sleep(0.3)    # let the room settle before listening
+                self.speaking = False
+
+
 def decode_wav(path):
     """Offline check: run the streaming recognizer over a wav file."""
     rec = make_recognizer()
@@ -81,9 +153,9 @@ def decode_wav(path):
 
 
 def run():
-    os.environ.setdefault("XDG_RUNTIME_DIR", f"/run/user/{os.getuid()}")
     rec = make_recognizer()
-    print("voice: recognizer up, capturing", flush=True)
+    spk = Speaker()
+    print("voice: recognizer + speaker up, capturing", flush=True)
     stream = rec.create_stream()
     final, final_ts = "", 0.0
     nbytes = int(RATE * CHUNK_S) * 2
@@ -109,6 +181,18 @@ def run():
                 rms = float(np.sqrt(np.mean(x * x))) + 1e-6
                 db = 20 * math.log10(rms / 32768.0)
                 now = time.time()
+                if spk.speaking:
+                    # HALF-DUPLEX: our own voice is playing; drop any
+                    # in-flight partial and keep the gate shut
+                    if rec.get_result(stream):
+                        rec.reset(stream)
+                    loud_until = 0.0
+                    write_atomic(SPEECH_JSON, {
+                        "ts": round(now, 2), "partial": "",
+                        "final": final, "final_ts": round(final_ts, 2),
+                        "level_db": round(db, 1), "speaking": True,
+                    })
+                    continue
                 if db > GATE_DB:
                     loud_until = now + HANG_S
                 partial = ""
@@ -138,6 +222,7 @@ def run():
                     "final": final,
                     "final_ts": round(final_ts, 2),
                     "level_db": round(db, 1),
+                    "speaking": False,
                 })
         finally:
             try:
@@ -149,12 +234,20 @@ def run():
 
 
 def main():
+    os.environ.setdefault("XDG_RUNTIME_DIR", f"/run/user/{os.getuid()}")
     ap = argparse.ArgumentParser()
     ap.add_argument("--wav", default=None,
                     help="decode a 16 kHz mono wav and print the text")
+    ap.add_argument("--say", default=None,
+                    help="speak a line through the default sink and exit")
     args = ap.parse_args()
     if args.wav:
         print(repr(decode_wav(args.wav)))
+        return
+    if args.say:
+        sp = object.__new__(Speaker)   # no watcher threads, just synth
+        sp._voice = None
+        sp.synth(args.say)
         return
     run()
 

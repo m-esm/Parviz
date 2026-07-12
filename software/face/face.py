@@ -686,6 +686,7 @@ class FaceRenderer:
         self._say_until = None
         self._sp = None             # voice daemon state (live caption)
         self._sp_t = -1e9
+        self._was_speaking = False  # TTS mouth animation latch
         self._font = pygame.font.SysFont(
             "dejavusansmono,menlo,consolas,monospace", 17)
         self._font_lg = pygame.font.SysFont(
@@ -1087,6 +1088,17 @@ class FaceRenderer:
             self._say_until = None
         if d:
             self._brain_ever = True
+        # SPEAKING: animate the mouth while the voice daemon plays TTS,
+        # then hand the mouth back to the current expression
+        if self._sp and self._sp.get("speaking"):
+            self.state.target["open"] = (0.30
+                                         + 0.25 * abs(math.sin(now * 6.0)))
+            self._was_speaking = True
+        elif self._was_speaking:
+            self._was_speaking = False
+            base = EXPRESSIONS.get(self.state.expression)
+            if base:
+                self.state.target["open"] = base["open"]
         if self._dec_stale:
             # NO-BRAIN state: dozing face + animated status, two flavors
             dots = "." * (1 + int(now * 2) % 3)
