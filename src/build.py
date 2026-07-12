@@ -37,7 +37,8 @@ from neck import build_neck_clevis, build_tilt_carrier, build_trim_neckfoot
 from head import (build_ant_drive, build_antennas, build_arms, build_cam_pod, build_hatch_frame,
                   build_ear_jacks, build_head_parts, build_head_rails, build_led_strip,
                   build_screen_tray, build_sd_plug)
-from chassis import build_belly_plate, build_chassis_parts, build_fascia, build_pod_rails
+from chassis import (build_belly_plate, build_chassis_electronics, build_chassis_parts,
+                     build_fascia, build_pod_rails)
 from fitmap import _fit_report
 
 
@@ -88,6 +89,8 @@ def build():
     add(build_belly_plate(), np.eye(4), "belly_plate.stl")   # bolt-on floor access plate
     for fp in build_fascia():                        # front fascia set (design ref)
         add(fp, np.eye(4))
+    for ep in build_chassis_electronics():           # Arduino I/O plane seat
+        add(ep, np.eye(4))                           # placeholders (2026-07-13)
     for trk in build_tracks():
         add(trk, np.eye(4), trk.metadata["export"])
     for rail in build_pod_rails():                   # body<->pod join receiving rails

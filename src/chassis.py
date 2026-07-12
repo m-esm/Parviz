@@ -619,6 +619,72 @@ def build_chassis_core():
     tie = box(14.0, 39.0, 3.5)
     tie.apply_translation((-19.0, -43.5, 10.25))
     body = uni([body, tie])
+
+    # --- ELECTRONICS SEATS (2026-07-13, Arduino I/O plane; see the PARAMS block
+    # for every placement derivation + VERIFY_ON_ARRIVAL markers). Added AFTER the
+    # belly cut on purpose: the Uno front post overhangs the opening edge by ~2 at
+    # z >= 12, which blocks nothing (plate plug tops at z 10) -- cutting the
+    # opening later would instead notch the post.
+    # ARDUINO UNO R3: 4 posts to the z-21 seat plane + the rear-wall shelf bar.
+    sx0, sy0 = P["ard_org"]
+    seat_z = P["ard_seat_z"]
+    shx0, shx1, shy0, shy1, shz0 = P["ard_shelf"]
+    shelf = box(shx1 - shx0, shy1 - shy0, seat_z - shz0)
+    shelf.apply_translation(((shx0 + shx1) / 2, (shy0 + shy1) / 2,
+                             (shz0 + seat_z) / 2))
+    body = uni([body, shelf])
+    for lx_, ly_ in P["ard_holes"]:
+        hx_, hy_ = sx0 - lx_, sy0 - ly_              # R180 board-local -> world
+        on_shelf = hy_ < shy1 + 2.0
+        pb_ = seat_z - 6.0 if on_shelf else z0 + floor
+        post = cyl(3.5, seat_z - pb_)
+        post.apply_translation((hx_, hy_, (pb_ + seat_z) / 2))
+        body = uni([body, post])
+        pil = cyl(1.25, 5.5)                         # O2.5 thread-form, blind: stays
+        pil.apply_translation((hx_, hy_, seat_z + 0.5 - 2.75))   # inside post/shelf
+        body = sub(body, pil)                        # (never the thin floor below)
+    # IMU: 2 posts on the strap floor east of the pan pedestal.
+    ix_, iy_ = P["imu_c"]
+    for sy_ in (-1, 1):
+        py_ = iy_ + sy_ * P["imu_hole_cc"] / 2
+        post = cyl(3.0, P["imu_seat_z"] - 12.0)
+        post.apply_translation((ix_, py_, (12.0 + P["imu_seat_z"]) / 2))
+        body = uni([body, post])
+        pil = cyl(1.25, 5.5)
+        pil.apply_translation((ix_, py_, P["imu_seat_z"] + 0.5 - 2.75))
+        body = sub(body, pil)
+    # SW-420: hard pad + 1x O2.5 M3 pilot + 2 anti-rotation fence nubs at the far
+    # (inboard) end. Pad on full-thickness floor -> the pilot may run 3 into it.
+    vx_, vy_ = P["vib_c"]
+    vw_, vl_ = P["vib_board_wl"]
+    pad = box(vw_ + 2.5, vl_ + 2.5, P["vib_pad_h"])
+    pad.apply_translation((vx_, vy_, 12.0 + P["vib_pad_h"] / 2))
+    body = uni([body, pad])
+    vpz = 12.0 + P["vib_pad_h"]
+    vpil = cyl(1.25, P["vib_pad_h"] + 3.0)
+    vpil.apply_translation((vx_ + P["vib_hole_off"], vy_,
+                            vpz + 0.5 - (P["vib_pad_h"] + 3.0) / 2))
+    body = sub(body, vpil)
+    for sy_ in (-1, 1):                              # fence nubs hug the free end
+        nub = box(2.0, 2.0, P["vib_pad_h"] + 3.0)
+        nub.apply_translation((vx_ + vw_ / 2 + 0.3 + 1.0,
+                               vy_ + sy_ * (vl_ / 2 - 1.0),
+                               12.0 + (P["vib_pad_h"] + 3.0) / 2))
+        body = uni([body, nub])
+    # BME688: 2x O5 x 2 standoff bosses on the LEFT wall inner face flanking the
+    # y=-96 vent + O1.7 M2 pilots 3.0 into the 5-wall (2.0 web outside).
+    wallx = -(P["chassis_w"] / 2 - 5.0)              # inner face -65
+    bh_ = P["bme_boss_h"]
+    for sy_ in (-1, 1):
+        by_ = P["bme_cy"] + sy_ * P["bme_hole_cc"] / 2
+        boss = cyl(2.5, bh_ + 1.0, axis="x")         # 1.0 buried in the wall to
+        boss.apply_translation((wallx + (bh_ - 1.0) / 2, by_, P["bme_cz"]))  # fuse
+        body = uni([body, boss])
+        bpil = cyl(0.85, bh_ + 3.5, axis="x")        # boss face -> 3.0 into the
+        bpil.apply_translation((wallx + bh_ + 0.5 - (bh_ + 3.5) / 2,   # wall, 0.5
+                                by_, P["bme_cz"]))   # overshoot past the face
+        body = sub(body, bpil)
+
     _color(body, "base")
     body.metadata["name"] = "chassis"
     return body
@@ -813,6 +879,36 @@ def build_chassis_parts():
         else:
             deck_r = dtgt
 
+    # ---- mmWave FORWARD WINDOW (2026-07-13, PARAMS mmw_*): a second underside
+    # pocket in the FRONT deck overhang, left of the cliff pocket (2.0 wall), with
+    # a ceiling-hung VERTICAL SEAT TAB -- the LD2410-class board stands facing +Y
+    # so its boresight is HORIZONTAL, radiating through the slope's hex-grille
+    # skin (2.5 web radome). Construction mirrors the cliff pocket: cut trimmed at
+    # the 5-offset slope plane so the skin survives; the inboard end (y < 115)
+    # opens downward over the tub for wiring, service = lift the deck.
+    mx0, mx1 = P["mmw_pocket_x"]
+    mty0, mty1 = P["mmw_tab_y"]
+    mz0, mz1 = P["mmw_pocket_z"]
+    sa_m = np.arctan2(z1 - seam, P["deck_overhang"])
+    sn_m = np.array([0.0, np.cos(sa_m), np.sin(sa_m)])     # up-slope unit
+    nn_m = np.array([0.0, np.sin(sa_m), -np.cos(sa_m)])    # outward slope normal
+    se_m = np.array([(mx0 + mx1) / 2, fw, seam])           # slope bottom edge
+    pkt_m = box(mx1 - mx0, 40.0, mz1 - mz0)
+    pkt_m.apply_translation(((mx0 + mx1) / 2, 100.0 + 20.0, (mz0 + mz1) / 2))
+    pbnd_m = box(mx1 - mx0 + 20.0, 80.0, 60.0)             # keep the 5-thick skin
+    pbnd_m.apply_transform(R(sa_m, (1, 0, 0)))
+    pbnd_m.apply_translation(se_m - 5.0 * nn_m + 15.0 * sn_m + 30.0 * nn_m)
+    deck_f = sub(deck_f, sub(pkt_m, pbnd_m))
+    tab = box(mx1 - mx0 + 2.0, mty1 - mty0, mz1 - mz0 + 1.0)   # fused to both
+    tab.apply_translation(((mx0 + mx1) / 2, (mty0 + mty1) / 2,  # pocket walls +
+                           (mz0 + mz1 + 1.0) / 2))              # the ceiling
+    deck_f = uni([deck_f, tab])
+    for sx_ in (-1, 1):                                    # M2 pilots (through the
+        mp_ = cyl(0.85, (mty1 - mty0) + 2.0, axis="y")     # 3.5 tab is fine for a
+        mp_.apply_translation(((mx0 + mx1) / 2 + sx_ * P["mmw_hole_cc"] / 2,
+                               (mty0 + mty1) / 2, 54.0))   # self-tap M2)
+        deck_f = sub(deck_f, mp_)
+
     out = []
     for m_, nm in ((lower_f, "chassis_lower_front"), (lower_r, "chassis_lower_rear"),
                    (deck_f, "chassis_deck_front"), (deck_c, "chassis_deck_center"),
@@ -957,3 +1053,62 @@ def build_pod_rails():
     return rails
 
 
+
+
+def build_chassis_electronics():
+    """Bought-part PLACEHOLDERS for the electronics seats (2026-07-13; see the
+    PARAMS "ELECTRONICS SEATS" block for placements + VERIFY_ON_ARRIVAL markers).
+    All FIXED-frame, never printed (export=None convention, like sensor_us): the
+    Arduino Uno R3 on its rear-floor posts, the IMU on the strap, the SW-420 on
+    its pad, the BME688 on the left-wall vent bosses, and the LD2410-class mmWave
+    board on the deck-pocket tab. Each floats 0.05-0.15 off its seat so the
+    static gate sees air, not a press."""
+    parts = []
+    # Arduino Uno R3: board + USB-B shell (the shell drives the +X plug corridor)
+    sx0, sy0 = P["ard_org"]
+    seat = P["ard_seat_z"]
+    bw, bl = P["ard_board_wl"]
+    brd = box(bw, bl, 1.6)
+    brd.apply_translation((sx0 - bw / 2, sy0 - bl / 2, seat + 0.05 + 0.8))
+    usb = box(16.0, 12.0, 10.7)                      # shell overhangs the edge 6.5
+    usb.apply_translation((sx0 - 16.0 / 2 + 6.5, sy0 - P["ard_usb_ly"],
+                           seat + 0.05 + 1.6 + 10.7 / 2))
+    ard = uni([brd, usb])
+    _color(ard, "pi"); ard.metadata["name"] = "board_arduino"
+    parts.append(ard)
+    # IMU breakout: board (long axis Y, holes at +-imu_hole_cc/2) + chip bump
+    ix_, iy_ = P["imu_c"]
+    ibrd = box(P["imu_board_wl"][1], P["imu_board_wl"][0], 1.2)
+    ibrd.apply_translation((ix_, iy_, P["imu_seat_z"] + 0.05 + 0.6))
+    ichip = box(4.0, 4.0, 1.0)
+    ichip.apply_translation((ix_, iy_, P["imu_seat_z"] + 0.05 + 1.2 + 0.5))
+    imu = uni([ibrd, ichip])
+    _color(imu, "sensor"); imu.metadata["name"] = "sensor_imu"
+    parts.append(imu)
+    # BME688 breakout: vertical board on the wall bosses + sensor can toward the vent
+    wallx = -(P["chassis_w"] / 2 - 5.0)
+    bface = wallx + P["bme_boss_h"] + 0.05           # board back on the boss tips
+    bbrd = box(1.2, P["bme_board_yz"][0], P["bme_board_yz"][1])
+    bbrd.apply_translation((bface + 0.6, P["bme_cy"], P["bme_cz"]))
+    bcan = box(1.4, 3.0, 3.0)                        # sensor package faces the slot
+    bcan.apply_translation((bface - 0.75, P["bme_vent_y"], P["bme_cz"]))
+    bme = uni([bbrd, bcan])
+    _color(bme, "sensor"); bme.metadata["name"] = "sensor_bme"
+    parts.append(bme)
+    # SW-420: board flat on the pad + a component bump
+    vx_, vy_ = P["vib_c"]
+    vz_ = 12.0 + P["vib_pad_h"] + 0.05
+    vbrd = box(P["vib_board_wl"][0], P["vib_board_wl"][1], 1.2)
+    vbrd.apply_translation((vx_, vy_, vz_ + 0.6))
+    vpot = box(6.0, 6.0, 4.0)                        # trim pot / comparator bump
+    vpot.apply_translation((vx_ + 4.0, vy_, vz_ + 1.2 + 2.0))
+    vib = uni([vbrd, vpot])
+    _color(vib, "sensor"); vib.metadata["name"] = "sensor_vib"
+    parts.append(vib)
+    # mmWave LD2410-class: vertical board on the deck-pocket tab face (+Y = boresight)
+    mx0, mx1 = P["mmw_pocket_x"]
+    mbrd = box(P["mmw_board_wz"][0], 1.2, P["mmw_board_wz"][1])
+    mbrd.apply_translation(((mx0 + mx1) / 2, P["mmw_tab_y"][1] + 0.1 + 0.6, 54.0))
+    _color(mbrd, "sensor"); mbrd.metadata["name"] = "sensor_mmwave"
+    parts.append(mbrd)
+    return parts
