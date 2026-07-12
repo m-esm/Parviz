@@ -75,7 +75,7 @@ def semantic_key(vis, sy, events):
         sorted(v.get("objects") or []),
         bool(v.get("facing_camera")),
         bool(v.get("eyes_closed")),
-        int((v.get("size") or 0) * 5),
+        int((v.get("size") or 0) * 3),   # coarse distance band (flap-shy)
         [t for _, t in events.ring[-3:]],
         None if sy.get("temp_c") is None else int(sy["temp_c"] // 10),
         None if sy.get("mem_pct") is None else int(sy["mem_pct"] // 20),
