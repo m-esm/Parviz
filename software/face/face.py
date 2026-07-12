@@ -66,6 +66,9 @@ HUD_DIM = (88, 91, 95)        # dark gray: labels, brackets
 HUD_FAINT = (62, 64, 68)      # faintest: raw model output, secondary lines
 HUD_BAD = (220, 80, 64)       # reserved for alerts
 
+COOLING_MARK = "/dev/shm/parviz_cooling"   # brain writes while paused
+HUD_WARN = (208, 150, 62)     # amber: cooling state
+SWEAT = (150, 192, 216)       # pale blue sweat drops
 RED = (225, 45, 38)   # stress tint target: the face reddens as the
                       # system heats/loads up (user 2026-07-12)
 
@@ -120,6 +123,9 @@ EXPRESSIONS = {
                        size=1.0, pupil=0.7, mouth=-0.5, open=0.0),
     "sick":       dict(gaze=(0.0, 0.45), lid=0.45, squint=0.1,  tilt=-0.5,
                        size=0.95, pupil=0.75, mouth=-0.3, open=0.35),
+    # hot is FACE-INTERNAL (thermal cooldown): droopy pant, LLM can't pick it
+    "hot":        dict(gaze=(0.0, 0.3),  lid=0.35, squint=0.0,  tilt=-0.4,
+                       size=0.95, pupil=0.9, mouth=-0.2, open=0.4),
     # dozing is FACE-INTERNAL (no-brain state); the LLM cannot choose it
     "dozing":     dict(gaze=(0.0, 0.35), lid=0.6,  squint=0.1,  tilt=-0.25,
                        size=0.95, pupil=1.15, mouth=0.03, open=0.0),
@@ -553,6 +559,7 @@ class FaceRenderer:
         self._eye_gaze = {-1: (0.0, 0.0), 1: (0.0, 0.0)}  # per-eye eased
         self.face_col = ORANGE      # drifts toward RED under stress
         self._brain_ever = False    # any decision applied since start?
+        self._cooling = False       # thermal cooldown (sweating)
         self._nobrain = False
         self._dec_obj = None        # latest parsed brain decision
         self._dec_mt = None
@@ -760,7 +767,9 @@ class FaceRenderer:
         """Right side: what the LLM decided, clearly labeled as such."""
         x0, w = 654, 124
         y = self._header(surf, x0, 76, w, "BRAIN")
-        if self._dec_stale:
+        if self._cooling:
+            state, col = "COOLING (paused)", HUD_WARN
+        elif self._dec_stale:
             state, col = (("OFFLINE -> dozing", HUD_BAD)
                           if self._brain_ever else ("WARMING UP", HUD_MID))
         else:
@@ -800,6 +809,28 @@ class FaceRenderer:
         """Execute the LLM's decision: the brain is the ONLY source of
         truth for expression/gaze/speech. A stale brain puts the face to
         sleep until decisions flow again."""
+        # THERMAL COOLDOWN: brain paused on purpose -> sweat, don't doze
+        cooling = False
+        try:
+            cooling = time.time() - os.path.getmtime(COOLING_MARK) < 10
+        except OSError:
+            pass
+        was = self._cooling
+        self._cooling = cooling
+        if cooling:
+            dots = "." * (1 + int(now * 2) % 3)
+            t = self.tele.temp
+            self.status = (f"COOLING DOWN {t:.0f}C{dots}" if t
+                           else f"COOLING DOWN{dots}")
+            if self.state.expression != "hot":
+                self.set_expression("hot")
+            # panting mouth while overheated
+            self.state.target["open"] = 0.32 + 0.18 * math.sin(now * 3.2)
+            return
+        if was:      # just cooled down: hand control back cleanly
+            self.status = None
+            if self.state.expression == "hot":
+                self.set_expression("neutral")
         d, self._dec_pending = self._dec_pending, None
         if d:
             acts = [a for a in d.get("actions", []) if isinstance(a, dict)]
@@ -926,6 +957,22 @@ class FaceRenderer:
             int(SCREEN_W - m - 12 - r), int(SCREEN_H - m - 18 - r),
             int(2 * r), int(2 * r)))
 
+    def _sweat(self, surf, now):
+        """Cooling-down visuals: chamfered sweat drops sliding down from
+        the brow line, staggered so there is always one in flight."""
+        pg = self.pygame
+        y0 = EYE_CY - EYE_H // 2 - 12
+        for i, bx in enumerate((EYE_CX[0] - 52, 400, EYE_CX[1] + 52)):
+            ph = (now * 0.4 + i / 3.0) % 1.0
+            if ph > 0.82:
+                continue
+            dy = ph * 110
+            w, h = 7, 11
+            drop = [(bx, y0 + dy), (bx + w / 2, y0 + dy + h * 0.45),
+                    (bx + w / 2, y0 + dy + h), (bx - w / 2, y0 + dy + h),
+                    (bx - w / 2, y0 + dy + h * 0.45)]
+            pg.draw.polygon(surf, SWEAT, drop)
+
     def _draw_ripples(self, surf, now):
         pg = self.pygame
         keep = []
@@ -970,6 +1017,8 @@ class FaceRenderer:
         for side, ex in ((-1, EYE_CX[0]), (1, EYE_CX[1])):
             self._eye(surf, ex, EYE_CY, side, lid, dt)
         self._mouth(surf)
+        if self._cooling:
+            self._sweat(surf, now)
         if boot_ph < 1.0:
             # power-on: curtains sweep open from the center line outward,
             # and the status line types itself out.

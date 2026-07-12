@@ -42,6 +42,16 @@ MODEL = os.path.join(HERE, "models", "face_detection_yunet_2023mar.onnx")
 LM_MODEL = os.path.join(HERE, "models", "face_landmarks_detector.tflite")
 VISION_JSON = "/dev/shm/parviz_vision.json"
 PREVIEW_JPG = "/dev/shm/parviz_preview.jpg"
+COOL_ENTER = float(os.environ.get("PARVIZ_COOL_ENTER", 84.0))
+COOL_EXIT = float(os.environ.get("PARVIZ_COOL_EXIT", 72.0))
+
+
+def cpu_temp():
+    try:
+        with open("/sys/class/thermal/thermal_zone0/temp") as f:
+            return int(f.read()) / 1000
+    except OSError:
+        return None
 
 CAP_W, CAP_H = 640, 480
 DET_W, DET_H = 320, 240
@@ -205,8 +215,24 @@ def run(bench_s=None, hz=LOOP_HZ):
     t_start = time.monotonic()
     fps_t0, fps_n, fps = t_start, 0, 0.0
     print(f"perceive: yunet {DET_W}x{DET_H}, loop {hz} Hz", flush=True)
+    cooling = False
     while True:
         t0 = time.monotonic()
+        # thermal circuit breaker: no inference while the SoC is hot
+        tc = cpu_temp()
+        if cooling and tc is not None and tc <= COOL_EXIT:
+            cooling = False
+            print(f"cooled to {tc:.0f}C, resuming", flush=True)
+        elif not cooling and tc is not None and tc >= COOL_ENTER:
+            cooling = True
+            print(f"cooling down at {tc:.0f}C, vision paused", flush=True)
+        if cooling:
+            write_atomic(VISION_JSON, json.dumps(
+                {"ts": round(time.time(), 2), "cooling": True,
+                 "person_present": False, "n_faces": 0, "fps": 0,
+                 "infer_ms": 0}))
+            time.sleep(2)
+            continue
         frame = cam.capture_array()                    # RGB-ordered
         bgr = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
         small = cv2.resize(bgr, (DET_W, DET_H), interpolation=cv2.INTER_AREA)

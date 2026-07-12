@@ -35,6 +35,17 @@ DECISION_FILE = "/tmp/parviz_decision.json"
 HERE = os.path.dirname(os.path.abspath(__file__))
 JOURNAL = os.path.join(HERE, "journal.log")
 HOST = os.environ.get("PARVIZ_LLM", "127.0.0.1:8081")
+COOL_ENTER = float(os.environ.get("PARVIZ_COOL_ENTER", 84.0))
+COOL_EXIT = float(os.environ.get("PARVIZ_COOL_EXIT", 72.0))
+COOLING_MARK = "/dev/shm/parviz_cooling"
+
+
+def cpu_temp():
+    try:
+        with open("/sys/class/thermal/thermal_zone0/temp") as f:
+            return int(f.read()) / 1000
+    except OSError:
+        return None
 TICK_IDLE_S = 20.0   # heartbeat tick when nothing changes
 TICK_MIN_S = 4.0     # cooldown after a tick (thermals; fanless Pi)
 
@@ -163,8 +174,30 @@ def main():
         jf.flush()
 
     journal("brain up")
+    cooling = False
     while True:
         t0 = time.monotonic()
+        # THERMAL CIRCUIT BREAKER: pause all LLM work while the SoC is
+        # hot; the marker file tells the face to sweat instead of doze.
+        t = cpu_temp()
+        if cooling:
+            if t is not None and t <= COOL_EXIT:
+                cooling = False
+                try:
+                    os.remove(COOLING_MARK)
+                except OSError:
+                    pass
+                journal(f"cooled down to {t:.0f}C, resuming")
+            else:
+                with open(COOLING_MARK, "w") as f:
+                    f.write(f"{t or 0:.0f}")
+                time.sleep(2)
+                continue
+        elif t is not None and t >= COOL_ENTER:
+            cooling = True
+            journal(f"COOLING DOWN: {t:.0f}C >= {COOL_ENTER:.0f}C, "
+                    "brain paused")
+            continue
         vis = read_vision()
         events.update_from_vision(vis)
         digest = build_digest(vis, read_sys(), events, last_actions,
