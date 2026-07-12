@@ -275,14 +275,31 @@ class CamPreview:
 class VisionGaze:
     """Person-following idle gaze: reads perception's interaction state;
     while a person is present (and nothing stronger is going on) the eyes
-    drift toward them. Touch and non-neutral expressions win."""
+    drift toward them. Touch and non-neutral expressions win.
+
+    SUBTLE by design (user: full-range tracking read as too twitchy):
+    GAIN flattens the response so the pupils only HINT toward the person
+    instead of pegging the eye corner, the DEADBAND keeps a roughly
+    centered person from wiggling the pupils at all, and a low-pass
+    hides the 3 fps detection steps."""
+
+    GAIN = 0.5
+    DEAD = 0.14
 
     def __init__(self):
         self._t = -1e9
         self.want = None      # (gx, gy) in gaze space, or None
+        self._sm = (0.0, 0.0)   # low-passed gaze target
         self.present = False
         self.online = False   # vision daemon delivering frames right now
         self.raw = None       # last parsed state dict (raw model output)
+
+    def _soften(self, v):
+        a = abs(v)
+        if a <= self.DEAD:
+            return 0.0
+        return math.copysign((a - self.DEAD) / (1.0 - self.DEAD),
+                             v) * self.GAIN
 
     def poll(self, now):
         if now - self._t < 0.25:
@@ -301,8 +318,12 @@ class VisionGaze:
             self.online = not st.get("cooling")
             if st.get("person_present"):
                 self.present = True
-                self.want = (max(-1.0, min(1.0, st["cx"] * 1.3)),
-                             max(-1.0, min(1.0, st["cy"] * 1.3)))
+                gx, gy = self._soften(st["cx"]), self._soften(st["cy"])
+                self._sm = (self._sm[0] + 0.35 * (gx - self._sm[0]),
+                            self._sm[1] + 0.35 * (gy - self._sm[1]))
+                self.want = self._sm
+            else:
+                self._sm = (0.0, 0.0)
         except (OSError, ValueError, KeyError):
             pass
 
