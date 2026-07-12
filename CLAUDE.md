@@ -545,8 +545,10 @@ after the shared R(Y,90) (mirrored L STLs landed sprockets DISC-UP with a ~1050 
 tree forest over the teeth; flip when >45deg overhang above z10 exceeds 200 mm2) and
 sprockets/idlers print SUPPORT-OFF (their only ceilings are 1-2 mm annular bore
 steps that bridge; tree pillars would scar the F688 flange seats + D-socket).
-Keepers roll onto their wide face. All 7 track plates slice 'Success.' with zero
-floating-region warnings; slice-check plates headlessly after export changes.
+Keepers roll onto their wide face. ALL 21 PLATES slice 'Success.' (full-project
+headless check 2026-07-12); `make slicecheck` (tools/slice_check.py) is the
+permanent gate -- run it after every export change. It catches the SLICER-visible
+class only; physical stability of tall/thin plating still needs a human look.
 
 **Drive-mechanism review (2026-07-11, task #11):** the wheel beam doubles as the
 ANTI-BUCKLE CAP for the mid-drive: the pushed side of the ground run (rear of the

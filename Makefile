@@ -2,7 +2,7 @@
 # and web/assembly.glb. Run `make help`. See the 3d-print-modeling skill for the loop.
 PORT ?= 8770         # dedicated to desk-pi; 8765 collides with the finnish-doors serve.py
 
-.PHONY: help install build viewer shot watch check check-sweep fits export all
+.PHONY: help install build viewer shot watch check check-sweep fits export slicecheck all
 
 help:                ## List targets
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
@@ -37,6 +37,9 @@ fits:                ## Fit/pressure map -> web/fit_report.json + NEUTRAL-pose a
 export:              ## Regenerate STLs + sliceable Bambu .3mf plates -> exports/ (settings baked in)
 	EXPORT=1 python3 src/build.py
 	python3 tools/export_bambu.py
+
+slicecheck:          ## Headless-slice EVERY plate in exports/bambu.3mf (BambuStudio CLI); fails on any warning
+	python3 tools/slice_check.py
 
 all:                 ## Full pipeline: build GLB, interference gate, then export STLs + .3mf plates
 	python3 src/build.py

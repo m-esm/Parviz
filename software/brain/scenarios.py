@@ -148,7 +148,13 @@ concerned, neutral->neutral.
 set_expression sleepy.
 5. The user asks something needing sight/knowledge/planning: escalate.
 6. Environment problem (cpu over 80C, memory over 90%): log it.
-7. Only when nothing at all needs attention: do_nothing."""
+7. Only when nothing at all needs attention: do_nothing.
+
+The person line may name WHO it is (enrolled identity; "stranger" =
+unrecognized face -- be politely curious, never hostile) and their body
+pose (hand_raised, leaning_*). "scene:" lists objects the camera sees;
+mention them only when relevant. "body but no face" means someone is
+there facing away."""
 
 FEW_SHOT_V3 = [
     {"role": "user", "content":

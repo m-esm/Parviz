@@ -67,8 +67,12 @@ def semantic_key(vis, sy, events):
     v = vis or {}
     return json.dumps([
         v.get("person_present") if vis else "offline",
+        v.get("person_name"),
         v.get("visible_expression"),
         v.get("gesture"),
+        v.get("pose"),
+        bool(v.get("body_present")),
+        sorted(v.get("objects") or []),
         bool(v.get("facing_camera")),
         bool(v.get("eyes_closed")),
         int((v.get("size") or 0) * 5),
@@ -130,15 +134,24 @@ class Events:
         self.keep = keep
         self._present = None
         self._vexpr = None
+        self._name = None
 
     def add(self, text):
         self.ring = (self.ring + [(time.time(), text)])[-self.keep:]
 
     def update_from_vision(self, vis):
         present = bool(vis and vis.get("person_present"))
+        name = (vis or {}).get("person_name")
         if present != self._present and self._present is not None:
-            self.add("person arrived" if present else "person left")
+            self.add(f"{name or 'person'} arrived" if present
+                     else "person left")
         self._present = present
+        if present and name and name != self._name:
+            if name == "stranger":
+                self.add("an UNRECOGNIZED person is here")
+            elif name != "unenrolled":
+                self.add(f"recognized {name}")
+        self._name = name if present else None
         vexpr = (vis or {}).get("visible_expression")
         if present and vexpr and vexpr != self._vexpr:
             self.add(f"person now looks {vexpr}")
@@ -154,10 +167,15 @@ class Events:
 
 def build_digest(vis, sy, events, last_actions, cur_expr):
     if vis and vis.get("person_present"):
-        person = (f'present, {vis["n_faces"]} face(s), conf {vis["conf"]}, '
+        who = vis.get("person_name")
+        who_s = f" ({who})" if who else ""
+        person = (f'present{who_s}, {vis["n_faces"]} face(s), '
+                  f'conf {vis["conf"]}, '
                   f'position x{vis["cx"]:+.2f} y{vis["cy"]:+.2f} of camera '
                   f'view, size {vis["size"]}, '
                   f'{"FACING the robot" if vis.get("facing_camera") else "not facing the robot"}')
+        if vis.get("pose") and vis["pose"] != "upright":
+            person += f'; pose {vis["pose"]}'
         if "visible_expression" in vis:
             person += (f'; looks {vis["visible_expression"]} '
                        f'(smile {vis.get("smile", 0)}, eye-openness '
@@ -167,16 +185,22 @@ def build_digest(vis, sy, events, last_actions, cur_expr):
                        f'{vis.get("brow_gap", 0)})')
         if vis.get("gesture"):
             person += f'; gesture {vis["gesture"]}'
+    elif vis and vis.get("body_present"):
+        person = (f'BODY visible but no face (turned away?)'
+                  f'{"; pose " + vis["pose"] if vis.get("pose") else ""}')
     elif vis:
         person = "none visible"
     else:
         person = "vision offline"
+    objs = (vis or {}).get("objects") or []
+    scene = ", ".join(o.replace("_", " ") for o in objs) or "nothing notable"
     # EVENT leads with the CURRENT salient situation (tiny models act on
     # the top line); the ring history follows inside it.
     if vis and vis.get("person_present"):
+        who = vis.get("person_name")
         ges = (f', gesture {vis["gesture"]}'
                if vis.get("gesture") and vis["gesture"] != "none" else "")
-        ev = (f'person present: looks '
+        ev = (f'person{f" ({who})" if who else ""} present: looks '
               f'{vis.get("visible_expression", "unknown")}{ges}, '
               f'{"FACING the robot" if vis.get("facing_camera") else "not facing"}')
     else:
@@ -185,6 +209,7 @@ def build_digest(vis, sy, events, last_actions, cur_expr):
     return "\n".join([
         f"EVENT: {ev}",
         f"person: {person}",
+        f"scene: {scene}",
         "sound: mics not wired yet",
         f'env: cpu {sy.get("temp_c", "?")}C load {sy.get("load_pct", "?")}% '
         f'mem {sy.get("mem_pct", "?")}% | wall power ok',

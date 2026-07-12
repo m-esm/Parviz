@@ -767,6 +767,9 @@ class FaceRenderer:
             lines.append((f'facing '
                           f'{"yes" if raw.get("facing_camera") else "no"}',
                           HUD_FAINT))
+            if raw.get("person_name"):
+                lines.append((f'who {raw["person_name"]} '
+                              f'{raw.get("name_conf", "")}', HUD_MID))
             if "visible_expression" in raw:
                 lines.append((f'looks {raw["visible_expression"]}',
                               HUD_MID))
@@ -774,12 +777,21 @@ class FaceRenderer:
                               f'{raw.get("ear", 0):.2f}', HUD_FAINT))
             if raw.get("gesture") and raw["gesture"] != "none":
                 lines.append((f'gesture {raw["gesture"]}', HUD_MID))
+            if raw.get("pose") and raw["pose"] != "upright":
+                lines.append((f'pose {raw["pose"]}', HUD_MID))
             lines.append((f'{raw.get("infer_ms", 0):.0f}ms det  '
                           f'{raw.get("lm_ms", 0):.0f}ms lmk '
                           f'{raw.get("hand_ms", 0):.0f}ms hnd', HUD_FAINT))
         else:
             lines.append(("no face", HUD_MID))
+            if raw is not None and raw.get("body_present"):
+                lines.append(("body (turned away)", HUD_MID))
             lines.append((f'{raw.get("infer_ms", 0):.0f}ms det', HUD_FAINT))
+        if raw is not None and raw.get("objects"):
+            objs = ", ".join(o.replace("_", " ")
+                             for o in raw["objects"][:4])
+            for ln in self._wrap(f'see: {objs}', 19, max_lines=2):
+                lines.append((ln, HUD_FAINT))
         for s, col in lines:
             surf.blit(self._text(s, col, tiny=True), (x0, y))
             y += 14

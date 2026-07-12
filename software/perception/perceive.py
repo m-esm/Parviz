@@ -40,6 +40,11 @@ import numpy as np
 HERE = os.path.dirname(os.path.abspath(__file__))
 MODEL = os.path.join(HERE, "models", "face_detection_yunet_2023mar.onnx")
 LM_MODEL = os.path.join(HERE, "models", "face_landmarks_detector.tflite")
+YOLO_MODEL = os.path.join(HERE, "models", "yolo26n.onnx")
+SFACE_MODEL = os.path.join(HERE, "models", "sface.onnx")
+POSE_MODEL = os.path.join(HERE, "models", "movenet_lightning_int8.tflite")
+FACES_DIR = os.path.join(HERE, "faces")     # enrolled identities (*.npy)
+ENROLL_TRIGGER = "/dev/shm/parviz_enroll"   # write a name here to enroll
 VISION_JSON = "/dev/shm/parviz_vision.json"
 PREVIEW_JPG = "/dev/shm/parviz_preview.jpg"
 COOL_ENTER = float(os.environ.get("PARVIZ_COOL_ENTER", 80.0))
@@ -97,6 +102,179 @@ class Landmarker:
         lm = self.it.get_tensor(self._lm).reshape(-1, 3)
         logit = float(self.it.get_tensor(self._conf).ravel()[0])
         return lm, 1.0 / (1.0 + math.exp(-logit))   # logit -> probability
+
+
+COCO = ("person bicycle car motorcycle airplane bus train truck boat "
+        "traffic_light fire_hydrant stop_sign parking_meter bench bird cat "
+        "dog horse sheep cow elephant bear zebra giraffe backpack umbrella "
+        "handbag tie suitcase frisbee skis snowboard sports_ball kite "
+        "baseball_bat baseball_glove skateboard surfboard tennis_racket "
+        "bottle wine_glass cup fork knife spoon bowl banana apple sandwich "
+        "orange broccoli carrot hot_dog pizza donut cake chair couch "
+        "potted_plant bed dining_table toilet tv laptop mouse remote "
+        "keyboard cell_phone microwave oven toaster sink refrigerator book "
+        "clock vase scissors teddy_bear hair_drier toothbrush").split()
+
+
+class Objects:
+    """YOLO26n end-to-end ONNX (320px, opset 19): 39 ms on the Pi 5 CPU.
+    Output rows are final (x1,y1,x2,y2,conf,cls), no NMS needed."""
+
+    def __init__(self, path=YOLO_MODEL, conf=0.45):
+        import onnxruntime as ort
+        so = ort.SessionOptions()
+        so.intra_op_num_threads = 2
+        self.sess = ort.InferenceSession(
+            path, so, providers=["CPUExecutionProvider"])
+        self.conf = conf
+        self._streak = {}   # name -> consecutive-frame count (+seen/-miss)
+
+    def run(self, bgr):
+        h, w = bgr.shape[:2]
+        s = 320.0 / max(h, w)
+        nh, nw = int(h * s), int(w * s)
+        canvas = np.full((320, 320, 3), 114, np.uint8)
+        canvas[:nh, :nw] = cv2.resize(bgr, (nw, nh),
+                                      interpolation=cv2.INTER_AREA)
+        x = canvas[:, :, ::-1].transpose(2, 0, 1)[None].astype(
+            np.float32) / 255.0
+        out = self.sess.run(None, {"images": x})[0][0]
+        best = {}
+        n_person = 0
+        for d in out[out[:, 4] > self.conf]:
+            name = COCO[int(d[5])]
+            if name == "person":
+                n_person += 1
+                continue          # people are covered by the face stack
+            best[name] = max(best.get(name, 0.0), float(d[4]))
+        # 2-frame hysteresis: an object must be seen twice in a row to
+        # appear, and missed twice to drop -- keeps the brain's semantic
+        # key (and its LLM calls) from churning on detector flicker
+        for name in list(self._streak):
+            self._streak[name] = (min(2, self._streak[name] + 1)
+                                  if name in best
+                                  else max(0, self._streak[name] - 1))
+            if self._streak[name] == 0 and name not in best:
+                del self._streak[name]
+        for name in best:
+            self._streak.setdefault(name, 1)
+        stable = [n for n in sorted(best, key=best.get, reverse=True)
+                  if self._streak.get(n, 0) >= 2]
+        return stable[:6], n_person
+
+
+class Pose:
+    """MoveNet singlepose lightning int8 (192px, 9 ms): body posture +
+    a body-presence signal for people whose face the camera can't see."""
+
+    KP = ("nose l_eye r_eye l_ear r_ear l_shoulder r_shoulder l_elbow "
+          "r_elbow l_wrist r_wrist l_hip r_hip l_knee r_knee l_ankle "
+          "r_ankle").split()
+
+    def __init__(self, path=POSE_MODEL):
+        from ai_edge_litert.interpreter import Interpreter
+        self.it = Interpreter(model_path=path, num_threads=2)
+        self.it.allocate_tensors()
+        self._in = self.it.get_input_details()[0]["index"]
+        self._out = self.it.get_output_details()[0]["index"]
+
+    def run(self, bgr):
+        h, w = bgr.shape[:2]
+        side = max(h, w)
+        canvas = np.zeros((side, side, 3), np.uint8)
+        canvas[:h, :w] = bgr
+        img = cv2.resize(canvas, (192, 192), interpolation=cv2.INTER_AREA)
+        self.it.set_tensor(self._in, img[None, :, :, ::-1])   # RGB uint8
+        self.it.invoke()
+        kp = self.it.get_tensor(self._out)[0, 0]   # 17 x (y, x, score)
+        k = {n: kp[i] for i, n in enumerate(self.KP)}
+
+        def ok(*names):
+            return all(k[n][2] > 0.3 for n in names)
+        body = ok("l_shoulder", "r_shoulder") or ok("nose")
+        if not body:
+            return None
+        label = "upright"
+        if (ok("l_wrist", "nose") and k["l_wrist"][0] < k["nose"][0]) or \
+           (ok("r_wrist", "nose") and k["r_wrist"][0] < k["nose"][0]):
+            label = "hand_raised"
+        elif ok("l_shoulder", "r_shoulder"):
+            dy = float(k["l_shoulder"][0] - k["r_shoulder"][0])
+            dx = float(abs(k["l_shoulder"][1] - k["r_shoulder"][1])) or 1e-6
+            if abs(math.degrees(math.atan2(dy, dx))) > 14:
+                # camera x is mirrored into robot frame (see header)
+                label = ("leaning_left" if dy > 0 else "leaning_right")
+        return {"pose": label,
+                "body_conf": round(float(np.mean(
+                    [k[n][2] for n in ("l_shoulder", "r_shoulder",
+                                       "nose")])), 2)}
+
+
+class FaceID:
+    """SFace embeddings on the YuNet detection: WHO is this? Enrollment:
+    write a name to /dev/shm/parviz_enroll while that person faces the
+    camera; 8 embeddings are averaged into faces/<name>.npy."""
+
+    THRESH = 0.36          # SFace cosine threshold (standard 0.363)
+    ENROLL_N = 8
+
+    def __init__(self, path=SFACE_MODEL, faces_dir=FACES_DIR):
+        self.rec = cv2.FaceRecognizerSF_create(path, "")
+        self.faces_dir = faces_dir
+        self.known = {}
+        self._enrolling = None      # (name, [embeddings])
+        self.reload()
+
+    def reload(self):
+        self.known = {}
+        if os.path.isdir(self.faces_dir):
+            for fn in os.listdir(self.faces_dir):
+                if fn.endswith(".npy"):
+                    self.known[fn[:-4]] = np.load(
+                        os.path.join(self.faces_dir, fn))
+
+    def embed(self, bgr_full, face, sx, sy):
+        f = np.array(face[:15], dtype=np.float32).copy()
+        f[0:13:2] *= sx     # x, w and landmark xs into full-frame pixels
+        f[1:14:2] *= sy
+        crop = self.rec.alignCrop(bgr_full, f)
+        return self.rec.feature(crop).flatten().astype(np.float32)
+
+    def identify(self, emb):
+        best, bd = None, 0.0
+        for name, ref in self.known.items():
+            cos = float(np.dot(emb, ref) /
+                        ((np.linalg.norm(emb) * np.linalg.norm(ref))
+                         or 1e-9))
+            if cos > bd:
+                best, bd = name, cos
+        if best is not None and bd >= self.THRESH:
+            return best, round(bd, 2)
+        return ("stranger" if self.known else "unenrolled"), round(bd, 2)
+
+    def maybe_enroll(self, emb):
+        """Trigger-file driven enrollment; returns a status string once."""
+        if self._enrolling is None:
+            try:
+                with open(ENROLL_TRIGGER) as f:
+                    name = f.read().strip() or "user"
+            except OSError:
+                return None
+            self._enrolling = (name, [])
+        name, embs = self._enrolling
+        embs.append(emb)
+        if len(embs) < self.ENROLL_N:
+            return None
+        ref = np.mean(embs, axis=0)
+        os.makedirs(self.faces_dir, exist_ok=True)
+        np.save(os.path.join(self.faces_dir, f"{name}.npy"), ref)
+        try:
+            os.remove(ENROLL_TRIGGER)
+        except OSError:
+            pass
+        self._enrolling = None
+        self.reload()
+        return f"enrolled {name} ({self.ENROLL_N} samples)"
 
 
 def crop_align(bgr_full, face, sx, sy, out=256):
@@ -207,10 +385,25 @@ def run(bench_s=None, hz=LOOP_HZ):
     except Exception as e:
         print(f"hand gestures unavailable ({e})", flush=True)
         hnd = None
+    obj = pose = fid = None
+    try:
+        obj = Objects()                 # 1 fps, always
+    except Exception as e:
+        print(f"objects unavailable ({e})", flush=True)
+    try:
+        pose = Pose()                   # every loop: 3 fps w/ person, 1 idle
+    except Exception as e:
+        print(f"pose unavailable ({e})", flush=True)
+    try:
+        fid = FaceID()                  # 1 fps, when a face is present
+    except Exception as e:
+        print(f"face-id unavailable ({e})", flush=True)
     period = 1.0 / hz
     last_prev = 0.0
     loop_n = 0
     last_hand = None
+    last_yolo_t, yolo_res = 0.0, ([], 0)
+    last_sface_t, name_res = 0.0, None
     lat = []
     t_start = time.monotonic()
     fps_t0, fps_n, fps = t_start, 0, 0.0
@@ -271,6 +464,52 @@ def run(bench_s=None, hz=LOOP_HZ):
                     last_hand = None
             if last_hand:
                 st["gesture"], st["gesture_conf"], st["hand_ms"] = last_hand
+        # WHO: SFace at 1 fps on the largest face; also serves enrollment
+        if fid is not None and faces:
+            if t0 - last_sface_t >= 1.0:
+                last_sface_t = t0
+                try:
+                    f = max(faces, key=lambda f: f[2] * f[3])
+                    emb = fid.embed(bgr, f, CAP_W / DET_W, CAP_H / DET_H)
+                    msg = fid.maybe_enroll(emb)
+                    if msg:
+                        print(msg, flush=True)
+                    new = fid.identify(emb)
+                    # identity is STICKY for a presence: a confident match
+                    # overwrites; a low-conf frame (turned head, blur)
+                    # never demotes a known person back to "stranger"
+                    if (new[1] >= FaceID.THRESH or name_res is None
+                            or name_res[1] < FaceID.THRESH):
+                        name_res = new
+                except Exception:
+                    pass
+            if name_res:
+                st["person_name"], st["name_conf"] = name_res
+        elif not faces:
+            name_res = None
+        # POSE: MoveNet every loop (3 fps w/ person, 1 fps idle); it also
+        # spots a BODY when the face is turned away
+        if pose is not None:
+            try:
+                p = pose.run(bgr)
+            except Exception:
+                p = None
+            if p:
+                st.update(p)
+                st["body_present"] = True
+            else:
+                st["body_present"] = False
+        # SCENE: YOLO26n objects at 1 fps, carried between runs
+        if obj is not None:
+            if t0 - last_yolo_t >= 1.0:
+                last_yolo_t = t0
+                t4 = time.monotonic()
+                try:
+                    yolo_res = obj.run(bgr)
+                    st["obj_ms"] = round((time.monotonic() - t4) * 1000, 1)
+                except Exception:
+                    yolo_res = ([], 0)
+            st["objects"], st["yolo_persons"] = yolo_res
         loop_n += 1
         write_atomic(VISION_JSON, json.dumps(st))
         if t0 - last_prev >= PREVIEW_EVERY_S:
@@ -282,9 +521,10 @@ def run(bench_s=None, hz=LOOP_HZ):
                 write_atomic(PREVIEW_JPG, buf.tobytes())
         if bench_s and time.monotonic() - t_start >= bench_s:
             break
-        # adaptive rate: 2 Hz while someone is here (fresh expression /
-        # gesture signals), 0.5 Hz when the desk is empty
-        period = (0.5 if faces else 2.0) if hz == LOOP_HZ else 1.0 / hz
+        # adaptive rate (user): 3 fps while someone is here (expression /
+        # gesture / pose fresh), 1 fps when the desk is empty
+        period = ((1 / 3 if faces else 1.0) if hz == LOOP_HZ
+                  else 1.0 / hz)
         time.sleep(max(0.0, period - (time.monotonic() - t0)))
     if bench_s:
         rss = 0
