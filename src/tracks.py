@@ -211,17 +211,21 @@ def _track_master_link():
     for sxs in (-1, 1):
         bar = box(13.3, 1.9, 2.2)                      # rides the slot walls, top face -0.95
         bar.apply_translation((sxs * (9.7 + 23.0) / 2, 0, -0.95 - 1.1))    # seats the pin;
-        tab = box(2.6, 5.5, 5.5)                       # outboard end fuses into the tab.
+        tab = box(2.6, 5.7, 5.7)                       # outboard end fuses into the tab.
         tab.apply_translation((sxs * (tw / 2 + 0.05 + 1.3), 2.6, -1.9))    # Tab centered on
         k = uni([bar, tab])                            # the M2 at y 2.6 (reviews: the old
         # 1.8x7x4 tab left 0.65-0.85 hole ligaments AND let the M2 head stand 0.55-0.85
-        # off the chassis wall on the top run; 2.6 thick x 5.5 + a head counterbore gives
-        # >=1.5 walls and sinks the head to >=1.1 wall clearance. Tab y -0.15..5.35 keeps
-        # 1.15 to the next link's knuckle side faces on the straight run.
+        # off the chassis wall on the top run; 2.6 thick x 5.7 + a head counterbore gives
+        # >=1.5 walls and sinks the head to >=1.1 wall clearance. Wallcheck pass
+        # 2026-07-13: the Ø4.2 cb left a 0.65 rim on the 5.5 tab (p1 0.66 < the 0.8
+        # gate) -- cb shrunk to Ø4.0 (M2 pan head is Ø3.8 max, 0.2 diametral clear)
+        # and the tab grew 5.5 -> 5.7, rim now 0.85. The slot-critical 13.3x1.9 bar
+        # is untouched. Tab y -0.25..5.45 keeps 1.05 to the next link's knuckle side
+        # faces on the straight run; z low -4.75 stays 1.25 above the grouser plane.
         mc = cyl(1.15, 6.0, axis="x")                  # M2 clearance through the tab
         mc.apply_translation((sxs * (tw / 2 + 1.3), 2.6, -1.9))
         k = sub(k, mc)
-        cb = cyl(2.1, 1.5, axis="x")                   # Ø4.2 head counterbore, outer face
+        cb = cyl(2.0, 1.5, axis="x")                   # Ø4.0 head counterbore, outer face
         cb.apply_translation((sxs * (tw / 2 + 0.05 + 2.6 - 0.7), 2.6, -1.9))
         k = sub(k, cb)
         keepers.append(k)

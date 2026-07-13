@@ -43,6 +43,46 @@ def _color(m, key):
     return m
 
 
+def export_stl(mesh, path):
+    """EXPORT-path STL writer with a WATERTIGHTNESS GATE (wallcheck pass 2026-07-13).
+
+    slice_mesh_plane(cap=True) splits (the head_back frames) can leave non-manifold
+    cap junctions -- edges shared by 4 faces (measured: 2 such edges per frame, zero
+    open edges) -- which make the printed mesh non-watertight and ray-thickness
+    numbers on it meaningless. Repair = a manifold3d ROUND-TRIP: it merges the
+    junctions without moving a vertex (verified volume delta 0.0%, bbox identical).
+    Multi-body-by-design meshes (track strips/keepers, pan_clips) are watertight per
+    body and pass through untouched (repair only runs on a non-watertight mesh).
+    Guards: repair must not change printed geometry (volume < 0.1%, bbox < 0.01 mm)
+    and the written mesh MUST be watertight -- regressions fail loudly at export.
+
+    NOTE the check runs on a FLOAT32-QUANTIZED, POSITION-MERGED copy: STL stores
+    float32 per-triangle vertices, so writing collapses nearly-equal float64
+    vertices into exactly-equal ones and every reader then merges them -- an
+    in-memory mesh can look watertight on its own vertex indices while the FILE it
+    writes is not (the frame defect hid exactly there; merge_vertices alone on the
+    float64 mesh still read watertight). If the quantized copy is clean, the
+    ORIGINAL bytes are written unchanged; only a defective mesh gets the repair."""
+    chk = trimesh.Trimesh(vertices=np.asarray(mesh.vertices, dtype=np.float32)
+                          .astype(np.float64),
+                          faces=mesh.faces.copy(), process=True)
+    if not chk.is_watertight:
+        import manifold3d
+        mg = manifold3d.Mesh(
+            vert_properties=np.asarray(chk.vertices, dtype=np.float32),
+            tri_verts=np.asarray(chk.faces, dtype=np.uint32))
+        out = manifold3d.Manifold(mesh=mg).to_mesh()
+        rep = trimesh.Trimesh(vertices=np.asarray(out.vert_properties)[:, :3],
+                              faces=np.asarray(out.tri_verts))
+        dvol = abs(rep.volume - mesh.volume) / max(abs(mesh.volume), 1e-9)
+        dbox = float(np.abs(np.asarray(rep.bounds) - np.asarray(mesh.bounds)).max())
+        assert dvol < 1e-3 and dbox < 0.01, (
+            "export repair changed %s: dvol %.4f%%, dbbox %.4f mm" % (path, 100 * dvol, dbox))
+        assert rep.is_watertight, "export mesh NOT WATERTIGHT after repair: %s" % path
+        mesh = rep
+    mesh.export(path)
+
+
 def box(w, d, h):
     return trimesh.creation.box(extents=(w, d, h))
 

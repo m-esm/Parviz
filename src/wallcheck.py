@@ -79,6 +79,13 @@ WHITELIST = {
     # of the m1.25 profile; the printed part is the generated-teeth regen per
     # docs/WORM.md, this placeholder only holds the envelope. Measured p1 0.79.
     "tilt_worm.stl": (0.6, "placeholder worm thread crests (real teeth per docs/WORM.md)"),
+    # Pan spur pair: every sub-0.8 sample sits at r 13.58..13.60 off the motor gear
+    # axis (-19.2, 0) in the z 45..50 gear band = the 32T m0.8 ADDENDUM circle
+    # (tip r = 12.8 + 0.8 = 13.6, probed 2026-07-13 at 6000 samples, p1 0.77).
+    # Real m0.8 tooth tips taper below 0.8 by nature of the involute profile; the
+    # mesh itself is probe-verified per docs/WORM.md (pan spur section, coupled
+    # sweep 0.000 mm3) and runs greased. Not a wall: no load normal to the tip land.
+    "pan_gears.stl": (0.75, "real m0.8 tooth tips, mesh probe-verified, greased drive gear"),
     # Screen-pocket LOCATOR STEP: the pocket stops 0.11 over the glass by design
     # (2026-07-11 LCD-seated-watertight pass), and the window's bezel_overlap lip
     # corner slivers sample near-zero on the step faces at (x ~+-94, y 31.1).
@@ -91,6 +98,14 @@ WHITELIST = {
     # itself is fine (bulk thickness 4.0). Measured p1 0.33 / 0.71.
     "head_back_panel_L.stl": (0.25, "frame-tab seam coincident-face slivers at (+-97, -66)"),
     "head_back_panel_R.stl": (0.25, "frame-tab seam coincident-face slivers at (+-97, -66)"),
+    # Frame rear rim: the y -66 panel/frame split plane slices the footprint's rear
+    # corner ROUND, so the side wall feathers to zero at its tangency with the back
+    # wall plane (probed 2026-07-13: every sub-0.8 sample sits at x +-87..91 /
+    # y -66..-65.88, the rim wedge; thickness grows smoothly off the tangent line).
+    # Designed split geometry -- the panel's corner mass backs the wedge in assembly.
+    # Frames only became measurable 2026-07-13 (export watertight repair); p1 0.34.
+    "head_back_frame_L.stl": (0.25, "split-plane feather rim where the y -66 seam cuts the corner round"),
+    "head_back_frame_R.stl": (0.25, "split-plane feather rim where the y -66 seam cuts the corner round"),
     # Track link KEELS + inner-face draft chamfers taper to their corner lines by
     # design (2026-07-12 print-in-place strips: 45 deg self-supporting buttresses).
     # Strips actually measure p1 ~1.9 -- the entry is here so a future keel

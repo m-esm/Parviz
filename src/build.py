@@ -26,7 +26,7 @@ from trimesh.transformations import rotation_matrix as R
 
 from stlpaths import webpath, stlp
 from params import DEG, EXPORT, P, TAU
-from geo import _T, _color, box, cyl, dbore_neg, inter, sub, uni
+from geo import _T, _color, box, cyl, dbore_neg, export_stl, inter, sub, uni
 from gears import (gear_disc, load_gear_stl, pan_gear_mesh_deg, pan_real_ok, worm,
                    worm_cd, worm_real_ok)
 from screen import load_screen, screen_pose
@@ -70,7 +70,7 @@ def build():
         if mesh.metadata.get("scene") is False:      # export-only ghost (granular
             if EXPORT and export_name:               # children carry the scene; the
                 g = mesh.copy(); g.apply_transform(M)  # ghost is the multi-body STL)
-                g.export(stlp(export_name))
+                export_stl(g, stlp(export_name))
             return
         g = mesh.copy()
         g.apply_transform(M)
@@ -81,7 +81,7 @@ def build():
         elif M is M_pan:
             pose_groups["pan"].append(mesh.metadata["name"])
         if EXPORT and export_name:
-            mesh.export(stlp(export_name))
+            export_stl(mesh, stlp(export_name))
 
     # --- FIXED: printable split tank chassis body + two track pods ---
     for ch in build_chassis_parts():
@@ -125,7 +125,7 @@ def build():
     scene.add_geometry(scene_neck, node_name="neck_clevis")
     pose_groups["pan"].append("neck_clevis")         # bypasses add(): tag its group by hand
     if EXPORT:
-        neck.export(stlp("neck_clevis.stl"))
+        export_stl(neck, stlp("neck_clevis.stl"))
     # orange pedestal collar at the column foot (neck styling pass 2026-07-12): rides the
     # platform (pan group), slipped over the column before the neck bolts down, pinned+glued
     add(build_trim_neckfoot(), M_pan, "trim_neckfoot.stl")
