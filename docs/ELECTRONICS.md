@@ -16,7 +16,7 @@ some Thingiverse "models" are low-poly illustrations, not mechanical CAD.
 |---|---|---|---|
 | Raspberry Pi 5 (2GB) | Brain: face render, perception, local LLM, voice | OWNED (on the bench, `moshe-pi5-2gb.local`) | No board model on Thingiverse; official STEP at [rpi products page](https://www.raspberrypi.com/products/raspberry-pi-5/) -- and the repo already carries the combined screen+Pi mesh in `reference/rpi-7in-touchscreen-model/` |
 | Official 7" Touch Display | The face | OWNED | [clough42 reference model (thing:1646255)](https://www.thingiverse.com/thing:1646255) -- repo already has the official STEP/STL |
-| Camera Module 3 | The eye (imx708) | OWNED | [CM3 Wide mockup (thing:6939162)](https://www.thingiverse.com/thing:6939162) -- Wide variant, same 25x24 board, different lens barrel; repo models CM3 from official dims |
+| Camera Module 3 | The eye (imx708) | OWNED | [CM3 Wide mockup (thing:6939162)](https://www.thingiverse.com/thing:6939162), CC BY-SA, DOWNLOADED to `reference/electronics/rpi-cam3-wide-mockup-6939162/` (mesh 25.0x23.9 = official 25x24 board; Wide lens barrel differs) |
 | Pi 5 Active Cooler | Head thermal (80C breaker trips under brain bursts) | BUY (nice-to-have; CAD clearance CLEARED 2026-07-13) | Official envelope modeled in `build_pi5_cooler()` from RP-008188/RP-008187 |
 | Gooseneck mics x2 + CM108 | Ears (Ø17 windscreen through head side walls) | ORDERED, not yet in inventory | none needed -- placeholder `ear_mic_L/R` |
 
@@ -26,7 +26,7 @@ some Thingiverse "models" are low-poly illustrations, not mechanical CAD.
 |---|---|---|---|
 | 28BYJ-48 stepper x4 | Pan (2:1 spur), tilt (3-start worm), 2x antenna deploy | OWNED x6 (Bags 5, 14) | [MajicDesigns (thing:4919536)](https://www.thingiverse.com/thing:4919536) -- Fusion360 + IGES + STL; also [CastorX (thing:3247370)](https://www.thingiverse.com/thing:3247370) |
 | ULN2003 driver x4 | Stepper drivers | OWNED x9 | [seandoughtie clearance model (thing:3781347)](https://www.thingiverse.com/thing:3781347) |
-| TT gearmotor 1:120 x2 | Track drive (2 more OPTIONAL for twin-drive) | OWNED x3 (Bag 5); buy 1 only for the 4th station | [mademodeller TT motor + gearbox (thing:4890871)](https://www.thingiverse.com/thing:4890871) |
+| TT gearmotor 1:120 x2 | Track drive (2 more OPTIONAL for twin-drive) | OWNED x3 (Bag 5); buy 1 only for the 4th station | [CCFIVE yellow TT motor (thing:1079893)](https://www.thingiverse.com/thing:1079893), CC BY, DOWNLOADED to `reference/electronics/tt-motor-1079893/` (STL + STEP, 69.5x22.4x29.9); also [mademodeller (thing:4890871)](https://www.thingiverse.com/thing:4890871) |
 | MX1588 H-bridge | Drives both TTs | OWNED x5 | none found; trivial 2-layer module, model from measurement |
 
 ## Sensors (Arduino I/O plane, docs/AWARENESS.md)
