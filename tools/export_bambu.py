@@ -70,6 +70,7 @@ STRUCT = {**TREE, "wall_loops": "4", "sparse_infill_density": "20%"}   # big she
 PARTS = {  # name: (subsystem, [rotations], obj_settings)
     "chassis_lower_front": ("base", [],         STRUCT),   # open-top tub halves, seam up
     "chassis_lower_rear":  ("base", [],         STRUCT),
+    "chassis_lower_tail":  ("base", [],         STRUCT),   # rear cap (cheeks + rear wall)
     "chassis_deck_front":  ("base", [(X, 180)], STRUCT),   # deck pieces, top face down
     "chassis_deck_center": ("base", [(X, 180)], STRUCT),
     "chassis_deck_rear":   ("base", [(X, 180)], STRUCT),
@@ -103,8 +104,9 @@ PARTS = {  # name: (subsystem, [rotations], obj_settings)
 
 # category -> ordered part names (or generated-unit tokens); each becomes 1+ named plates
 CATEGORIES = [
-    ("Chassis",      ["chassis_lower_front", "chassis_lower_rear", "chassis_deck_front",
-                      "chassis_deck_center", "chassis_deck_rear", "belly_plate"]),
+    ("Chassis",      ["chassis_lower_front", "chassis_lower_rear", "chassis_lower_tail",
+                      "chassis_deck_front", "chassis_deck_center", "chassis_deck_rear",
+                      "belly_plate"]),
     ("Head",         ["head_back_frame_L", "head_back_frame_R", "head_back_panel_L",
                       "head_back_panel_R", "head_bezel_L", "head_bezel_R",
                       "head_door", "screen_tray", "cam_cover", "sd_plug"]),
