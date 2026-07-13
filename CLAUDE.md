@@ -437,8 +437,18 @@ via inter() -- at y -66 the side walls are all corner_r curve); halves still joi
 the top-wall flange (frames, 2x M3 axis-X) + tongue/groove (panels), `head_bezel` -> `_L/_R` at x=+22
 (staggered vs the back seam = brickwork interlock; per face strip one M3 + one Ø4
 dowel in pads behind the face, clear of the camera bosses), `chassis_lower` ->
-`_front/_rear` at y=+26 (floor pads x +-61: M3x12 axis-Y + Ø4 dowel each; the deck
-screws and the one-piece pod rails also bridge), `chassis_deck` -> `_front/_center/
+`_front` / `_rear` / `_tail` at y=+26 and y=-88 (floor pads: M3x12 axis-Y + Ø4 dowel
+per seam; the deck screws and one-piece pod rails also bridge). The 2026-07-13 rear
+sub-split (`lower_seam2_y`, user: faster/easier main-housing print) peels the
+FEATURE-DENSE rear end (rear wall + both prow cheeks + M8 nut ducts + rear
+obstacle/buzzer/USB) into the small bolt-on `chassis_lower_tail`, leaving
+`chassis_lower_rear` a clean 140x114 tub (208->119 cm3, 172->114 mm) that prints
+support-light; the tail is 140x58. Its seam fasteners go CENTRAL (x 25, not the
+wall band 61) because the left wall corner is owned by the SW-420 pad; a `_despeck`
+pass drops the sub-0.5 cm3 fragment the seam shears off the wire-pass edge.
+`chassis_lower_tail` aliases to `chassis_lower` in both gate SPLIT_ALIAS maps
+(inherits every whitelist), auto-groups under the viewer HULL, and the M8-nut-channel
+invariant now probes the tail. `chassis_deck` -> `_front/_center/
 _rear` at y 66 / -52 (half-laps + 2x vertical M3 per seam; the pan seat stays
 monolithic in the center, which gets its OWN 4 hold-downs at (+-64, 8)/(+-64, -26)).
 `head_door` kept whole but the solid tier legs got lightening pockets (-19 cm3). Gate
@@ -446,7 +456,7 @@ whitelists alias split pieces to their parent (SPLIT_ALIAS in assembly_check/fit
 sibling seam contact is designed. The viewer parts panel is grouped BY OBJECT with
 collapsible per-group toggle-alls.
 
-- Printed set (exports via `EXPORT=1`): `chassis_lower`, `chassis_deck`, `belly_plate`, `track_L/R`,
+- Printed set (exports via `EXPORT=1`): `chassis_lower` (`_front/_rear/_tail`), `chassis_deck`, `belly_plate`, `track_L/R`,
   `drivewheels_L/R` (as track_wheels_*), `track_keeper_L/R`, `pod_rail_L/R` (as
   track_pod_rail_*), `neck_clevis`, `tilt_carrier`, `pan_platform`, `pan_race`,
   `pan_clips`, `pan_cage`, `head_bezel`, `head_back`, `head_door`, `screen_tray`,
@@ -472,7 +482,7 @@ collapsible per-group toggle-alls.
 - **Tilt bearings:** 695-2RS pressed into the neck cheeks (not the head); head clamps the axle ends.
 - **Electronics fittings:** base has a pan-motor pad + ULN2003 standoffs + a USB-C wall slot +
   8 vent slots; head back cover has a Pi I/O slot + ventilation louvres + the cable port.
-- **Per-part print orientation:** `chassis_lower` seam-up/open-top, `chassis_deck` top-face-down,
+- **Per-part print orientation:** `chassis_lower` (`_front/_rear/_tail`) seam-up/open-top, `chassis_deck` top-face-down,
   bezel face-down (aperture opens up, best cosmetic face), back
   open-side-down, neck on its back, base flange-down.
 - **Still a refinement:** explicit 45° self-supporting chamfers on the largest back openings

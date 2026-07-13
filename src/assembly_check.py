@@ -69,6 +69,7 @@ SPLIT_ALIAS = {
     "head_back_panel_L": "head_back", "head_back_panel_R": "head_back",
     "head_bezel_L": "head_bezel", "head_bezel_R": "head_bezel",
     "chassis_lower_front": "chassis_lower", "chassis_lower_rear": "chassis_lower",
+    "chassis_lower_tail": "chassis_lower",
     "chassis_deck_front": "chassis_deck", "chassis_deck_center": "chassis_deck",
     "chassis_deck_rear": "chassis_deck",
 }

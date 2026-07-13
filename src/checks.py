@@ -121,6 +121,10 @@ def main():
     check("4x HC-SR04 sensor nodes in scene",
           {"sensor_us", "sensor_us_rear", "sensor_cliff", "sensor_cliff_rear"} <= nodes)
 
+    # user 2026-07-13 (split the rear housing for faster printing): chassis_lower_rear
+    # peels its feature-dense rear end into a bolt-on chassis_lower_tail at lower_seam2_y.
+    check("chassis_lower_tail present (rear housing split)", "chassis_lower_tail" in nodes)
+
     # user 2026-07-08 (master link + keepers): loop closes tool-openable.
     check("master links in both loops",
           {"track_L.link_00_master", "track_R.link_00_master"} <= geoms)
@@ -240,7 +244,7 @@ def main():
     # descending M8 nut.
     nut_ok = True
     for sxb in (1, -1):
-        m = M("chassis_lower_rear")
+        m = M("chassis_lower_tail")     # rear cheeks moved to the tail cap (2026-07-13 split)
         nut_ok &= clear(m, [(sxb * 53.5, -wb2, z) for z in (28.0, 35.0, 42.0)])
         nut_ok &= inside(m, [(sxb * 53.5, -(wb2 + 8.2), 30.0),
                              (sxb * 53.5, -(wb2 - 8.2), 30.0)])

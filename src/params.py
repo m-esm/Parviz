@@ -398,6 +398,14 @@ P = {
     # build_chassis_parts' docstring for the joint scheme per seam.
     "lower_seam_y": 26.0,        # lower tub front/rear seam (vent-free wall band
                                  # 18.5..29.5, pan pedestal <=|24|, pod joins +-40)
+    "lower_seam2_y": -88.0,      # 2nd rear seam: peels the feature-dense TAIL cap
+                                 # (rear wall + cheeks + rear sensors/buzzer/USB +
+                                 # M8 nut ducts) off chassis_lower_rear so the main
+                                 # housing is a clean, short, fast print. Clean full-
+                                 # width wall band: behind the Arduino (ends -85.7),
+                                 # in front of the SW-420 seat (-89.75) + side vents
+                                 # (-96..-112). Same floor-pad + M3x12 + Ø4 dowel joint
+                                 # as lower_seam_y; deck screws + pod rails also bridge.
     "deck_seam_y": (66.0, -52.0),  # deck strip seams (front clip reaches y 58; the
                                  # y-60 corner bosses reach 64 -> strips own them)
     "deck_center_screws": ((-64.0, 8.0), (64.0, 8.0), (-64.0, -26.0), (64.0, -26.0)),

@@ -771,10 +771,16 @@ def build_chassis_parts():
 
     # lower-tub seam FLOOR PADS (span y across the seam; drilled after slicing)
     ysl = P["lower_seam_y"]
-    for sx_ in (-1, 1):
-        pad = box(18.0, 26.0, 8.0)
-        pad.apply_translation((sx_ * 61.0, ysl, 15.0))       # x 52..70, y 13..39, z 11..19
-        core = uni([core, pad])
+    ysl2 = P["lower_seam2_y"]
+    # per-seam fastener x: the y=26 seam uses the vent-free wall band (x 61); the
+    # y=-88 tail seam goes CENTRAL (x 25) because the left wall corner is occupied
+    # by the SW-420 pad (x -60..-36) -- x25 clears its board (inboard edge -37.25).
+    seams = ((ysl, 61.0, 18.0, 57.0, 66.0), (ysl2, 25.0, 20.0, 25.0, 32.0))
+    for seam_y, xpad, wpad, _xs, _xd in seams:
+        for sx_ in (-1, 1):
+            pad = box(wpad, 26.0, 8.0)
+            pad.apply_translation((sx_ * xpad, seam_y, 15.0))  # y +-13, z 11..19
+            core = uni([core, pad])
 
     lower = slice_mesh_plane(core, plane_normal=(0, 0, -1), plane_origin=(0, 0, seam), cap=True)
     deck = slice_mesh_plane(core, plane_normal=(0, 0, 1), plane_origin=(0, 0, seam), cap=True)
@@ -793,22 +799,44 @@ def build_chassis_parts():
         pil.apply_translation((sx_, sy_, seam - 8.5 / 2))
         lower = sub(lower, pil)
 
-    # ---- lower tub -> front / rear at y = lower_seam_y ----
-    for sx_ in (-1, 1):
-        scr = cyl(P["m3_clear_r"], 14.0, axis="y")           # M3x12 through the front pad
-        scr.apply_translation((sx_ * 57.0, ysl + 6.0, 15.0))
-        lower = sub(lower, scr)
-        cbf = cyl(3.4, 4.5, axis="y")                        # head counterbore, front face
-        cbf.apply_translation((sx_ * 57.0, ysl + 11.2, 15.0))
-        lower = sub(lower, cbf)
-        pilr = cyl(1.25, 10.0, axis="y")                     # rear thread-form pilot
-        pilr.apply_translation((sx_ * 57.0, ysl - 6.0, 15.0))
-        lower = sub(lower, pilr)
-        dwl = cyl(2.05, 16.0, axis="y")                      # Ø4 dowel across the seam
-        dwl.apply_translation((sx_ * 66.0, ysl, 15.0))       # (+0.1 slip; press the rear
-        lower = sub(lower, dwl)                              #  side on assembly with glue)
+    # ---- lower tub seams: front/rear at ysl, then peel the rear TAIL at ysl2 ----
+    # Both seams use the SAME joint: M3x12 axis-Y through the +y piece's floor pad
+    # into a Ø2.5 thread-form pilot in the -y piece + a Ø4 dowel (drilled here,
+    # across the pad added to core above).
+    def _seam_join(mesh, sy, xs, xd):
+        for sx_ in (-1, 1):
+            scr = cyl(P["m3_clear_r"], 14.0, axis="y")       # M3x12 through the +y pad
+            scr.apply_translation((sx_ * xs, sy + 6.0, 15.0))
+            mesh = sub(mesh, scr)
+            cbf = cyl(3.4, 4.5, axis="y")                    # head counterbore, +y face
+            cbf.apply_translation((sx_ * xs, sy + 11.2, 15.0))
+            mesh = sub(mesh, cbf)
+            pilr = cyl(1.25, 10.0, axis="y")                 # -y thread-form pilot
+            pilr.apply_translation((sx_ * xs, sy - 6.0, 15.0))
+            mesh = sub(mesh, pilr)
+            dwl = cyl(2.05, 16.0, axis="y")                  # Ø4 dowel across the seam
+            dwl.apply_translation((sx_ * xd, sy, 15.0))      # (+0.1 slip; press the -y
+            mesh = sub(mesh, dwl)                            #  side on assembly with glue)
+        return mesh
+
+    def _despeck(mesh, min_cm3=0.5):
+        """Drop tiny disconnected fragments a seam cut can shear off a wire-pass /
+        pad edge (they'd print as loose specks). Keeps every real body."""
+        parts = mesh.split(only_watertight=False)
+        if len(parts) <= 1:
+            return mesh
+        keep = [p for p in parts if abs(p.volume) / 1000.0 >= min_cm3]
+        return trimesh.util.concatenate(keep) if keep else mesh
+
+    lower = _seam_join(lower, ysl, 57.0, 66.0)
     lower_f = slice_mesh_plane(lower, plane_normal=(0, 1, 0), plane_origin=(0, ysl, 0), cap=True)
     lower_r = slice_mesh_plane(lower, plane_normal=(0, -1, 0), plane_origin=(0, ysl, 0), cap=True)
+    # rear TAIL cap off the main housing (chassis_lower_rear stays the larger front piece)
+    lower_r = _seam_join(lower_r, ysl2, 25.0, 32.0)
+    lower_tail = _despeck(slice_mesh_plane(lower_r, plane_normal=(0, -1, 0),
+                                           plane_origin=(0, ysl2, 0), cap=True))
+    lower_r = _despeck(slice_mesh_plane(lower_r, plane_normal=(0, 1, 0),
+                                        plane_origin=(0, ysl2, 0), cap=True))
 
     # ---- deck -> front strip / center / rear strip with half-laps ----
     yf, yr = P["deck_seam_y"]                                # (66.0, -52.0)
@@ -977,6 +1005,7 @@ def build_chassis_parts():
 
     out = []
     for m_, nm in ((lower_f, "chassis_lower_front"), (lower_r, "chassis_lower_rear"),
+                   (lower_tail, "chassis_lower_tail"),
                    (deck_f, "chassis_deck_front"), (deck_c, "chassis_deck_center"),
                    (deck_r, "chassis_deck_rear")):
         _color(m_, "base"); m_.metadata["name"] = nm
