@@ -463,6 +463,16 @@ collapsible per-group toggle-alls.
   `cam_cover`, `sd_plug`, plus the real generated `worm_wheel`/`tilt_worm` (docs/WORM.md).
   `pan_balls`/`motor_*`/`drive_*` are bought-part placeholders. track_L/R (links +
   wheels), track_keeper_* (2 bars) and pan_clips (3 clips) are multi-body by design.
+- **HORIZONTAL screw holes print as TEARDROPS (`geo.teardrop`, 2026-07-13 DFAM):** a bore
+  whose axis is parallel to the bed (e.g. the seam-join M3 through-hole + head counterbore
+  in the lower-tub floor pads, printed seam-up) has a hanging roof that sags/needs support.
+  `teardrop(r, length, axis, up="z")` = `cyl` + a 45deg pointed cap so the roof is
+  self-supporting (no support material, no sag). The `_seam_join` screws + counterbores use
+  it (both lower seams); a large counterbore whose apex clears the part top just opens into a
+  small self-supporting slot (flat-roof teardrop). Round dowels stay round (small, they bridge,
+  and want full grip). Reuse `teardrop` for any new horizontal head recess; keep vertical /
+  open-up bores as plain `cyl` (already self-supporting). Verified: 45deg roof probe + 20/20
+  plates slice clean.
 - **Fastening = M3 into CAPTIVE HEX NUTS on serviced seams, Ø2.5 THREAD-FORM pilots on
   assemble-once joints** (M2 for the camera / master-link keepers). `screw_post`/`hex_prism`.
   Thread-form (2026-07-08): chassis deck split (4x M3 from above), pod rails (M3×12 from the

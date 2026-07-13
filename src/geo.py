@@ -107,6 +107,29 @@ def hex_prism(af, h):
     return trimesh.creation.cylinder(radius=af / np.sqrt(3), height=h, sections=6)
 
 
+def teardrop(r, length, axis="y", up="z"):
+    """Self-supporting HOLE CUTTER for a horizontal bore: a `cyl(r)` with a 45deg
+    pointed cap on the `up` side (the teardrop). Subtracting it gives a bore whose
+    roof never exceeds 45deg, so it FDM-prints WITHOUT support and without a sagging
+    ceiling (classic teardrop-hole technique). `axis` = bore direction, `up` = the
+    print-up direction the apex points toward. Only the horizontal cases used in the
+    seam-up / wall-up prints are supported (axis x or y, up z). The cap is a `box(r)`
+    rotated 45deg about the bore axis, bottom vertex at the bore centre, apex at
+    r*sqrt(2) along +up -- so a large counterbore whose apex would clear the part top
+    simply opens into a self-supporting slot (the 'flat-roof teardrop' variant)."""
+    if up != "z":
+        raise ValueError("teardrop(): up must be 'z'")
+    base = cyl(r, length, axis=axis)
+    if axis == "y":
+        cap = box(r, length, r); cap.apply_transform(R(TAU / 8, (0, 1, 0)))
+    elif axis == "x":
+        cap = box(length, r, r); cap.apply_transform(R(TAU / 8, (1, 0, 0)))
+    else:
+        raise ValueError("teardrop(): axis must be 'x' or 'y' for up='z'")
+    cap.apply_translation((0, 0, r * np.sqrt(0.5)))
+    return uni([base, cap])
+
+
 def _orient(m, normal):
     """Rotate a +Z-aligned mesh so +Z points along `normal`."""
     n = np.asarray(normal, float); n /= np.linalg.norm(n)

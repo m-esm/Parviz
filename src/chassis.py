@@ -9,7 +9,7 @@ import shapely.geometry as sg
 from trimesh.creation import extrude_polygon
 from trimesh.transformations import rotation_matrix as R
 from params import DEG, P, TAU
-from geo import (_color, _orient, blind_socket, box, cyl, fix_pin, frustum, hex_prism, inter, rounded_box, sub, uni)
+from geo import (_color, _orient, blind_socket, box, cyl, fix_pin, frustum, hex_prism, inter, rounded_box, sub, teardrop, uni)
 from tracks import _track_zc
 from pan import _pan_stack
 
@@ -804,11 +804,16 @@ def build_chassis_parts():
     # into a Ø2.5 thread-form pilot in the -y piece + a Ø4 dowel (drilled here,
     # across the pad added to core above).
     def _seam_join(mesh, sy, xs, xd):
+        # The screw axis is HORIZONTAL (Y) and the lower tub prints seam-up (floor
+        # down), so the through-hole + head counterbore are hanging bores. Cut them as
+        # TEARDROPS (45deg self-supporting roof) so they print clean with no support
+        # and no sagging ceiling -- the hanging-screw-pocket fix (2026-07-13, DFAM).
+        # The Ø4 dowel stays round: it's small (bridges fine) and wants full-round grip.
         for sx_ in (-1, 1):
-            scr = cyl(P["m3_clear_r"], 14.0, axis="y")       # M3x12 through the +y pad
+            scr = teardrop(P["m3_clear_r"], 14.0, axis="y")  # M3x12 through the +y pad
             scr.apply_translation((sx_ * xs, sy + 6.0, 15.0))
             mesh = sub(mesh, scr)
-            cbf = cyl(3.4, 4.5, axis="y")                    # head counterbore, +y face
+            cbf = teardrop(3.4, 4.5, axis="y")               # head counterbore, +y face
             cbf.apply_translation((sx_ * xs, sy + 11.2, 15.0))
             mesh = sub(mesh, cbf)
             pilr = cyl(1.25, 10.0, axis="y")                 # -y thread-form pilot
