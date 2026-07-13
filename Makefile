@@ -50,9 +50,10 @@ invariants:          ## Design-invariant gate: user-approved features asserted v
 tipover:             ## Mass/CoM/stability report: tip angles, accel limits, fast-pan swing (INFILL=0.5 = conservative)
 	python3 tools/tipover.py
 
-all:                 ## Full pipeline: build GLB, interference gate, then export STLs + .3mf plates
+all:                 ## Full pipeline: build GLB, interference gate, design invariants, then export STLs + .3mf plates
 	python3 src/build.py
 	python3 src/assembly_check.py web/assembly.glb
+	python3 src/checks.py
 	$(MAKE) export
 
 pages:               ## Force a Pages deploy now (normally AUTOMATIC: pushing web/ to main triggers .github/workflows/pages.yml)

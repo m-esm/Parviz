@@ -127,6 +127,13 @@ make fits           # fit/pressure map (ported from finnish-doors 2026-07-08): n
                     #   opt-in, not part of the watch loop. Patches are NEUTRAL-pose coords
                     #   but the viewer re-poses them per kinematic group (2026-07-10), so
                     #   they track the pan/tilt sliders and sit right on ANY baked GLB pose.
+make invariants     # design-invariant gate (src/checks.py, ~1.3 s, IN make all): one
+                    #   assertion per user-approved feature -- ADD A CHECK THE SAME TURN a
+                    #   feature is approved, so it can't silently regress later.
+make wallcheck      # min-wall report over the printed STL set (0.8 mm gate + documented
+                    #   whitelist; exits 1 while findings stand -- see docs/FIXES.md)
+make tipover        # mass/CoM/tip-margin report (solid-PLA + 50%-infill bounds); a
+                    #   report, not a gate -- 2026-07-13 verdict: no ballast needed.
 ```
 
 Then **downscale and actually Read every PNG** before claiming a change works:
@@ -573,10 +580,21 @@ regenerated for the Ø2.0 pin (r 1.275): probe (tools/probe_track_pip.py) --
 conjugate penetration -0.152 (clearance), numeric skip barrier 2.12 (analytic
 2.18), CR 1.37 unchanged, +-35 deg articulation sweep of every variant pair
 CLEAN (min approach 0.349 = the PIP annulus), 3D tooth-vs-keeled-link sweep 0
-overlap (tooth band +-4.0 vs keel band 4.9). SLACK CAVEAT: 0.35 radial x ~60 PIP
-joints adds ~8 mm chain slack vs the filament chain -- it lands as top-run sag;
-expect the front tension slot to need MORE TRAVEL after the first physical
-chain, budget that before reprinting links. MASTER links stay grouser-up NOSUP
+overlap (tooth band +-4.0 vs keel band 4.9). TENSION TRAVEL (2026-07-13, closed
+the old SLACK CAVEAT): the front idler slot is a true stadium, -2..+6.5 off
+nominal (the old cut gave the Ø8 shank only ~+-0.2 -- the documented "+-2"
+never existed). dL/d(idler_y) = 1 + cos(33 deg) = 1.84 on this raised loop, so
+the predicted +8 mm PIP slack needs 4.3 mm; 6.5 = 1.5x margin. Front pylons run
+y 120.5..142.5; tub_nose 20->26 (cheek noses 146, 2 past the deck tips). The
+FRONT M8 nut is captured FLATS +-Z in a closed cheek DUCT (floor ledge z 27.62
++ chamfered roof strip z 41.02, gap 13.4 = AF 13+0.4) -- y-wall grip is
+geometrically impossible over slide travel -- inserted via the pylon notch
+BEFORE the deck drops (slide inboard along x through the washer slice); the M8
+threads in axially after track closure. Rear cheeks keep the drop-in y-wall
+channel. Full first-chain elongation is ~21.8 mm: tension only to mesh, the
+rest is designed top-run sag (the wheel beam caps run lift at 4.5). COUPON:
+print plate 20 (5-link PIP strip + master + keepers, ~48 min) before any strip
+plate; protocol in docs/ASSEMBLY.md. MASTER links stay grouser-up NOSUP
 (C-jaw removes the floating region) and keep the full old Ø2.2 interface (a
 closed far bore can't slide onto a fused pin) + keels (jaw slots re-cut through
 them). Track gear plate: running-gear bodies are ORIENTATION-NORMALIZED
@@ -739,11 +757,15 @@ probed) and a spur+3-start combo fails torque (0.6x). **TRADEOFF: single-start
 self-locking is LOST -- a 3-start (lead ~23 deg) back-drives, so de-energized the head
 holds only via the 28BYJ detent+gear friction through 4:1 (~27-54 mNm at the axle,
 marginal vs imbalance): firmware must energize-hold or park at the balance point,
-and a power-off head may slowly nod.** Placeholders: pan spur pair + the 3-start worm
-(worm_starts!=1 forces placeholder gears -- the committed *_real.stl pair is
-single-start; regenerate per docs/WORM.md). Gates re-whitelisted: (pan_gears,
-motor_pan)+(pan_gears, pan_platform) replaced (pan_platform, motor_pan); viewer PAL
-silver rule grew |gears.
+and a power-off head may slowly nod.** REAL TEETH SINCE 2026-07-13: the 3-start worm
+pair (lead angle 23.08 deg, wheel helix matched) and the 32T/16T pan spurs (m0.8,
+PA20, CD 19.2, backlash 0.20) are generated + committed (docs/WORM.md regeneration
+record; coupled sweeps 0.000 mm3 penetration, worm clocking constant 24.5 -> 17.75,
+pan mesh phase 5.625 deg). The placeholder fallback trigger is now a META-SIDECAR
+HONESTY GATE (stl/neck/worm_real_meta.json + pan_gears_real_meta.json vs PARAMS in
+src/gears.py), not worm_starts != 1 -- param changes can't silently ship stale teeth.
+Gates re-whitelisted: (pan_gears, motor_pan)+(pan_gears, pan_platform) replaced
+(pan_platform, motor_pan); viewer PAL silver rule grew |gears.
 
 **Tilt holding (decision, 2026-07-13):** with self-locking gone, the rule is FIRMWARE
 HOLD: energize the tilt coils whenever the head sits off its balance point, and PARK AT
@@ -761,9 +783,23 @@ mics/display stay on the Pi. With arduino-cli on the Pi, the AI tier can WRITE, 
 and FLASH the Arduino firmware on the fly over that same cable — firmware is an
 LLM-modifiable artifact (repo: firmware/arduino/ when it lands). Reflexes (cliff-stop)
 can live in-firmware below the Pi. Full rationale: docs/AWARENESS.md "Arduino I/O
-plane". Board choice + motor placement open — check the parts inventory first. CAD
-knock-on: the electronics bay needs a mounting spot for the Arduino + one internal USB
-run to the Pi.
+plane". Board = Uno R3 (owned x3, Bag 6); motor placement still open.
+
+**Electronics seats (2026-07-13, Arduino I/O plane CAD):** chassis_lower_rear now
+carries the Uno R3 seat (4 posts to z 21 + a rear-wall shelf for the glacis-side hole;
+hole pattern verified vs the Adafruit Arduino-dimensions drawing, USB-B faces +X, cable
+route right wall -> pan service loop -> the 16x8 platform pass -> neck channel -> Pi),
+IMU posts on the floor strap at (14,-12) (rigid, near the pan axis; pedestal owns dead
+center), an SW-420 hard pad at (-48,-95), and BME688 bosses over the y-96 LEFT vent
+(samples room air, 43+ from the buck tray; the y16 vent was rejected -- seam pad +
+deck boss leave an exact-18.0 squeeze). chassis_deck_front gets a second underside
+pocket (x -55..-32) with a vertical tab: the LD2410-class mmWave stands BORESIGHT
+FORWARD behind the front slope's hex-grille field as its radome (~3.5-6 mm oblique PLA
+on axis; the front wall itself has no copper-free aperture -- HC-SR04 center, M8 nut
+stacks in the cheeks). LD2450 (25.6 wide) does NOT fit this bay. Placeholders
+board_arduino + sensor_imu/bme/vib/mmwave, ALL module dims VERIFY_ON_ARRIVAL in
+PARAMS (docs/ASSEMBLY.md table); TTP223 pads deferred to a head-top pass (chassis
+fallback documented in PARAMS: cliff-pocket top skins are 3.5 thick).
 
 **Head-thermal pass (2026-07-13, Pi 5 Active Cooler keep-out):** the buy-list "CAD must
 confirm head-bay clearance" question is answered with measured geometry, not guesses.

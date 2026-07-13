@@ -83,7 +83,7 @@ tracks, bezel, neck, pan parts, cosmetics -- can stay PLA. The black CR-PETG spo
 - `track_L` / `track_R`: tank track pods: 64 links/side (4 print-in-place strips +
   master; integral Ø2.0 pins in-strip, Ø1.75 filament pins at the 5 boundaries), 12T
   pin-pocket sprocket (real circular pin seats since 2026-07-10, r 1.15 on the 19.32
-  pin circle), 2 end idlers on 2x F688ZZ each (30 wide; front tensions in its deck pylon), a ground-run
+  pin circle), 2 end idlers on 2x F688ZZ each (30 wide; front tensions in its deck pylon),
   TWO ground-run drive sprockets (spr_y rear + spr_y2 front; the front motor is
   OPTIONAL, all fittings modeled), 5 dished road wheels/side
   (30 wide) on M4x40 bolt-axles off the pod-rail wheel beams
@@ -322,6 +322,23 @@ tray killed the 88.5 mm blind channels, 2026-07-08.)
 (2026-07-08 passes retired the old tilt-motor-ear reach, the worm-wheel bench grub, the
 last-track-pin loop flex, and the 4× 88.5 mm blind screen-standoff screws -- the worst
 step in the build is now four short bench screws plus four visible wall screws.)
+
+### Track coupon protocol (plate 20, ~48 min -- print BEFORE any strip plate)
+
+Plate 20 is a 5-link print-in-place coupon (open-A first link, 3 integral-pin mids,
+open-far last, keels on) + 1 loose master link + both keeper bars. Measure on it:
+
+1. Every PIP hinge frees after break-in flexing -- no fused knuckles.
+2. Hinge radial slop: pull the 5-link strip taut and measure total stretch vs 40.0
+   nominal; that gives real per-joint slack. Scale x59 and check it still fits the
+   6.5 mm front slot travel via delta_L / 1.84.
+3. Ø2.0 integral pins unbroken after 20 full +-35 deg articulations.
+4. Keel faces clean (no sag scars), grousers flat.
+5. Ø2.2 boundary bores accept Ø1.75 filament.
+6. Master jaw drops onto the end pin; keepers slide and seat; M2 pilots hold.
+
+Any fail: adjust `track_bore_pip_d` / `track_pin_print_d` and reprint the COUPON,
+not a strip.
 
 ### Recommendations (bigger than this pass)
 

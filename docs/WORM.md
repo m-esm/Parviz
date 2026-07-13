@@ -129,12 +129,31 @@ the worm. OpenSCAD/BOSL2 is not installed on this machine.
    flank angle is self-supporting. Grease the mesh lightly; design clearance
    doubles as the reservoir.
 
-## TODO: 3-start regeneration (fast-tilt pass 2026-07-12)
+## 3-start regeneration record (2026-07-13)
 
-PARAMS `worm_starts` is now **3** (ratio 12:1 -> 4:1, 22.5 deg/s tilt; tradeoff notes in
-params.py / CLAUDE.md). The committed `*_real.stl` pair above is the OLD single-start
-generation, so `build.py` forces the readable placeholders whenever `worm_starts != 1`
-(same honesty convention as the antenna gears). Before printing: re-run
-`tools/gears/gen_worm_drive.py` with 3 starts at the SAME pitch r 4.4 / CD 11.9 / 12T
-wheel (lead angle becomes ~23 deg -- NOT self-locking; the wheel helix angle must match),
-re-verify mesh volume 0.000 and update the cosmetic clocking constant in build.py.
+PARAMS `worm_starts` = **3** (ratio 12:1 -> 4:1, 22.5 deg/s tilt; tradeoff notes in
+params.py / CLAUDE.md). The committed `*_real.stl` pair IS the 3-start generation:
+same m 1.25 / pitch r 4.4 / CD 11.9 / 12T wheel / PA 25 deg; lead 11.781, **lead angle
+23.081 deg** (NOT self-locking), wheel helix matched (22.79 deg twist over the 7 mm
+face), backlash 0.25 circular, crest width 1.147 (printable). OD 10.55 / core Ø7
+unchanged so cradle/carrier interfaces carry over. Verification: static min
+intersection 0.000 mm3 at CD 11.9; coupled full-worm-rev sweep (wheel follows at 3
+teeth/rev) max 0.000 mm3; contact onset between CD-0.05 and CD-0.10; wrong-hand wheel
+7.41 mm3 (direction confirmed). Assembly clocking constant in build.py: 24.5 -> 17.75.
+`gen_worm_drive.py` reads STARTS from PARAMS and writes `stl/neck/worm_real_meta.json`;
+`worm_real_ok()` (src/gears.py) compares meta to PARAMS and falls back to placeholders
+on ANY mismatch -- the honesty gate is the sidecar now, not `worm_starts != 1`.
+FDM caveat: flank gap measures ~0.05-0.10 radial (tighter than the pan spurs); confirm
+the first printed pair doesn't bind at +0.1 oversize before greasing.
+
+## Pan spur pair (2026-07-13)
+
+`tools/gears/gen_pan_spurs.py`: m 0.8, PA 20 deg, **32T** (width 5.0, D-bore cut in
+build.py on the motor shaft flats) + **16T** (width 5.5, fused into the pan_platform
+shank), CD 19.2, backlash 0.20 circular split 0.10/member, full-depth teeth (tips
+13.6 / 7.2, roots 11.8 / 5.4). 16T undercut is a non-issue against a 32T mate (pair
+limit ~14.2T). Verification: static 0.000 mm3, zero window centered 5.625 deg (half a
+32T pitch, stored in the meta as `gear32_mesh_deg`), coupled sweep over one pinion
+pitch 0.000 mm3. Cluster reach 32.8 <= 33.0 budget (race ID 34); deck gear pocket runs
+0.9 clear. Meta sidecar `stl/neck/pan_gears_real_meta.json`, gated by `pan_real_ok()`.
+NOTE: the 32T clocking assumes `pan_shaft_azim` = 180 -- re-derive if the azimuth moves.

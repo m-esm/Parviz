@@ -226,16 +226,33 @@ def main():
 
     # ---------------- prow cheeks: M8 nut channels + USB corridor --------------
     wb2 = P["track_wheelbase"] / 2.0
-    # user 2026-07-11 (prow cheeks): open-top NUT CHANNELS, y-walls 13.8 apart
-    # centered on the end-axle y, self-capture the descending M8 nut.
+    # REAR cheeks, user 2026-07-11 (prow cheeks): open-top NUT CHANNELS,
+    # y-walls 13.8 apart centered on the end-axle y, self-capture the
+    # descending M8 nut.
     nut_ok = True
-    for sgn, part in ((1, "chassis_lower_front"), (-1, "chassis_lower_rear")):
-        for sxb in (1, -1):
-            m = M(part)
-            nut_ok &= clear(m, [(sxb * 53.5, sgn * wb2, z) for z in (28.0, 35.0, 42.0)])
-            nut_ok &= inside(m, [(sxb * 53.5, sgn * (wb2 + 8.2), 30.0),
-                                 (sxb * 53.5, sgn * (wb2 - 8.2), 30.0)])
-    check("M8 nut channels in all 4 prow cheeks (walls 13.8 apart)", bool(nut_ok))
+    for sxb in (1, -1):
+        m = M("chassis_lower_rear")
+        nut_ok &= clear(m, [(sxb * 53.5, -wb2, z) for z in (28.0, 35.0, 42.0)])
+        nut_ok &= inside(m, [(sxb * 53.5, -(wb2 + 8.2), 30.0),
+                             (sxb * 53.5, -(wb2 - 8.2), 30.0)])
+    check("M8 nut channels in both REAR cheeks (y-walls 13.8 apart)", bool(nut_ok))
+    # FRONT cheeks, tension-travel pass 2026-07-13: y-wall grip is impossible
+    # over slide travel, so the front nut rides FLATS +-Z in a closed capture
+    # DUCT: floor ledge (top z 27.62) + roof grip strip (z 41.02, gap 13.4)
+    # about the end-axle line z 34.32, void open across the whole
+    # -idler_slot_in..+idler_slot_out stroke.
+    za = 34.32
+    duct_ok = True
+    for sxb in (1, -1):
+        m = M("chassis_lower_front")
+        for dy in (-P["idler_slot_in"], 0.0, P["idler_slot_out"]):
+            duct_ok &= clear(m, [(sxb * 53.5, wb2 + dy, za),
+                                 (sxb * 53.5, wb2 + dy, za - 5.8),
+                                 (sxb * 53.5, wb2 + dy, za + 5.8)])
+        duct_ok &= inside(m, [(sxb * 54.0, wb2, 26.2),      # ledge below
+                              (sxb * 54.5, wb2, 42.5)])     # roof strip above
+    check("front M8 capture ducts (flats +-Z, ledge+roof, full stroke)",
+          bool(duct_ok))
     # user 2026-07-11 (trim + rear-sensor pass): USB-C entry is a recessed
     # corridor through the REAR-LEFT cheek at x -38, z 31.
     check("USB-C corridor through rear-left cheek",
