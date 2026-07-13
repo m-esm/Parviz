@@ -52,7 +52,7 @@ HEAD_NODES = {
     "head_bezel", "head_back", "trim_rail_L", "trim_rail_R", "led_strip",
     "antenna_stub", "trim_hatch_frame", "camera_pod", "arm_L", "arm_R",
     "worm_wheel", "tilt_axle", "cam_cover", "camera_ref", "head_door",
-    "sd_plug", "screen_tray",
+    "sd_plug", "screen_tray", "pi5_cooler",   # COOLER=1 keep-out (default off)
 }
 PAN_NODES = {"pan_platform", "neck_clevis", "tilt_worm", "motor_tilt", "tilt_carrier",
              "trim_neckfoot"}
