@@ -92,10 +92,11 @@ def _fit_report(geo):
         # electronics seat placeholders (2026-07-13): each floats 0.05-0.15 off
         # its seat, but the pairs ARE designed seats -- whitelisted so a future
         # gap-close doesn't trip the audit
-        frozenset(("board_arduino", "chassis_lower")),   # Uno on the rear posts/shelf
-        frozenset(("sensor_imu", "chassis_lower")),      # IMU posts on the strap
-        frozenset(("sensor_bme", "chassis_lower")),      # wall bosses at the y16 vent
-        frozenset(("sensor_vib", "chassis_lower")),      # hard pad on the floor
+        frozenset(("chassis_base", "chassis_lower")),    # equipment base on the hull floor
+        frozenset(("board_arduino", "chassis_base")),    # Uno on the base posts/shelf
+        frozenset(("sensor_imu", "chassis_base")),       # IMU posts on the base
+        frozenset(("sensor_vib", "chassis_base")),       # SW-420 seat on the base
+        frozenset(("sensor_bme", "chassis_lower")),      # wall bosses at the y-96 vent
         frozenset(("sensor_mmwave", "chassis_deck")),    # tab in the deck pocket
         frozenset(("pod_rail_L", "chassis_lower")),  # rail sits flush on the wall outer face
         frozenset(("pod_rail_R", "chassis_lower")),

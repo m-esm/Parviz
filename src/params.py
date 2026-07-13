@@ -497,7 +497,9 @@ P = {
     # bottom z 15 stays above the glacis plane (z 14.74 at the wall inner face)
     # so nothing pokes through the hull; shelf top clears the sensor_us_rear
     # board bottom (z 21.55) where they share the wall.
-    "ard_org": (34.29, -59.0),
+    "ard_org": (34.29, -61.0),   # 2 back off the belly-opening edge (-61) so the
+                                 # equipment base holds the front posts without
+                                 # overhanging the opening (2026-07-14 hull/base split)
     "ard_seat_z": 21.0,
     "ard_shelf": (10.0, 28.0, -115.0, -104.0, 15.0),   # x0,x1,y0,y1,z_bot (top=20)
     "ard_usb_ly": 38.1,     # USB-B shell center, board-local y. VERIFY_ON_ARRIVAL
@@ -509,7 +511,9 @@ P = {
     # Posts along Y clear the ULN#1 post at (20.5,4) by 1.0 and the strap edges
     # (x1 25, y0 -26). Strap floor is the 3.5-thick rebate band (z 8.5..12), so
     # the pilots live INSIDE the posts and never break into the belly rebate.
-    "imu_c": (14.0, -12.0),
+    "imu_c": (40.0, -100.0),     # on the equipment base, right side-strip beside the
+                                 # Arduino, clear of the TT tab ribs (x>=52) + the rear
+                                 # deck boss (y-113). 2026-07-14: moved off the hull strap
     "imu_hole_cc": 15.5,    # 2-hole pattern along Y (GY-521-class). VERIFY_ON_ARRIVAL
     "imu_board_wl": (21.0, 16.5),   # breakout envelope. VERIFY_ON_ARRIVAL
     "imu_seat_z": 18.0,     # post tops (O6 posts, M2.5/M3 self-tap into O2.5 pilots)
@@ -541,7 +545,12 @@ P = {
     # the TT_L tab rib (y >= -86.6), the y -96 vent cut (x <= -64), the belly
     # screws (-42,-65.5) and the Uno board edge (x -34.3, 2.2 gap). One M3 into a
     # O2.5 pilot + two corner fence nubs against rotation.
-    "vib_c": (-48.0, -95.0),
+    "vib_c": (-38.0, -105.0),    # on the equipment base, left side-strip (2026-07-14)
+    # EQUIPMENT BASE (2026-07-14, user: split the shell so the in-flux electronics
+    # iterate on a swappable base, not the finalized hull). The base carries the
+    # Arduino + IMU + SW-420 seats in the rear bay; the hull keeps only these 4 M3
+    # hold-down pilots in the floor. BME stays wall-mounted (air-coupled to the vent).
+    "base_mount_pts": ((-44.0, -64.0), (44.0, -64.0), (-44.0, -114.0), (44.0, -114.0)),
     "vib_board_wl": (21.5, 10.5),   # module envelope, long axis X. VERIFY_ON_ARRIVAL
     "vib_hole_off": -5.5,   # single O3 hole, offset from board center along X
                             # (toward the wall end). VERIFY_ON_ARRIVAL

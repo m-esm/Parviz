@@ -668,55 +668,16 @@ def build_chassis_core():
 
     # --- ELECTRONICS SEATS (2026-07-13, Arduino I/O plane; see the PARAMS block
     # for every placement derivation + VERIFY_ON_ARRIVAL markers). Added AFTER the
-    # belly cut on purpose: the Uno front post overhangs the opening edge by ~2 at
-    # z >= 12, which blocks nothing (plate plug tops at z 10) -- cutting the
-    # opening later would instead notch the post.
-    # ARDUINO UNO R3: 4 posts to the z-21 seat plane + the rear-wall shelf bar.
-    sx0, sy0 = P["ard_org"]
-    seat_z = P["ard_seat_z"]
-    shx0, shx1, shy0, shy1, shz0 = P["ard_shelf"]
-    shelf = box(shx1 - shx0, shy1 - shy0, seat_z - shz0)
-    shelf.apply_translation(((shx0 + shx1) / 2, (shy0 + shy1) / 2,
-                             (shz0 + seat_z) / 2))
-    body = uni([body, shelf])
-    for lx_, ly_ in P["ard_holes"]:
-        hx_, hy_ = sx0 - lx_, sy0 - ly_              # R180 board-local -> world
-        on_shelf = hy_ < shy1 + 2.0
-        pb_ = seat_z - 6.0 if on_shelf else z0 + floor
-        post = cyl(3.5, seat_z - pb_)
-        post.apply_translation((hx_, hy_, (pb_ + seat_z) / 2))
-        body = uni([body, post])
-        pil = cyl(1.25, 5.5)                         # O2.5 thread-form, blind: stays
-        pil.apply_translation((hx_, hy_, seat_z + 0.5 - 2.75))   # inside post/shelf
-        body = sub(body, pil)                        # (never the thin floor below)
-    # IMU: 2 posts on the strap floor east of the pan pedestal.
-    ix_, iy_ = P["imu_c"]
-    for sy_ in (-1, 1):
-        py_ = iy_ + sy_ * P["imu_hole_cc"] / 2
-        post = cyl(3.0, P["imu_seat_z"] - 12.0)
-        post.apply_translation((ix_, py_, (12.0 + P["imu_seat_z"]) / 2))
-        body = uni([body, post])
-        pil = cyl(1.25, 5.5)
-        pil.apply_translation((ix_, py_, P["imu_seat_z"] + 0.5 - 2.75))
-        body = sub(body, pil)
-    # SW-420: hard pad + 1x O2.5 M3 pilot + 2 anti-rotation fence nubs at the far
-    # (inboard) end. Pad on full-thickness floor -> the pilot may run 3 into it.
-    vx_, vy_ = P["vib_c"]
-    vw_, vl_ = P["vib_board_wl"]
-    pad = box(vw_ + 2.5, vl_ + 2.5, P["vib_pad_h"])
-    pad.apply_translation((vx_, vy_, 12.0 + P["vib_pad_h"] / 2))
-    body = uni([body, pad])
-    vpz = 12.0 + P["vib_pad_h"]
-    vpil = cyl(1.25, P["vib_pad_h"] + 3.0)
-    vpil.apply_translation((vx_ + P["vib_hole_off"], vy_,
-                            vpz + 0.5 - (P["vib_pad_h"] + 3.0) / 2))
-    body = sub(body, vpil)
-    for sy_ in (-1, 1):                              # fence nubs hug the free end
-        nub = box(2.0, 2.0, P["vib_pad_h"] + 3.0)
-        nub.apply_translation((vx_ + vw_ / 2 + 0.3 + 1.0,
-                               vy_ + sy_ * (vl_ / 2 - 1.0),
-                               12.0 + (P["vib_pad_h"] + 3.0) / 2))
-        body = uni([body, nub])
+    # belly cut on purpose.
+    # ARDUINO + IMU + SW-420 seats MOVED to the removable chassis_base (2026-07-14,
+    # user: split the shell so the in-flux electronics iterate on a swappable base,
+    # not the finalized hull). The hull keeps only 4x blind Ø2.5 thread-form pilots
+    # in the floor for the base's hold-down M3s (build_chassis_base). BME stays here
+    # (its bosses are air-coupled to the left wall vent, shell-integral like the sonars).
+    for tmx, tmy in P["base_mount_pts"]:
+        tpil = cyl(1.25, 5.0)                        # blind pilot up from the floor bottom
+        tpil.apply_translation((tmx, tmy, z0 + floor - 2.5 + 0.2))
+        body = sub(body, tpil)
     # BME688: 2x O5 x 2 standoff bosses on the LEFT wall inner face flanking the
     # y=-96 vent + O1.7 M2 pilots 3.0 into the 5-wall (2.0 web outside).
     wallx = -(P["chassis_w"] / 2 - 5.0)              # inner face -65
@@ -773,14 +734,15 @@ def build_chassis_parts():
     ysl = P["lower_seam_y"]
     ysl2 = P["lower_seam2_y"]
     # per-seam fastener x: the y=26 seam uses the vent-free wall band (x 61); the
-    # y=-88 tail seam goes CENTRAL (x 25) because the left wall corner is occupied
-    # by the SW-420 pad (x -60..-36) -- x25 clears its board (inboard edge -37.25).
-    seams = ((ysl, 61.0, 18.0, 57.0, 66.0), (ysl2, 25.0, 20.0, 25.0, 32.0))
-    for seam_y, xpad, wpad, _xs, _xd in seams:
-        for sx_ in (-1, 1):
-            pad = box(wpad, 26.0, 8.0)
-            pad.apply_translation((sx_ * xpad, seam_y, 15.0))  # y +-13, z 11..19
-            core = uni([core, pad])
+    # y=-88 tail seam sits at x 48 -- outboard of the chassis_tray footprint (x <= 30,
+    # 2026-07-14) and merging with the SW-420 pad on the left (both hull).
+    # Only the y=26 (front/rear) seam gets floor-pad screw hardware. The y=-88 tail
+    # seam is under the equipment BASE, which spans it and bolts to both shells -- so
+    # it needs no pads (the base + deck screws + pod rails tie rear<->tail).
+    for sx_ in (-1, 1):
+        pad = box(18.0, 26.0, 8.0)
+        pad.apply_translation((sx_ * 61.0, ysl, 15.0))       # y +-13, z 11..19
+        core = uni([core, pad])
 
     lower = slice_mesh_plane(core, plane_normal=(0, 0, -1), plane_origin=(0, 0, seam), cap=True)
     deck = slice_mesh_plane(core, plane_normal=(0, 0, 1), plane_origin=(0, 0, seam), cap=True)
@@ -836,8 +798,8 @@ def build_chassis_parts():
     lower = _seam_join(lower, ysl, 57.0, 66.0)
     lower_f = slice_mesh_plane(lower, plane_normal=(0, 1, 0), plane_origin=(0, ysl, 0), cap=True)
     lower_r = slice_mesh_plane(lower, plane_normal=(0, -1, 0), plane_origin=(0, ysl, 0), cap=True)
-    # rear TAIL cap off the main housing (chassis_lower_rear stays the larger front piece)
-    lower_r = _seam_join(lower_r, ysl2, 25.0, 32.0)
+    # rear TAIL cap off the main housing (no seam pads here -- the equipment base
+    # spans this seam and ties rear<->tail). chassis_lower_rear stays the larger piece.
     lower_tail = _despeck(slice_mesh_plane(lower_r, plane_normal=(0, -1, 0),
                                            plane_origin=(0, ysl2, 0), cap=True))
     lower_r = _despeck(slice_mesh_plane(lower_r, plane_normal=(0, 1, 0),
@@ -1015,7 +977,79 @@ def build_chassis_parts():
                    (deck_r, "chassis_deck_rear")):
         _color(m_, "base"); m_.metadata["name"] = nm
         out.append(m_)
+    # EQUIPMENT BASE: built here so it can be RELIEVED against the hull -- subtract the
+    # lower shells so the base bottom gets clearance pockets for every dense floor
+    # feature it spans (ULN standoffs, belly-edge lip, etc.), a robust drop-in fit that
+    # can't silently overlap a hull feature.
+    base = build_chassis_base()
+    base = _despeck(sub(base, uni([lower_f, lower_r, lower_tail])))
+    _color(base, "pi"); base.metadata["name"] = "chassis_base"
+    out.append(base)
     return out
+
+
+def build_chassis_base():
+    """Drop-in EQUIPMENT BASE (2026-07-14, user: split the shell so the in-flux
+    electronics iterate on a swappable base, not the finalized hull). Owns the
+    ARDUINO + IMU + SW-420 seats, re-laid-out into the rear electronics bay (behind
+    the belly opening at y<-61 and the pan pedestal at y>-16): the Arduino centred,
+    the IMU + SW-420 in the side strips. Plate flat on the hull floor at z12, top
+    btop=z15 = the seat plane. Bolts down with 4x M3 into hull-floor pilots
+    (build_chassis_core) and SPANS the y=-88 hull seam, so it ties the rear+tail
+    shells (that seam needs no pads). Two clearance holes pass the rear deck-split
+    bosses through to the deck. Prints flat, plate-down / seats-up -- no support.
+    BME stays wall-mounted (air-coupled to the vent, shell-integral like the sonars)."""
+    z0, floor = P["chassis_clear"], 5.0
+    zb = z0 + floor                      # z12, sits on the hull floor
+    btop = zb + 3.0                      # z15 seat plane (3 mm plate)
+    base = rounded_box(98.0, 56.0, btop - zb, 6.0)      # x -49..49 (clears the TT tab
+    base.apply_translation((0.0, -90.0, zb))            # ribs at x>=52), y -118..-62
+    # ARDUINO: rear shelf bar + 4 posts to z21
+    sx0, sy0 = P["ard_org"]; seat_z = P["ard_seat_z"]
+    shx0, shx1, shy0, shy1, shz0 = P["ard_shelf"]
+    shelf = box(shx1 - shx0, shy1 - shy0, seat_z - shz0)
+    shelf.apply_translation(((shx0 + shx1) / 2, (shy0 + shy1) / 2, (shz0 + seat_z) / 2))
+    base = uni([base, shelf])
+    for lx_, ly_ in P["ard_holes"]:
+        hx_, hy_ = sx0 - lx_, sy0 - ly_
+        post = cyl(3.5, seat_z - btop)
+        post.apply_translation((hx_, hy_, (btop + seat_z) / 2))
+        base = uni([base, post])
+        pil = cyl(1.25, 5.5)
+        pil.apply_translation((hx_, hy_, seat_z + 0.5 - 2.75))
+        base = sub(base, pil)
+    # IMU: 2 posts to imu_seat_z (right side strip)
+    ix_, iy_ = P["imu_c"]
+    for sy_ in (-1, 1):
+        py_ = iy_ + sy_ * P["imu_hole_cc"] / 2
+        post = cyl(3.0, P["imu_seat_z"] - btop)
+        post.apply_translation((ix_, py_, (btop + P["imu_seat_z"]) / 2))
+        base = uni([base, post])
+        pil = cyl(1.25, 5.5)
+        pil.apply_translation((ix_, py_, P["imu_seat_z"] + 0.5 - 2.75))
+        base = sub(base, pil)
+    # SW-420: hard pad + pilot + 2 anti-rotation fence nubs (left side strip)
+    vx_, vy_ = P["vib_c"]; vw_, vl_ = P["vib_board_wl"]
+    pad = box(vw_ + 2.5, vl_ + 2.5, P["vib_pad_h"])
+    pad.apply_translation((vx_, vy_, btop + P["vib_pad_h"] / 2))
+    base = uni([base, pad])
+    vpz = btop + P["vib_pad_h"]
+    vpil = cyl(1.25, P["vib_pad_h"] + 3.0)
+    vpil.apply_translation((vx_ + P["vib_hole_off"], vy_, vpz + 0.5 - (P["vib_pad_h"] + 3.0) / 2))
+    base = sub(base, vpil)
+    for sy_ in (-1, 1):
+        nub = box(2.0, 2.0, P["vib_pad_h"] + 3.0)
+        nub.apply_translation((vx_ + vw_ / 2 + 0.3 + 1.0, vy_ + sy_ * (vl_ / 2 - 1.0),
+                               btop + (P["vib_pad_h"] + 3.0) / 2))
+        base = uni([base, nub])
+    # 4x M3 hold-down: clearance + top counterbore (opens up -> self-supporting)
+    for mx_, my_ in P["base_mount_pts"]:
+        clr = cyl(P["m3_clear_r"], 8.0); clr.apply_translation((mx_, my_, btop - 3.0))
+        base = sub(base, clr)
+        cb = cyl(3.4, 2.4); cb.apply_translation((mx_, my_, btop - 1.2))
+        base = sub(base, cb)
+    _color(base, "pi"); base.metadata["name"] = "chassis_base"
+    return base
 
 
 def build_belly_plate():
@@ -1197,7 +1231,7 @@ def build_chassis_electronics():
     parts.append(bme)
     # SW-420: board flat on the pad + a component bump
     vx_, vy_ = P["vib_c"]
-    vz_ = 12.0 + P["vib_pad_h"] + 0.05
+    vz_ = 15.0 + P["vib_pad_h"] + 0.05      # SW-420 pad now rides the z15 base top
     vbrd = box(P["vib_board_wl"][0], P["vib_board_wl"][1], 1.2)
     vbrd.apply_translation((vx_, vy_, vz_ + 0.6))
     vpot = box(6.0, 6.0, 4.0)                        # trim pot / comparator bump

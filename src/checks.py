@@ -125,6 +125,10 @@ def main():
     # peels its feature-dense rear end into a bolt-on chassis_lower_tail at lower_seam2_y.
     check("chassis_lower_tail present (rear housing split)", "chassis_lower_tail" in nodes)
 
+    # user 2026-07-14 (hull/base split): the free electronics (Arduino/IMU/SW-420) live
+    # on a removable chassis_base so the in-flux components iterate without the hull.
+    check("chassis_base present (equipment base)", "chassis_base" in nodes)
+
     # user 2026-07-08 (master link + keepers): loop closes tool-openable.
     check("master links in both loops",
           {"track_L.link_00_master", "track_R.link_00_master"} <= geoms)

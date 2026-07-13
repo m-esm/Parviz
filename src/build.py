@@ -39,7 +39,7 @@ from head import (build_ant_drive, build_antennas, build_arms, build_cam_pod, bu
                   build_ear_jacks, build_head_parts, build_head_rails, build_led_strip,
                   build_pi5_cooler, build_screen_tray, build_sd_plug)
 from chassis import (build_belly_plate, build_chassis_electronics, build_chassis_parts,
-                     build_fascia, build_pod_rails)
+                     build_chassis_base, build_fascia, build_pod_rails)
 from fitmap import _fit_report
 
 

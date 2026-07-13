@@ -88,6 +88,12 @@ WHITELIST = {
     frozenset(("ant_gears_R", "motor_ant_R")),
     frozenset(("axle_hw_L", "chassis_deck")),    # Ø8 end stubs PRESSED into the deck
     frozenset(("axle_hw_R", "chassis_deck")),    # pylons' Ø7.85 sockets (designed press)
+    # equipment base (2026-07-14): drops into the rear bay, bolts to the hull floor,
+    # carries the Arduino/IMU/SW-420 seats (SW-420 rides its fence nubs).
+    frozenset(("chassis_base", "chassis_lower")),   # base rests on the hull floor + bolts
+    frozenset(("chassis_base", "sensor_vib")),      # SW-420 in its seat fence
+    frozenset(("chassis_base", "sensor_imu")),      # IMU on its posts
+    frozenset(("chassis_base", "board_arduino")),   # Uno on its posts (refpart, excl.)
 }
 
 # Sweep pose grid: (pan_deg, tilt_deg)

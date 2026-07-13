@@ -830,8 +830,28 @@ LLM-modifiable artifact (repo: firmware/arduino/ when it lands). Reflexes (cliff
 can live in-firmware below the Pi. Full rationale: docs/AWARENESS.md "Arduino I/O
 plane". Board = Uno R3 (owned x3, Bag 6); motor placement still open.
 
-**Electronics seats (2026-07-13, Arduino I/O plane CAD):** chassis_lower_rear now
-carries the Uno R3 seat (4 posts to z 21 + a rear-wall shelf for the glacis-side hole;
+**HULL / EQUIPMENT-BASE split (2026-07-14, user: separate the shell by STABILITY so
+the in-flux components iterate without reprinting the finalized hull).** The free
+electronics -- Arduino Uno + IMU + SW-420 -- MOVED off the hull floor onto a removable
+`chassis_base`: a flat plate that drops into the rear electronics bay (behind the belly
+opening y<-61 and the pan pedestal y>-16), sits on the hull floor at z12 (seat plane
+z15), bolts down with 4x M3 into hull-floor pilots, and SPANS the y=-88 seam so it ties
+the rear+tail shells (that seam lost its pads). The boards were RE-LAID-OUT to fit the
+bay cleanly (Arduino shifted 2 back off the belly edge; IMU/SW-420 in the x<=+-49 side
+strips, clear of the TT tab ribs at x>=52). The base is built inside build_chassis_parts
+and RELIEVED against the hull (`sub(base, uni(lower_f/r/tail))` + _despeck) so it gets
+clearance pockets for every dense floor feature it spans -- a robust drop-in that can't
+silently clash. STAYED in the hull (structural or shell-integral, NOT in-flux): the pan
+pedestal (pan-axis critical), the HC-SR04/cliff/mmWave/US bores + BME bosses (all
+air/hole-coupled to the wall/slope skins), the deck bosses, and the y=26 seam. Gates:
+chassis_base in export_bambu Chassis plates, assembly_check WHITELIST + fitmap
+_FIT_CONTACT_OK (base<->hull rest, sensor<->base seats), an invariant, and the viewer
+Hull group (chassis_ regex). All green: interference PASS, 35/35 invariants, wallcheck
+PASS, 20/20 plates slice clean, fits 55 pairs all expected. To iterate the electronics
+layout, edit build_chassis_base + the *_c PARAMS and reprint ONLY chassis_base.
+
+**Electronics seats (2026-07-13 -> moved to the base 2026-07-14):** the Uno R3 seat (4
+posts to z 21 + a rear-wall shelf for the glacis-side hole;
 hole pattern verified vs the Adafruit Arduino-dimensions drawing, USB-B faces +X, cable
 route right wall -> pan service loop -> the 16x8 platform pass -> neck channel -> Pi),
 IMU posts on the floor strap at (14,-12) (rigid, near the pan axis; pedestal owns dead
