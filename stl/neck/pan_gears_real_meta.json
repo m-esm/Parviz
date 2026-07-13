@@ -1,0 +1,11 @@
+{
+  "module": 0.8,
+  "gear_teeth": 32,
+  "pinion_teeth": 16,
+  "pa_deg": 20.0,
+  "cd": 19.200000000000003,
+  "backlash": 0.2,
+  "gear_w": 5.0,
+  "pinion_w": 5.5,
+  "gear32_mesh_deg": 5.625
+}

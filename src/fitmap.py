@@ -85,6 +85,14 @@ def _fit_report(geo):
         frozenset(("lamp_L", "chassis_lower")), frozenset(("lamp_R", "chassis_lower")),
         frozenset(("led_front", "chassis_lower")),
         frozenset(("sd_plug", "trim_rail_L")),       # plug face plate rests on the rail
+        # electronics seat placeholders (2026-07-13): each floats 0.05-0.15 off
+        # its seat, but the pairs ARE designed seats -- whitelisted so a future
+        # gap-close doesn't trip the audit
+        frozenset(("board_arduino", "chassis_lower")),   # Uno on the rear posts/shelf
+        frozenset(("sensor_imu", "chassis_lower")),      # IMU posts on the strap
+        frozenset(("sensor_bme", "chassis_lower")),      # wall bosses at the y16 vent
+        frozenset(("sensor_vib", "chassis_lower")),      # hard pad on the floor
+        frozenset(("sensor_mmwave", "chassis_deck")),    # tab in the deck pocket
         frozenset(("pod_rail_L", "chassis_lower")),  # rail sits flush on the wall outer face
         frozenset(("pod_rail_R", "chassis_lower")),
         frozenset(("chassis_deck", "chassis_lower")),

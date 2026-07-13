@@ -425,6 +425,122 @@ P = {
     "blst_rib_xmax": 40.0,                  # rib outer end (TT clearance, see above)
     "blst_usb_hw": 10.0,                    # rib-free USB corridor half-width
 
+    # --- ELECTRONICS SEATS (2026-07-13, Arduino I/O plane -- docs/AWARENESS.md):
+    # the sensor suite wires to an Arduino Uno R3 (owned x3) which talks to the Pi
+    # over ONE USB cable up the neck channel. Seats below are floor features of
+    # chassis_lower (rear piece, all y < the +26 seam) except the mmWave window,
+    # which physics puts in chassis_deck_front (forward radome). Every seat has a
+    # wire path to the Uno at the rear floor.
+    # ARDUINO UNO R3: hole pattern from the "Arduino Dimensions and Hole Patterns"
+    # drawing rev 1-A (J.M. DeCristofaro 2011, CC-BY-SA 3.0, hosted by Adafruit:
+    # cdn-shop.adafruit.com/datasheets/arduino_hole_dimensions.pdf): board
+    # 2.70 x 2.10 in (68.58 x 53.34), 4x O3.2 holes at (13.97,2.54) (15.24,50.8)
+    # (66.04,7.62) (66.04,35.56) from the bottom-left corner, USB-B + power jack
+    # on the LEFT short edge. Verified against the drawing's own chain dims
+    # (0.55/0.05/2.00 in horizontal, 0.10/0.20/1.10/0.60 vertical). The drawing's
+    # M3 pre-tap drill 2.5 mm = exactly the repo's O2.5 thread-form pilot.
+    "ard_holes": ((13.97, 2.54), (15.24, 50.8), (66.04, 7.62), (66.04, 35.56)),
+    "ard_board_wl": (68.58, 53.34),
+    # Placement: REAR floor bay, board local frame ROTATED 180 (world = org - local)
+    # so the USB-B edge faces +X into the free rear-right corridor (the TT_R rear
+    # envelope ends y -80.6, its tab rib at y -86.6..-79.7; the plug corridor
+    # y ~ -104..-92, x 34..64 is clear to the wall). The 4-hole span 52.1 x 48.3
+    # only fits here: front-center is owned by ULN2 + the optional front TTs, the
+    # strap by the pan pedestal. org y -59: the rear board edge -112.3 keeps 1.1
+    # to the rear HC-SR04 board (sensor_us_rear hangs off the wall to y -113.4;
+    # org -60 left 0.06, probed 2026-07-13) and 2.7 to the wall inner face; the
+    # front-row post (y -61.5) overhangs the belly-opening rim (-61) by ~3 at its
+    # base -- fine, its pilot lives inside the post and the rear ballast rib
+    # (y -64..-62) fuses into its back half. USB-A cable route: forward along the
+    # right wall -> service loop -> the 16x8 platform pass at cable_exit (a USB-A
+    # plug head 12x4.5 < the JST-sized obround) -> neck channel -> Pi. Seat plane
+    # z 21 (posts O7 off the floor, pilots O2.5 INSIDE the posts): the
+    # (15.24,50.8) hole lands past the glacis-thinned floor (<2 thick beyond
+    # y ~ -106), so a SHELF BAR off the rear wall takes that pilot -- shelf
+    # bottom z 15 stays above the glacis plane (z 14.74 at the wall inner face)
+    # so nothing pokes through the hull; shelf top clears the sensor_us_rear
+    # board bottom (z 21.55) where they share the wall.
+    "ard_org": (34.29, -59.0),
+    "ard_seat_z": 21.0,
+    "ard_shelf": (10.0, 28.0, -115.0, -104.0, 15.0),   # x0,x1,y0,y1,z_bot (top=20)
+    "ard_usb_ly": 38.1,     # USB-B shell center, board-local y. VERIFY_ON_ARRIVAL
+                            # (the drawing shows the connector, not its center dim)
+    # IMU (MPU6050/ICM-20948-class breakout, NOT owned): rigid seat DIRECTLY on the
+    # retained floor strap (not the removable belly plate -- a screwed panel
+    # drums), as close to the pan axis / chassis center as fixed floor allows: the
+    # pedestal owns x -43.2..4.8 / y -16..32, so the seat sits just east of it.
+    # Posts along Y clear the ULN#1 post at (20.5,4) by 1.0 and the strap edges
+    # (x1 25, y0 -26). Strap floor is the 3.5-thick rebate band (z 8.5..12), so
+    # the pilots live INSIDE the posts and never break into the belly rebate.
+    "imu_c": (14.0, -12.0),
+    "imu_hole_cc": 15.5,    # 2-hole pattern along Y (GY-521-class). VERIFY_ON_ARRIVAL
+    "imu_board_wl": (21.0, 16.5),   # breakout envelope. VERIFY_ON_ARRIVAL
+    "imu_seat_z": 18.0,     # post tops (O6 posts, M2.5/M3 self-tap into O2.5 pilots)
+    # BME688 breakout (NOT owned): hangs on the LEFT wall's INNER face over the
+    # y=-96 side vent so it samples ROOM air through the slot, 43+ behind the
+    # belly buck tray (y -53..-33) and 16 behind the rear TT gearbox (wall zone
+    # ends y -80.6; the TTs are intermittent desk-speed loads). The y=16 vent was
+    # probed first and REJECTED: the lower-seam floor pad (top z 19, y 13..39)
+    # below and the deck-center hold-down boss (z 37..58 at y 4..12) above leave
+    # an exact-18.0 z window -- zero margin for the 18-tall board. At -96 the
+    # only neighbor is the rear TT's tab rib (y -86.55..-79.65, x to -51.6), so
+    # the board center sits 1.2 behind the vent center. 2x O5x2 standoff bosses
+    # keep a sniff gap off the wall; O1.7 M2 pilots go 3.0 into the 5-wall
+    # (2.0 web to the outside face). Wiring: the SW-420 pad (-48,-95) and the
+    # Uno are right there -- the rear-left corner is the sensor cluster.
+    "bme_vent_y": -96.0,
+    "bme_cy": -97.2,        # board/hole-pair center: board edge -86.7 keeps 0.15
+                            # to the TT rib -- if the real board is longer than
+                            # 21, shift this back or trim. VERIFY_ON_ARRIVAL
+    "bme_hole_cc": 13.0,    # hole pitch along Y. VERIFY_ON_ARRIVAL (bosses at
+                            # -103.7/-90.7 flank the slot y -98.5..-93.5 with
+                            # 0.3+ and stay off the -112 vent)
+    "bme_board_yz": (21.0, 18.0),   # board envelope. VERIFY_ON_ARRIVAL
+    "bme_cz": 30.0,         # on the vent slot's z center (slot z 22..38)
+    "bme_boss_h": 2.0,
+    # SW-420 vibration module (NOT owned): senses CHASSIS vibration, so it bolts
+    # HARD to the floor via a 2-tall pad (no standoffs, no compliant mount; the
+    # rigid path IS the sensor's input): rear-left full-thickness floor, clear of
+    # the TT_L tab rib (y >= -86.6), the y -96 vent cut (x <= -64), the belly
+    # screws (-42,-65.5) and the Uno board edge (x -34.3, 2.2 gap). One M3 into a
+    # O2.5 pilot + two corner fence nubs against rotation.
+    "vib_c": (-48.0, -95.0),
+    "vib_board_wl": (21.5, 10.5),   # module envelope, long axis X. VERIFY_ON_ARRIVAL
+    "vib_hole_off": -5.5,   # single O3 hole, offset from board center along X
+                            # (toward the wall end). VERIFY_ON_ARRIVAL
+    "vib_pad_h": 2.0,
+    # mmWave presence (LD2410-class, NOT owned): needs a horizontal FORWARD beam
+    # behind a plastic-only window. The front WALL has no clean aperture (center =
+    # HC-SR04 board copper + barrels inside the grille ring; flanks = prow cheeks
+    # with the steel M8 nut stacks), so the sensor stands VERTICALLY inside a new
+    # underside pocket in the FRONT DECK OVERHANG, boresight +Y THROUGH the front
+    # slope's hex-grille field: the 2.5-web hex skin doubles as the radome (PLA is
+    # RF-transparent; the oblique 33.7 deg incidence is fine for a radar dome and
+    # the hex relief reads as a sensor grille). Pocket x -55..-32: 2.0 wall to the
+    # cliff pocket (x +-30), 7 to the pylon at -62. Cone check from the seat
+    # (x -43.5, y 109.5, z 54), +-30 deg at the y~130 exit: cliff HC-SR04 board
+    # (|x| <= 23.1) and the grille ring corner (x -30, z 45) stay outside; the
+    # LEFT M8 nut stack (x -60..-47, z <= 49) grazes the cone's lower-outer
+    # CORNER only (~30/30 deg off-axis, static -> the LD2410 calibrates static
+    # clutter out). LD2450 (25.6 wide) does NOT fit this bay: the seat is
+    # LD2410-class. VERIFY_ON_ARRIVAL. Wires drop behind the seat tab over the
+    # tub (y 109.5..115 opens over the cavity, aft of the front TT_L at y<=102);
+    # service = lift the deck, same convention as the cliff sensors.
+    "mmw_pocket_x": (-55.0, -32.0),
+    "mmw_tab_y": (106.0, 109.5),    # vertical seat tab (board face on 109.5, +Y)
+    "mmw_pocket_z": (42.0, 62.5),   # ceiling keeps the deck's 3.5 top skin
+    "mmw_hole_cc": 15.0,    # M2 pilot pitch IF the module has holes; most LD2410
+                            # boards are HOLELESS -> VHB tape / hot glue onto the
+                            # tab face (the factory-intended mount for a 2 g radar
+                            # module; the pocket walls shelter it). VERIFY_ON_ARRIVAL
+    "mmw_board_wz": (22.0, 16.0),   # LD2410 board envelope. VERIFY_ON_ARRIVAL
+    # TTP223 touch pads (x2-4): NO chassis geometry -- pads want shell surfaces the
+    # user actually touches, i.e. the HEAD TOP (a head.py pass, out of scope here).
+    # Chassis fallback candidates, documented only: both deck-overhang top skins
+    # are 3.5 thick (TTP223 senses through <= ~4 of PLA) and the cliff-sensor
+    # pockets already give interior access -- stick pads under the top skin at
+    # ~(+-18, +-125) inside the existing pockets; zero new geometry needed.
+
     # --- BELLY ACCESS PLATE (task #26): bolt-on floor plate under the cavity ---
     # Opening 100x110 keeps a >=12 rim inside the 130x146 cavity footprint EXCEPT a
     # retained floor STRAP (x -34..25, y -26..51): the pan-motor pedestal (x -31.9..

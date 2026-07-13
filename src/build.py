@@ -27,7 +27,8 @@ from trimesh.transformations import rotation_matrix as R
 from stlpaths import webpath, stlp
 from params import DEG, EXPORT, P, TAU
 from geo import _T, _color, box, cyl, dbore_neg, inter, sub, uni
-from gears import gear_disc, load_gear_stl, worm, worm_cd
+from gears import (gear_disc, load_gear_stl, pan_gear_mesh_deg, pan_real_ok, worm,
+                   worm_cd, worm_real_ok)
 from screen import load_screen, screen_pose
 from tracks import _track_zc, build_tracks
 from motors import motor_28byj, motor_tt
@@ -36,7 +37,8 @@ from neck import build_neck_clevis, build_tilt_carrier, build_trim_neckfoot
 from head import (build_ant_drive, build_antennas, build_arms, build_cam_pod, build_hatch_frame,
                   build_ear_jacks, build_head_parts, build_head_rails, build_led_strip,
                   build_pi5_cooler, build_screen_tray, build_sd_plug)
-from chassis import build_belly_plate, build_chassis_parts, build_fascia, build_pod_rails
+from chassis import (build_belly_plate, build_chassis_electronics, build_chassis_parts,
+                     build_fascia, build_pod_rails)
 from fitmap import _fit_report
 
 
@@ -87,6 +89,8 @@ def build():
     add(build_belly_plate(), np.eye(4), "belly_plate.stl")   # bolt-on floor access plate
     for fp in build_fascia():                        # front fascia set (design ref)
         add(fp, np.eye(4))
+    for ep in build_chassis_electronics():           # Arduino I/O plane seat
+        add(ep, np.eye(4))                           # placeholders (2026-07-13)
     for trk in build_tracks():
         add(trk, np.eye(4), trk.metadata["export"])
     for rail in build_pod_rails():                   # body<->pod join receiving rails
@@ -126,7 +130,7 @@ def build():
     # platform (pan group), slipped over the column before the neck bolts down, pinned+glued
     add(build_trim_neckfoot(), M_pan, "trim_neckfoot.stl")
 
-    # --- TILT WORM DRIVE (self-locking single-start) ---
+    # --- TILT WORM DRIVE (3-start, 4:1 -- NOT self-locking, see PARAMS worm_starts) ---
     wx = P["worm_wheel_x"]
     cd = worm_cd()
     wz = zt - cd
@@ -137,16 +141,16 @@ def build():
     # BLIND once the cartridge sat in the cheeks and relied on point friction), and spacer
     # TUBES out to both 695 inner races: they react the ~10 N worm thrust / 3.7 N wheel
     # axial load (they also locate the wheel axially, so no extra retainer is needed).
-    # REAL generated teeth (docs/WORM.md): 12T involute helical wheel + single-start worm,
-    # verified meshing at CD 11.9 / 0.000 mm3. PLACEHOLDER_GEARS=1 restores the readable
-    # gear_disc/worm placeholders (cheap insurance + regen testing).
-    # FAST-TILT (2026-07-12): worm_starts=3 -> ratio 4:1, 22.5 deg/s (see PARAMS
-    # worm_starts, incl. the SELF-LOCKING LOSS tradeoff). The committed *_real.stl pair
-    # is the OLD single-start generation, so starts!=1 forces the readable placeholders
-    # until tools/gears/gen_worm_drive.py is re-run for 3 starts (docs/WORM.md) --
-    # same honesty convention as the antenna gears.
+    # REAL generated teeth (docs/WORM.md): 12T involute helical wheel + 3-START worm
+    # (fast-tilt 2026-07-12, ratio 4:1, lead angle 23.08 -- see PARAMS worm_starts incl.
+    # the SELF-LOCKING LOSS tradeoff), verified meshing at CD 11.9: 0.000 mm3 static AND
+    # over a coupled full-worm-rev sweep (tools/gears/probe_worm_sweep.py).
+    # PLACEHOLDER_GEARS=1 restores the readable gear_disc/worm placeholders;
+    # worm_real_ok() compares the generator's meta sidecar (stl/neck/worm_real_meta.json)
+    # to PARAMS, so ANY params change without a regen also falls back -- same honesty
+    # convention as the antenna gears (which replaced the old hard-coded starts != 1).
     placeholder_gears = (os.environ.get("PLACEHOLDER_GEARS") == "1"
-                         or P["worm_starts"] != 1)
+                         or not worm_real_ok())
     if placeholder_gears:
         wheel = gear_disc(wheel_r, P["worm_wheel_teeth"], P["worm_wheel_w"],
                           2.5 * P["worm_module"], axis="x")
@@ -155,12 +159,13 @@ def build():
         # gear_disc built; the hub/tube union, bore re-cut and grub pilot below apply unchanged.
         wheel = load_gear_stl("worm_wheel_real.stl")
         # cosmetic mesh clocking: at the assembly's relative pose (wheel midplane crosses the
-        # worm at worm-local y +6) the blank's zero-interference phase is 24.5 deg (scanned per
-        # docs/WORM.md note 4 / mesh_check in tools/gears/gen_worm_drive.py). M_head then adds
-        # tilt_deg about the SAME axis, so pre-rotate by (24.5 - tilt) mod one tooth pitch (30)
-        # and the teeth visually mesh at ANY preview/sweep pose. Physically meaningless (the
-        # wheel is 30-deg tooth-periodic); the grub pilot below stays clocked +Z regardless.
-        wheel.apply_transform(R(((24.5 - tilt_deg) % 30.0) * DEG, (1, 0, 0)))
+        # worm at worm-local y +6) the 3-start blank's zero-interference window centers at
+        # 17.75 deg (tools/gears/probe_worm_sweep.py; the old single-start pair was 24.5).
+        # M_head then adds tilt_deg about the SAME axis, so pre-rotate by (17.75 - tilt)
+        # mod one tooth pitch (30) and the teeth visually mesh at ANY preview/sweep pose.
+        # Physically meaningless (the wheel is 30-deg tooth-periodic); the grub pilot
+        # below stays clocked +Z regardless.
+        wheel.apply_transform(R(((17.75 - tilt_deg) % 30.0) * DEG, (1, 0, 0)))
     hub = cyl(5.5, 5.5, axis="x"); hub.apply_translation((6.25, 0, 0))          # x 3.5..9
     tub_p = cyl(4.0, 9.0, axis="x"); tub_p.apply_translation((13.5, 0, 0))      # hub -> +X race
     tub_m = cyl(4.0, 14.5, axis="x"); tub_m.apply_translation((-10.75, 0, 0))   # wheel -> -X race
@@ -201,7 +206,7 @@ def build():
     if placeholder_gears:
         wm = worm(P["worm_od"] / 2, P["worm_len"], starts=P["worm_starts"], axis="y")
     else:
-        # real single-start RH worm (docs/WORM.md): axis Y, OD 10.55, solid core Ø7, thread
+        # real 3-start RH worm (docs/WORM.md): axis Y, OD 10.55, solid core Ø7, thread
         # span exactly +-7 about origin. The Ø7 core takes the full-depth double-D bore in
         # SOLID stock (probed: bore surface 100% inside the solid over the thread span;
         # round wall 0.915 mm, flat wall 1.88 -- thin but the D-flats carry the torque).
@@ -254,11 +259,28 @@ def build():
     mp.apply_translation((sx_, sy_ + P["motor_shaft_off"], zsh))
     add(mp, np.eye(4))
     # 32T drive gear, double-D bored onto the flats (fixed frame -- it spins with the
-    # motor, not the platform). Placeholder gear_disc teeth: the real generated spur pair
-    # is a later pass, antenna-gear convention. Flats face +-X after the -90 clock, which
-    # is dbore_neg's native orientation -- no extra clocking (cf. stage-4 defect D3).
+    # motor, not the platform). REAL generated involute teeth (tools/gears/gen_pan_spurs.py:
+    # m0.8 / PA 20 / 32T+16T / CD 19.2, backlash 0.20 circular, probed 0.000 mm3 over a
+    # coupled rotation sweep); pan_real_ok() falls back to gear_disc on any PARAMS
+    # mismatch, PLACEHOLDER_GEARS=1 forces it (worm-pair convention).
     big_r = m_g * P["pan_gear_motor_t"] / 2                                # 12.8
-    pg = gear_disc(big_r, P["pan_gear_motor_t"], gz1 - gz0, 2.0, axis="z")
+    placeholder_pan = (os.environ.get("PLACEHOLDER_GEARS") == "1" or not pan_real_ok())
+    if placeholder_pan:
+        pg = gear_disc(big_r, P["pan_gear_motor_t"], gz1 - gz0, 2.0, axis="z")
+    else:
+        pg = load_gear_stl("pan_gear32_real.stl")    # axis Z, width 5, centered at origin
+        # cosmetic mesh clocking (worm-wheel convention): both blanks generate
+        # tooth-centered-on-+X and the gear sits at azimuth 180 (pan_shaft_azim), so the
+        # measured zero-window center (meta gear32_mesh_deg, 5.625 = half a 32T pitch)
+        # meshes it with the platform's integral 16T at pan=0. The platform (and pinion)
+        # then pan by pan_deg, an external mesh counter-rotates the gear by half of that
+        # (16T/32T, opposite sense -- sign probed in gen_pan_spurs' coupled sweep), all
+        # mod one tooth pitch (11.25). The gear-teeth clocking is physically free; the
+        # D-bore is cut AFTER, so its flats stay on the motor shaft flats (cf. the track
+        # sprockets' disc-only clocking note).
+        pg.apply_transform(
+            R(((pan_gear_mesh_deg() - pan_deg / 2) % (360.0 / P["pan_gear_motor_t"]))
+              * DEG, (0, 0, 1)))
     pg = sub(pg, dbore_neg(gz1 - gz0 + 1.2, axis="z"))
     _color(pg, "motor"); pg.metadata["name"] = "pan_gears"
     pg.apply_translation((sx_, sy_, (gz0 + gz1) / 2))

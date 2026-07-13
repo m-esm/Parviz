@@ -1,0 +1,13 @@
+{
+  "starts": 3,
+  "module": 1.25,
+  "wheel_teeth": 12,
+  "worm_pitch_r": 4.4,
+  "cd": 11.9,
+  "pa_deg": 25.0,
+  "backlash": 0.25,
+  "lead_angle_deg": 23.081,
+  "face_w": 7.0,
+  "worm_len": 14.0,
+  "hand": 1
+}
