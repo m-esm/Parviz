@@ -11,3 +11,5 @@ matplotlib>=3.8
 playwright>=1.40
 # After install: python3 -m playwright install chromium
 # BREP path (build123d/CadQuery) needs Python >=3.10 and its own venv; add `build123d` there.
+# docs pipeline (make docs -> web/docs/*.html)
+markdown>=3.5

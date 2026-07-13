@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0d0f13">
+<title>Awareness · desk-pi</title>
+<style>
+  :root{
+    --ink:#e9edf1; --ink-dim:#9aa4b0; --ink-faint:#69727e;
+    --panel:rgba(20,23,28,.66); --hair:rgba(255,255,255,.09);
+    --accent:#5cc7d4; --accent-soft:rgba(92,199,212,.16);
+    --orange:#e87422;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html{scroll-padding-top:56px}
+  body{margin:0;min-height:100vh;color:var(--ink);
+    font:14.5px/1.65 system-ui,-apple-system,Segoe UI,sans-serif;
+    background:radial-gradient(125% 100% at 50% -10%, #2b313b 0%, #191d23 46%, #0d0f13 100%);
+    background-attachment:fixed}
+  main{max-width:880px;margin:0 auto;padding:68px 22px 80px}
+  h1,h2,h3,h4{line-height:1.25;letter-spacing:-.01em;scroll-margin-top:56px}
+  h1{font-size:27px;margin:10px 0 6px}
+  h2{font-size:19px;margin:34px 0 10px;padding-top:18px;border-top:1px solid var(--hair)}
+  h3{font-size:15.5px;margin:24px 0 8px;color:var(--ink)}
+  p{margin:10px 0;color:var(--ink-dim)}
+  li{color:var(--ink-dim);margin:4px 0}
+  strong{color:var(--ink)}
+  a{color:var(--accent);text-decoration:none}
+  a:hover{text-decoration:underline}
+  code{font:12.5px var(--mono);background:rgba(255,255,255,.07);padding:1.5px 5px;border-radius:5px;color:var(--ink)}
+  pre{background:rgba(0,0,0,.38);border:1px solid var(--hair);border-radius:12px;
+    padding:14px 16px;overflow-x:auto}
+  pre code{background:transparent;padding:0;color:var(--ink-dim)}
+  .tbl{overflow-x:auto;margin:14px 0;border:1px solid var(--hair);border-radius:12px}
+  table{border-collapse:collapse;width:100%;font-size:13px}
+  th,td{padding:8px 12px;text-align:left;vertical-align:top;border-bottom:1px solid var(--hair)}
+  th{font:600 10.5px/1.3 var(--mono);letter-spacing:.1em;text-transform:uppercase;
+    color:var(--ink-faint);background:rgba(255,255,255,.03)}
+  tr:last-child td{border-bottom:0}
+  td{color:var(--ink-dim)}
+  td:first-child{color:var(--ink)}
+  blockquote{margin:12px 0;padding:2px 16px;border-left:3px solid var(--accent);
+    background:var(--accent-soft);border-radius:0 10px 10px 0}
+  hr{border:0;border-top:1px solid var(--hair);margin:26px 0}
+  .crumb{font:600 9.5px/1 var(--mono);letter-spacing:.22em;color:var(--accent);text-transform:uppercase}
+  /* hub cards */
+  .hub h2{border-top:0;padding-top:8px}
+  .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin:14px 0 8px}
+  .card{display:block;padding:14px 16px;background:var(--panel);border:1px solid var(--hair);
+    border-radius:14px;transition:border-color .12s,transform .12s}
+  .card:hover{border-color:var(--accent);text-decoration:none;transform:translateY(-1px)}
+  .card b{display:block;font-size:14px;color:var(--ink);margin-bottom:4px}
+  .card span{font-size:12px;color:var(--ink-dim);line-height:1.5;display:block}
+  .hero{width:100%;border-radius:16px;border:1px solid var(--hair);margin:16px 0 4px;display:block}
+
+  #topnav{position:fixed;top:0;left:0;right:0;z-index:30;display:flex;align-items:center;
+    gap:2px;height:42px;padding:0 14px 0 16px;
+    background:rgba(13,15,19,.82);border-bottom:1px solid var(--hair);
+    backdrop-filter:blur(18px) saturate(1.25);-webkit-backdrop-filter:blur(18px) saturate(1.25);
+    white-space:nowrap}
+  @media (max-width:700px){#topnav a.pl{display:none}#topnav .brand span{display:none}}
+  #topnav a,#topnav .dd button{font:600 11px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;
+    color:var(--ink-dim);text-decoration:none;padding:7px 10px;border-radius:8px;
+    background:transparent;border:0;cursor:pointer;transition:color .12s,background .12s}
+  #topnav a:hover,#topnav .dd button:hover{color:var(--ink);background:rgba(255,255,255,.06)}
+  #topnav a.on,#topnav .dd button.on{color:var(--accent);background:var(--accent-soft)}
+  #topnav .brand{font:700 12px/1 var(--mono);letter-spacing:.18em;color:var(--ink);
+    margin-right:10px;display:flex;align-items:baseline;gap:7px}
+  #topnav .brand span{font:600 9px/1 var(--mono);letter-spacing:.14em;color:var(--ink-faint)}
+  #topnav .gh{margin-left:auto;color:var(--ink-faint)}
+  #topnav .dd{position:relative}
+  #topnav .dd .menu{display:none;position:absolute;top:calc(100% + 4px);left:0;min-width:180px;
+    padding:5px;background:rgba(20,23,28,.96);border:1px solid var(--hair);border-radius:12px;
+    box-shadow:0 14px 38px rgba(0,0,0,.55);
+    backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+  #topnav .dd:hover .menu,#topnav .dd:focus-within .menu{display:block}
+  #topnav .dd .menu a{display:block;padding:8px 10px}
+</style>
+</head>
+<body>
+<nav id="topnav">
+  <a class="brand" href="../viewer_glb.html">PARVIZ<span>desk-pi</span></a>
+  <a href="../viewer_glb.html">Viewer</a>
+  <a class="pl" href="../docs/electronics.html">Electronics</a><a class="pl" href="../docs/assembly.html">Assembly</a><a class="pl" href="../docs/wiring.html">Wiring &amp; power</a>
+  <div class="dd"><button class="on" aria-haspopup="true">Docs &#9662;</button>
+    <div class="menu"><a href="../docs/index.html">All docs</a><a href="../docs/electronics.html">Electronics</a><a href="../docs/assembly.html">Assembly</a><a href="../docs/wiring.html">Wiring &amp; power</a><a href="../docs/printability.html">Printability</a><a href="../docs/fixes.html">Fix ledger</a><a href="../docs/worm.html">Worm drive</a><a href="../docs/arm-mech.html">Arm mechanism</a><a href="../docs/cable-check.html">Cable check</a><a href="../docs/reference-audit.html">Reference audit</a><a href="../docs/awareness.html">Awareness</a><a href="../docs/software.html">Software</a></div></div>
+  <a class="gh" href="https://github.com/m-esm/parviz" title="source">GitHub</a>
+</nav>
+<main>
+<div class="crumb">desk-pi · Software docs</div>
+<h1 id="parviz-awareness-architecture-design-intent-2026-07-12">Parviz awareness architecture (design intent, 2026-07-12)</h1>
+<p>The robot is called <strong>Parviz</strong>. The core idea: Parviz is <strong>aware of its
+surroundings at all times</strong>. A continuous stream of sensory data is fused
+into a compact world state, a summary of that state is fed to an LLM, and
+the LLM's output decides what Parviz does (expression, motion, speech,
+escalation). Nothing sensory leaves the robot by default: <strong>always listen,
+always process locally, and call a more intelligent AI model only for
+specific tasks or when the user asks for it.</strong></p>
+<h2 id="sensor-suite-target">Sensor suite (target)</h2>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Sense</th>
+<th>Hardware</th>
+<th>Status</th>
+<th>Feeds</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Hearing (stereo)</td>
+<td>2x 3.5mm gooseneck mics in the head ears + CM108 USB adapters</td>
+<td>ordered</td>
+<td>VAD, wake word, local ASR, sound direction (L/R level diff)</td>
+</tr>
+<tr>
+<td>Vision</td>
+<td>Camera Module 3 (imx708) in the forehead; AI-camera upgrade path (IMX500-class or Hailo HAT) is an open decision</td>
+<td>CM3 owned, verified</td>
+<td>person/face detect, motion, scene description on demand</td>
+</tr>
+<tr>
+<td>Obstacle / cliff</td>
+<td>4x HC-SR04 (front + rear obstacle, front + rear cliff, modeled in the chassis)</td>
+<td>buy list</td>
+<td>reflex layer, never waits for the LLM</td>
+</tr>
+<tr>
+<td>Temp / humidity / pressure</td>
+<td>BME688-class environmental sensor (also VOC/gas)</td>
+<td>candidate</td>
+<td>ambient log, "room feels stuffy" events</td>
+</tr>
+<tr>
+<td>Tilt / angle / accel</td>
+<td>IMU (MPU6050/ICM-20948-class)</td>
+<td>candidate</td>
+<td>fall/pickup detect, incline, head pose sanity</td>
+</tr>
+<tr>
+<td>Vibration</td>
+<td>piezo/SW-420-class or the IMU's accel stream</td>
+<td>candidate</td>
+<td>desk knocks, being handled</td>
+</tr>
+<tr>
+<td>Presence / micro-motion</td>
+<td>mmWave radar (LD2410/LD2450-class): detects a still person by breathing</td>
+<td>candidate</td>
+<td>occupancy even when vision is off/dark</td>
+</tr>
+<tr>
+<td>Touch</td>
+<td>capacitive touch pads + the 7" touchscreen (done: face reacts to touch)</td>
+<td>screen done</td>
+<td>petting/attention events</td>
+</tr>
+<tr>
+<td>Odometry</td>
+<td>TCST1103 photo-interrupters on the drivetrain</td>
+<td>candidate</td>
+<td>dead reckoning for track moves</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="tiered-processing-the-efficiency-contract">Tiered processing (the efficiency contract)</h2>
+<p><strong>Tier 0, reflexes (no model, &lt;10 ms):</strong> cliff = stop, obstacle = stop/avoid,
+over-tilt = motors off. Hard-coded in the motion daemon; the LLM is advisory
+and can NEVER override a reflex.</p>
+<p><strong>Tier 1, always-on local perception (continuous, cheap):</strong> per-sensor
+daemons run constantly: VAD + wake word on the mic stream (openWakeWord /
+whisper.cpp tiny-class), mmWave presence, IMU events, environment polling,
+periodic low-res camera motion checks. Output = timestamped EVENTS into a
+shared world state, not raw streams. Audio is transcribed locally; raw audio
+is never stored or uploaded.</p>
+<p><strong>Tier 2, local LLM tick (the ambient brain):</strong> a summarizer turns the world
+state into a compact text digest (most recent events + rolling context).
+The digest goes to the LOCAL model, llama.cpp <code>llama-server</code> with
+Qwen3-0.6B-class GGUF (measured on the Pi 5 2GB: 21 tok/s generation,
+0.94 s for a short reply, fits alongside the face in RAM, see
+software/README.md). It runs on a slow tick (seconds) plus event triggers,
+and answers one question: <em>what should Parviz do right now?</em> Output is a
+constrained action vocabulary: set_expression, look_at, say, move, log,
+escalate, do_nothing (most common answer). <strong>The face is an LLM output
+device</strong>: the expression shown and where the eyes/head look come from
+these actions, not from local heuristics. Only reflex-speed overlays stay
+local in the face process (idle blink, pupils tracking an active touch);
+the brain's set_expression/look_at wins otherwise, so the face needs a
+control channel (local socket) the brain writes to.</p>
+<p><strong>Tier 3, escalation (rare, explicit):</strong> only for specific tasks or when
+the user asks: real conversation, scene understanding ("what's on my
+desk?"), planning. Goes to a bigger model (Claude API or a model on the
+Mac/VPS). The escalation payload is the world-state digest + the specific
+request, still not raw sensor streams. Offline = Tier 2 keeps working,
+Tier 3 features degrade gracefully.</p>
+<h2 id="data-flow">Data flow</h2>
+<pre><code>mics ─ VAD/wake/ASR ─┐
+camera ─ detect ─────┤
+mmWave/IMU/BME/touch ┼─ events → WORLD STATE (rolling, in-RAM) ─ summarizer
+HC-SR04 ─ reflex ────┘        (reflexes act directly)              │ digest
+                                                                   ▼
+                              action bus ◄─ local LLM (llama-server, ~0.6B)
+                              │ set_expression / look_at / say / move / …
+                              ▼                    │ escalate (rare)
+                    face / neck / tracks / TTS     ▼
+                                        remote brain (Claude API / Mac)
+</code></pre>
+<h2 id="ram-budget-the-hard-constraint-pi-5-2gb">RAM budget (the hard constraint, Pi 5 2GB)</h2>
+<p>face ~130 MB + local LLM server ~0.9 GB (0.6B, ctx 2048) + whisper-tiny
+~0.2 GB + daemons/summarizer leaves ~0.4 GB headroom. This is exactly why
+the ambient model is 0.6B-class: the 1.7B ceiling model fits ONLY alone,
+not next to the ears. Bigger ambient brains mean a bigger-RAM Pi or an
+accelerator, not a config change.</p>
+<h2 id="arduino-io-plane-decided-direction-2026-07-12">Arduino I/O plane (decided direction, 2026-07-12)</h2>
+<p>Most of the electrical components do NOT wire to the Pi's GPIO: they
+connect to an <strong>Arduino dev board</strong>, and the Arduino connects to the Pi 5
+over <strong>one USB cable</strong> (serial telemetry + commands + power + flashing on
+the same wire). The Pi keeps only what needs its bandwidth: camera (CSI),
+mics (USB), display (DSI).</p>
+<p>Why:
+- <strong>Real-time belongs on the microcontroller</strong>: HC-SR04 echo timing,
+  vibration debounce, LED strip protocols, encoder counting, stepper
+  pulse trains — all jitter-free there, all jittery under Linux.
+- <strong>Electrical decoupling</strong>: sensor mistakes fry a $5 board, not the Pi;
+  5V-tolerant pins; one clean harness instead of a GPIO spaghetti.
+- <strong>The Pi can REPROGRAM the Arduino on the fly using its AI.</strong> With
+  <code>arduino-cli</code> installed on the Pi, firmware is just another artifact
+  the LLM tier can write: generate sketch -&gt; compile -&gt; flash over the
+  same USB cable -&gt; verify over serial. New sensor arrives, the robot
+  can (with the big-brain tier) write, flash, and test its own firmware
+  for it. Firmware lives in the repo (<code>firmware/arduino/</code>) like any code.</p>
+<p>Protocol intent: line-based JSON over serial (~10 Hz telemetry into the
+world state: sonar distances, IMU, env, touch events; commands back:
+motors, LEDs). The Arduino is a Tier-0/Tier-1 peripheral, reflexes like
+cliff-stop can live IN the firmware, below even the Pi.</p>
+<p>Open here: which board (classic Uno/Nano AVR vs RP2040/ESP32-class with
+more headroom — check the parts inventory before buying), and which of
+pan/tilt steppers + TT motors move behind it vs stay on Pi GPIO/ULN2003.</p>
+<h2 id="open-decisions">Open decisions</h2>
+<ul>
+<li>"AI camera": keep plain CM3 + on-CPU detect, vs IMX500 AI Camera or a
+  Hailo-8L HAT (offloads vision entirely, frees CPU/RAM; costs money, a
+  CSI/PCIe slot, and mounting changes).</li>
+<li>Exact sensor parts + wiring (I2C bus budget, GPIO map) — decide with the
+  power/wiring pass (firmware/WIRING.md).</li>
+<li>Wake-word vs continuous small-ASR duty cycle (battery/thermal tradeoff).</li>
+<li>Where TTS runs (Piper local fits; voice choice open).</li>
+</ul>
+</main>
+</body>
+</html>

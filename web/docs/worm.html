@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0d0f13">
+<title>Worm drive · desk-pi</title>
+<style>
+  :root{
+    --ink:#e9edf1; --ink-dim:#9aa4b0; --ink-faint:#69727e;
+    --panel:rgba(20,23,28,.66); --hair:rgba(255,255,255,.09);
+    --accent:#5cc7d4; --accent-soft:rgba(92,199,212,.16);
+    --orange:#e87422;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html{scroll-padding-top:56px}
+  body{margin:0;min-height:100vh;color:var(--ink);
+    font:14.5px/1.65 system-ui,-apple-system,Segoe UI,sans-serif;
+    background:radial-gradient(125% 100% at 50% -10%, #2b313b 0%, #191d23 46%, #0d0f13 100%);
+    background-attachment:fixed}
+  main{max-width:880px;margin:0 auto;padding:68px 22px 80px}
+  h1,h2,h3,h4{line-height:1.25;letter-spacing:-.01em;scroll-margin-top:56px}
+  h1{font-size:27px;margin:10px 0 6px}
+  h2{font-size:19px;margin:34px 0 10px;padding-top:18px;border-top:1px solid var(--hair)}
+  h3{font-size:15.5px;margin:24px 0 8px;color:var(--ink)}
+  p{margin:10px 0;color:var(--ink-dim)}
+  li{color:var(--ink-dim);margin:4px 0}
+  strong{color:var(--ink)}
+  a{color:var(--accent);text-decoration:none}
+  a:hover{text-decoration:underline}
+  code{font:12.5px var(--mono);background:rgba(255,255,255,.07);padding:1.5px 5px;border-radius:5px;color:var(--ink)}
+  pre{background:rgba(0,0,0,.38);border:1px solid var(--hair);border-radius:12px;
+    padding:14px 16px;overflow-x:auto}
+  pre code{background:transparent;padding:0;color:var(--ink-dim)}
+  .tbl{overflow-x:auto;margin:14px 0;border:1px solid var(--hair);border-radius:12px}
+  table{border-collapse:collapse;width:100%;font-size:13px}
+  th,td{padding:8px 12px;text-align:left;vertical-align:top;border-bottom:1px solid var(--hair)}
+  th{font:600 10.5px/1.3 var(--mono);letter-spacing:.1em;text-transform:uppercase;
+    color:var(--ink-faint);background:rgba(255,255,255,.03)}
+  tr:last-child td{border-bottom:0}
+  td{color:var(--ink-dim)}
+  td:first-child{color:var(--ink)}
+  blockquote{margin:12px 0;padding:2px 16px;border-left:3px solid var(--accent);
+    background:var(--accent-soft);border-radius:0 10px 10px 0}
+  hr{border:0;border-top:1px solid var(--hair);margin:26px 0}
+  .crumb{font:600 9.5px/1 var(--mono);letter-spacing:.22em;color:var(--accent);text-transform:uppercase}
+  /* hub cards */
+  .hub h2{border-top:0;padding-top:8px}
+  .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin:14px 0 8px}
+  .card{display:block;padding:14px 16px;background:var(--panel);border:1px solid var(--hair);
+    border-radius:14px;transition:border-color .12s,transform .12s}
+  .card:hover{border-color:var(--accent);text-decoration:none;transform:translateY(-1px)}
+  .card b{display:block;font-size:14px;color:var(--ink);margin-bottom:4px}
+  .card span{font-size:12px;color:var(--ink-dim);line-height:1.5;display:block}
+  .hero{width:100%;border-radius:16px;border:1px solid var(--hair);margin:16px 0 4px;display:block}
+
+  #topnav{position:fixed;top:0;left:0;right:0;z-index:30;display:flex;align-items:center;
+    gap:2px;height:42px;padding:0 14px 0 16px;
+    background:rgba(13,15,19,.82);border-bottom:1px solid var(--hair);
+    backdrop-filter:blur(18px) saturate(1.25);-webkit-backdrop-filter:blur(18px) saturate(1.25);
+    white-space:nowrap}
+  @media (max-width:700px){#topnav a.pl{display:none}#topnav .brand span{display:none}}
+  #topnav a,#topnav .dd button{font:600 11px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;
+    color:var(--ink-dim);text-decoration:none;padding:7px 10px;border-radius:8px;
+    background:transparent;border:0;cursor:pointer;transition:color .12s,background .12s}
+  #topnav a:hover,#topnav .dd button:hover{color:var(--ink);background:rgba(255,255,255,.06)}
+  #topnav a.on,#topnav .dd button.on{color:var(--accent);background:var(--accent-soft)}
+  #topnav .brand{font:700 12px/1 var(--mono);letter-spacing:.18em;color:var(--ink);
+    margin-right:10px;display:flex;align-items:baseline;gap:7px}
+  #topnav .brand span{font:600 9px/1 var(--mono);letter-spacing:.14em;color:var(--ink-faint)}
+  #topnav .gh{margin-left:auto;color:var(--ink-faint)}
+  #topnav .dd{position:relative}
+  #topnav .dd .menu{display:none;position:absolute;top:calc(100% + 4px);left:0;min-width:180px;
+    padding:5px;background:rgba(20,23,28,.96);border:1px solid var(--hair);border-radius:12px;
+    box-shadow:0 14px 38px rgba(0,0,0,.55);
+    backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+  #topnav .dd:hover .menu,#topnav .dd:focus-within .menu{display:block}
+  #topnav .dd .menu a{display:block;padding:8px 10px}
+</style>
+</head>
+<body>
+<nav id="topnav">
+  <a class="brand" href="../viewer_glb.html">PARVIZ<span>desk-pi</span></a>
+  <a href="../viewer_glb.html">Viewer</a>
+  <a class="pl" href="../docs/electronics.html">Electronics</a><a class="pl" href="../docs/assembly.html">Assembly</a><a class="pl" href="../docs/wiring.html">Wiring &amp; power</a>
+  <div class="dd"><button class="on" aria-haspopup="true">Docs &#9662;</button>
+    <div class="menu"><a href="../docs/index.html">All docs</a><a href="../docs/electronics.html">Electronics</a><a href="../docs/assembly.html">Assembly</a><a href="../docs/wiring.html">Wiring &amp; power</a><a href="../docs/printability.html">Printability</a><a href="../docs/fixes.html">Fix ledger</a><a href="../docs/worm.html">Worm drive</a><a href="../docs/arm-mech.html">Arm mechanism</a><a href="../docs/cable-check.html">Cable check</a><a href="../docs/reference-audit.html">Reference audit</a><a href="../docs/awareness.html">Awareness</a><a href="../docs/software.html">Software</a></div></div>
+  <a class="gh" href="https://github.com/m-esm/parviz" title="source">GitHub</a>
+</nav>
+<main>
+<div class="crumb">desk-pi · Design docs</div>
+<h1 id="tilt-worm-drive-real-tooth-geometry">Tilt worm drive, real tooth geometry</h1>
+<p>Real involute worm-drive geometry replacing the readable placeholders
+(<code>gear_disc</code> / <code>worm</code> in <code>src/build.py</code>). Generated by
+<code>tools/gears/gen_worm_drive.py</code>, verified by <code>tools/gears/verify_mesh.py</code>.</p>
+<p>Files (both watertight, <code>mesh.is_volume == True</code>):</p>
+<ul>
+<li><code>stl/neck/worm_wheel_real.stl</code>: 12T helical involute wheel, axis <strong>X</strong>, centered at origin</li>
+<li><code>stl/neck/tilt_worm_real.stl</code>: single-start trapezoidal-thread worm, axis <strong>Y</strong>, centered at origin</li>
+</ul>
+<h2 id="the-numbers">The numbers</h2>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Quantity</th>
+<th>Value</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Module</td>
+<td>1.25</td>
+<td><code>PARAMS["worm_module"]</code></td>
+</tr>
+<tr>
+<td>Wheel teeth</td>
+<td>12</td>
+<td><code>PARAMS["worm_wheel_teeth"]</code> (ratio 12:1)</td>
+</tr>
+<tr>
+<td>Pressure angle</td>
+<td><strong>25°</strong> (not 20°)</td>
+<td>12T undercuts at 20° (limit 17.1T); at 25° the limit is 11.2T, so zero profile shift and full-strength roots. Both members are printed as a matched pair, so the nonstandard PA costs nothing.</td>
+</tr>
+<tr>
+<td>Wheel pitch r</td>
+<td>7.500</td>
+<td>m·z/2</td>
+</tr>
+<tr>
+<td>Wheel tip r</td>
+<td>8.250</td>
+<td>stub addendum 0.6m = 0.75 (see core constraint below)</td>
+</tr>
+<tr>
+<td>Wheel root r</td>
+<td>6.475</td>
+<td>worm addendum 0.875 + 0.15 clearance below pitch</td>
+</tr>
+<tr>
+<td>Wheel face width</td>
+<td>7.0</td>
+<td><code>PARAMS["worm_wheel_w"]</code></td>
+</tr>
+<tr>
+<td>Wheel bore</td>
+<td>Ø5.2 through</td>
+<td>axle Ø5 + clearance (blank only: no hub/tubes/grub, build.py adds those)</td>
+</tr>
+<tr>
+<td>Wheel helix angle</td>
+<td>8.085° right-hand</td>
+<td><strong>must equal the worm lead angle</strong> (crossed 90° axes); a spur wheel would clash ~0.5 mm at the face edges</td>
+</tr>
+<tr>
+<td>Worm starts</td>
+<td>1</td>
+<td>self-locking</td>
+</tr>
+<tr>
+<td>Worm pitch r</td>
+<td><strong>4.400</strong></td>
+<td>derived, see below</td>
+</tr>
+<tr>
+<td>Worm tip r / OD</td>
+<td>5.275 / <strong>10.55</strong></td>
+<td>worm addendum 0.7m = 0.875</td>
+</tr>
+<tr>
+<td>Worm root r / core</td>
+<td>3.500 / <strong>Ø7.00</strong></td>
+<td>wall for the double-D bore build.py cuts</td>
+</tr>
+<tr>
+<td>Worm thread length</td>
+<td>14.0</td>
+<td><code>PARAMS["worm_len"]</code>, exactly ±7 about origin</td>
+</tr>
+<tr>
+<td>Axial pitch = lead</td>
+<td>3.92699</td>
+<td>π·m, fixed by the wheel</td>
+</tr>
+<tr>
+<td><strong>Lead angle λ</strong></td>
+<td><strong>8.085°</strong></td>
+<td>atan(lead / (2π·4.4))</td>
+</tr>
+<tr>
+<td><strong>Center distance</strong></td>
+<td><strong>11.900</strong></td>
+<td>7.5 + 4.4 (vs <code>worm_cd()</code> = 11.5 → <strong>+0.40 mm</strong>, see below)</td>
+</tr>
+<tr>
+<td>Backlash</td>
+<td>0.25 circular</td>
+<td>all taken on the wheel tooth (thinned at the pitch line)</td>
+</tr>
+<tr>
+<td>Worm crest width</td>
+<td>1.147 mm</td>
+<td>printable (&gt; 0.6)</td>
+</tr>
+<tr>
+<td>Wheel tip tooth width</td>
+<td>~0.97 mm</td>
+<td>printable</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="why-cd-is-119-not-worm_cds-115">Why CD is 11.9, not worm_cd()'s 11.5</h2>
+<p>Three constraints can't coexist: module 1.25 (fixes lead at 3.927), the Ø7
+solid worm core (root r ≥ 3.5), and CD 11.5 (worm pitch r 4.0). With pitch r
+4.0 the whole thread depth budget below the pitch line is 0.5 mm, leaving the
+wheel ~0.35 mm of usable addendum, no real tooth engagement. Resolving in
+favor of meshing physics: worm pitch r = root 3.5 + wheel addendum 0.75 +
+clearance 0.15 = <strong>4.4</strong>, so <strong>CD = 11.9</strong>. The worm axis drops 0.4 mm relative
+to the axle; <code>worm_cd()</code> is the single source of truth for the bracket AND the
+assembly, so it propagates as a one-line change.</p>
+<h2 id="why-the-lead-angle-is-81-not-45">Why the lead angle is 8.1°, not &lt; 4–5°</h2>
+<p>At module 1.25 single-start, λ = atan(3.927 / (π·d_pitch)). Hitting λ ≤ 4.5°
+needs worm pitch Ø ≥ 16 → CD ≥ 15.5, blowing both the OD and the bracket. The
+&lt; 4–5° rule is for steel-on-steel (μ ≈ 0.07–0.10). Self-locking requires
+μ &gt; tan λ · cos α = <strong>0.129</strong>; printed PLA-on-PLA runs μ ≈ 0.3–0.4 dry, so the
+drive self-locks with 2–3× margin. Caveat: heavy grease (μ ≈ 0.1) makes it
+marginal, if lubricating, use a light dry film or rely on the balanced head
+(near-zero back-drive torque by design; CLAUDE.md: "pre-balance the head so
+the worm barely works").</p>
+<h2 id="verification-results-2026-07-07">Verification results (2026-07-07)</h2>
+<ul>
+<li>Both STLs: <code>is_watertight = True</code>, <code>is_volume = True</code>.
+  Wheel bounds ±(3.5, 8.25, 8.25); worm bounds ±(5.275, 7.0, 5.275). Pitch
+  radii check out (tip r = pitch r + addendum on both members).</li>
+<li><strong>Static mesh check</strong> (wheel at origin axis X, worm axis Y at z = −11.9,
+  wheel phase scanned over one tooth pitch): minimum boolean intersection
+  <strong>0.0000 mm³</strong> (placeholder was &lt; 30 mm³); worst deliberately-misaligned
+  phase 16.1 mm³ (tooth-on-crest, as expected).</li>
+<li><strong>Engagement proof</strong> (zero overlap ≠ floating apart): shrinking CD by 0.10 mm
+  produces first flank contact (0.003 mm³), 0.30 mm gives 0.41 mm³, flanks sit
+  ~0.1 mm apart at nominal CD, i.e. exactly the designed backlash.</li>
+<li><strong>Hand check</strong>: opposite-hand wheel helix can't find a zero-interference
+  phase (min 0.75 mm³); the exported right-hand pair can.</li>
+<li>Visual: <code>.claude/renders/worm_mesh_section.png</code> / <code>worm_mesh_zoom.png</code>
+  (x=0 section, pitch circles tangent, crests centered in gaps, no crossings).</li>
+</ul>
+<h2 id="how-to-regenerate">How to regenerate</h2>
+<pre><code class="language-bash">cd tools/gears
+uv venv .venv --python 3.10          # any &gt;= 3.10; system python3 is 3.9
+uv pip install --python .venv/bin/python -r requirements.txt
+cd ../..                             # run from the repo root (output paths)
+tools/gears/.venv/bin/python tools/gears/gen_worm_drive.py
+PYTHONPATH=tools/gears tools/gears/.venv/bin/python tools/gears/verify_mesh.py
+</code></pre>
+<p>Route note: bd_warehouse (the "preferred" build123d route) only generates spur
+gears, no helical wheel, no worm, so the pair is generated from first
+principles: numpy involute outline → manifold3d <strong>twisted extrude</strong>
+(<code>Manifold.extrude(..., twist_degrees=7.596)</code>) for the wheel; a trapezoidal
+rib swept along the helix + core cylinder, manifold-booleaned and trimmed, for
+the worm. OpenSCAD/BOSL2 is not installed on this machine.</p>
+<h2 id="integration-notes-for-srcbuildpy-not-applied-do-this-in-a-follow-up">Integration notes for src/build.py (not applied, do this in a follow-up)</h2>
+<ol>
+<li><strong><code>worm_cd()</code></strong> (line ~420): return
+   <code>P["worm_module"] * P["worm_wheel_teeth"] / 2 + 4.4</code>  (= 11.9).
+   Cleaner: add <code>PARAMS["worm_pitch_r"] = 4.4</code> and use it. Everything keyed
+   off <code>worm_cd()</code> (bracket, cradle, motor pose, <code>wz</code>) moves 0.4 mm down
+   automatically. Update <code>PARAMS["worm_od"]</code> 10.0 → 10.55 for honesty (it
+   only feeds the placeholder radius today). The cradle's Ø11.8 thread-relief
+   bore still clears: new tip r 5.275 &lt; the 5.34 it was sized for.</li>
+<li><strong>Wheel</strong> (line ~1703): replace
+   <code>wheel = gear_disc(wheel_r, ..., axis="x")</code> with
+   <code>wheel = trimesh.load(stlp("worm_wheel_real.stl"), force="mesh")</code>.
+   Keep everything after it unchanged: the hub/spacer-tube union, the Ø5.2
+   bore re-cut (harmless, the blank already has it), and the grub pilot all
+   still apply. The blank is centered at origin, axis X, exactly like
+   <code>gear_disc</code> output.</li>
+<li><strong>Worm</strong> (line ~1720): replace
+   <code>wm = worm(P["worm_od"] / 2, P["worm_len"], axis="y")</code> with
+   <code>wm = trimesh.load(stlp("tilt_worm_real.stl"), force="mesh")</code>.
+   Keep the tail-stub union and the <code>dbore_neg</code> subtraction (flats ±X)
+   unchanged. Core is Ø7.0, so the Ø~5.2 D-bore leaves a 0.9 mm wall, thin
+   but adequate; the D-flats carry the torque. The thread span is exactly
+   14 mm (the placeholder's ribs overhung 1 mm per end; envelope shrinks
+   slightly).</li>
+<li><strong>Render phase</strong>: tooth/thread clocking now matters visually. The wheel's
+   meshing phase depends on the worm's y-offset (the wheel plane crosses the
+   worm at worm-local y ≈ +6 in the assembly). To render without fake
+   interference, scan the wheel rotation about X over one tooth pitch (30°)
+   for minimum boolean intersection and bake that phase in, see
+   <code>mesh_check()</code> in <code>tools/gears/gen_worm_drive.py</code> for the exact snippet.
+   <code>EXPORT=1</code> should export these real parts under the existing
+   <code>worm_wheel</code> / <code>tilt_worm</code> names (they're print/buy parts now, not
+   placeholders).</li>
+<li><strong>Print notes</strong>: wheel prints on its face (teeth are near-vertical walls,
+   7.6° twist is fine); worm prints vertical (axis Z on the bed): the 25°
+   flank angle is self-supporting. Grease the mesh lightly; design clearance
+   doubles as the reservoir.</li>
+</ol>
+<h2 id="3-start-regeneration-record-2026-07-13">3-start regeneration record (2026-07-13)</h2>
+<p>PARAMS <code>worm_starts</code> = <strong>3</strong> (ratio 12:1 -&gt; 4:1, 22.5 deg/s tilt; tradeoff notes in
+params.py / CLAUDE.md). The committed <code>*_real.stl</code> pair IS the 3-start generation:
+same m 1.25 / pitch r 4.4 / CD 11.9 / 12T wheel / PA 25 deg; lead 11.781, <strong>lead angle
+23.081 deg</strong> (NOT self-locking), wheel helix matched (22.79 deg twist over the 7 mm
+face), backlash 0.25 circular, crest width 1.147 (printable). OD 10.55 / core Ø7
+unchanged so cradle/carrier interfaces carry over. Verification: static min
+intersection 0.000 mm3 at CD 11.9; coupled full-worm-rev sweep (wheel follows at 3
+teeth/rev) max 0.000 mm3; contact onset between CD-0.05 and CD-0.10; wrong-hand wheel
+7.41 mm3 (direction confirmed). Assembly clocking constant in build.py: 24.5 -&gt; 17.75.
+<code>gen_worm_drive.py</code> reads STARTS from PARAMS and writes <code>stl/neck/worm_real_meta.json</code>;
+<code>worm_real_ok()</code> (src/gears.py) compares meta to PARAMS and falls back to placeholders
+on ANY mismatch -- the honesty gate is the sidecar now, not <code>worm_starts != 1</code>.
+FDM caveat: flank gap measures ~0.05-0.10 radial (tighter than the pan spurs); confirm
+the first printed pair doesn't bind at +0.1 oversize before greasing.</p>
+<h2 id="worm_len-13-end-chamfer-regeneration-2026-07-13-evening-pi-5-cooler-pass">worm_len 13 + end-chamfer regeneration (2026-07-13 evening, Pi 5 cooler pass)</h2>
+<p>PARAMS <code>worm_len</code> = <strong>13.0</strong> (was 14.0) and the generator grew a <strong>0.6 mm 45 deg crest
+END CHAMFER</strong> on both thread ends (<code>END_CH</code> in gen_worm_drive.py, implemented as a
+per-ring radius clamp in the helix sweep, recorded in the meta as <code>end_chamfer</code>).
+Why: at the -33.8 nose-down tilt stall the Pi 5 active-cooler keep-out's swung rear
+face reaches y = -20.0 + 0.669(z - 131.5); the old front thread end (y -17, crest
+bottom z 135.8) penetrated ~0.1 and the Ø5 tail stub past it +2.7. New span: world
+y -30.5..-17.5 (full crest to -18.1), stall margins +0.81 full-crest end / +0.64
+chamfer edge (tools/probe_cooler.py reports tilt_worm -0.61). The wheel contact
+plane (y -18) keeps 0.5 mm of full flank past it; the rear trim (-31 -&gt; -30.5) is
+dead thread (wheel-envelope overlap ends ~-22.9). <code>WORM_LEN</code> now reads from PARAMS
+(single source of truth). Assembly knock-on: worm center stays y -24 (build.py's
+plate-face offset 9.5 -&gt; 10.0 and thread-start gap 3.5 -&gt; 4.0, so plate/motor/
+carrier/can-pocket all HOLD at face_y -34.5); the TAIL STUB union in build.py is
+GONE -- the tail is now carried by a crest-riding r5.5 half-groove in the neck
+(build_neck_clevis), riding the thread crest envelope at 0.225 radial clearance.
+Verification (same tooling): both meshes watertight; static min intersection 0.000
+mm3 at CD 11.9 (worst deliberate misphase 16.5); hand check wrong-hand 7.40 mm3;
+contact onset between CD-0.05 and CD-0.10 (unchanged); coupled full-worm-rev sweep
+0.000 mm3; assembly-pose zero window center <strong>17.88 deg</strong> (build.py clocking
+constant, was 17.75). Wheel blank unchanged (byte-identical regeneration).
+Wallcheck: tilt_worm.stl p1 0.25-0.27 = thread RUN-OUT FEATHERS where the helical
+rib meets the flat trim faces (machined worms carry the same edge unless a run-out
+relief is cut) + crest grazing rays; unloaded dead-thread ends, prints vertical
+(bottom wedge on the bed, top wedge tip-rounded by the slicer) -- dispositioned as
+a documented whitelist floor of 0.2 in src/wallcheck.py, not a generator defect.</p>
+<h2 id="pan-spur-pair-2026-07-13">Pan spur pair (2026-07-13)</h2>
+<p><code>tools/gears/gen_pan_spurs.py</code>: m 0.8, PA 20 deg, <strong>32T</strong> (width 5.0, D-bore cut in
+build.py on the motor shaft flats) + <strong>16T</strong> (width 5.5, fused into the pan_platform
+shank), CD 19.2, backlash 0.20 circular split 0.10/member, full-depth teeth (tips
+13.6 / 7.2, roots 11.8 / 5.4). 16T undercut is a non-issue against a 32T mate (pair
+limit ~14.2T). Verification: static 0.000 mm3, zero window centered 5.625 deg (half a
+32T pitch, stored in the meta as <code>gear32_mesh_deg</code>), coupled sweep over one pinion
+pitch 0.000 mm3. Cluster reach 32.8 &lt;= 33.0 budget (race ID 34); deck gear pocket runs
+0.9 clear. Meta sidecar <code>stl/neck/pan_gears_real_meta.json</code>, gated by <code>pan_real_ok()</code>.
+NOTE: the 32T clocking assumes <code>pan_shaft_azim</code> = 180 -- re-derive if the azimuth moves.</p>
+</main>
+</body>
+</html>

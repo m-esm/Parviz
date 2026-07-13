@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0d0f13">
+<title>Cable check · desk-pi</title>
+<style>
+  :root{
+    --ink:#e9edf1; --ink-dim:#9aa4b0; --ink-faint:#69727e;
+    --panel:rgba(20,23,28,.66); --hair:rgba(255,255,255,.09);
+    --accent:#5cc7d4; --accent-soft:rgba(92,199,212,.16);
+    --orange:#e87422;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html{scroll-padding-top:56px}
+  body{margin:0;min-height:100vh;color:var(--ink);
+    font:14.5px/1.65 system-ui,-apple-system,Segoe UI,sans-serif;
+    background:radial-gradient(125% 100% at 50% -10%, #2b313b 0%, #191d23 46%, #0d0f13 100%);
+    background-attachment:fixed}
+  main{max-width:880px;margin:0 auto;padding:68px 22px 80px}
+  h1,h2,h3,h4{line-height:1.25;letter-spacing:-.01em;scroll-margin-top:56px}
+  h1{font-size:27px;margin:10px 0 6px}
+  h2{font-size:19px;margin:34px 0 10px;padding-top:18px;border-top:1px solid var(--hair)}
+  h3{font-size:15.5px;margin:24px 0 8px;color:var(--ink)}
+  p{margin:10px 0;color:var(--ink-dim)}
+  li{color:var(--ink-dim);margin:4px 0}
+  strong{color:var(--ink)}
+  a{color:var(--accent);text-decoration:none}
+  a:hover{text-decoration:underline}
+  code{font:12.5px var(--mono);background:rgba(255,255,255,.07);padding:1.5px 5px;border-radius:5px;color:var(--ink)}
+  pre{background:rgba(0,0,0,.38);border:1px solid var(--hair);border-radius:12px;
+    padding:14px 16px;overflow-x:auto}
+  pre code{background:transparent;padding:0;color:var(--ink-dim)}
+  .tbl{overflow-x:auto;margin:14px 0;border:1px solid var(--hair);border-radius:12px}
+  table{border-collapse:collapse;width:100%;font-size:13px}
+  th,td{padding:8px 12px;text-align:left;vertical-align:top;border-bottom:1px solid var(--hair)}
+  th{font:600 10.5px/1.3 var(--mono);letter-spacing:.1em;text-transform:uppercase;
+    color:var(--ink-faint);background:rgba(255,255,255,.03)}
+  tr:last-child td{border-bottom:0}
+  td{color:var(--ink-dim)}
+  td:first-child{color:var(--ink)}
+  blockquote{margin:12px 0;padding:2px 16px;border-left:3px solid var(--accent);
+    background:var(--accent-soft);border-radius:0 10px 10px 0}
+  hr{border:0;border-top:1px solid var(--hair);margin:26px 0}
+  .crumb{font:600 9.5px/1 var(--mono);letter-spacing:.22em;color:var(--accent);text-transform:uppercase}
+  /* hub cards */
+  .hub h2{border-top:0;padding-top:8px}
+  .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin:14px 0 8px}
+  .card{display:block;padding:14px 16px;background:var(--panel);border:1px solid var(--hair);
+    border-radius:14px;transition:border-color .12s,transform .12s}
+  .card:hover{border-color:var(--accent);text-decoration:none;transform:translateY(-1px)}
+  .card b{display:block;font-size:14px;color:var(--ink);margin-bottom:4px}
+  .card span{font-size:12px;color:var(--ink-dim);line-height:1.5;display:block}
+  .hero{width:100%;border-radius:16px;border:1px solid var(--hair);margin:16px 0 4px;display:block}
+
+  #topnav{position:fixed;top:0;left:0;right:0;z-index:30;display:flex;align-items:center;
+    gap:2px;height:42px;padding:0 14px 0 16px;
+    background:rgba(13,15,19,.82);border-bottom:1px solid var(--hair);
+    backdrop-filter:blur(18px) saturate(1.25);-webkit-backdrop-filter:blur(18px) saturate(1.25);
+    white-space:nowrap}
+  @media (max-width:700px){#topnav a.pl{display:none}#topnav .brand span{display:none}}
+  #topnav a,#topnav .dd button{font:600 11px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;
+    color:var(--ink-dim);text-decoration:none;padding:7px 10px;border-radius:8px;
+    background:transparent;border:0;cursor:pointer;transition:color .12s,background .12s}
+  #topnav a:hover,#topnav .dd button:hover{color:var(--ink);background:rgba(255,255,255,.06)}
+  #topnav a.on,#topnav .dd button.on{color:var(--accent);background:var(--accent-soft)}
+  #topnav .brand{font:700 12px/1 var(--mono);letter-spacing:.18em;color:var(--ink);
+    margin-right:10px;display:flex;align-items:baseline;gap:7px}
+  #topnav .brand span{font:600 9px/1 var(--mono);letter-spacing:.14em;color:var(--ink-faint)}
+  #topnav .gh{margin-left:auto;color:var(--ink-faint)}
+  #topnav .dd{position:relative}
+  #topnav .dd .menu{display:none;position:absolute;top:calc(100% + 4px);left:0;min-width:180px;
+    padding:5px;background:rgba(20,23,28,.96);border:1px solid var(--hair);border-radius:12px;
+    box-shadow:0 14px 38px rgba(0,0,0,.55);
+    backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+  #topnav .dd:hover .menu,#topnav .dd:focus-within .menu{display:block}
+  #topnav .dd .menu a{display:block;padding:8px 10px}
+</style>
+</head>
+<body>
+<nav id="topnav">
+  <a class="brand" href="../viewer_glb.html">PARVIZ<span>desk-pi</span></a>
+  <a href="../viewer_glb.html">Viewer</a>
+  <a class="pl" href="../docs/electronics.html">Electronics</a><a class="pl" href="../docs/assembly.html">Assembly</a><a class="pl" href="../docs/wiring.html">Wiring &amp; power</a>
+  <div class="dd"><button class="on" aria-haspopup="true">Docs &#9662;</button>
+    <div class="menu"><a href="../docs/index.html">All docs</a><a href="../docs/electronics.html">Electronics</a><a href="../docs/assembly.html">Assembly</a><a href="../docs/wiring.html">Wiring &amp; power</a><a href="../docs/printability.html">Printability</a><a href="../docs/fixes.html">Fix ledger</a><a href="../docs/worm.html">Worm drive</a><a href="../docs/arm-mech.html">Arm mechanism</a><a href="../docs/cable-check.html">Cable check</a><a href="../docs/reference-audit.html">Reference audit</a><a href="../docs/awareness.html">Awareness</a><a href="../docs/software.html">Software</a></div></div>
+  <a class="gh" href="https://github.com/m-esm/parviz" title="source">GitHub</a>
+</nav>
+<main>
+<div class="crumb">desk-pi · Design docs</div>
+<h1 id="cable-check-power-route-re-verification-after-the-25-mm-head-drop">CABLE-CHECK, power-route re-verification after the 25 mm head drop</h1>
+<p>Task #18, 2026-07-07. Geometry probed with trimesh signed-distance / containment
+against scenes built as <code>OUT=_cable_t{θ}.glb PAN=0 TILT={-30,-15,0,15,30}</code> (probe
+scripts in the session scratchpad; <code>web/assembly.glb</code> untouched, probe GLBs deleted
+after the run). Conduit spec: Ø5 virtual conduit (≥2.5 mm clearance to every solid);
+real bundle is the Pi power pair, ~Ø3.6.</p>
+<p>Route under test: base rear USB-C wall port → base cavity (pan service loop) →
+16×8 deck pass at <code>cable_exit</code> (12,−24) → platform slot → neck channel
+(<code>neck_chan_y</code>=−26) → column top → head bottom-rear slot (tilt drape) → Pi USB-C
+(bottom edge, z≈126).</p>
+<h2 id="verdict-summary">Verdict summary</h2>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>#</th>
+<th>Segment</th>
+<th>Verdict</th>
+<th>Worst number</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>USB wall port → cavity</td>
+<td><strong>CLEAR</strong></td>
+<td>4.00 mm</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Service loop (cavity annulus)</td>
+<td><strong>CLEAR</strong> (at z 36–45.5)</td>
+<td>r40–56 ring free all-round</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Deck pass, through the deck itself (z 46–51)</td>
+<td><strong>CLEAR</strong></td>
+<td>16.0 × 8.5 window, footprint max r 32.2 &lt; race ID 34</td>
+</tr>
+<tr>
+<td>3a</td>
+<td>Deck pass, drop below the deck</td>
+<td><strong>OBSTRUCTED (Ø5) / marginal (Ø3.6)</strong></td>
+<td>pan pedestal refills the pass to a 4.0 mm window</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Seat void jog → platform slot → channel base</td>
+<td><strong>CLEAR</strong></td>
+<td>3.93 mm</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Neck channel, z 66 → 125</td>
+<td><strong>CLEAR</strong></td>
+<td>4.00 mm (16.5 × 8.5 window at z 95)</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Channel exit at the column top</td>
+<td><strong>OBSTRUCTED</strong></td>
+<td>1.0 mm escape gap (riser + root block + arm + worm box it in)</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Tilt drape, column top → head slot → Pi</td>
+<td><strong>CLEAR</strong> (once 6 is fixed)</td>
+<td>0.32 mm chord graze at −30° (wire bows; all worm parts ≥ 10 mm)</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Head-side, slot → Pi USB-C vs worm/wheel/axle</td>
+<td><strong>CLEAR</strong></td>
+<td>worm 14.2, wheel 19.4, axle 23.5, stack 12.3 mm</td>
+</tr>
+</tbody>
+</table></div>
+<p>Two geometry fixes needed (both in <code>src/build.py</code>, exact cuts below). Defect 6 is
+pre-existing (identical relative geometry before the drop, the whole
+column-top/riser/worm cluster moved together), not caused by the drop. Defect 3a
+is a build-order bug.</p>
+<h2 id="1-usb-port-cavity-clear">1. USB port → cavity, CLEAR</h2>
+<p>The 14×12×8 port cut at (0, −78, 19) opens the rear wall (containment: wall material
+absent at (0,−77.4,19)). Min clearance of a Ø5 conduit from the port into the cavity:
+4.00 mm.</p>
+<h2 id="2-service-loop-clear-but-it-lives-in-the-top-band-of-the-cavity">2. Service loop, CLEAR, but it lives in the TOP band of the cavity</h2>
+<p>Full-ring annulus scan around the pan axis (5° steps, 2 mm radial steps):</p>
+<ul>
+<li>z 38 and z 43: annulus <strong>r 40–52 and r 44–56 fully free over 360°</strong>.</li>
+<li>z ≤ 30: blocked at azimuth 190–215° (TT drive motors) and 330–345° (ULN standoff
+  corner). Worst free radial window at z 26 is still 15 mm, but not at a loopable
+  radius all-round.</li>
+<li>r &lt; 40 blocked at all heights by the pan pedestal (48×48 at (−7.9, 0), top z 44.25,
+  only 1.75 mm under the deck).</li>
+</ul>
+<p>So the 2-turn Ø3.6 loop coils at <strong>r ≈ 44–52, z ≈ 37–45.5</strong> (radial window 12–16 mm,
+vertical 8 mm, two turns side-by-side need 7.2 mm: fits). 2 turns at r 48 ≈ 600 mm
+of wire; pan ±90° winds/unwinds ~±150 mm (half a turn): the loop absorbs it with a
+full turn of margin. Free annular volume r 20–64, z 14–45: ~330 cm³ (89 % of the
+annulus is free). Pan motor / pedestal / ULN don't crowd the loop band; they only
+push it up against the deck underside.</p>
+<h2 id="3-deck-pass-the-deck-cut-is-fine-the-pedestal-blocks-the-drop-defect-a">3. Deck pass, the deck cut is fine, the PEDESTAL blocks the drop (defect A)</h2>
+<p>Through the deck floor (z 46–51) the 16×8 obround at (12,−24) is fully open (probed
+16.0 × 8.5 mm) and its footprint max radius is 32.2 &lt; race-ring ID 34 (nearest
+approach to <code>pan_race</code>: 7.13 mm). Aligned with the platform slot at pan=0.</p>
+<p><strong>Below z 44.25 the pan-motor pedestal refills most of the pass footprint.</strong> In
+<code>build_base()</code> the cable pass <code>cbl</code> is subtracted (~line 1294–1298) BEFORE the
+pedestal is unioned (~line 1300–1306), so the pedestal (x −31.9..16.1, y ±24,
+z 12..44.25) fills the pass back in over y &gt; −24. Probed free window under the deck
+at x 8–16: <strong>y −28..−24 ≈ 4.0–4.3 mm</strong> (plus full 8 mm only for the x 16.1..19.9
+sliver). A vertical Ø5 conduit at (12,−24) has 0.29 mm to the pedestal corner: FAIL.
+The Ø3.6 pair squeezes through the 4 mm window: marginal.</p>
+<p><strong>Fix:</strong> move the <code>cbl</code> subtraction to AFTER the pedestal union (or subtract <code>cbl</code> a
+second time there). <code>cbl</code> already spans z 29–51, so this bores a clean 16×8 shaft
+through the pedestal corner; below z 44 the shaft's −y side is open to the cavity
+(pedestal stops at y −24), so the wire swings straight back into the loop band.
+No other part is affected (overlap zone is pedestal corner x 4..16, y −24..−19 only).</p>
+<h2 id="45-seat-void-jog-platform-slot-neck-channel-clear">4–5. Seat-void jog + platform slot + neck channel, CLEAR</h2>
+<p>Jog polyline (12,−24,50) → seat void → platform slot → (0,−26,68): min clearance
+3.93 mm (platform), 7.1 mm (race ring), 10.8 mm (balls). Platform slot and neck
+channel are mutually aligned at pan=0 (both aim along (0,−26)→(12,−24)); slot and
+channel windows probed at 16 × 8.5 mm. Channel clear at 4.0 mm from z 66 to the
+column top at z 125. At pan≠0 the platform slot + channel rotate together (same pan
+group) so they never misalign; the fixed deck pass ↔ rotating slot offset is taken
+by the wire winding in the 7.4 mm seat-void disc (z 51–58.4, r&lt;34) + the loop below.</p>
+<p>Minor: the 270° neck-bolt <strong>M3 head counterbore (Ø6.5 at (0,−33)) breaks into the
+platform cable slot edge by 0.25 mm</strong> (slot edge y −30.0 vs cbore edge y −29.75).
+Confirmed by containment probe. The screw head loses a sliver of its seat,
+functional, but if touched anyway: bump that bolt circle <code>rad</code> 16.0 → 16.5 in BOTH
+<code>build_neck_clevis()</code> and <code>build_pan_platform()</code> (they must stay in sync).</p>
+<h2 id="6-channel-exit-at-the-column-top-obstructed-defect-b-the-real-find">6. Channel exit at the column top, OBSTRUCTED (defect B, the real find)</h2>
+<p>The channel emerges at the column top (z 125) into a chimney that is boxed in on
+every side (all containment-verified on the built mesh):</p>
+<ul>
+<li><strong>front</strong>: the worm-cradle <strong>riser</strong> (x ±9, y −25..−20, z 125–141.5): the channel
+  cut hollows its back 3 mm, but its front 2 mm wall (y −22..−20) survives full-width;</li>
+<li><strong>rear</strong>: the cheek-root block (y −40..−26, z 125–135): bored only for |x| ≤ ~8;</li>
+<li><strong>sides</strong>: at z 129.25–135.25 the cradle arm (x ±9) closes the flanks; on +x the
+  gusset (x 14..24, z 122–144) blocks the right bay;</li>
+<li><strong>top</strong>: the worm thread envelope, clearance at (0,−26,z) falls to 2.46 mm at
+  z 134 and goes negative at z 138 (worm bottom ≈ 135.6).</li>
+</ul>
+<p>Measured escape gaps: <strong>left, between root face (y −26) and riser back (y −25):
+1.0 mm</strong> (z 125–129.25 only). Forward, in front of the riser: y −20..−18.2 =
+<strong>1.8 mm</strong>, and the −30° head sweep (display stack rear digs to y −18.2 over
+z 123–135 post-drop) closes onto it. Both fail even the Ø3.6 bundle. The wire
+cannot legally leave the channel.</p>
+<p><strong>Fix: a side exit window in the column's top-left corner</strong>, subtracted from the
+neck after the main union (next to the existing <code>chan</code> cut in <code>build_neck_clevis()</code>,
+~line 1014): <code>box(12, 8, 10)</code> centered <strong>(−12, −26, 122)</strong> → spans x −18..−6,
+y −30..−22, z 117..127. Probes confirm the zone is pure column/riser-bottom-corner
+material; nearest other parts are motor_tilt at 10.9 mm and the platform 55 mm below;
+it leaves the x −24..−18 column corner and a 2.5 mm web to the chin-notch face
+(y −19.5). The cable then exits at x ≈ −12 below the riser into the <strong>left bay</strong>
+(x −9..−24, y −26..−20), which is open upward to z ~147 (probed window at
+(−13,−22,127): 20 mm free up, 20 mm free left) and stays 1.8 mm clear of the −30°
+head sweep (bay is behind y −20). Mirror on +x is NOT available (gusset).</p>
+<h2 id="7-tilt-drape-clear-through-the-slot-at-all-angles-given-the-fix-above">7. Tilt drape, CLEAR through the slot at all angles (given the fix above)</h2>
+<p>Anchors: pan-frame exit X1 = (−13,−22,127) (top of the left bay); head-frame entry
+H = Pi USB-C at local (−30,−7.5,126) (bottom edge of the stack; the ETH edge faces
++X so power is at the −X end, the plug sits 1 mm inboard of the head slot's x ±31
+side wall).</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>TILT</th>
+<th>H (world)</th>
+<th>straight gap X1→H</th>
+<th>chord min-clearance</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>−30°</td>
+<td>(−30, −22.4, 124.4)</td>
+<td>17.2 mm</td>
+<td>0.32 mm (neck root, wire bows forward)</td>
+</tr>
+<tr>
+<td>−15°</td>
+<td>(−30, −14.9, 124.2)</td>
+<td>18.7 mm</td>
+<td>0.95 mm</td>
+</tr>
+<tr>
+<td>0°</td>
+<td>(−30, −7.5, 126.0)</td>
+<td>22.4 mm</td>
+<td>1.82 mm</td>
+</tr>
+<tr>
+<td>+15°</td>
+<td>(−30, −0.9, 129.6)</td>
+<td>27.3 mm</td>
+<td>2.00 mm</td>
+</tr>
+<tr>
+<td>+30°</td>
+<td>(−30, +4.6, 134.9)</td>
+<td>32.5 mm</td>
+<td>2.00 mm</td>
+</tr>
+</tbody>
+</table></div>
+<p>All worm-drive parts stay ≥ 10 mm from the chord at every angle; head shell ≥ 14.3;
+the bottom-rear slot faces the exit across the whole range (exit stub vs head shell:
+23.9 mm at −30°, 18.3 mm at +30°, no pinch). Total wire, column exit → plug:
+31 mm (−30°) → 46.5 mm (+30°), i.e. <strong>~15.5 mm of drape travel. Install ≈ 60 mm of
+free lead</strong> (max 46.5 + bow + strain relief at the plug); the slack bows down-forward
+into the open head cavity at −30° and straightens at +30°.</p>
+<h2 id="8-head-side-path-vs-the-wormwheelaxle-zone-clear">8. Head-side path vs the worm/wheel/axle zone, CLEAR</h2>
+<p>Neutral-pose polyline (−13,−22,127) → (−13,−12,127) → (−20,−8.5,126.5) →
+(−30,−7.5,126), i.e. hug z ≈ 126–127, cross under the −X cheek at y ≈ −8.5:
+worm 14.2 mm, wheel 19.4, axle 23.5, motor_tilt 14.5, neck 2.0, head walls ≥ 18.7,
+screen/Pi stack 12.3 mm (unsigned, reference mesh isn't watertight). The whole
+mechanism cluster sits at z ≥ 135.6; the cable never needs to climb above z ≈ 128
+until it is forward of the worm, so tilt motion doesn't sweep the drive through the
+wire. At −30° the swept stack bottom passes 10.5 mm above the drape chord.</p>
+<h2 id="action-list">Action list</h2>
+<ol>
+<li><strong><code>build_base()</code></strong>: subtract the deck cable pass <code>cbl</code> AFTER the pedestal union
+   (defect A, restores the full 16×8 drop; today's real window is 4.0 mm).</li>
+<li><strong><code>build_neck_clevis()</code></strong>: add the side exit window <code>box(12,8,10)</code> at
+   (−12,−26,122) (defect B, today the channel exit is sealed to a 1.0 mm gap).</li>
+<li>Optional: re-clock/bump the 270° neck-bolt circle 16.0 → 16.5 to un-graze the
+   platform cable slot from the M3 head counterbore (0.25 mm overlap).</li>
+<li>BOM/assembly note: route the power pair with ~60 mm free lead between the column
+   exit and the Pi plug; coil 2 turns (~600 mm) at r ≈ 48, z ≈ 38–45 in the cavity;
+   keep the pan software limit at ±90°.</li>
+</ol>
+</main>
+</body>
+</html>

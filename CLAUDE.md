@@ -138,6 +138,12 @@ make wallcheck      # min-wall gate over the printed STL set (0.8 mm p1 + docume
                     #   tips/run-out feathers whitelisted with probe-verified reasons)
 make tipover        # mass/CoM/tip-margin report (solid-PLA + 50%-infill bounds); a
                     #   report, not a gate -- 2026-07-13 verdict: no ballast needed.
+make docs           # render docs/*.md + firmware/WIRING.md + software/README.md ->
+                    #   web/docs/*.html (tools/build_docs.py; IN make all). The viewer
+                    #   has a top nav header linking them; its nav markup/CSS must stay
+                    #   in sync with nav_html()/NAV_CSS in the builder. shoot.py hides
+                    #   #topnav so CAD renders stay chrome-free. Pages deploys web/
+                    #   verbatim, so docs ship with the published viewer.
 ```
 
 Then **downscale and actually Read every PNG** before claiming a change works:
@@ -485,6 +491,8 @@ src/stlpaths.py  routes stlp("track_L.stl") -> stl/base/... ; subsystems: base /
 src/serve.py     localhost viewer server (serves web/ at root)
 src/shoot.py     headless multi-angle renders -> .claude/renders/
 web/             viewer_glb.html + assembly.glb (committed so a fresh clone shows the assembly)
+web/docs/        rendered doc pages (make docs; committed so Pages ships them)
+tools/build_docs.py  the md->html docs pipeline + shared top-nav generator
 stl/{base,neck,head}/   per-part STLs (head_bezel + head_back), written by `EXPORT=1 python3 src/build.py`
 exports/         Bambu .3mf plates (regenerable, gitignored)
 reference/       rpi-7in-touchscreen-model (STEP/STL, the real screen) + -case + alexa-style-* +

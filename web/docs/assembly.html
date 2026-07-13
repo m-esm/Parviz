@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0d0f13">
+<title>Assembly · desk-pi</title>
+<style>
+  :root{
+    --ink:#e9edf1; --ink-dim:#9aa4b0; --ink-faint:#69727e;
+    --panel:rgba(20,23,28,.66); --hair:rgba(255,255,255,.09);
+    --accent:#5cc7d4; --accent-soft:rgba(92,199,212,.16);
+    --orange:#e87422;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html{scroll-padding-top:56px}
+  body{margin:0;min-height:100vh;color:var(--ink);
+    font:14.5px/1.65 system-ui,-apple-system,Segoe UI,sans-serif;
+    background:radial-gradient(125% 100% at 50% -10%, #2b313b 0%, #191d23 46%, #0d0f13 100%);
+    background-attachment:fixed}
+  main{max-width:880px;margin:0 auto;padding:68px 22px 80px}
+  h1,h2,h3,h4{line-height:1.25;letter-spacing:-.01em;scroll-margin-top:56px}
+  h1{font-size:27px;margin:10px 0 6px}
+  h2{font-size:19px;margin:34px 0 10px;padding-top:18px;border-top:1px solid var(--hair)}
+  h3{font-size:15.5px;margin:24px 0 8px;color:var(--ink)}
+  p{margin:10px 0;color:var(--ink-dim)}
+  li{color:var(--ink-dim);margin:4px 0}
+  strong{color:var(--ink)}
+  a{color:var(--accent);text-decoration:none}
+  a:hover{text-decoration:underline}
+  code{font:12.5px var(--mono);background:rgba(255,255,255,.07);padding:1.5px 5px;border-radius:5px;color:var(--ink)}
+  pre{background:rgba(0,0,0,.38);border:1px solid var(--hair);border-radius:12px;
+    padding:14px 16px;overflow-x:auto}
+  pre code{background:transparent;padding:0;color:var(--ink-dim)}
+  .tbl{overflow-x:auto;margin:14px 0;border:1px solid var(--hair);border-radius:12px}
+  table{border-collapse:collapse;width:100%;font-size:13px}
+  th,td{padding:8px 12px;text-align:left;vertical-align:top;border-bottom:1px solid var(--hair)}
+  th{font:600 10.5px/1.3 var(--mono);letter-spacing:.1em;text-transform:uppercase;
+    color:var(--ink-faint);background:rgba(255,255,255,.03)}
+  tr:last-child td{border-bottom:0}
+  td{color:var(--ink-dim)}
+  td:first-child{color:var(--ink)}
+  blockquote{margin:12px 0;padding:2px 16px;border-left:3px solid var(--accent);
+    background:var(--accent-soft);border-radius:0 10px 10px 0}
+  hr{border:0;border-top:1px solid var(--hair);margin:26px 0}
+  .crumb{font:600 9.5px/1 var(--mono);letter-spacing:.22em;color:var(--accent);text-transform:uppercase}
+  /* hub cards */
+  .hub h2{border-top:0;padding-top:8px}
+  .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin:14px 0 8px}
+  .card{display:block;padding:14px 16px;background:var(--panel);border:1px solid var(--hair);
+    border-radius:14px;transition:border-color .12s,transform .12s}
+  .card:hover{border-color:var(--accent);text-decoration:none;transform:translateY(-1px)}
+  .card b{display:block;font-size:14px;color:var(--ink);margin-bottom:4px}
+  .card span{font-size:12px;color:var(--ink-dim);line-height:1.5;display:block}
+  .hero{width:100%;border-radius:16px;border:1px solid var(--hair);margin:16px 0 4px;display:block}
+
+  #topnav{position:fixed;top:0;left:0;right:0;z-index:30;display:flex;align-items:center;
+    gap:2px;height:42px;padding:0 14px 0 16px;
+    background:rgba(13,15,19,.82);border-bottom:1px solid var(--hair);
+    backdrop-filter:blur(18px) saturate(1.25);-webkit-backdrop-filter:blur(18px) saturate(1.25);
+    white-space:nowrap}
+  @media (max-width:700px){#topnav a.pl{display:none}#topnav .brand span{display:none}}
+  #topnav a,#topnav .dd button{font:600 11px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;
+    color:var(--ink-dim);text-decoration:none;padding:7px 10px;border-radius:8px;
+    background:transparent;border:0;cursor:pointer;transition:color .12s,background .12s}
+  #topnav a:hover,#topnav .dd button:hover{color:var(--ink);background:rgba(255,255,255,.06)}
+  #topnav a.on,#topnav .dd button.on{color:var(--accent);background:var(--accent-soft)}
+  #topnav .brand{font:700 12px/1 var(--mono);letter-spacing:.18em;color:var(--ink);
+    margin-right:10px;display:flex;align-items:baseline;gap:7px}
+  #topnav .brand span{font:600 9px/1 var(--mono);letter-spacing:.14em;color:var(--ink-faint)}
+  #topnav .gh{margin-left:auto;color:var(--ink-faint)}
+  #topnav .dd{position:relative}
+  #topnav .dd .menu{display:none;position:absolute;top:calc(100% + 4px);left:0;min-width:180px;
+    padding:5px;background:rgba(20,23,28,.96);border:1px solid var(--hair);border-radius:12px;
+    box-shadow:0 14px 38px rgba(0,0,0,.55);
+    backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+  #topnav .dd:hover .menu,#topnav .dd:focus-within .menu{display:block}
+  #topnav .dd .menu a{display:block;padding:8px 10px}
+</style>
+</head>
+<body>
+<nav id="topnav">
+  <a class="brand" href="../viewer_glb.html">PARVIZ<span>desk-pi</span></a>
+  <a href="../viewer_glb.html">Viewer</a>
+  <a class="pl" href="../docs/electronics.html">Electronics</a><a class="pl on" href="../docs/assembly.html">Assembly</a><a class="pl" href="../docs/wiring.html">Wiring &amp; power</a>
+  <div class="dd"><button aria-haspopup="true">Docs &#9662;</button>
+    <div class="menu"><a href="../docs/index.html">All docs</a><a href="../docs/electronics.html">Electronics</a><a href="../docs/assembly.html">Assembly</a><a href="../docs/wiring.html">Wiring &amp; power</a><a href="../docs/printability.html">Printability</a><a href="../docs/fixes.html">Fix ledger</a><a href="../docs/worm.html">Worm drive</a><a href="../docs/arm-mech.html">Arm mechanism</a><a href="../docs/cable-check.html">Cable check</a><a href="../docs/reference-audit.html">Reference audit</a><a href="../docs/awareness.html">Awareness</a><a href="../docs/software.html">Software</a></div></div>
+  <a class="gh" href="https://github.com/m-esm/parviz" title="source">GitHub</a>
+</nav>
+<main>
+<div class="crumb">desk-pi · Build docs</div>
+<h1 id="assembly">Assembly</h1>
+<p>Current assembly notes for the tracked desk-pi prototype. The task #28 insertion/torque-path
+audit (2026-07-07) verified a complete install order exists (see "Assembly order (verified)"
+below). The 2026-07-08 maintenance pass then killed the worst service traps: tilt motor is a
+rear-access cartridge (<code>tilt_carrier</code>), the worm wheel is D-keyed to a flatted axle (no blind
+grub), tracks close with a master link (no loop-flexing), the pan race got a BB cage, both
+joints got stall-homing hard stops, the microSD swaps through a plugged left-wall slot, the
+pod rails thread-form (no buried nuts), and power is a 12 V PD-trigger + dual-buck belly tray
+(firmware/WIRING.md). Not print-final: still open is a D-key fit coupon for the axle flat.</p>
+<h2 id="bill-of-materials">Bill of materials</h2>
+<p>Owned quantities cross-checked against a personal parts inventory (2026-07-07; re-audited
+2026-07-13 with bag-label photo reads: TT motors, M8, 608zz, F688 candidates, fuses all
+settled below). "Need" is per robot.</p>
+<h3 id="electronics">Electronics</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Part</th>
+<th>Spec / where it goes</th>
+<th>Need</th>
+<th>Owned</th>
+<th>Buy</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Raspberry Pi 5</td>
+<td>2 GB, rides the display's own 58x49 standoffs</td>
+<td>1</td>
+<td>1 (Tray 1)</td>
+<td>,</td>
+</tr>
+<tr>
+<td>7" touchscreen</td>
+<td>official kit; 4 factory M3 mounts (126.2x65.65)</td>
+<td>1</td>
+<td>1 (Tray 1)</td>
+<td>,</td>
+</tr>
+<tr>
+<td>Camera Module 3</td>
+<td>recessed forehead, 4x M2 at 21x12.5</td>
+<td>1</td>
+<td>1 (Tray 1)</td>
+<td>,</td>
+</tr>
+<tr>
+<td>30W+ USB-C PD brick</td>
+<td>any brick offering 12V (the official 27W works); the robot bucks 12V down internally, see firmware/WIRING.md</td>
+<td>1</td>
+<td>0</td>
+<td><strong>1</strong></td>
+</tr>
+<tr>
+<td>USB-C PD trigger board</td>
+<td>set to 12V; mounts on the rear-wall M2 pilots beside the USB slot</td>
+<td>1</td>
+<td>0</td>
+<td><strong>1</strong></td>
+</tr>
+<tr>
+<td>XL4015-class 5A buck</td>
+<td>Pi rail (trim to 5.25V); 40x20 post grid on the belly-plate tray</td>
+<td>1</td>
+<td>0</td>
+<td><strong>1</strong></td>
+</tr>
+<tr>
+<td>MP1584-class mini buck</td>
+<td>motor rail 5V; zip anchors beside the main buck</td>
+<td>1</td>
+<td>0</td>
+<td><strong>1</strong></td>
+</tr>
+<tr>
+<td>JST-XH kit + crimper</td>
+<td>every joint-crossing / board run is a keyed XH plug</td>
+<td>1</td>
+<td>0</td>
+<td><strong>1</strong></td>
+</tr>
+<tr>
+<td>18 AWG silicone pair + 5A blade fuse + inline holder</td>
+<td>Pi-rail run + inline fuse at the tray</td>
+<td>1 m</td>
+<td>fuse: OWNED (ATC/ATO blade assortment, settled 2026-07-13); wire + holder: 0</td>
+<td><strong>1 m wire + 1 holder</strong></td>
+</tr>
+<tr>
+<td>28BYJ-48 stepper</td>
+<td>5V, pan + tilt + 2x antenna drives</td>
+<td>4</td>
+<td>6 (Bag 14)</td>
+<td>,</td>
+</tr>
+<tr>
+<td>ULN2003 driver</td>
+<td>one per stepper</td>
+<td>4</td>
+<td>9 (3 Bag 14 + 6 Bag 5)</td>
+<td>,</td>
+</tr>
+<tr>
+<td>TT gearmotor 1:120</td>
+<td>track drive, one per pod, shaft on X into the sprocket; +2 OPTIONAL for the twin-drive front stations</td>
+<td>2 (+2 opt)</td>
+<td><strong>3 (Bag 5, re-audited 2026-07-13; the old "own 1" was stale)</strong></td>
+<td>, (<strong>1</strong> only if the optional 4th station is populated)</td>
+</tr>
+<tr>
+<td>MX1588 dual H-bridge</td>
+<td>drives both TT motors, skid steer</td>
+<td>1</td>
+<td>5 (Bag 7)</td>
+<td>,</td>
+</tr>
+<tr>
+<td>WS2812 forehead segment</td>
+<td>8 LEDs in the <code>led_slot</code> recess: <strong>42 x 5 mm, 1.5 deep</strong> (model dot pitch 4.6). A standard 8x5050 stick is 53.3 x 10.2, it does NOT fit. Buy a narrow (4–5 mm wide) addressable strip (SK6805-2427 / WS2812-2020, ≥160 LED/m) and cut an 8-LED segment, or widen <code>led_slot</code> to ~54 x 11 for the common stick</td>
+<td>1 seg</td>
+<td>0</td>
+<td><strong>1 m narrow strip</strong> (also covers the front strip, next row)</td>
+</tr>
+<tr>
+<td>Front white strip</td>
+<td>7 dots at 5 mm pitch in a 36 x 2.5 lip (<code>fled_*</code>): either 7x 3 mm white LEDs or a second segment cut from the same narrow WS2812 strip</td>
+<td>1</td>
+<td>0</td>
+<td>covered by the strip above (or 10x 3 mm white LED)</td>
+</tr>
+<tr>
+<td>Amber indicator LEDs</td>
+<td>2 corner lamps, 12 x 7 windows (<code>lamp_*</code>): 2 rectangular amber LEDs (2x5x7) or 5 mm amber behind a printed lens</td>
+<td>2</td>
+<td>0</td>
+<td><strong>2–5</strong></td>
+</tr>
+<tr>
+<td>HC-SR04 ultrasonic</td>
+<td>x4 since the 2026-07-10/11 sensor passes (this row used to say "optional x1", stale): forward + rear obstacle (grille rings, Ø16 barrel passes at 26 mm c-c, <code>us_dx</code>=±13) + 2 cliff (deck slopes). With the Arduino I/O plane (docs/AWARENESS.md) plain 5V HC-SR04 is fine; HC-SR04P (3.3V) only needed if wired straight to Pi GPIO</td>
+<td>4</td>
+<td>0</td>
+<td><strong>4</strong></td>
+</tr>
+<tr>
+<td>Rear pod audio</td>
+<td>rear Ø14 cylinder pod (<code>rear_cyl_*</code>): an owned Ø12 active buzzer fits for beeps. For real audio, buy a <strong>MAX98357A I2S amp</strong> and drive the owned 8Ω 0.5W mini speaker (Bag 15) from inside the chassis, the speaker is ~40–50 mm and can't live in the pod; the pod becomes the grille</td>
+<td>1</td>
+<td>buzzers: 5x active 5V (Bag 1) + 4x ~12 mm (Bag 16); speaker: 1 (Bag 15)</td>
+<td><strong>1x MAX98357A</strong> (only if speech/audio wanted)</td>
+</tr>
+<tr>
+<td>Arm actuation</td>
+<td>placeholder arms, TBD pending the arm mechanism pass. If actuated: 9x 9g servos owned (5x T-8090, 3x SG90, 1x MG90S)</td>
+<td>TBD</td>
+<td>9 servos</td>
+<td>nothing yet</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="bearings-race-axles">Bearings, race, axles</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Part</th>
+<th>Spec</th>
+<th>Need</th>
+<th>Owned</th>
+<th>Buy</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>695-2RS</td>
+<td>5x13x4, tilt-axle cheeks</td>
+<td>2</td>
+<td>30 (Bag 13)</td>
+<td>,</td>
+</tr>
+<tr>
+<td>F688ZZ flanged</td>
+<td>8x16x5, flange Ø18; END idlers (both loop ends are free idlers since the 2026-07-11 mid-drive), <strong>2 per wheel x 4 wheels</strong> (one pressed at each face, Ø15.95 through-seat + Ø18.5x1.0 flange recess both sides). The Bag 13 "Miniature Ball Bearings" were checked as a candidate 2026-07-13: label reads <strong>10pcs MR105 ZZ</strong> (5x10x4, unflanged) -- wrong part</td>
+<td>8</td>
+<td>0</td>
+<td><strong>8</strong></td>
+</tr>
+<tr>
+<td>6 mm airsoft BBs</td>
+<td>pan race, Ø80 circle, <code>pan_race_n</code>=18</td>
+<td>18</td>
+<td>0</td>
+<td><strong>smallest bag (100+)</strong></td>
+</tr>
+<tr>
+<td>Ø5 SOLID rod</td>
+<td>tilt axle, ~100 mm silver steel (<strong>NOT tube</strong>: a 1.0 flat on a Ø5/Ø2.5 tube leaves a 0.25 wall). <strong>File a 1.0-deep flat</strong> from the insertion end to ~15 past center (D-key for the worm wheel's hub ledge); only the ~6 mm under the hub needs a clean 1.0 ±0.1 depth. The flat crosses the +X 695 seat, so that inner race rides a D-profile (fine, the spacer tubes clamp it). Print a D-bore coupon first, starting at <strong>+0.05</strong> clearance (+0.15 measured as ±4.4° of head backlash)</td>
+<td>1</td>
+<td>0</td>
+<td><strong>1</strong></td>
+</tr>
+<tr>
+<td>M8x60 bolts + NYLOC nuts</td>
+<td>END BOLT-AXLES (2026-07-11: plain stubs had no retention): head = outboard hubcap, shank through the F688 pair + pylon, nut inboard; front nuts CLAMP the tension slots (no set screws). NYLOC required: the nut lives in the prow-cheek clearance pocket with no wrench access after the deck drops on -- torque on the bench, retension from the outboard head only. +4 washers</td>
+<td>4+4</td>
+<td>0 -- <strong>SETTLED 2026-07-13: the Bag 13 "Machine Bolts" bag label reads 30PCS M3-30</strong> (plain M3x30 pan heads), no M8 anywhere in inventory</td>
+<td><strong>4x M8x60 + 4 NYLOC + 4 washers</strong></td>
+</tr>
+<tr>
+<td>608zz</td>
+<td><strong>not used</strong> in the current design. SETTLED 2026-07-13: the bag label reads <strong>"10pcs-608ZZ"</strong> -- real 608ZZ bearings under translucent shrink wrap, not plastic rings. Still don't design around them</td>
+<td>0</td>
+<td>~10-30 (608ZZ, confirmed by label)</td>
+<td>,</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="fasteners-and-pins">Fasteners and pins</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Part</th>
+<th>Spec</th>
+<th>Need</th>
+<th>Owned</th>
+<th>Buy</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>M3 screws + hex nuts</td>
+<td>captive-nut joints everywhere; incl. M3x35 x8 bezel↔back</td>
+<td>lots</td>
+<td>540pc M3 stainless kit + 175pc M3 30–50 mm kit + 600pc M2-M5 kit + 1263pc M2-M4 kit (all Tray 1)</td>
+<td>,</td>
+</tr>
+<tr>
+<td>M2 screws</td>
+<td>camera board (2 screwed + 2 locating pads) + cam_cover (2) + track master-link keepers (2/pod, <strong>M2×8 pan head</strong>, sunk in the tab counterbores) + PD-trigger mount (2)</td>
+<td>8+</td>
+<td>in the 600pc M2-M5 and 1263pc M2-M4 kits</td>
+<td>, (CLAUDE.md's "buy M2" is stale)</td>
+</tr>
+<tr>
+<td>M3 nylon standoffs</td>
+<td>ULN2003 / driver mounts</td>
+<td>few</td>
+<td>380pc kit (Tray 1)</td>
+<td>,</td>
+</tr>
+<tr>
+<td>Track hinge pins</td>
+<td>Ø1.75 filament, Ø2.2 boundary bores only (2026-07-12 print-in-place strips: the 59 in-strip joints/side ride INTEGRAL printed Ø2.0 pins). Per pod: 3 strip-to-strip + 2 at the master (its far-end pin + the jaw closure pin) = <strong>10 pins x ~46 mm</strong> ≈ 0.5 m, cut from an owned spool (the black CR-PETG is tougher than PLA for pins)</td>
+<td>10</td>
+<td>spooled (Tray 1)</td>
+<td>,</td>
+</tr>
+<tr>
+<td>Ø4 dowel pins</td>
+<td>body-to-pod join (2 per side), Ø4x12: modeled (wall slip holes + rail press sockets)</td>
+<td>4</td>
+<td>0</td>
+<td><strong>4</strong></td>
+</tr>
+<tr>
+<td>HC-SR04 ultrasonic</td>
+<td>x4: forward + REAR obstacle (front/rear walls, inside the twin grille rings) + front/rear cliff (flush in the deck slopes, boards behind the 5-thick skin). <strong>Inventory has ZERO</strong> (checked 2026-07-10)</td>
+<td>4</td>
+<td>0</td>
+<td><strong>4</strong></td>
+</tr>
+<tr>
+<td>M4x40 + nuts</td>
+<td>road-wheel bolt-axles (2026-07-10 fix: wheels were mounted to nothing): head = outer hubcap, shank in the Ø4.2 wheel bore, nut captive in the rail wheel-beam slot. Prefer partially threaded (shank bearing surface); 40 mm exceeds the owned kits</td>
+<td>10+10</td>
+<td>nuts: OWNED (the 600pc M2-M5 kit lists <strong>M4 nuts x40</strong>, settled 2026-07-13); bolts: 0</td>
+<td><strong>10x M4x40</strong></td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="printed-parts-watertight-tank-base-split-head">Printed parts (watertight; tank base + split head)</h3>
+<p><strong>Materials:</strong> print <code>head_back</code> (all four pieces), <code>screen_tray</code> and <code>head_door</code> in
+<strong>PETG, not PLA</strong>. The Pi 5 lives in the closed head and sustains 70-80 C bursts under
+brain load (measured, see CLAUDE.md thermal notes); PLA creeps from ~60 C, so a PLA tray
+would slowly sag under the screen+Pi module and a PLA back wall would relax its snap
+tongues and tray pilots. The head_door shares the same hot bay, so it goes PETG too
+(its snap tongues also live longer in PETG). Everything else on the robot -- chassis,
+tracks, bezel, neck, pan parts, cosmetics -- can stay PLA. The black CR-PETG spool
+(Tray 1) covers the PETG set.</p>
+<ul>
+<li><code>chassis_lower_front</code> / <code>chassis_lower_rear</code>: the open-top tub, split at y=+26 for
+  print speed; join with 2x M3x12 (axis Y, heads in the front pads, thread-form rear)</li>
+<li>2x Ø4 dowels in the floor pads at x +-61, then the deck + pod rails bridge it</li>
+<li><code>chassis_deck_front</code> / <code>chassis_deck_center</code> / <code>chassis_deck_rear</code>: the pan deck in
+  three plates (seams y 66/-52, half-laps + 2x M3 down through each strip into shelf
+  pilots); the center carries the whole pan seat + its own 4 hold-downs; the corner
+  hold-downs live in the strips</li>
+<li><code>track_L</code> / <code>track_R</code>: tank track pods: 64 links/side (4 print-in-place strips +
+  master; integral Ø2.0 pins in-strip, Ø1.75 filament pins at the 5 boundaries), 12T
+  pin-pocket sprocket (real circular pin seats since 2026-07-10, r 1.15 on the 19.32
+  pin circle), 2 end idlers on 2x F688ZZ each (30 wide; front tensions in its deck pylon),
+  TWO ground-run drive sprockets (spr_y rear + spr_y2 front; the front motor is
+  OPTIONAL, all fittings modeled), 5 dished road wheels/side
+  (30 wide) on M4x40 bolt-axles off the pod-rail wheel beams</li>
+<li><code>pan_platform</code>: disc that yaws on the base (central shaft bore + off-axis cable pass)</li>
+<li><code>pan_race</code> / <code>pan_balls</code> / <code>pan_clips</code> / <code>pan_cage</code>: captured-BB lazy-Susan race, retaining
+  clips, and the BB spacer cage (18x 6 mm BBs; <code>pan_balls</code> is a placeholder for the bought
+  BBs; the cage keeps them spaced so a turret lift doesn't scatter them)</li>
+<li><code>neck_clevis</code>: rounded column + two cheeks that rise into the head and drive the tilt axle;
+  vertical cable channel</li>
+<li><code>head_bezel_L</code> / <code>head_bezel_R</code>: front frame split at x=+22 (M3 + Ø4 dowel in pads
+  behind the forehead/chin strips); seam staggered off the back's for interlock</li>
+<li><code>head_back_frame_L/R</code> + <code>head_back_panel_L/R</code>: rear cover in four (frames = walls +
+  pivot hubs, print front-down, no ceiling support; panels = the flat 4mm back wall,
+  print lying flat). 6x M3 from the back join panel to frame rim tabs; the frame
+  halves share the top-wall flange (2x M3) and the panel halves a tongue/groove</li>
+<li><code>screen_tray</code>: bench-mounted module carrier (2 rails + spine): the screen+Pi bolts to it
+  on the bench (4x M3x10 into the factory bosses, open access), the loaded tray drops into
+  head_back, 4x M3x10 drive from OUTSIDE the back wall (visible, between door and frame)</li>
+<li><code>cam_cover</code>: camera board cover and cable trap</li>
+<li><code>sd_plug</code>: friction plug for the microSD service slot (left wall + trim_rail_L); pull it,
+  reach the card with straight forceps down the eject axis (~61 mm, sight line clear)</li>
+<li><code>tilt_carrier</code>: removable tilt-motor cartridge plate; motor ears bolt to it on the bench,
+  4x M3x16 clamp it to the neck bracket from the open rear bay</li>
+<li><code>track_keeper_L/R</code>: master-link keeper bars (2 bars + side tabs per pod, 1x M2 each);
+  the master link body prints as link 0 inside each <code>track_L/R</code></li>
+<li><code>worm_wheel</code> / <code>tilt_worm</code>: real generated teeth (docs/WORM.md); the wheel hub now carries
+  the D-key ledge (regen includes it via the build's hub union)</li>
+<li>Cosmetic / design-ref set (render-only today, print with the head): side rails, forehead
+  <code>led_strip</code>, <code>antenna_stub</code> (pure print, no hardware, a real telescopic antenna is owned
+  in Bag 15 if ever wanted), <code>camera_pod</code> eye shell, rear <code>trim_hatch_frame</code>, chassis
+  <code>trim_fascia</code> + <code>trim_rear</code>, and the placeholder gripper arms (mechanism TBD)</li>
+</ul>
+<h2 id="verify-on-arrival-caliper-before-printing">Verify on arrival (caliper before printing)</h2>
+<p>The CAD models several bought parts from datasheet/typical dims, not measurements. The
+rule for every row: <strong>caliper the real part -&gt; update the named param(s) -&gt; <code>make build</code>
+-&gt; <code>make check</code> + <code>make fits</code> -&gt; only then print the dependent parts.</strong> Clone boards
+vary: barrel/jack spacings tend to be stable across clones, mounting-hole patterns are
+not. Printing a seat before its part has arrived is how reprints happen.</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Arriving part</th>
+<th>Caliper this</th>
+<th>CAD that depends on it (do not print first)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>XL4015 5A buck</td>
+<td>board LxW, mounting-hole pattern (40x20 assumed) + hole Ø, tallest component height</td>
+<td>belly power tray posts (Ø6x6, Ø2.5 pilots, <code>build_belly_plate</code> in src/chassis.py); board must clear the z14 ballast ribs</td>
+</tr>
+<tr>
+<td>MP1584 mini buck</td>
+<td>board LxW only (zip-mounted, no holes)</td>
+<td>zip-anchor pair spacing (x 20/34, y -58) on the belly plate</td>
+</tr>
+<tr>
+<td>12V PD trigger</td>
+<td>board LxW, jack position + height above board, mounting-hole spread</td>
+<td>rear-wall USB-C slot (14x8 at x -38, z0+24) + the 2x Ø1.7 M2 pilots at x -38±9</td>
+</tr>
+<tr>
+<td>HC-SR04 x4</td>
+<td>barrel c-c (26.0 assumed -- stable), barrel Ø (16.0/16.6 bores), board LxW, <strong>mounting-hole positions (vary by clone!)</strong></td>
+<td>front/rear grille recesses + fascia pilots; both cliff recesses in the deck slopes (1.2 skin-back recess + 4x Ø1.6 M2 pilots each, <code>sensor_cliff*</code>)</td>
+</tr>
+<tr>
+<td>Gooseneck mic windscreen</td>
+<td>foam Ø (17 assumed) + gooseneck stem Ø</td>
+<td>ear grommet Ø15 compress-fit bores + Ø19/Ø15 trim rings in the head_back side walls (<code>ear_*</code> params)</td>
+</tr>
+<tr>
+<td>LD2410 / BME688 / IMU / SW-420 / TTP223</td>
+<td>board LxW + hole pattern each</td>
+<td>chassis sensor seats (being added parametrized -- treat every one as VERIFY_ON_ARRIVAL, exact modules not yet chosen)</td>
+</tr>
+<tr>
+<td>M8x60 + NYLOC</td>
+<td>nut across-flats (13.0 nom) + nut height, washer OD</td>
+<td>prow-cheek nut channels (walls 13.8 apart grip the flats) + Ø14.4 washer slice</td>
+</tr>
+<tr>
+<td>M8 shank / Ø8 stubs</td>
+<td>actual shank Ø</td>
+<td>pylon Ø8.4 through holes + F688 8 mm bores (a fat zinc bolt binds)</td>
+</tr>
+<tr>
+<td>F688ZZ</td>
+<td>flange Ø (18) + width (5) + OD (16)</td>
+<td>idler Ø15.95 press seats + Ø18.5x1.0 flange recesses</td>
+</tr>
+<tr>
+<td>Narrow LED strip</td>
+<td>strip width + dot pitch</td>
+<td>42x5x1.5 <code>led_slot</code> + the 36x2.5 front lip (widen <code>led_slot</code> to ~54x11 only if forced onto 8x5050 sticks)</td>
+</tr>
+<tr>
+<td>Ø5 rod</td>
+<td>actual Ø (silver steel is -0/-0.01; generic rod varies)</td>
+<td>695-2RS 5 mm bore slip fit, head clamp bores, and the D-key coupon clearance (+0.05 start)</td>
+</tr>
+<tr>
+<td>XH connectors</td>
+<td>crimped-head width</td>
+<td>16x8 platform obround + neck channel passes (sized for a 5-pos XH head)</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="assembly-order-verified">Assembly order (verified)</h2>
+<p>Task #28 insertion-path + torque-path audit (2026-07-07): a full install order EXISTS
+end-to-end. Every step below was checked with swept-cylinder driver-line / extraction
+probes on the neutral-pose mesh; the numbers in parentheses are the worst measured
+clearance. Read the <strong>order constraints</strong> and <strong>nasty steps</strong> at the bottom before you
+start: several joints are only reachable at ONE point in the sequence.</p>
+<p>Tools you need: a <strong>1.5 mm hex key</strong> (head-clamp grubs), a standard M3/M2 driver, tweezers,
+and thread-lock or CA glue (cosmetics). (The old ~95 mm slim driver is retired: the screen
+tray killed the 88.5 mm blind channels, 2026-07-08.)</p>
+<h3 id="sub-assemblies-to-build-on-the-bench-first-they-become-unreachable-once-seated">Sub-assemblies to build on the bench FIRST (they become unreachable once seated)</h3>
+<ul>
+<li><strong>A. Neck + pan platform.</strong> With <code>pan_platform</code> upside-down on the bench, drop 3× M3 up
+  through its underside Ø6.5 counterbores (r16.5 circle, clocked 270/30/150) into the
+  <code>neck_clevis</code> base pilots. The counterbores face DOWN into the race once seated, so this
+  bolt-up is impossible after the platform is on the balls. Torque path: screws clamp
+  neck to platform; the platform's integral 16T pinion takes the drive from the pan
+  motor's 32T gear (fast-pan 2:1 gear-up 2026-07-12; the old on-axis D-bore is gone).</li>
+<li><strong>B. Tilt axle cartridge.</strong> Slide the <code>worm_wheel</code> (+ its two spacer tubes) onto the Ø5
+  axle, hub ledge riding the axle's filed flat (D-key: positive torque, nothing to grub).
+  Verify the fit on a printed coupon first: a loose flat is backlash.</li>
+<li><strong>C. Tilt-motor cartridge.</strong> Bolt the tilt 28BYJ's ears to <code>tilt_carrier</code> (2x M4 + nuts,
+  open bench access) and press the worm onto the D-shaft. The loaded carrier inserts later
+  from the rear bay (step 11) and comes OUT the same way for a motor swap, no head teardown.</li>
+</ul>
+<h3 id="chassis-drive-fixed-frame">Chassis + drive (fixed frame)</h3>
+<ol>
+<li><strong>Print + prep the chassis.</strong> Confirm the deck pan-seat, the pedestal, and both TT
+   motor pockets are clean.</li>
+<li><strong>Body↔pod join (rails), BEFORE ULN #1.</strong> Press the Ø4×12 dowels into each rail's blind
+   sockets, seat <code>pod_rail_L/R</code> on the body walls (dowels into the wall slip holes), and
+   drive the 2× M3×12 per side from INSIDE the cavity, thread-forming into the rail blocks'
+   blind Ø2.5 pilots. These four screws ARE the body↔pod join -- there is no second screw
+   set. ULN #1 mounts later because its board covers this cavity-side access.</li>
+<li><strong>TT motors.</strong> Set each TT gearmotor: shaft +X into the sprocket hub's double-D socket,
+   front tab into the rear-wall pocket, nub into the wall pocket, 2× M3 through the
+   gearbox + wall with the nut floating in the pod gap.</li>
+<li><strong>Track running gear.</strong> Press an F688ZZ into EACH face of all four end idlers (Ø15.95
+   seat + Ø18.5 flange recess both sides). Each end wheel: M8 bolt from outboard
+   through the bearings and the pylon, washer + NYLOC nut inboard, started ON THE
+   BENCH with the deck upside down. Orient each nut HEX FLATS FORE-AFT: as the deck
+   drops onto the tub the nut descends into its prow-cheek NUT CHANNEL (y-walls 13.8
+   apart), which grips the flats -- all torquing happens from the outboard head, no
+   inboard tool ever needed. Rear pair: snug. Front pair: leave loose, set tension
+   AFTER threading the tracks, then tighten from the head -- the channel holds the
+   nut, the nut clamps the slot. Fit the sprockets on the
+   TT shafts (they mesh the ground run under the hull; the robot's weight seats them). Drop an M4 nut up each wheel-beam slot (do this BEFORE mounting the
+   rails if access is tight), then bolt each road wheel with its M4x40 from outboard --
+   snug, then back off 1/8 turn so the wheel spins free.</li>
+<li><strong>Join the strips + close with the master (print-in-place chain, 2026-07-12).</strong>
+   Each pod is 4 PRINT-IN-PLACE strips (16+16+16+15 links, hinges already free off
+   the printer -- flex every joint once to crack any sag bonds) + 1 separate master.
+   On the bench: pin the strips end-to-end with 3 Ø1.75 filament pins (each boundary
+   = one strip's Ø2.2 open A-bores interleaving the previous strip's Ø2.2 far bores),
+   then pin the MASTER's far end to strip 1's first link (4th filament pin). Wrap the
+   open chain around the pod with the front idler retracted. Seat the last filament
+   pin (5th) in strip 4's final-link far bores, swing the master's open jaws down
+   onto it, slide the two <code>track_keeper</code> bars into the jaw slot from the side faces,
+   and lock each with its M2 into the side-face pilot. Tension the idler -- run the
+   chain TENSIONED: the PIP joints carry 0.35 radial slop (~8 mm of loop slack vs
+   the old filament chain) that otherwise lands as top-run sag; if the front
+   tension slot runs out of travel on the physical chain, that is the expected
+   first fix (more slot travel), not a link redesign. Track removal forever after:
+   2 M2s out, slide the keepers, lift the master off its pin.</li>
+</ol>
+<h3 id="pan-joint">Pan joint</h3>
+<ol start="6">
+<li><strong>Pan motor + drivers.</strong> Fit the printed 32T <code>pan_gears</code> onto the motor's D-flats, then
+   drop the pan 28BYJ into the pedestal can pocket (fast-pan 2026-07-12: the shaft sits
+   OFF-axis at (-19.2, 0), gear up; ears run along X), clamp the 2 ears with M3 into the
+   pedestal pilots from ABOVE (deck open). Mount ULN #1 and the 2nd ULN/MX1588 board on
+   their standoffs; wiring box leads exit the pedestal +Y relief.</li>
+<li><strong>Power tray, ballast, then belly plate.</strong> Screw the PD trigger to the rear-wall M2
+   pilots (jack aligned with the USB slot), the 5A buck to the belly plate's 40×20 post
+   grid, zip the mini buck beside it, and wire per firmware/WIRING.md (leave 60 mm slack
+   on every tray run; zip the incoming wall cable to the floor anchors as strain relief).
+   Load the low ballast into the rear bay + the belly-plate pockets from BELOW, then bolt
+   on <code>belly_plate</code> (6× M3 csk, flush at z=7). Ballast must go in before the plate closes
+   the floor.</li>
+<li><strong>Pan race.</strong> Grease the <code>pan_race</code> lower groove, seat it on the deck floor, lay the
+   <code>pan_cage</code> ring over it, and drop the <strong>18× 6 mm BBs</strong> through the cage pockets into
+   the groove with tweezers. The cage keeps them spaced; any later turret lift leaves all
+   18 sitting evenly in the groove instead of bunching and rolling out.</li>
+<li><strong>Lower sub-assembly A</strong> (neck+platform) onto the BBs so the platform's upper groove
+   captures them and its integral 16T pinion drops into mesh with the motor's 32T gear
+   (fast-pan 2026-07-12: fit the 32T on the motor D-flats BEFORE this step). Screw
+   the 3 <code>pan_clips</code> into the deck pockets (driver clear 6.17 mm from above); their tabs
+   reach over the platform rim rebate to hold the top-heavy head down. Check the platform
+   spins free.</li>
+</ol>
+<h3 id="tilt-joint-head-all-on-the-pan-group">Tilt joint + head (all on the pan group)</h3>
+<ol start="10">
+<li><strong>Bearings + axle cartridge.</strong> Press a 695-2RS into each neck cheek from the clevis gap
+    (seats open flush to the inner face; a light lead-in helps start the press). Insert
+    sub-assembly B through one cheek bearing → the gap (wheel meshes the worm) → the far
+    bearing.</li>
+<li><strong>Insert the tilt cartridge.</strong> Slide sub-assembly C (carrier + motor + worm) in from
+    the open rear bay: the worm passes the bracket plate's Ø12.2 bore, its tail lands in
+    the open-top cradle groove, the can registers in the Ø29 pocket, and the carrier's 4
+    bosses land on the plate/column rear faces. Drive 4× M3×16 from the rear into the
+    thread-form pilots. (Extraction reverses this and is UNCONDITIONAL since the 2026-07-12
+    3-start worm: the mesh back-drives, so with a dead motor just hand-nod the head while
+    pulling and the worm screws itself out. The old rule -- drive the head fully UP first
+    because the single-start pull needed ~46° of nod against ~34° of stop travel -- is
+    retired, 2026-07-13.) Route
+    the tilt ULN wiring on the column back standoffs, board centered at z 93, below the
+    carrier (motor + driver both ride the pan group, so no leads cross a joint).</li>
+<li><strong>Hang the head on the axle.</strong> Lower <code>head_back</code> so its side hubs take the axle ends, then
+    set the two head-clamp grubs at x=±30 with a 1.5 mm hex key driven UP through the bottom
+    motor bay (4.0 mm clear). The axle now turns with the head; the worm holds tilt with the
+    driver off ONLY marginally (fast-tilt 2026-07-12: the 3-start worm back-drives;
+    hold is 28BYJ detent+gear friction through 4:1 -- firmware energize-hold or park
+    at the balance point; see CLAUDE.md fast pan/tilt pass).</li>
+<li><strong>Screen + Pi module (tray).</strong> On the BENCH: bolt <code>screen_tray</code> to the combined
+    touchscreen+Pi with 4× M3×10 pan heads straight into the display's factory 126.2×65.65
+    bosses (the pillars are z-offset from the bores, so the driver line is open). Power-test
+    the module on the desk if you like -- it is now a self-contained unit. Then drop the
+    loaded tray into <code>head_back</code> from the open front (the pillars pass z-clear of the clamp
+    tubes) and drive 4× M3×10 from OUTSIDE the back wall into the pillar-end pilots: short,
+    visible screws in the fixed strip between the door outline and the hatch-frame opening.
+    The bezel pocket locates the glass when the head closes (step 15).</li>
+<li><strong>Camera + forehead LED.</strong> Mount the CM3 front-face-in on the 4× M2 pier bosses, trap it
+    with <code>cam_cover</code> (2× M2 + ribbon pinch), drop the CSI ribbon into the pocket. Seat the
+    WS2812 forehead segment in its recess and route the 3 wires through the wire pass to the
+    Pi. Route the Pi power pair per the cable step below.</li>
+<li><strong>Close the head.</strong> Bezel to back: 8× M3×35 through the perimeter posts into the captive
+    nuts in the back bosses (screws from the front). Fit the rear service <code>head_door</code>
+    (the stepped rear pod): engage the two top hook tabs first, swing the door in until
+    both leg snap tongues CLICK behind the wall band beside the void (tool-free; replaced
+    the 2× M3 csk 2026-07-10). To open: firm pull on the pod's bottom edge (35 mm proud,
+    that IS the grip); the barbs' back ramps cam the tongues inboard and release. Open at
+    roughly neutral tilt: at the ±33.8° stalls the tilt drivetrain reaches into the pod's
+    internal cavity.</li>
+</ol>
+<p>15b. <strong>Antenna drives.</strong> Slip a friction O-ring into each top-wall guide bore, drop each
+    mast in from above (rack facing the pinion slot), then hang <code>ant_bracket</code> on the back
+    wall (spine + 2 pilots), slide the Ø4 half-shafts through their bushings with the
+    pinion + G4 gears, seat the idler shafts + G2/G3, and bolt each 28BYJ nose-through
+    its face plate (2x M3 into the vertical-ear pilots, shaft inboard). Each mast has its
+    OWN motor + ULN2003 (independent control); wire both to the Pi in the head. Homing:
+    drive down until stall (tip cap on the boss). BUY: 2x Ø4 steel rod ~90 mm, 2x O-ring
+    (Ø7 bore seat), plus the 30T/12T/27T m0.8 spur set per side (or print them with the
+    worm-gear pipeline, docs/WORM.md).</p>
+<h3 id="cables-per-docscable-checkmd-firmwarewiringmd">Cables (per docs/CABLE-CHECK.md + firmware/WIRING.md)</h3>
+<ol start="16">
+<li>Wall PD brick → rear PD trigger (12 V) → belly tray bucks. The Pi-rail pair (18 AWG,
+    from the 5A buck) coils a <strong>2-turn service loop (~600 mm) at r≈48, z≈38–45</strong> in the
+    cavity → 16×8 deck pass → platform slot → neck channel → the column top-left exit
+    window → through the bottom-rear head slot to the Pi's <strong>GPIO 5V/GND pins</strong> with
+    <strong>~60 mm of free head lead</strong> for the tilt drape. Set <code>usb_max_current_enable=1</code> +
+    EEPROM <code>PSU_MAX_CURRENT=5000</code> (GPIO power skips PD negotiation). Software-limit pan
+    to ±90° (hard stops at ±93.3) so the loop never over-winds.</li>
+</ol>
+<h3 id="cosmetics-last-glue-locating-pins">Cosmetics LAST (glue + locating pins)</h3>
+<ol start="17">
+<li>Press-and-glue the pin-located cosmetic parts: <code>trim_rail_L/R</code>, <code>trim_hatch_frame</code>
+    (<strong>after</strong> the screen, its band overlaps the 4 driver-channel mouths, up to 2.3 mm),
+    <code>camera_pod</code>, <code>antenna_stub</code>, and the chassis <code>trim_fascia</code> / <code>trim_rear</code> / <code>sensor_rear</code>
+    grille cap. Fit fascia electronics if used: HC-SR04P barrels through the Ø16 passes, amber
+    corner lamps, front LED strip, rear buzzer/speaker.</li>
+<li><strong>Final check + homing.</strong> Power on; firmware stall-homes pan against its ±93.3° deck
+    stops and tilt against its ±33.8° fin stops, backs off, and zeroes. Sweep pan ±90 and
+    tilt ±30 and confirm the screen/Pi stack, worm, cheeks, axle, cables and bottom head
+    edge stay clear (matches the <code>make check-sweep</code> gate).</li>
+</ol>
+<h3 id="order-constraints-do-not-reorder">Order constraints (do NOT reorder)</h3>
+<ul>
+<li>Body↔pod join + TT screws (step 3) <strong>before</strong> ULN #1 (step 6): the board blocks cavity access.</li>
+<li>Neck↔platform bolt-up (sub-assembly A) <strong>before</strong> seating on the balls, counterbores face down.</li>
+<li>BBs + cage (step 8) <strong>before</strong> the platform (step 9); power tray + ballast (step 7)
+  <strong>before</strong> the belly plate closes the floor.</li>
+</ul>
+<h3 id="nasty-but-possible-steps-measured">Nasty-but-possible steps (measured)</h3>
+<ul>
+<li><strong>Head-clamp grubs (step 12):</strong> 1.5 mm hex key driven blind UP through the motor bay,
+  4.0 mm clearance. Kept deliberately: the grubs give continuous tilt-zero trim.</li>
+</ul>
+<p>(2026-07-08 passes retired the old tilt-motor-ear reach, the worm-wheel bench grub, the
+last-track-pin loop flex, and the 4× 88.5 mm blind screen-standoff screws -- the worst
+step in the build is now four short bench screws plus four visible wall screws.)</p>
+<h3 id="track-coupon-protocol-plate-20-48-min-print-before-any-strip-plate">Track coupon protocol (plate 20, ~48 min -- print BEFORE any strip plate)</h3>
+<p>Plate 20 is a 5-link print-in-place coupon (open-A first link, 3 integral-pin mids,
+open-far last, keels on) + 1 loose master link + both keeper bars. Measure on it:</p>
+<ol>
+<li>Every PIP hinge frees after break-in flexing -- no fused knuckles.</li>
+<li>Hinge radial slop: pull the 5-link strip taut and measure total stretch vs 40.0
+   nominal; that gives real per-joint slack. Scale x59 and check it still fits the
+   6.5 mm front slot travel via delta_L / 1.84.</li>
+<li>Ø2.0 integral pins unbroken after 20 full +-35 deg articulations.</li>
+<li>Keel faces clean (no sag scars), grousers flat.</li>
+<li>Ø2.2 boundary bores accept Ø1.75 filament.</li>
+<li>Master jaw drops onto the end pin; keepers slide and seat; M2 pilots hold.</li>
+</ol>
+<p>Any fail: adjust <code>track_bore_pip_d</code> / <code>track_pin_print_d</code> and reprint the COUPON,
+not a strip.</p>
+<h3 id="recommendations-bigger-than-this-pass">Recommendations (bigger than this pass)</h3>
+<ul>
+<li>Print a D-bore coupon and dial the axle-flat clearance (modeled at +0.05; +0.15 measured
+  as ±4.4° of head backlash) before committing the filed axle.</li>
+<li>Print supports: paint a support enforcer under the neck's two tilt-stop posts (x 20..32,
+  z 150..156 -- their outboard halves start mid-air with the neck on its back) and extend
+  the clamp-tube supports over the head_back stop fins (55° overhangs feeding a ~0.9 mm
+  homing margin; treat the first stall-home angle as calibration). Print the track keepers
+  lying on their 13.3×1.9 bar face so the slot-critical 1.9 width is XY-accurate.</li>
+<li>Track gauge is still ~184 vs a 205-wide head (~10 mm overhang/side): widen the gauge or
+  accept it (tracked elsewhere).</li>
+<li>If field-servicing the screen without un-gluing the hatch frame matters, notch the frame
+  band clear of the 4 channel mouths.</li>
+</ul>
+<h2 id="wiring">Wiring</h2>
+<p><strong>See firmware/WIRING.md</strong> (2026-07-08) for the full architecture: 12 V PD-trigger input,
+dual-buck belly tray (5.1 V Pi rail + 5 V motor rail), what crosses each joint, Pi 5
+config flags, connector/labeling rules, and the buy-list delta. Short version: only the
+Pi-rail pair crosses tilt; the pan loop carries that pair plus the thin motor-rail/signal
+bundle; DSI and CSI ribbons never leave the head.</p>
+<h2 id="order-now-by-lead-time-importance">Order now (by lead-time importance)</h2>
+<ol>
+<li><strong>8x F688ZZ flanged bearings</strong> (8x16x5, flange Ø18): most specific part, slowest to source;
+   the end-idler seats are modeled around them (2 per wheel x 4 since the mid-drive).
+1b. <strong>10x M4x40</strong> (road-wheel bolt-axles; partially threaded preferred; M4 nuts are owned)<ul>
+<li><strong>4x M8x60 + 4 NYLOC nuts + 4 washers</strong> (end bolt-axles; SETTLED 2026-07-13, Bag 13
+has no M8).</li>
+</ul>
+</li>
+<li><strong>4x HC-SR04</strong> (forward + rear obstacle + 2 cliff; zero owned; plain 5V is fine on the
+   Arduino I/O plane). TT gearmotors are COVERED (own 3); buy 1 more only for the optional
+   twin-drive 4th station.</li>
+<li><strong>Power electronics</strong> (firmware/WIRING.md): a 30W+ USB-C PD brick (the official 27W
+   works), 12V PD trigger, XL4015-class 5A buck, MP1584 mini buck, JST-XH kit + crimper,
+   1 m 18 AWG silicone pair, inline blade-fuse holder (the 5A blade fuse itself is owned).</li>
+<li><strong>1 m narrow addressable LED strip</strong> (4–5 mm wide, SK6805-2427 / WS2812-2020, ≥160 LED/m),
+   one purchase covers the forehead 8-LED segment and the front 7-dot strip. (Alternative:
+   widen <code>led_slot</code> to ~54x11 and buy two common 8x5050 sticks.)</li>
+<li><strong>Ø5 SOLID rod ~100 mm</strong> (tilt axle; NOT tube) + <strong>Ø4x12 dowels x4</strong> (body-to-pod join).</li>
+<li><strong>6 mm airsoft BBs</strong> (bag of 100+; need 18): cheap, everywhere.</li>
+<li>Optional: <strong>MAX98357A I2S amp</strong> x1 (pairs with the owned 8Ω speaker), <strong>amber LEDs</strong> x2–5.</li>
+</ol>
+<p>Every board/hardware item above lands in the "Verify on arrival" table -- caliper before
+printing its seat.</p>
+</main>
+</body>
+</html>

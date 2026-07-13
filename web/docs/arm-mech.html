@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0d0f13">
+<title>Arm mechanism · desk-pi</title>
+<style>
+  :root{
+    --ink:#e9edf1; --ink-dim:#9aa4b0; --ink-faint:#69727e;
+    --panel:rgba(20,23,28,.66); --hair:rgba(255,255,255,.09);
+    --accent:#5cc7d4; --accent-soft:rgba(92,199,212,.16);
+    --orange:#e87422;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html{scroll-padding-top:56px}
+  body{margin:0;min-height:100vh;color:var(--ink);
+    font:14.5px/1.65 system-ui,-apple-system,Segoe UI,sans-serif;
+    background:radial-gradient(125% 100% at 50% -10%, #2b313b 0%, #191d23 46%, #0d0f13 100%);
+    background-attachment:fixed}
+  main{max-width:880px;margin:0 auto;padding:68px 22px 80px}
+  h1,h2,h3,h4{line-height:1.25;letter-spacing:-.01em;scroll-margin-top:56px}
+  h1{font-size:27px;margin:10px 0 6px}
+  h2{font-size:19px;margin:34px 0 10px;padding-top:18px;border-top:1px solid var(--hair)}
+  h3{font-size:15.5px;margin:24px 0 8px;color:var(--ink)}
+  p{margin:10px 0;color:var(--ink-dim)}
+  li{color:var(--ink-dim);margin:4px 0}
+  strong{color:var(--ink)}
+  a{color:var(--accent);text-decoration:none}
+  a:hover{text-decoration:underline}
+  code{font:12.5px var(--mono);background:rgba(255,255,255,.07);padding:1.5px 5px;border-radius:5px;color:var(--ink)}
+  pre{background:rgba(0,0,0,.38);border:1px solid var(--hair);border-radius:12px;
+    padding:14px 16px;overflow-x:auto}
+  pre code{background:transparent;padding:0;color:var(--ink-dim)}
+  .tbl{overflow-x:auto;margin:14px 0;border:1px solid var(--hair);border-radius:12px}
+  table{border-collapse:collapse;width:100%;font-size:13px}
+  th,td{padding:8px 12px;text-align:left;vertical-align:top;border-bottom:1px solid var(--hair)}
+  th{font:600 10.5px/1.3 var(--mono);letter-spacing:.1em;text-transform:uppercase;
+    color:var(--ink-faint);background:rgba(255,255,255,.03)}
+  tr:last-child td{border-bottom:0}
+  td{color:var(--ink-dim)}
+  td:first-child{color:var(--ink)}
+  blockquote{margin:12px 0;padding:2px 16px;border-left:3px solid var(--accent);
+    background:var(--accent-soft);border-radius:0 10px 10px 0}
+  hr{border:0;border-top:1px solid var(--hair);margin:26px 0}
+  .crumb{font:600 9.5px/1 var(--mono);letter-spacing:.22em;color:var(--accent);text-transform:uppercase}
+  /* hub cards */
+  .hub h2{border-top:0;padding-top:8px}
+  .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin:14px 0 8px}
+  .card{display:block;padding:14px 16px;background:var(--panel);border:1px solid var(--hair);
+    border-radius:14px;transition:border-color .12s,transform .12s}
+  .card:hover{border-color:var(--accent);text-decoration:none;transform:translateY(-1px)}
+  .card b{display:block;font-size:14px;color:var(--ink);margin-bottom:4px}
+  .card span{font-size:12px;color:var(--ink-dim);line-height:1.5;display:block}
+  .hero{width:100%;border-radius:16px;border:1px solid var(--hair);margin:16px 0 4px;display:block}
+
+  #topnav{position:fixed;top:0;left:0;right:0;z-index:30;display:flex;align-items:center;
+    gap:2px;height:42px;padding:0 14px 0 16px;
+    background:rgba(13,15,19,.82);border-bottom:1px solid var(--hair);
+    backdrop-filter:blur(18px) saturate(1.25);-webkit-backdrop-filter:blur(18px) saturate(1.25);
+    white-space:nowrap}
+  @media (max-width:700px){#topnav a.pl{display:none}#topnav .brand span{display:none}}
+  #topnav a,#topnav .dd button{font:600 11px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;
+    color:var(--ink-dim);text-decoration:none;padding:7px 10px;border-radius:8px;
+    background:transparent;border:0;cursor:pointer;transition:color .12s,background .12s}
+  #topnav a:hover,#topnav .dd button:hover{color:var(--ink);background:rgba(255,255,255,.06)}
+  #topnav a.on,#topnav .dd button.on{color:var(--accent);background:var(--accent-soft)}
+  #topnav .brand{font:700 12px/1 var(--mono);letter-spacing:.18em;color:var(--ink);
+    margin-right:10px;display:flex;align-items:baseline;gap:7px}
+  #topnav .brand span{font:600 9px/1 var(--mono);letter-spacing:.14em;color:var(--ink-faint)}
+  #topnav .gh{margin-left:auto;color:var(--ink-faint)}
+  #topnav .dd{position:relative}
+  #topnav .dd .menu{display:none;position:absolute;top:calc(100% + 4px);left:0;min-width:180px;
+    padding:5px;background:rgba(20,23,28,.96);border:1px solid var(--hair);border-radius:12px;
+    box-shadow:0 14px 38px rgba(0,0,0,.55);
+    backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+  #topnav .dd:hover .menu,#topnav .dd:focus-within .menu{display:block}
+  #topnav .dd .menu a{display:block;padding:8px 10px}
+</style>
+</head>
+<body>
+<nav id="topnav">
+  <a class="brand" href="../viewer_glb.html">PARVIZ<span>desk-pi</span></a>
+  <a href="../viewer_glb.html">Viewer</a>
+  <a class="pl" href="../docs/electronics.html">Electronics</a><a class="pl" href="../docs/assembly.html">Assembly</a><a class="pl" href="../docs/wiring.html">Wiring &amp; power</a>
+  <div class="dd"><button class="on" aria-haspopup="true">Docs &#9662;</button>
+    <div class="menu"><a href="../docs/index.html">All docs</a><a href="../docs/electronics.html">Electronics</a><a href="../docs/assembly.html">Assembly</a><a href="../docs/wiring.html">Wiring &amp; power</a><a href="../docs/printability.html">Printability</a><a href="../docs/fixes.html">Fix ledger</a><a href="../docs/worm.html">Worm drive</a><a href="../docs/arm-mech.html">Arm mechanism</a><a href="../docs/cable-check.html">Cable check</a><a href="../docs/reference-audit.html">Reference audit</a><a href="../docs/awareness.html">Awareness</a><a href="../docs/software.html">Software</a></div></div>
+  <a class="gh" href="https://github.com/m-esm/parviz" title="source">GitHub</a>
+</nav>
+<main>
+<div class="crumb">desk-pi · Design docs</div>
+<h1 id="arm-mechanism-task-20-rigid-vs-posable-vs-actuated">Arm mechanism (task #20): rigid vs posable vs actuated</h1>
+<p>Scope: the two gripper arms built by <code>build_arms()</code> in <code>src/build.py</code>. They mount on the head's
+side rails (rail face x ±107.5, arm plane x ±127, standoff span 19.5 mm), so they ride the pan
+AND tilt joints. Every option below is judged against the tilt worm drive, the joint that
+actually carries them.</p>
+<h2 id="measured-baseline-from-the-neutral-pose-geometry-not-the-posed-glb">Measured baseline (from the neutral-pose geometry, not the posed GLB)</h2>
+<p>Computed by loading <code>build_arms()</code> directly (the committed <code>web/assembly.glb</code> is posed at
+pan 22 / tilt -12, which skews per-arm centroids; neutral-pose numbers below).</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>quantity</th>
+<th>value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>volume per arm (watertight)</td>
+<td>23.9 cm³</td>
+</tr>
+<tr>
+<td>solid PLA (1.24 g/cm³)</td>
+<td>29.7 g/arm</td>
+</tr>
+<tr>
+<td>printed, 2 walls + 30% infill (eff. 0.45 to 0.60 of solid)</td>
+<td><strong>13.4 to 17.8 g/arm, ~15 g nominal</strong></td>
+</tr>
+<tr>
+<td>both arms, printed</td>
+<td><strong>27 to 36 g</strong></td>
+</tr>
+<tr>
+<td>arm CoM, neutral pose</td>
+<td>(±125.5, +18.6, +170.7)</td>
+</tr>
+<tr>
+<td>lever about tilt axis (y -18, z 153)</td>
+<td>dy +36.6 mm horizontal, r 40.6 mm total</td>
+</tr>
+<tr>
+<td>lever about shoulder (y 0, z 130)</td>
+<td>44.7 mm</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="tilt-worm-load-budget">Tilt-worm load budget</h2>
+<p>Gravity moment the arms add about the tilt axle (both arms, they are symmetric so pan position
+does not matter):</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>print</th>
+<th>neutral tilt</th>
+<th>worst tilt angle (full r as lever)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>30% infill (~15 g/arm)</td>
+<td>10.7 mN·m</td>
+<td>11.8 mN·m</td>
+</tr>
+<tr>
+<td>solid (29.7 g/arm)</td>
+<td>21.3 mN·m</td>
+<td>23.7 mN·m</td>
+</tr>
+</tbody>
+</table></div>
+<p>Available torque at the axle: 28BYJ-48 usable 30 to 35 mN·m, times the 12:1 wheel, times
+single-start worm efficiency 0.35 to 0.45 = <strong>126 to 189 mN·m at the axle</strong>.</p>
+<ul>
+<li>Holding is free (self-locking worm), as designed.</li>
+<li>Swinging: arms consume 6 to 9% of axle torque at 30% infill, 13 to 19% if printed solid.
+  <strong>Margin is fine.</strong> The head must stay roughly pre-balanced as CLAUDE.md already requires;
+  the arms are a small perturbation on top of that, not the dominant load.</li>
+<li>Caveat: the arm CoM sits 36.6 mm FORWARD of the tilt axis, so both arms add a constant
+  ~11 mN·m nose-down bias. Re-trim the head balance for it (slide the Pi/ballast back a few mm
+  or accept the bias, it is well inside the budget either way). The worm holds it de-energized
+  regardless.</li>
+<li>Pan: added inertia 4.8e-4 kg·m² (CoM at r 127 from the pan axis). At a brisk 3 rad/s²
+  that is 1.5 mN·m against the pan 28BYJ's ~30 mN·m. Negligible.</li>
+</ul>
+<h2 id="option-a-rigid-single-print-current-placeholder-formalized">Option A: rigid single-print (current placeholder, formalized)</h2>
+<p>Each arm stays one body in the raised pose. Zero hardware, zero wiring, zero new failure modes.
+The numbers above show the tilt worm does not care. This is fully adequate for v1: the arms are
+a styling element and the raised pose already clears the pods at every pan x tilt combination
+(that is why the pose exists, see the <code>build_arms()</code> docstring).</p>
+<p>One change now (see "print differently today" below): make the arm a <strong>bolt-on module</strong>, not
+fused to the head, so options B and C retrofit without reprinting <code>head_back</code>.</p>
+<h2 id="option-b-hand-posable-frictiondetent-joints">Option B: hand-posable friction/detent joints</h2>
+<p>For photo-posing and desk expressiveness without electronics.</p>
+<ul>
+<li><strong>Shoulder (pitch about X), the DoF that matters.</strong> Split the arm at the shoulder disc:
+  standoff-side clutch disc + arm-side clutch disc, mating faces carry 12 radial teeth
+  (30° indexing) or a smooth friction face for continuous posing. M3×16 through the shoulder
+  axis into a captive nut, preloaded through a printed wave washer (or a rubber M3 washer,
+  which holds its preload better than PLA creep). Target breakaway ~50 to 100 mN·m: gravity on
+  the arm about the shoulder is only 6.6 mN·m, so 8 to 15x margin against droop from track
+  vibration, still an easy two-finger repose.</li>
+<li><strong>Elbow (pitch about X), second priority.</strong> Same disc pair at the 9.5 mm elbow joint, smaller
+  teeth. Gravity load about the elbow is ~2 mN·m; even a light preload holds.</li>
+<li><strong>Skip the wrist.</strong> Claw orientation is cosmetic; a third clutch adds slop and print fiddle
+  for nothing.</li>
+<li>Cost: 2× M3 + nylock + washer per arm, ~2 g extra plastic per joint. Tilt-worm impact:
+  effectively unchanged from option A (the hardware adds ~4 g/arm near the shoulder, under
+  1 mN·m about the tilt axis).</li>
+<li>Known risk: PLA clutch faces creep and lose preload over weeks. Detent teeth fix that
+  (position held by geometry, not friction), at the price of 30° granularity. Ship teeth.</li>
+</ul>
+<h2 id="option-c-actuated-smallest-sensible-one-sg90-per-shoulder">Option C: actuated, smallest sensible = one SG90 per shoulder</h2>
+<p><strong>One DoF per arm (shoulder swing) is enough for expressiveness.</strong> Prior art agrees: Anki
+Cozmo/Vector get their entire body language from a single 1-DoF lift plus head pitch; here
+pan + tilt + track motion already exist, so arm raise/wave/droop/point completes the vocabulary.
+An elbow servo doubles wiring and mass for a marginal gain. Do not do 2-DoF arms.</p>
+<h3 id="actuator-choice-checked-against-a-personal-parts-inventory-2026-07-07">Actuator choice, checked against a personal parts inventory (2026-07-07)</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>owned</th>
+<th>qty</th>
+<th>mass</th>
+<th>torque</th>
+<th>verdict</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Cytron T-8090 (SG90 clone)</td>
+<td>5, Bag 2</td>
+<td>~9 g</td>
+<td>~1.8 kg·cm (176 mN·m) @ 4.8 V</td>
+<td><strong>use these</strong></td>
+</tr>
+<tr>
+<td>Tower Pro SG90 (blue)</td>
+<td>3, Bag 14</td>
+<td>~9 g</td>
+<td>~1.8 kg·cm</td>
+<td>same part</td>
+</tr>
+<tr>
+<td>SG90 (other brand)</td>
+<td>1, Bag 14</td>
+<td>~9 g</td>
+<td>~1.8 kg·cm</td>
+<td>spare</td>
+</tr>
+<tr>
+<td>MG90S metal gear</td>
+<td>1, Bag 14</td>
+<td>~13.4 g</td>
+<td>~2.2 kg·cm</td>
+<td>overkill; keep for the claw if ever</td>
+</tr>
+<tr>
+<td>28BYJ-48 spare</td>
+<td>4 of 6, Bag 14</td>
+<td>~35 g</td>
+<td>~30 mN·m</td>
+<td><strong>rejected, see below</strong></td>
+</tr>
+<tr>
+<td>ULN2003 boards</td>
+<td>9 (3 + 6)</td>
+<td></td>
+<td></td>
+<td>pan/tilt use 2, plenty spare</td>
+</tr>
+</tbody>
+</table></div>
+<p>Required shoulder torque: 6.6 mN·m to swing the bare arm, 24 mN·m with a 20 g object in the
+claw at full reach. An SG90's 176 mN·m gives 7 to 27x margin. Buy nothing.</p>
+<p><strong>28BYJ at the shoulder does not fit and should not fit.</strong> The standoff span (rail face 107.5
+to arm plane 127) is 19.5 mm; the motor can is Ø28.25 x 18.8 with mounting ears at 35 mm, and
+it weighs ~35 g against the arm's 15 g. It would more than triple the outboard mass (35 g at
+x ±110+, tilt moment contribution alone ~2x the whole arm's) and need its own ULN2003 in the
+head. Wrong tool; the 28BYJs stay on pan, tilt, and the spares shelf.</p>
+<h3 id="packaging-rotating-body-servo-in-the-arms-shoulder-hub">Packaging: rotating-body servo in the arm's shoulder hub</h3>
+<p>The naive layout (servo in the standoff, shaft along X) fails: the SG90 is 31 mm along its
+shaft axis and only 19.5 mm exists between rail face and arm plane. Pocketing it inside the
+head fails too: interior width is 197 mm and the screen module is 192.96 wide, ~2 mm/side at
+shoulder height. Two layouts that do work:</p>
+<ol>
+<li><strong>Preferred: fixed horn, rotating body.</strong> Bolt the servo horn to the (static) standoff face
+   on the shoulder axis; embed the servo body in the arm's shoulder end, which grows from the
+   r11 disc to a ~26 x 24 x 14 box (the SG90 is 22.2 x 11.8 in footprint, 11.8 fits inside the
+   arm-plane thickness). The servo rotates itself plus the arm around the fixed horn. No change
+   to <code>arm_x</code>, no change to the head silhouette. The lead exits the arm at the shoulder and
+   immediately enters the rail wall (see wiring).</li>
+<li>Fallback: push <code>arm_x</code> from 127 to ~139 and house the servo in a fattened standoff pod,
+   shaft outboard. Costs 12 mm of overhang per side on a head that already overhangs the
+   tracks ~10 mm/side. Only if layout 1's rotating lead proves annoying.</li>
+</ol>
+<p>Added mass: servo 9 g + horn/screws ~2 g + pocket rework ~3 g = <strong>~14 g/arm</strong>, sitting near the
+shoulder (r 29 mm from the tilt axis), adding at most 8 mN·m for both arms. Combined with the
+arms themselves the whole actuated system stays under ~20 mN·m of the 126+ mN·m axle budget.</p>
+<h3 id="wiring-and-the-no-joint-crossing-confirmation">Wiring (and the no-joint-crossing confirmation)</h3>
+<p>Confirmed: <strong>the arms are head-mounted, so arm wiring crosses ZERO joints.</strong> They pan and tilt
+with the head; the Pi is also in the head. The route: servo lead (3-core) from the shoulder,
+through a Ø6 hole in the head side wall hidden behind the orange rail, into the rear head
+cavity (behind the screen module, y &lt; -14 is free), to the Pi. Total run ~15 cm, static, no
+drape, no service loop. Signal from two GPIO PWM pins (or the existing PWM channels); power the
+two servos from the 5 V rail through their own filtered branch, stall is ~650 mA each and two
+stalled servos plus screen plus camera is exactly the brownout scenario the 27 W PD supply was
+chosen for. Software-limit the sweep so a claw can never reach the pods (the raised-pose
+clearance analysis assumed a fixed arm).</p>
+<h2 id="recommendation-for-v1-and-what-to-print-differently-today">Recommendation for v1, and what to print differently today</h2>
+<p><strong>Ship v1 with option A (rigid, raised pose), but print the interface for option C now:</strong></p>
+<ol>
+<li><strong>Make the arm a separable bolt-on, not part of the head print.</strong> Give the side rail /
+   head_back a flat mounting pad with 2× M3 captive-nut bosses (vertical pair, 16 mm apart,
+   centered on the shoulder axis at y 0, z 130). v1 arm prints as one rigid body with a
+   matching 2-hole flange on its standoff root. Options B and C then bolt onto the same pad,
+   and a broken arm (the most snag-prone part on the robot) is a 24 g reprint instead of a
+   head_back reprint.</li>
+<li><strong>Drill the servo lead pass now.</strong> Ø6 through-hole in the head side wall behind the rail,
+   at the shoulder position, with a printed blanking plug for v1. Retrofitting option C then
+   touches zero head parts.</li>
+<li>Print arms at ~30% infill, 2 walls; do not print solid (doubles the tilt bias for no
+   stiffness you need).</li>
+<li>When the upgrade itch hits, go straight to option C with the owned SG90s (fixed-horn,
+   rotating-body layout, one per shoulder). Option B is a decent halfway house only if you
+   want posable arms before you want wiring; it uses the same bolt-on pad either way.</li>
+</ol>
+<p>The tilt worm is not the constraint at any point in this path: worst case (solid arms plus
+servos) stays under 20% of available axle torque, and holding torque is free by design.</p>
+</main>
+</body>
+</html>

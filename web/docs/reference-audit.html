@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0d0f13">
+<title>Reference audit · desk-pi</title>
+<style>
+  :root{
+    --ink:#e9edf1; --ink-dim:#9aa4b0; --ink-faint:#69727e;
+    --panel:rgba(20,23,28,.66); --hair:rgba(255,255,255,.09);
+    --accent:#5cc7d4; --accent-soft:rgba(92,199,212,.16);
+    --orange:#e87422;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html{scroll-padding-top:56px}
+  body{margin:0;min-height:100vh;color:var(--ink);
+    font:14.5px/1.65 system-ui,-apple-system,Segoe UI,sans-serif;
+    background:radial-gradient(125% 100% at 50% -10%, #2b313b 0%, #191d23 46%, #0d0f13 100%);
+    background-attachment:fixed}
+  main{max-width:880px;margin:0 auto;padding:68px 22px 80px}
+  h1,h2,h3,h4{line-height:1.25;letter-spacing:-.01em;scroll-margin-top:56px}
+  h1{font-size:27px;margin:10px 0 6px}
+  h2{font-size:19px;margin:34px 0 10px;padding-top:18px;border-top:1px solid var(--hair)}
+  h3{font-size:15.5px;margin:24px 0 8px;color:var(--ink)}
+  p{margin:10px 0;color:var(--ink-dim)}
+  li{color:var(--ink-dim);margin:4px 0}
+  strong{color:var(--ink)}
+  a{color:var(--accent);text-decoration:none}
+  a:hover{text-decoration:underline}
+  code{font:12.5px var(--mono);background:rgba(255,255,255,.07);padding:1.5px 5px;border-radius:5px;color:var(--ink)}
+  pre{background:rgba(0,0,0,.38);border:1px solid var(--hair);border-radius:12px;
+    padding:14px 16px;overflow-x:auto}
+  pre code{background:transparent;padding:0;color:var(--ink-dim)}
+  .tbl{overflow-x:auto;margin:14px 0;border:1px solid var(--hair);border-radius:12px}
+  table{border-collapse:collapse;width:100%;font-size:13px}
+  th,td{padding:8px 12px;text-align:left;vertical-align:top;border-bottom:1px solid var(--hair)}
+  th{font:600 10.5px/1.3 var(--mono);letter-spacing:.1em;text-transform:uppercase;
+    color:var(--ink-faint);background:rgba(255,255,255,.03)}
+  tr:last-child td{border-bottom:0}
+  td{color:var(--ink-dim)}
+  td:first-child{color:var(--ink)}
+  blockquote{margin:12px 0;padding:2px 16px;border-left:3px solid var(--accent);
+    background:var(--accent-soft);border-radius:0 10px 10px 0}
+  hr{border:0;border-top:1px solid var(--hair);margin:26px 0}
+  .crumb{font:600 9.5px/1 var(--mono);letter-spacing:.22em;color:var(--accent);text-transform:uppercase}
+  /* hub cards */
+  .hub h2{border-top:0;padding-top:8px}
+  .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin:14px 0 8px}
+  .card{display:block;padding:14px 16px;background:var(--panel);border:1px solid var(--hair);
+    border-radius:14px;transition:border-color .12s,transform .12s}
+  .card:hover{border-color:var(--accent);text-decoration:none;transform:translateY(-1px)}
+  .card b{display:block;font-size:14px;color:var(--ink);margin-bottom:4px}
+  .card span{font-size:12px;color:var(--ink-dim);line-height:1.5;display:block}
+  .hero{width:100%;border-radius:16px;border:1px solid var(--hair);margin:16px 0 4px;display:block}
+
+  #topnav{position:fixed;top:0;left:0;right:0;z-index:30;display:flex;align-items:center;
+    gap:2px;height:42px;padding:0 14px 0 16px;
+    background:rgba(13,15,19,.82);border-bottom:1px solid var(--hair);
+    backdrop-filter:blur(18px) saturate(1.25);-webkit-backdrop-filter:blur(18px) saturate(1.25);
+    white-space:nowrap}
+  @media (max-width:700px){#topnav a.pl{display:none}#topnav .brand span{display:none}}
+  #topnav a,#topnav .dd button{font:600 11px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;
+    color:var(--ink-dim);text-decoration:none;padding:7px 10px;border-radius:8px;
+    background:transparent;border:0;cursor:pointer;transition:color .12s,background .12s}
+  #topnav a:hover,#topnav .dd button:hover{color:var(--ink);background:rgba(255,255,255,.06)}
+  #topnav a.on,#topnav .dd button.on{color:var(--accent);background:var(--accent-soft)}
+  #topnav .brand{font:700 12px/1 var(--mono);letter-spacing:.18em;color:var(--ink);
+    margin-right:10px;display:flex;align-items:baseline;gap:7px}
+  #topnav .brand span{font:600 9px/1 var(--mono);letter-spacing:.14em;color:var(--ink-faint)}
+  #topnav .gh{margin-left:auto;color:var(--ink-faint)}
+  #topnav .dd{position:relative}
+  #topnav .dd .menu{display:none;position:absolute;top:calc(100% + 4px);left:0;min-width:180px;
+    padding:5px;background:rgba(20,23,28,.96);border:1px solid var(--hair);border-radius:12px;
+    box-shadow:0 14px 38px rgba(0,0,0,.55);
+    backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+  #topnav .dd:hover .menu,#topnav .dd:focus-within .menu{display:block}
+  #topnav .dd .menu a{display:block;padding:8px 10px}
+</style>
+</head>
+<body>
+<nav id="topnav">
+  <a class="brand" href="../viewer_glb.html">PARVIZ<span>desk-pi</span></a>
+  <a href="../viewer_glb.html">Viewer</a>
+  <a class="pl" href="../docs/electronics.html">Electronics</a><a class="pl" href="../docs/assembly.html">Assembly</a><a class="pl" href="../docs/wiring.html">Wiring &amp; power</a>
+  <div class="dd"><button class="on" aria-haspopup="true">Docs &#9662;</button>
+    <div class="menu"><a href="../docs/index.html">All docs</a><a href="../docs/electronics.html">Electronics</a><a href="../docs/assembly.html">Assembly</a><a href="../docs/wiring.html">Wiring &amp; power</a><a href="../docs/printability.html">Printability</a><a href="../docs/fixes.html">Fix ledger</a><a href="../docs/worm.html">Worm drive</a><a href="../docs/arm-mech.html">Arm mechanism</a><a href="../docs/cable-check.html">Cable check</a><a href="../docs/reference-audit.html">Reference audit</a><a href="../docs/awareness.html">Awareness</a><a href="../docs/software.html">Software</a></div></div>
+  <a class="gh" href="https://github.com/m-esm/parviz" title="source">GitHub</a>
+</nav>
+<main>
+<div class="crumb">desk-pi · Design docs</div>
+<h1 id="reference-model-audit-independent-re-measurement">Reference-model audit (independent re-measurement)</h1>
+<p>Every dimensional claim in <code>src/build.py</code> PARAMS and <code>CLAUDE.md</code> that cites a reference model,
+re-measured directly from the reference meshes with trimesh (cross-sections, hole circle-fits,
+angular tooth counts). Probe scripts live in the session scratchpad (<code>probe_screen.py</code>,
+<code>probe_cam.py</code>, <code>probe_track.py</code>, <code>probe_track2.py</code>, <code>probe_misc.py</code>). Measurement frame for the
+screen matches <code>load_screen()</code>: recentered at bbox centroid, then 180 deg yaw (post-flip local frame).</p>
+<p>Verdicts: OK (matches within measurement noise), WRONG (transcription error),
+DESIGN (deliberate deviation from the reference, no error but flagged),
+UNVERIFIABLE (this reference cannot confirm it).</p>
+<h2 id="1-7-touchscreen-raspberry_pi_touch_screen_assembly_v12stl">1. 7" touchscreen (<code>Raspberry_Pi_Touch_Screen_Assembly_v12.stl</code>)</h2>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Claim</th>
+<th>Claimed</th>
+<th>Measured</th>
+<th>Verdict</th>
+<th>Impact if wrong</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Assembly bbox W x D x H</td>
+<td>193.0 x 25.0 x 110.8</td>
+<td>192.96 x 24.99 x 110.76</td>
+<td>OK (rounded up &lt;= 0.05)</td>
+<td>head pocket sizing</td>
+</tr>
+<tr>
+<td>STL axes</td>
+<td>X=W, Y=D, Z=H</td>
+<td>confirmed (extents map exactly)</td>
+<td>OK</td>
+<td>screen orientation</td>
+</tr>
+<tr>
+<td>Glass faces -Y pre-flip, +Y post-flip</td>
+<td>flip = 180 yaw</td>
+<td>full flat 21324 mm^2 face at local y = +12.19 post-flip</td>
+<td>OK</td>
+<td>screen would face into the head</td>
+</tr>
+<tr>
+<td>Outer mount pattern</td>
+<td>126.2 x 65.65</td>
+<td>126.19 x 65.65</td>
+<td>OK</td>
+<td>screen retention bosses</td>
+</tr>
+<tr>
+<td><code>scr_mount_pts</code> x values</td>
+<td>+61.61 / -64.59</td>
+<td>+61.61 / -64.59</td>
+<td>OK</td>
+<td>boss placement</td>
+</tr>
+<tr>
+<td><code>scr_mount_pts</code> z values</td>
+<td>+33.80 / -31.85</td>
+<td>+33.80 / -31.85 (per-hole spread &lt; 0.03)</td>
+<td>OK</td>
+<td>boss placement</td>
+</tr>
+<tr>
+<td>Mount face plane local Y</td>
+<td>+6.53</td>
+<td>+6.53 (hole runs y 4.03 to 6.53, depth 2.50)</td>
+<td>OK</td>
+<td>boss standoff length</td>
+</tr>
+<tr>
+<td>Hole size, M3 claim</td>
+<td>M3, clear r 1.75</td>
+<td>hole dia 3.00, 2.50 deep through a tab</td>
+<td>OK (M3 threads/self-taps the pan hole)</td>
+<td>screw choice</td>
+</tr>
+<tr>
+<td>Pattern centering vs bezel outline</td>
+<td>encoded asymmetric</td>
+<td>pattern center at (-1.49, +0.98) from bbox center; <code>scr_mount_pts</code> encode exactly this offset</td>
+<td>OK</td>
+<td>bosses would miss holes by 1.5 mm if symmetric points were used. They are not.</td>
+</tr>
+<tr>
+<td>Bonus: inner standoff pattern</td>
+<td>(pi_hole 58 x 49)</td>
+<td>57.99 x 49.01, dia 2.51 holes, center (-6.44, +3.45) from bbox center</td>
+<td>OK</td>
+<td>Pi mounting (in-head, uses back-cover standoffs anyway)</td>
+</tr>
+</tbody>
+</table></div>
+<p>Screen transcription is clean. No corrections needed.</p>
+<h2 id="2-camera-rpi-camera-v21-1564160-jbeale-v21-model-scad-source-included">2. Camera (<code>rpi-camera-v21-1564160</code>, jbeale v2.1 model, SCAD source included)</h2>
+<p>The reference IS a Camera v2.1 model (PCB + sensor + flex), with exact numbers in <code>RPiCam-v2.scad</code>.
+The robot uses Camera Module 3. Board width and 4-hole pattern are shared; lens geometry is NOT.</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Claim</th>
+<th>Claimed</th>
+<th>Measured (v2.1 ref)</th>
+<th>Verdict</th>
+<th>Impact if wrong</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Board W</td>
+<td>25.0</td>
+<td>25.00 (scad xs=25.0)</td>
+<td>OK</td>
+<td>pod pocket</td>
+</tr>
+<tr>
+<td>Board H <code>cam_board_h</code></td>
+<td>23.862</td>
+<td>23.85 (scad ys=23.85; 23.862 is the official v2.1 drawing figure)</td>
+<td>OK (0.01)</td>
+<td>pod pocket. CM3 nominal is 25 x 24: verify before print</td>
+</tr>
+<tr>
+<td>Mount hole pattern</td>
+<td>21.0 x 12.5</td>
+<td>21.01 x 12.51, hole dia 2.20</td>
+<td>OK</td>
+<td>M2 bosses</td>
+</tr>
+<tr>
+<td>Hole rows vs board center</td>
+<td>+2.565 / -9.935</td>
+<td>+2.575 / -9.925 exact (scad); mesh circle-fit gives 2.56 / -9.93</td>
+<td>OK (0.01)</td>
+<td>M2 boss Z</td>
+</tr>
+<tr>
+<td>Lens optical axis X</td>
+<td>0 (board center)</td>
+<td>+0.00</td>
+<td>OK</td>
+<td>aperture X</td>
+</tr>
+<tr>
+<td><code>cam_lens_dz</code></td>
+<td>+2.47</td>
+<td>+2.575 on v2.1; but official CM3 = +2.469 (see corrections #2)</td>
+<td>OK for CM3 (superseded)</td>
+<td>none: the robot uses CM3, 2.47 is right</td>
+</tr>
+<tr>
+<td>Lens barrel</td>
+<td>"dia 5.75 v3 barrel"</td>
+<td>v2.1 holder barrel dia 7.24 (cell dia 5.60)</td>
+<td>UNVERIFIABLE for v3; note the v2.1 barrel alone is BIGGER than the quoted 5.75</td>
+<td>aperture bore / recess clearance</td>
+</tr>
+<tr>
+<td>CM3-specific: board 24 H, lens housing size/protrusion, 66 deg FOV cone</td>
+<td>various</td>
+<td>not in this reference (v2.1 only). CM3 lens housing is a larger molded block than the v2.1 barrel</td>
+<td>UNVERIFIABLE-FROM-THIS-REF</td>
+<td>forehead recess depth, aperture dia, cover fit</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="3-tank-track-tank-track-3062624-advancedvb">3. Tank track (<code>tank-track-3062624</code>, advancedvb)</h2>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Claim</th>
+<th>Claimed</th>
+<th>Measured</th>
+<th>Verdict</th>
+<th>Impact if wrong</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Link pitch ("reference ~9.8")</td>
+<td>comment says ref ~9.8; <code>track_pitch</code>=10.0</td>
+<td>9.65 (track_1.75: 9.65; track_2.85: 9.65 to 9.67)</td>
+<td>WRONG comment (ref is 9.65, not 9.8). pitch 10 itself = DESIGN</td>
+<td>if links are printed FROM the reference STLs, a pitch-10 sprocket/loop will not mesh them</td>
+</tr>
+<tr>
+<td>Pin bore (FIXES.md: "dia 1.9 pin bores")</td>
+<td>1.9</td>
+<td>2.01 nominal (drafted; circle-fits 1.82 to 2.01) for dia 1.75 filament</td>
+<td>WRONG (use 2.0)</td>
+<td>pins will not insert into a 1.9 bore printed with normal shrinkage</td>
+</tr>
+<tr>
+<td>Link width <code>track_width</code></td>
+<td>28.0</td>
+<td>36.00</td>
+<td>DESIGN (deliberate narrowing; flag: reference geometry is 36)</td>
+<td>sprocket/link engagement width, pod width</td>
+</tr>
+<tr>
+<td>Link thickness</td>
+<td><code>track_pad_th</code>=5.0 (+1.5 grouser)</td>
+<td>link overall 8.00 thick; pad web 2.70; hinge-pin center 4.50 above outer face</td>
+<td>DESIGN (model is a simplified pad)</td>
+<td>ground clearance, loop circumference</td>
+</tr>
+<tr>
+<td>Sprocket teeth <code>sprocket_teeth</code></td>
+<td>12</td>
+<td>12 (12 tooth pockets, 12 rim lobes)</td>
+<td>OK</td>
+<td>meshing</td>
+</tr>
+<tr>
+<td>Sprocket OD <code>sprocket_outer_d</code></td>
+<td>42.0</td>
+<td>ref OD 36.28 (tip r 18.14, valley r 15.43, width 8.30)</td>
+<td>WRONG as scaled: for 12T x pitch 10 the pin circle r = 19.32 and ref keeps tips 0.51 BELOW the pin circle, so tip r ~18.8, OD ~37.6. OD 42 puts tips 1.68 PAST the pin circle</td>
+<td>tooth tips collide with link pads; track will not wrap</td>
+</tr>
+<tr>
+<td>Pitch radius <code>track_wheel_r</code></td>
+<td>19.0</td>
+<td>exact pin-circle radius for 12T x 10.0 pitch = 19.32; ref (12T x 9.65) = 18.65</td>
+<td>WRONG (small): 19.0 gives loop perimeter 359.4 vs 36 x 10 = 360</td>
+<td>0.6 mm loop slack; fold into the idler tension slot or set 19.32</td>
+</tr>
+<tr>
+<td>Idler bore <code>idler_bore_d</code></td>
+<td>16.0 (dia 16 flanged bearing)</td>
+<td>driven wheel: bore 15.95 press seat + 18.46 flange recess; <code>bearing_size.stl</code> = flanged bearing OD 16.00, flange dia 17.92, width 5.00, bore dia 7.96 =&gt; F688ZZ (8 x 16 x 5, flange 18)</td>
+<td>OK, now fully specified</td>
+<td>buy list: the part is an F688ZZ; the idler also needs a dia 8 stub axle and a ~dia 18.5 x 1 flange recess</td>
+</tr>
+<tr>
+<td>Road wheels <code>roadwheel_d</code>=22, count 2</td>
+<td>22.0</td>
+<td>no road wheels exist in the reference (driving + driven wheels only)</td>
+<td>UNVERIFIABLE-FROM-THIS-REF (design addition)</td>
+<td>none; free choice</td>
+</tr>
+<tr>
+<td>Drive bore (ref driving wheel)</td>
+<td>(TT double-D 5.4 assumed)</td>
+<td>ref bore is double-D: round dia 5.88, across-flats 5.31 (their gearmotor, not a TT)</td>
+<td>DESIGN note</td>
+<td>TT adapter bore must be modeled for the TT's 5.4 shaft, not copied from the ref</td>
+</tr>
+</tbody>
+</table></div>
+<p>Other reference facts for the fix agent: driving wheel width 8.30 (this is the "~8 mm central
+engagement" in the PARAMS comment; matches), driven wheel width 6.00, both wheels OD ~36.0
+lightened by a 12-hole ring.</p>
+<h2 id="4-case-alexa-style-references">4. Case + Alexa style references</h2>
+<ul>
+<li><code>rpi-7in-touchscreen-case</code>: not needed; the screen mount was verified directly from the screen
+  mesh above.</li>
+<li><code>alexa-style-smart-display</code>: style only. Body 191.32 x 110.00 x 122.24, front plate
+  191.32 x 12.00 x 122.24. No PARAMS numbers claim to come from it. OK / no claims.</li>
+</ul>
+<h2 id="5-claims-with-no-local-reference">5. Claims with no local reference</h2>
+<ul>
+<li>28BYJ-48 dims (<code>motor_*</code>): sourced from the beckdac SCAD + Mouser datasheet per the comment; no
+  local mesh to audit. Values are consistent with the well-known datasheet (dia 28, offset 7.875,
+  ears 35). UNVERIFIABLE from local refs, no action.</li>
+</ul>
+<h2 id="prioritized-corrections-for-the-stage-3-fix-agent">Prioritized corrections for the Stage 3 fix agent</h2>
+<ol>
+<li><code>sprocket_outer_d</code>: 42.0 -&gt; 37.6 (tip radius 18.8, i.e. pin-circle 19.32 minus 0.5 tip
+   clearance, matching the reference proportion). With OD 42 the tooth tips stand 1.68 proud of
+   the pin circle and jam the links. Optionally set <code>track_wheel_r</code> = 19.32 (exact 12T x 10.0
+   polygon radius) and let the 0.6 mm residual go to the idler tension slot.</li>
+<li><code>cam_lens_dz</code>: KEEP 2.47. SUPERSEDED by the official CM3 drawing (RP-008153-DS, now in
+   <code>reference/rpi-camera-module-3/</code> with NOTES.md): the CM3 lens axis is +2.469 above board
+   center, 0.106 BELOW the top hole row. The 2.575 value above is correct only for v2.1; the
+   robot uses CM3, so the original 2.47 stands. Real CM3 corrections instead: barrel dia 5.75
+   (not 7.24), AF housing 10.8 x 10.8 centered on the lens, housing front ~4.0 above board
+   front, lens tip 6.98, overall depth 11.3 (keep 3.2 clear behind the board). Aperture for
+   the 4 mm forehead wall: dia 6.3 through-bore + dia 8.0 countersink at 45 deg per side
+   clears the full 75 deg diagonal FoV (pupil dia 2.63 recessed ~3 mm needs only 7.24 clear
+   at the outer face). This replaces the FIXES.md "dia 10 -&gt; dia 18 countersink" guess.</li>
+<li>Track pin bores (FIXES.md item): model dia 2.0, not dia 1.9 (reference uses ~2.0 drafted bores
+   for dia 1.75 filament pins; 1.9 printed will not accept the pin).</li>
+<li>Fix the <code>track_pitch</code> comment: the reference pitch is 9.65, not ~9.8. Keep pitch 10.0 only with
+   re-modeled links (the plan); do NOT print links from the reference STLs and expect them to mesh
+   a pitch-10 sprocket.</li>
+<li>Idler spec for the BOM: the "dia 16 flanged bearing" is an F688ZZ (8 x 16 x 5, flange dia 18).
+   The idler wheel needs a 15.95 press seat, an 18.5 x 1.0 flange recess, and a dia 8 stub axle.</li>
+<li>No screen changes: bbox, mount pattern, hole plane, and the asymmetric <code>scr_mount_pts</code> all
+   verified correct to 0.02 mm.</li>
+</ol>
+</main>
+</body>
+</html>

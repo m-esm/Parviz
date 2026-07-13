@@ -2,7 +2,7 @@
 # and web/assembly.glb. Run `make help`. See the 3d-print-modeling skill for the loop.
 PORT ?= 8770         # dedicated to desk-pi; 8765 collides with the finnish-doors serve.py
 
-.PHONY: help install build viewer shot watch check check-sweep fits export slicecheck wallcheck invariants tipover all
+.PHONY: help install build viewer shot watch check check-sweep fits export slicecheck wallcheck invariants tipover docs all
 
 help:                ## List targets
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
@@ -50,11 +50,15 @@ invariants:          ## Design-invariant gate: user-approved features asserted v
 tipover:             ## Mass/CoM/stability report: tip angles, accel limits, fast-pan swing (INFILL=0.5 = conservative)
 	python3 tools/tipover.py
 
+docs:                ## Render project markdown docs -> web/docs/*.html (linked from the viewer top nav)
+	python3 tools/build_docs.py
+
 all:                 ## Full pipeline: build GLB, interference gate, design invariants, then export STLs + .3mf plates
 	python3 src/build.py
 	python3 src/assembly_check.py web/assembly.glb
 	python3 src/checks.py
 	python3 src/wallcheck.py
+	python3 tools/build_docs.py
 	$(MAKE) export
 
 pages:               ## Force a Pages deploy now (normally AUTOMATIC: pushing web/ to main triggers .github/workflows/pages.yml)

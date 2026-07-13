@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0d0f13">
+<title>Printability · desk-pi</title>
+<style>
+  :root{
+    --ink:#e9edf1; --ink-dim:#9aa4b0; --ink-faint:#69727e;
+    --panel:rgba(20,23,28,.66); --hair:rgba(255,255,255,.09);
+    --accent:#5cc7d4; --accent-soft:rgba(92,199,212,.16);
+    --orange:#e87422;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html{scroll-padding-top:56px}
+  body{margin:0;min-height:100vh;color:var(--ink);
+    font:14.5px/1.65 system-ui,-apple-system,Segoe UI,sans-serif;
+    background:radial-gradient(125% 100% at 50% -10%, #2b313b 0%, #191d23 46%, #0d0f13 100%);
+    background-attachment:fixed}
+  main{max-width:880px;margin:0 auto;padding:68px 22px 80px}
+  h1,h2,h3,h4{line-height:1.25;letter-spacing:-.01em;scroll-margin-top:56px}
+  h1{font-size:27px;margin:10px 0 6px}
+  h2{font-size:19px;margin:34px 0 10px;padding-top:18px;border-top:1px solid var(--hair)}
+  h3{font-size:15.5px;margin:24px 0 8px;color:var(--ink)}
+  p{margin:10px 0;color:var(--ink-dim)}
+  li{color:var(--ink-dim);margin:4px 0}
+  strong{color:var(--ink)}
+  a{color:var(--accent);text-decoration:none}
+  a:hover{text-decoration:underline}
+  code{font:12.5px var(--mono);background:rgba(255,255,255,.07);padding:1.5px 5px;border-radius:5px;color:var(--ink)}
+  pre{background:rgba(0,0,0,.38);border:1px solid var(--hair);border-radius:12px;
+    padding:14px 16px;overflow-x:auto}
+  pre code{background:transparent;padding:0;color:var(--ink-dim)}
+  .tbl{overflow-x:auto;margin:14px 0;border:1px solid var(--hair);border-radius:12px}
+  table{border-collapse:collapse;width:100%;font-size:13px}
+  th,td{padding:8px 12px;text-align:left;vertical-align:top;border-bottom:1px solid var(--hair)}
+  th{font:600 10.5px/1.3 var(--mono);letter-spacing:.1em;text-transform:uppercase;
+    color:var(--ink-faint);background:rgba(255,255,255,.03)}
+  tr:last-child td{border-bottom:0}
+  td{color:var(--ink-dim)}
+  td:first-child{color:var(--ink)}
+  blockquote{margin:12px 0;padding:2px 16px;border-left:3px solid var(--accent);
+    background:var(--accent-soft);border-radius:0 10px 10px 0}
+  hr{border:0;border-top:1px solid var(--hair);margin:26px 0}
+  .crumb{font:600 9.5px/1 var(--mono);letter-spacing:.22em;color:var(--accent);text-transform:uppercase}
+  /* hub cards */
+  .hub h2{border-top:0;padding-top:8px}
+  .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin:14px 0 8px}
+  .card{display:block;padding:14px 16px;background:var(--panel);border:1px solid var(--hair);
+    border-radius:14px;transition:border-color .12s,transform .12s}
+  .card:hover{border-color:var(--accent);text-decoration:none;transform:translateY(-1px)}
+  .card b{display:block;font-size:14px;color:var(--ink);margin-bottom:4px}
+  .card span{font-size:12px;color:var(--ink-dim);line-height:1.5;display:block}
+  .hero{width:100%;border-radius:16px;border:1px solid var(--hair);margin:16px 0 4px;display:block}
+
+  #topnav{position:fixed;top:0;left:0;right:0;z-index:30;display:flex;align-items:center;
+    gap:2px;height:42px;padding:0 14px 0 16px;
+    background:rgba(13,15,19,.82);border-bottom:1px solid var(--hair);
+    backdrop-filter:blur(18px) saturate(1.25);-webkit-backdrop-filter:blur(18px) saturate(1.25);
+    white-space:nowrap}
+  @media (max-width:700px){#topnav a.pl{display:none}#topnav .brand span{display:none}}
+  #topnav a,#topnav .dd button{font:600 11px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;
+    color:var(--ink-dim);text-decoration:none;padding:7px 10px;border-radius:8px;
+    background:transparent;border:0;cursor:pointer;transition:color .12s,background .12s}
+  #topnav a:hover,#topnav .dd button:hover{color:var(--ink);background:rgba(255,255,255,.06)}
+  #topnav a.on,#topnav .dd button.on{color:var(--accent);background:var(--accent-soft)}
+  #topnav .brand{font:700 12px/1 var(--mono);letter-spacing:.18em;color:var(--ink);
+    margin-right:10px;display:flex;align-items:baseline;gap:7px}
+  #topnav .brand span{font:600 9px/1 var(--mono);letter-spacing:.14em;color:var(--ink-faint)}
+  #topnav .gh{margin-left:auto;color:var(--ink-faint)}
+  #topnav .dd{position:relative}
+  #topnav .dd .menu{display:none;position:absolute;top:calc(100% + 4px);left:0;min-width:180px;
+    padding:5px;background:rgba(20,23,28,.96);border:1px solid var(--hair);border-radius:12px;
+    box-shadow:0 14px 38px rgba(0,0,0,.55);
+    backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+  #topnav .dd:hover .menu,#topnav .dd:focus-within .menu{display:block}
+  #topnav .dd .menu a{display:block;padding:8px 10px}
+</style>
+</head>
+<body>
+<nav id="topnav">
+  <a class="brand" href="../viewer_glb.html">PARVIZ<span>desk-pi</span></a>
+  <a href="../viewer_glb.html">Viewer</a>
+  <a class="pl" href="../docs/electronics.html">Electronics</a><a class="pl" href="../docs/assembly.html">Assembly</a><a class="pl" href="../docs/wiring.html">Wiring &amp; power</a>
+  <div class="dd"><button class="on" aria-haspopup="true">Docs &#9662;</button>
+    <div class="menu"><a href="../docs/index.html">All docs</a><a href="../docs/electronics.html">Electronics</a><a href="../docs/assembly.html">Assembly</a><a href="../docs/wiring.html">Wiring &amp; power</a><a href="../docs/printability.html">Printability</a><a href="../docs/fixes.html">Fix ledger</a><a href="../docs/worm.html">Worm drive</a><a href="../docs/arm-mech.html">Arm mechanism</a><a href="../docs/cable-check.html">Cable check</a><a href="../docs/reference-audit.html">Reference audit</a><a href="../docs/awareness.html">Awareness</a><a href="../docs/software.html">Software</a></div></div>
+  <a class="gh" href="https://github.com/m-esm/parviz" title="source">GitHub</a>
+</nav>
+<main>
+<div class="crumb">desk-pi · Build docs</div>
+<h1 id="printability-audit-styling-cosmetic-parts-design-styling-campaign">Printability audit, styling / cosmetic parts (design-styling campaign)</h1>
+<p>Audit of the cosmetic parts added in the design-styling pass, measured from
+<code>web/assembly.glb</code> (trimesh: extents, body splits, cross-sections) and cross-checked against
+the builders in <code>src/build.py</code>. Rules basis: FDM on a 0.4 mm nozzle (Bambu A1 class),
+Arachne floors: <strong>&gt;= 0.6 mm for detail that must survive slicing, &gt;= 0.8 mm structural walls,
+~0.4 mm absolute single-wall floor</strong>. Read-only audit; no geometry changed.</p>
+<p>Preview pose note: GLB extents below the head are world-posed (pan 22 / tilt -12); the
+per-part dimensions quoted are the as-modeled local sizes from <code>build.py</code>.</p>
+<h2 id="verdict-table">Verdict table</h2>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Part</th>
+<th>Material / color</th>
+<th>Min feature found</th>
+<th>Print orientation</th>
+<th>Supports</th>
+<th>Verdict</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>trim_rail_L/R</td>
+<td>orange PLA</td>
+<td>5.0 thick pad, r8 corners</td>
+<td>flat back face down</td>
+<td>no</td>
+<td><strong>OK</strong></td>
+</tr>
+<tr>
+<td>trim_hatch_frame</td>
+<td>orange PLA</td>
+<td>3.0 thick, band 13.0 (corner min 13.0 measured)</td>
+<td>flat on back face</td>
+<td>no</td>
+<td><strong>OK</strong> (brim; large 160x105 thin ring, warp watch)</td>
+</tr>
+<tr>
+<td>trim_fascia (ring + 6 fins)</td>
+<td>orange PLA</td>
+<td>fins 3 x 2 x 16; ring band 4.0 x 2.5</td>
+<td>flat, proud-face up</td>
+<td>no</td>
+<td><strong>FAIL, 7 disconnected bodies</strong> (fins never touch the ring; ring x +-30, fins at x 33.5..48.5)</td>
+</tr>
+<tr>
+<td>trim_rear</td>
+<td>orange PLA</td>
+<td>band 4.0 wide x 2.5 thick (corner min 4.0 measured)</td>
+<td>flat on back face</td>
+<td>no</td>
+<td><strong>OK</strong></td>
+</tr>
+<tr>
+<td>camera_pod</td>
+<td>black PLA</td>
+<td><strong>~0.05 mm wall</strong> at bore-flare cusp</td>
+<td>face down (flare then self-supports at 45)</td>
+<td>no</td>
+<td><strong>FAIL, knife-edge cusps</strong>: flared bore opens to Ø19 at the face vs pod height 18 (measured: bore edge z +-8.95 vs face +-9.0 at 0.3 mm depth; wall 0.75 at 1.0 mm depth)</td>
+</tr>
+<tr>
+<td>antenna_stub</td>
+<td>black PLA</td>
+<td>knurl grooves 1.4 wide x 0.7 deep (resolve fine, &gt; 0.6); Ø13 shaft</td>
+<td>axis vertical, collar down</td>
+<td>no (brim on Ø16 collar)</td>
+<td><strong>OK</strong> (cosmetic nit: dome is a subdivisions=2 icosphere, visibly faceted at Ø13)</td>
+</tr>
+<tr>
+<td>led_strip (8 dots + base)</td>
+<td>white PLA</td>
+<td>base plate <strong>0.8 thick</strong>; dots Ø2.4 x ~1.5 proud</td>
+<td>base down, dots up</td>
+<td>no</td>
+<td><strong>Marginal</strong>, one connected body (dots are unioned to the base, not loose), Ø2.4 bumps print as 2-perimeter towers; the 0.8 base is 4 layers and fragile to handle</td>
+</tr>
+<tr>
+<td>led_front (7 dots + base)</td>
+<td>white PLA</td>
+<td>base <strong>1.0 thick</strong>; dots Ø2.6 x ~1.5 proud</td>
+<td>base down, dots up</td>
+<td>no</td>
+<td><strong>Marginal</strong>, same pattern as led_strip, slightly better base</td>
+</tr>
+<tr>
+<td>lamp_L/R</td>
+<td>amber PLA (or painted)</td>
+<td>12 x 7 x 2.0 chip, r2.5</td>
+<td>flat face down</td>
+<td>no</td>
+<td><strong>OK</strong> (tiny; print with the white plate and swap color, or tint)</td>
+</tr>
+<tr>
+<td>sensor_us</td>
+<td>bought (HC-SR04)</td>
+<td>n/a</td>
+<td>n/a</td>
+<td>n/a</td>
+<td><strong>Bought part</strong>, placeholder only, skip print</td>
+</tr>
+<tr>
+<td>sensor_rear</td>
+<td>bought (recommended)</td>
+<td>Ø14 x 9 cylinder</td>
+<td>(face down if printed)</td>
+<td>no</td>
+<td><strong>Buy, don't print</strong>: it plays a speaker/buzzer; a Ø12-14 piezo buzzer or speaker grommet is the real part. A printed silver-painted plug is trivial if wanted</td>
+</tr>
+<tr>
+<td>arm_L/R</td>
+<td>charcoal PLA</td>
+<td>limbs 9 wide; claw ring wall 8; finger pads 13 x 6.5 x 7; standoff tube Ø16 x 23.5</td>
+<td>side-lying (arm plane on bed)</td>
+<td><strong>yes (tree)</strong></td>
+<td><strong>Marginal</strong>, single connected body, but limb/disc/claw widths (9/10/13) share a center plane so no face is flat; side-lying floats the limbs ~2 mm and stands the tube 23.5 up. Placeholder per build.py; split at joints at the mechanism pass</td>
+</tr>
+<tr>
+<td>chassis hex grille (on chassis)</td>
+<td>charcoal PLA</td>
+<td><strong>web 0.74 mm</strong> between hex vertex tips</td>
+<td>prints with chassis (wall vertical)</td>
+<td>no</td>
+<td><strong>Marginal</strong>, hexes are vertex-facing in X, so the web narrows to 0.736 at the tips (not the assumed 1.2); blind pockets also have a 3.0 flat ceiling bridge (fine)</td>
+</tr>
+<tr>
+<td>drivewheels: sprocket x2</td>
+<td>grey PETG</td>
+<td>teeth ~5 x 3 x 8 (fine) but <strong>zero-overlap root joint</strong></td>
+<td>gear face down, hub up (one-sided hub self-supports)</td>
+<td>no</td>
+<td><strong>FAIL, all 12 teeth are detached bodies</strong>: tooth boxes sit at radius 15.8..18.8 with the root cylinder at r 15.8 exactly, line contact only (16-body split confirms; <code>gear_disc</code> defect, worm_wheel has it too)</td>
+</tr>
+<tr>
+<td>drivewheels: idler x2</td>
+<td>grey PETG</td>
+<td>wall 7.7 (Ø31.4 over Ø15.95 bore); flange recess 18.5 x 1.05</td>
+<td>axis vertical, flange recess up</td>
+<td>no</td>
+<td><strong>OK</strong> (F688ZZ seat prints round when vertical)</td>
+</tr>
+<tr>
+<td>drivewheels: road wheels x4</td>
+<td>grey PETG</td>
+<td>Ø22 x 30 <strong>solid, no bore</strong></td>
+<td>axis vertical</td>
+<td>no</td>
+<td><strong>FAIL (incomplete)</strong>, 11.4 cm3 solid cylinder with no axle bore or bearing seat; unbuildable as running gear until the axle scheme is modeled</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="fix-list-marginal-fail-with-the-specific-change">Fix list (marginal / fail, with the specific change)</h2>
+<ol>
+<li><strong>camera_pod cusps (FAIL).</strong> The 45-deg flare from the Ø8 csk over <code>cam_pod_t + 0.5 = 5.5</code> mm
+   opens to Ø19 at the face; <code>cam_pod_h = 18</code> clips it top and bottom, leaving ~0.05 mm knife
+   edges at the front lip. Fix either: <code>cam_pod_h</code> 18 -&gt; <strong>22.0</strong> (1.5 mm wall each side, keeps the
+   45-deg flare), or drop the flare to 40 deg/side (opening Ø17.2, still &gt; the 37.5-deg FoV half
+   angle) <em>and</em> <code>cam_pod_h</code> -&gt; 20. Side walls at the face are 2.5 (fine) either way.</li>
+<li><strong>trim_fascia fins detached (FAIL).</strong> The 6 fins (x +-33.5..48.5) never touch the ring
+   (x +-30). Add a backing web per side tying fin bases to the ring: a <code>box(21.5, 1.2, 16)</code> at
+   y = fw..fw+1.2 spanning x 28..49.5 (mirrored), unioned before the <code>uni(fins)</code>. The web hides
+   behind the 2-mm-proud fins and overlaps the ring band. Alternative: emboss the fins into the
+   chassis wall and drop them from the orange part.</li>
+<li><strong>sprocket teeth detached (FAIL).</strong> In <code>gear_disc</code>, the tooth prism spans exactly
+   <code>root_r..root_r + tooth_h</code>: line contact with the root cylinder, so slicers/split see 12 loose
+   teeth. Fix in <code>gear_disc</code>: make the tooth box <code>tooth_h + 1.0</code> tall and translate to
+   <code>pitch_r - 0.5</code> so each tooth sinks 1 mm into the root. Fixes the sprocket now and the
+   worm_wheel placeholder for free (same 13-body split).</li>
+<li><strong>road wheels solid (FAIL, incomplete model).</strong> Add the axle scheme before printing: at
+   minimum a Ø8.3 through-bore for a stub axle, or F688ZZ seats (Ø15.95 x 5 + flange recess)
+   matching the idler if they should free-wheel. Blocked on the mechanism decision, not on print.</li>
+<li><strong>hex grille web 0.74 mm (marginal).</strong> Rotate each <code>hex_prism</code> 30 deg about its own axis
+   (flats facing +-X) before placing: web becomes a uniform <code>4.2 - 3.0 = 1.2</code> mm and the pocket
+   roof becomes a 60-deg self-supporting vertex instead of a 3 mm flat bridge. One-line change at
+   the <code>hex_prism(3.0, 4.0)</code> call.</li>
+<li><strong>led_strip base 0.8 (marginal).</strong> Thicken the base 0.8 -&gt; <strong>1.2</strong> (recess is 1.5 deep; dots
+   still clear to 0.3 proud). Print both LED bars at 0.12 mm layers. Longer term the honest part
+   is a real WS2812 stick behind a white/clear printed window; the current bars are dummies.</li>
+<li><strong>arm_L/R (marginal, placeholder).</strong> Printable today side-lying with tree support (support
+   scars land on the inboard face, hidden). At the arm mechanism pass, split at the joint discs
+   so each link prints flat per the gear/pin FDM rule; don't invest before then.</li>
+<li><strong>(Out of scope, print-blocking, found in passing.)</strong> <code>chassis</code> splits into 3 bodies: the two
+   2 x 28 x 28 idler tension plates at x +-86.3 / y 60 float disconnected from the body. They are
+   outside the +-60 chassis walls, in the pod envelope; they need a bridge to the chassis arm or
+   to be their own parts before <code>chassis.stl</code> is printable.</li>
+</ol>
+<h2 id="plate-grouping">Plate grouping</h2>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Plate</th>
+<th>Filament</th>
+<th>Parts</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A, orange</td>
+<td>orange PLA</td>
+<td>trim_rail_L, trim_rail_R, trim_hatch_frame, trim_fascia (post-fix 2), trim_rear</td>
+<td>all flat-back, no support; hatch frame centered on the bed with an 8 mm brim</td>
+</tr>
+<tr>
+<td>B, black/charcoal</td>
+<td>black PLA</td>
+<td>camera_pod (post-fix 1), antenna_stub, arm_L, arm_R (or hold arms for the mechanism pass)</td>
+<td>antenna brim; arms tree support only</td>
+</tr>
+<tr>
+<td>C, white + amber</td>
+<td>white PLA (+ amber for lamps)</td>
+<td>led_strip, led_front, lamp_L, lamp_R</td>
+<td>0.12 mm layers for the dot bars; lamps are a 2-part color swap or print natural and tint</td>
+</tr>
+<tr>
+<td>D, running gear</td>
+<td>grey PETG</td>
+<td>sprocket x2 (post-fix 3), idler x2, road wheels x4 (post-fix 4)</td>
+<td>PETG for creep under track tension; sprockets gear-face down, wheels axis-vertical</td>
+</tr>
+</tbody>
+</table></div>
+<p>Bought, not printed: sensor_us (HC-SR04), sensor_rear (Ø12-14 piezo buzzer/speaker),
+WS2812 stick if fix 6's window route is taken.</p>
+</main>
+</body>
+</html>

@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0d0f13">
+<title>Software · desk-pi</title>
+<style>
+  :root{
+    --ink:#e9edf1; --ink-dim:#9aa4b0; --ink-faint:#69727e;
+    --panel:rgba(20,23,28,.66); --hair:rgba(255,255,255,.09);
+    --accent:#5cc7d4; --accent-soft:rgba(92,199,212,.16);
+    --orange:#e87422;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html{scroll-padding-top:56px}
+  body{margin:0;min-height:100vh;color:var(--ink);
+    font:14.5px/1.65 system-ui,-apple-system,Segoe UI,sans-serif;
+    background:radial-gradient(125% 100% at 50% -10%, #2b313b 0%, #191d23 46%, #0d0f13 100%);
+    background-attachment:fixed}
+  main{max-width:880px;margin:0 auto;padding:68px 22px 80px}
+  h1,h2,h3,h4{line-height:1.25;letter-spacing:-.01em;scroll-margin-top:56px}
+  h1{font-size:27px;margin:10px 0 6px}
+  h2{font-size:19px;margin:34px 0 10px;padding-top:18px;border-top:1px solid var(--hair)}
+  h3{font-size:15.5px;margin:24px 0 8px;color:var(--ink)}
+  p{margin:10px 0;color:var(--ink-dim)}
+  li{color:var(--ink-dim);margin:4px 0}
+  strong{color:var(--ink)}
+  a{color:var(--accent);text-decoration:none}
+  a:hover{text-decoration:underline}
+  code{font:12.5px var(--mono);background:rgba(255,255,255,.07);padding:1.5px 5px;border-radius:5px;color:var(--ink)}
+  pre{background:rgba(0,0,0,.38);border:1px solid var(--hair);border-radius:12px;
+    padding:14px 16px;overflow-x:auto}
+  pre code{background:transparent;padding:0;color:var(--ink-dim)}
+  .tbl{overflow-x:auto;margin:14px 0;border:1px solid var(--hair);border-radius:12px}
+  table{border-collapse:collapse;width:100%;font-size:13px}
+  th,td{padding:8px 12px;text-align:left;vertical-align:top;border-bottom:1px solid var(--hair)}
+  th{font:600 10.5px/1.3 var(--mono);letter-spacing:.1em;text-transform:uppercase;
+    color:var(--ink-faint);background:rgba(255,255,255,.03)}
+  tr:last-child td{border-bottom:0}
+  td{color:var(--ink-dim)}
+  td:first-child{color:var(--ink)}
+  blockquote{margin:12px 0;padding:2px 16px;border-left:3px solid var(--accent);
+    background:var(--accent-soft);border-radius:0 10px 10px 0}
+  hr{border:0;border-top:1px solid var(--hair);margin:26px 0}
+  .crumb{font:600 9.5px/1 var(--mono);letter-spacing:.22em;color:var(--accent);text-transform:uppercase}
+  /* hub cards */
+  .hub h2{border-top:0;padding-top:8px}
+  .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin:14px 0 8px}
+  .card{display:block;padding:14px 16px;background:var(--panel);border:1px solid var(--hair);
+    border-radius:14px;transition:border-color .12s,transform .12s}
+  .card:hover{border-color:var(--accent);text-decoration:none;transform:translateY(-1px)}
+  .card b{display:block;font-size:14px;color:var(--ink);margin-bottom:4px}
+  .card span{font-size:12px;color:var(--ink-dim);line-height:1.5;display:block}
+  .hero{width:100%;border-radius:16px;border:1px solid var(--hair);margin:16px 0 4px;display:block}
+
+  #topnav{position:fixed;top:0;left:0;right:0;z-index:30;display:flex;align-items:center;
+    gap:2px;height:42px;padding:0 14px 0 16px;
+    background:rgba(13,15,19,.82);border-bottom:1px solid var(--hair);
+    backdrop-filter:blur(18px) saturate(1.25);-webkit-backdrop-filter:blur(18px) saturate(1.25);
+    white-space:nowrap}
+  @media (max-width:700px){#topnav a.pl{display:none}#topnav .brand span{display:none}}
+  #topnav a,#topnav .dd button{font:600 11px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;
+    color:var(--ink-dim);text-decoration:none;padding:7px 10px;border-radius:8px;
+    background:transparent;border:0;cursor:pointer;transition:color .12s,background .12s}
+  #topnav a:hover,#topnav .dd button:hover{color:var(--ink);background:rgba(255,255,255,.06)}
+  #topnav a.on,#topnav .dd button.on{color:var(--accent);background:var(--accent-soft)}
+  #topnav .brand{font:700 12px/1 var(--mono);letter-spacing:.18em;color:var(--ink);
+    margin-right:10px;display:flex;align-items:baseline;gap:7px}
+  #topnav .brand span{font:600 9px/1 var(--mono);letter-spacing:.14em;color:var(--ink-faint)}
+  #topnav .gh{margin-left:auto;color:var(--ink-faint)}
+  #topnav .dd{position:relative}
+  #topnav .dd .menu{display:none;position:absolute;top:calc(100% + 4px);left:0;min-width:180px;
+    padding:5px;background:rgba(20,23,28,.96);border:1px solid var(--hair);border-radius:12px;
+    box-shadow:0 14px 38px rgba(0,0,0,.55);
+    backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+  #topnav .dd:hover .menu,#topnav .dd:focus-within .menu{display:block}
+  #topnav .dd .menu a{display:block;padding:8px 10px}
+</style>
+</head>
+<body>
+<nav id="topnav">
+  <a class="brand" href="../viewer_glb.html">PARVIZ<span>desk-pi</span></a>
+  <a href="../viewer_glb.html">Viewer</a>
+  <a class="pl" href="../docs/electronics.html">Electronics</a><a class="pl" href="../docs/assembly.html">Assembly</a><a class="pl" href="../docs/wiring.html">Wiring &amp; power</a>
+  <div class="dd"><button class="on" aria-haspopup="true">Docs &#9662;</button>
+    <div class="menu"><a href="../docs/index.html">All docs</a><a href="../docs/electronics.html">Electronics</a><a href="../docs/assembly.html">Assembly</a><a href="../docs/wiring.html">Wiring &amp; power</a><a href="../docs/printability.html">Printability</a><a href="../docs/fixes.html">Fix ledger</a><a href="../docs/worm.html">Worm drive</a><a href="../docs/arm-mech.html">Arm mechanism</a><a href="../docs/cable-check.html">Cable check</a><a href="../docs/reference-audit.html">Reference audit</a><a href="../docs/awareness.html">Awareness</a><a href="../docs/software.html">Software</a></div></div>
+  <a class="gh" href="https://github.com/m-esm/parviz" title="source">GitHub</a>
+</nav>
+<main>
+<div class="crumb">desk-pi · Software docs</div>
+<h1 id="desk-pi-software">desk-pi software</h1>
+<p>Parviz robot software. Awareness/LLM design intent: ../docs/AWARENESS.md.
+Software spike for the tracked desk robot: face renderer, neck stepper
+driver, camera check. Lives here in the repo and mirrored to <code>~/parviz-sw</code>
+on the Pi (<code>ssh moshe@moshe-pi5-2gb.local</code>, key auth).</p>
+<h2 id="deploy">Deploy</h2>
+<pre><code class="language-sh">rsync -av --exclude __pycache__ software/ moshe@moshe-pi5-2gb.local:parviz-sw/
+</code></pre>
+<h2 id="pieces">Pieces</h2>
+<h3 id="facefacepy-fullscreen-face-800x480-official-7-touchscreen">face/face.py, fullscreen face (800x480, official 7" touchscreen)</h3>
+<p>Rigid-line robot face (2026-07-11 revision, per user): two rectangular
+outlined eyes with square pupils, NO mouth, NO eyebrows, single color =
+the body's safety orange (<code>src/geo.py COLORS["accent"]</code> = 232,116,34) on
+black. Expressions come from lid height, top-corner tilt and pupil
+position; every stroke is straight. Layout scales off the panel size
+(eyes 224x192 centered at 240/560). Idle blink stays.
+<code>FaceRenderer.set_expression(name)</code> API; expressions: neutral, happy, sad,
+surprised, sleepy, look_left, look_right, look_up, look_down.</p>
+<p>TOUCH: while a finger is on the panel the pupils track it and the eyes
+widen slightly; lifting the finger blinks and returns to the current
+expression. Handles both SDL FINGER* events (the DSI ft5x06 panel) and
+mouse-drag (windowed dev).</p>
+<p>Headless visual check (no compositor to screenshot through):
+<code>kill -USR1 &lt;pid&gt;</code> makes the next frame land in <code>/tmp/face_frame.png</code>.</p>
+<h3 id="faceparviz-faceservice-boot-service">face/parviz-face.service, boot service</h3>
+<p>The Pi boots to console (<code>sudo systemctl set-default multi-user.target</code>,
+desktop disabled; revert with <code>graphical.target</code>) and systemd starts the
+face fullscreen via KMS/DRM. SDL scans the DRM cards for a connected
+connector, which is always the DSI panel (HDMI unplugged), so no device
+index is pinned. DRM card numbers shuffle between boots; never hardcode
+<code>/dev/dri/cardN</code>.</p>
+<pre><code class="language-sh">sudo cp face/parviz-face.service /etc/systemd/system/
+sudo systemctl daemon-reload &amp;&amp; sudo systemctl enable --now parviz-face
+</code></pre>
+<p>Needs pygame (check <code>python3 -c "import pygame"</code>; else
+<code>pip3 install --user pygame</code>, no sudo).</p>
+<pre><code class="language-sh"># Over SSH, console owns the display (no desktop session):
+SDL_VIDEODRIVER=kmsdrm python3 face/face.py --demo --seconds 10
+# (face.py sets SDL_VIDEODRIVER=kmsdrm itself when no DISPLAY/WAYLAND_DISPLAY)
+
+# If a Wayland desktop session owns the display, kmsdrm will fail
+# (&quot;Could not initialize KMSDRM&quot;, the compositor holds DRM master).
+# Run inside the session instead:
+WAYLAND_DISPLAY=wayland-0 XDG_RUNTIME_DIR=/run/user/1000 python3 face/face.py --seconds 10
+# X11 desktop: DISPLAY=:0 python3 face/face.py --seconds 10
+
+# Dev on a laptop:
+python3 face/face.py --windowed --demo --seconds 10
+</code></pre>
+<p><code>--seconds N</code> auto-exits (SSH smoke tests, nothing left running). Esc/q quits.</p>
+<h3 id="motionstepperspy-28byj-48-half-step-driver-lgpio">motion/steppers.py, 28BYJ-48 half-step driver (lgpio)</h3>
+<p><code>PanStepper</code> / <code>TiltStepper</code> on a shared <code>LimitedStepper</code>:</p>
+<ul>
+<li><strong>Pins are required, no defaults</strong>, nothing is wired yet.</li>
+<li><strong>Pan hard clamp default ±88°</strong> (constructor param <code>limit_deg</code>). The Pi
+  power service loop in the neck must never over-wind; the ±90 mechanical
+  target keeps a 2° software margin. <code>move_to</code>/<code>move_by</code> both clamp; relative
+  moves cannot creep past.</li>
+<li><strong>Tilt clamp ±30°</strong>, <code>gear_ratio=12</code> (single-start worm, 12T wheel). Worm
+  self-locks, so coils release after every move (default <code>hold=False</code>).</li>
+<li><code>dry_run=True</code> records coil writes in <code>.trace</code> instead of touching GPIO;
+  lgpio imports lazily, so the module runs anywhere.</li>
+</ul>
+<pre><code class="language-sh"># Unit tests (any machine, no GPIO):
+cd motion &amp;&amp; python3 -m unittest test_steppers -v
+
+# On the robot (once wired; BCM pin numbers for the ULN2003 IN1..IN4):
+python3 -c &quot;from steppers import PanStepper; PanStepper(pins=(17,18,27,22)).move_to(30)&quot;
+</code></pre>
+<p>lgpio comes from the OS package <code>python3-lgpio</code> (should be present on
+Raspberry Pi OS trixie; if not: <code>pip3 install --user lgpio</code>).</p>
+<h3 id="camerapreviewpy-one-frame-capture-check">camera/preview.py, one-frame capture check</h3>
+<p>Tries Picamera2, falls back to <code>rpicam-still</code>. Writes <code>/tmp/desk_pi_cam.jpg</code>
+and prints backend + resolution (parses JPEG SOF, no PIL needed).</p>
+<pre><code class="language-sh">python3 camera/preview.py
+# expect: OK: /tmp/desk_pi_cam.jpg (... KB) via picamera2, resolution 4608x2592
+</code></pre>
+<h2 id="hardware-verification-status-2026-07-11">Hardware verification status (2026-07-11)</h2>
+<p><strong>All three pieces verified on the Pi</strong> (<code>moshe-pi5-2gb.local</code>, Pi 5 2GB,
+Debian 13 trixie, kernel 6.18, Python 3.13.5; pygame 2.6.1 / lgpio /
+picamera2 / numpy all present from the OS):</p>
+<ul>
+<li><code>camera/preview.py</code>: full-res capture works,
+  <code>OK: /tmp/desk_pi_cam.jpg (694 KB) via picamera2, resolution 4608x2592</code>
+  (imx708 on CAM1). Frame pulled back and inspected, real image.</li>
+<li><code>motion/test_steppers.py</code>: 19/19 pass on the Pi (no GPIO wired yet, so
+  only dry-run coverage; live coil test waits on the ULN2003 wiring).</li>
+<li><code>face/face.py --demo --seconds 12</code>: renders fullscreen on the 7" DSI
+  panel (800x480); expression demo verified frame-by-frame via screenshots.</li>
+<li><strong>Boot service verified 2026-07-12</strong>: <code>parviz-face.service</code> active after
+  a real reboot, holding the DSI card via kmsdrm, ~10% of one core,
+  system RAM 306 MB used (desktop disabled freed ~120 MB).</li>
+<li><strong>Touch verified end-to-end</strong> with a virtual multitouch device
+  (python3-evdev uinput, MT slots + <code>INPUT_PROP_DIRECT</code>): pupils track a
+  synthetic drag-and-hold, release blinks. NOTE: a single-touch ABS
+  uinput device does NOT work for this, SDL classifies it as a
+  pointer and only the press comes through; emulate real MT.</li>
+</ul>
+<p>Remote screenshots: desktop session up -&gt; <code>grim -o DSI-2 out.png</code>;
+console/service mode -&gt; <code>kill -USR1 $(pgrep -fn face.py)</code> and fetch
+<code>/tmp/face_frame.png</code> (the service renders into a DRM dumb buffer, there
+is nothing for grim to grab).</p>
+<h2 id="next-hardware-step">Next hardware step</h2>
+<p>Wire one 28BYJ-48 + ULN2003 to the Pi (pick 4 BCM pins, e.g. 17/18/27/22),
+then run the first live coil test:
+<code>python3 -c "from steppers import PanStepper; PanStepper(pins=(17,18,27,22)).move_to(30)"</code>.
+After that: pin map into a <code>pins.py</code> (or config), and a supervisor that
+ties face + camera + motion together.</p>
+<h2 id="llm-on-the-pi-measured-2026-07-12">LLM on the Pi (measured 2026-07-12)</h2>
+<p>The Pi 5 2GB runs small LLMs fine, CPU-only. Runtime: <strong>llama.cpp</strong>,
+built natively on the Pi (<code>~/llama.cpp/build/bin</code>, Cortex-A76 dotprod
+kernels; <code>cmake -B build -DCMAKE_BUILD_TYPE=Release -DLLAMA_CURL=ON</code>).
+Use <strong>Q4_0</strong> quants: llama.cpp runtime-repacks Q4_0 for the ARM dotprod
+path, so it beats Q4_K_M on this CPU. Ollama was rejected: it wraps
+llama.cpp anyway and its resident Go server wastes RAM the 2GB board
+does not have. Models live in <code>~/models/</code>.</p>
+<p>Measured with <code>llama-bench -t 4</code> (pp = prompt tokens/s, tg = generation
+tokens/s), face service running throughout:</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>model (Q4_0)</th>
+<th>weights</th>
+<th>pp256</th>
+<th>tg64</th>
+<th>verdict</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Qwen3-0.6B</td>
+<td>403 MiB</td>
+<td>204</td>
+<td>21.4</td>
+<td>daily driver</td>
+</tr>
+<tr>
+<td>LFM2-1.2B</td>
+<td>661 MiB</td>
+<td>94</td>
+<td>11.0</td>
+<td>quality alt</td>
+</tr>
+<tr>
+<td>Llama-3.2-1B</td>
+<td>730 MiB</td>
+<td>84</td>
+<td>9.0</td>
+<td>slower than LFM2, skip</td>
+</tr>
+<tr>
+<td>Qwen3-1.7B</td>
+<td>1002 MiB</td>
+<td>55</td>
+<td>6.5</td>
+<td>fits, sluggish; ceiling</td>
+</tr>
+</tbody>
+</table></div>
+<p>End-to-end serving check (Qwen3-0.6B, <code>llama-server -t 4 -c 2048</code>):
+short persona reply in <strong>0.94 s</strong> wall clock cold; server RSS 937 MB;
+face + server coexist with 1.17 GB still available. Qwen3 is a thinking
+model, append <code>/no_think</code> to the system prompt for latency.</p>
+<p>Serve command:</p>
+<pre><code class="language-sh">~/llama.cpp/build/bin/llama-server -m ~/models/Qwen3-0.6B-Q4_0.gguf \
+    -t 4 -c 2048 --host 127.0.0.1 --port 8081
+# OpenAI-compatible: POST localhost:8081/v1/chat/completions
+</code></pre>
+<p>Honest quality note: 0.6B-1.7B models handle persona lines, command
+parsing and simple Q&A; they are not good conversationalists. For real
+conversation quality the right architecture is a remote brain (API or a
+bigger box) with the local model as the offline/latency fallback.
+Budget rule: keep model + KV under ~1.2 GB so the face, camera and
+supervisor never fight the OOM killer.</p>
+<h3 id="llmparviz-llmservice-local-llm-chat-llama-server">llm/parviz-llm.service, local LLM chat (llama-server)</h3>
+<p>Persistent Tier-2 brain service (docs/AWARENESS.md): llama.cpp
+<code>llama-server</code> + Qwen3-0.6B-Q4_0, enabled on boot next to the face.
+<strong>Chat UI: http://moshe-pi5-2gb.local:8081/</strong> (LAN), API at
+<code>/v1/chat/completions</code> (OpenAI-compatible). <code>MemoryMax=1400M</code> so a
+runaway LLM gets killed before it OOMs the face. Qwen3 thinks by
+default; add <code>/no_think</code> to the system prompt for snappy replies.
+Verified 2026-07-12: service + face active together, 1.1 GB still free.</p>
+<h3 id="brainscenariospy-simulated-sensory-input-llm-behavior">brain/scenarios.py, simulated sensory input -&gt; LLM behavior</h3>
+<p>The Tier-2 loop from docs/AWARENESS.md, runnable before any sensor
+exists: full-suite sensor SNAPSHOTs (mics/camera/mmWave/IMU/vibration/
+env/sonar/cliff/touch) render to a compact text digest; the system
+prompt gives Parviz's behavior rules + a constrained action vocabulary
+(do_nothing / set_expression / look_at / say / move / log / escalate);
+10 scenarios (idle, person approaches, voice command, picked up, cliff
+stop, loud noise, stuffy room, petting, escalation-worthy question,
+late night) run against llama-server. Output shape is grammar-enforced
+via response_format json_schema; results append to
+<code>brain/results/&lt;tag&gt;.jsonl</code> with per-scenario <code>expect</code> verbs for the
+upcoming behavior benchmark.</p>
+<pre><code class="language-sh">python3 brain/scenarios.py --host moshe-pi5-2gb.local:8081 --tag mytag
+python3 brain/scenarios.py --scenario person_approaches --runs 5
+python3 brain/scenarios.py --digest-only   # inspect digests, no LLM
+</code></pre>
+<p>Findings on Qwen3-0.6B (2026-07-12, results/ committed):
+- raw prompt: right instincts, broken JSON shape; json_object grammar +
+  thinking template = empty replies.
+- schema-only: valid JSON but DEGENERATE (<code>look_at</code> twice for every
+  scenario, no parameters). Grammar alone kills a 0.6B.
+- schema + 2 few-shot examples + <code>chat_template_kwargs
+  {"enable_thinking": false}</code>: parameterized sensible actions (~6-10 s
+  per decision). Residual 0.6B failures, the benchmark targets: copies
+  the few-shot pan_deg=45 verbatim (looks RIGHT at a LEFT sound), never
+  chooses <code>escalate</code> or <code>say</code>, occasional gratuitous look_at when idle.</p>
+<h3 id="brainbench_reportpy-side-by-side-behavior-report">brain/bench_report.py, side-by-side behavior report</h3>
+<p>Reads <code>results/*.jsonl</code>, scores every run (pass = all expected verbs, no
+forbidden; partial = some expected; fail = forbidden/none/broken JSON)
+and writes self-contained <code>report.html</code>: score matrix, then per scenario
+the exact digest + every model's actions/reason/latency side by side.
+<code>python3 bench_report.py qwen3-0.6b llama3.2-1b lfm2-1.2b qwen3-1.7b</code>.
+First 4-model run (2026-07-12): qwen3-0.6b 6P/3~/2F, lfm2-1.2b 5P/3~/3F,
+qwen3-1.7b 3P/3~/5F (over-passive do_nothing bias; answers the visual
+question itself instead of escalating), llama3.2-1b 3P/0~/8F (says
+something for nearly every scenario). Deterministic verb scoring is
+crude and favors the few-shot pattern; an LLM-judge pass is the next
+benchmarking step.</p>
+<p>Prompt-format ablation (2026-07-12, user hypothesis "maybe the prompt is
+wrong for these models" -- partly confirmed): <code>--prompt v2</code> = EVENT-first
+digest with explicit side hints ("from LEFT (pan negative)"), compact
+decision-guide system prompt, 4 diverse few-shots (incl. escalate + say).
+Results: v2 improved every metric it touched -- qwen3-0.6b 2F-&gt;1F and the
+left/right pan sign FIXED (+45 -&gt; -45; v1's sign error was pure prompt
+anchoring), qwen3-1.7b 3P-&gt;5P. But NO model ever chooses <code>escalate</code>, even
+with an explicit escalate example: tiny models cannot tell "answerable
+from digest" from "needs outside capability". That is a capability gap,
+not a prompt gap, and the headline metric for model selection.</p>
+<p>Face UX v3 (2026-07-12): micro-saccades + breathing (never freezes),
+1.6 s boot curtain reveal with typed "PARVIZ // BOOT", DIM-orange HUD
+(corner brackets, "PARVIZ // <EXPRESSION>" + blinking cursor, breathing
+heartbeat pip), chamfered touch ripples. Same 10% of one core. SIGUSR1
+is ignored until the renderer's handler is up (a dump request during
+pygame init used to KILL the process, default USR1 disposition).</p>
+<p>Demo mode (2026-07-12): <code>--demo</code> now loops 11 scripted SCENES on timed
+intervals (idle scan, person detected -&gt; track -&gt; hello, wake word -&gt;
+listening, thinking, speaking, escalate "ASKING BIG BRAIN", cliff alert
+flash, petted, low power, sleep with shut-bar eyes + ZZZ, wake), each
+driving expression + the HUD status line ("SCENE // STATE" with animated
+dots). DEMO_SCENES/DemoDirector in face.py; the renderer's <code>status</code>
+field is the same hook the brain loop will use later. Run on the Pi:
+<code>sudo systemctl stop parviz-face &amp;&amp; cd parviz-sw &amp;&amp;
+SDL_VIDEODRIVER=kmsdrm python3 face/face.py --demo --seconds 45;
+sudo systemctl start parviz-face</code></p>
+<p>Face v4 (2026-07-12, user feedback rounds): eyes = TWO THIN OUTLINES
+(4px outer + 2px inset echo, GAP 11; the bold filled ring is gone) and
+more expressive: bottom-lid <code>squint</code> (happy is a squint, not a droop)
+and <code>pupil</code> dilation per expression (surprised = pinpoint, happy/touch
+= dilated). Eyes moved high (cy 0.365<em>H); a rigid 3-segment MOUTH is
+back by user request (smile/frown polyline; chamfered-O when <code>open</code>,
+surprise/speaking) at 0.72</em>H. Bottom TELEMETRY bar refreshed every 5 s:
+CPU temp + NET (wlan/eth operstate) + PWR AC real today, MIC/CAM/RDR
+show <code>--</code> until the hardware is wired (AWARENESS.md suite). All still
+one hue, straight strokes, ~10% CPU.</p>
+<p>Face v5 (2026-07-12): PUPILS rebuilt as iris ring + filled octagon core
++ BG glint notch, with hippus (dilation twitches on saccades). HUD got
+its own cool palette (user: ORANGE IS FACE-ONLY now): slate text, cyan
+graphs/accents, green/red states. Corner blocks: SYS top-left (CPU temp
++ load + mem, 48-sample cyan temp sparkline @2 s), NET top-right (dev,
+IP, uptime, 5-segment wifi signal bar from /proc/net/wireless), status
+line bottom-left (cyan cursor), sensor slots + green PWR AC + cyan
+heartbeat pip bottom-right. Telemetry class samples procfs/sysfs fast
+items @2 s, slow @30 s, degrades to '--'. TOUCH: per-eye gaze, each eye
+aims at the finger independently (renderer eases per eye), so a poke
+BETWEEN THE EYES goes cross-eyed + opens a silly o-mouth (user todo).</p>
+<p>Face v6 (2026-07-12, user rounds): HUD went LIGHT-GRAY monochrome
+(orange = face only; three grays, red reserved for alerts), MEM sparkline
+joined CPU (fixed 0-100% scale, labels left), dedicated PWR block top-
+center: real PMIC numbers via <code>vcgencmd pmic_read_adc</code> (sum of rail V<em>A
+= board watts, ~2.4 W idle, + core V + throttle state; OK</em> = past
+undervolt since boot) with a watts sparkline; NET gained the SSID (<code>iw
+dev wlan0 info</code>, iwgetid is not on trixie). LLM DECISIONS show subtly
+bottom-center: the brain writes {"actions":[...],"reason":...} to
+/tmp/parviz_decision.json, the face polls mtime every 2 s and shows
+"verbs // reason" while &lt;120 s fresh (first face&lt;-&gt;brain IPC). Pupil
+GLINT rides the gaze (dot sits where the eye looks). Touch between the
+eyes = DERP per user ref image: near eye stares at the finger, other
+rolls up-out. BG is true (0,0,0); the residual glow is IPS backlight,
+so the service dims it to 120/255 at start (ExecStartPre tee -- sh does
+NOT glob redirection targets, tee args do). Settled CPU ~6% of one core.</p>
+<p>Face v7 (2026-07-12): EMOTIONS +concerned/angry/sick (angry = the
+positive-tilt V + pinpoint pupils + frown; sick = droopy + queasy
+half-open mouth). PUPIL ANATOMY corrected per user: the orange octagon
+is the fixed-size IRIS, the black dot inside is the PUPIL, it DILATES
+(surprised ~11 px, happy ~25 px) and rides the gaze. DEMO now covers
+every case: all 12 expressions + 4 gaze directions + talking mouth-flap
+(SPEAKING modulates <code>open</code> per frame) + a BOOP scene that injects a
+synthetic between-the-eyes touch (derp + ripple) + INTRUDER/SAD scenes.
+CAMERA PREVIEW: 96x72 live window right-edge center (picamera2 lores
+160x120 BGR888 at ~6 fps; fails soft to CAM --). Costs +30 MB RSS and
+~6% of one core. NOTE: the face process now OWNS the camera; when the
+perception process arrives it takes ownership and the preview should
+consume ITS frames instead. Brain schema updated with the new emotion
+names (scenarios.py enum + prompts).</p>
+<h3 id="perceptionperceivepy-yunet-vision-daemon-2026-07-12">perception/perceive.py, YuNet vision daemon (2026-07-12)</h3>
+<p>Tier-1 vision per the user's benchmark research: OpenCV FaceDetectorYN
+(YuNet 2023mar ONNX, 232 KB, in models/) on picamera2 640x480 -&gt; 320x240,
+15 Hz loop. SOLE camera owner (the face's CamPreview now READS its
+/dev/shm frames instead of opening picamera2). Publishes atomically:
+- /dev/shm/parviz_vision.json: interaction state (person_present, conf,
+  cx/cy robot-frame normalized, size, facing_camera heuristic, pan/tilt
+  suggestion, raw det box, fps, infer_ms)
+- /dev/shm/parviz_preview.jpg: 160x120 @3 Hz for the face CAM window
+Measured on-device: ~16 ms inference, 189 MB RSS, live detection of a
+real face at 0.95 conf. Detection rate 1 Hz per user (15 Hz = 77% of a
+core, 1 Hz = ~10%), <code>--hz</code> overrides. The face CAM window is a bottom-
+left GHOST FEED (144x108, grayscale, alpha 110 into the black, scanlines
+every 3 px) with the detection box + raw numbers beside it. <code>--bench N</code> prints the
+research CSV; <code>--image f.jpg</code> one-shot test. parviz-perception.service
+(MemoryMax=400M) enabled on boot.</p>
+<p>Face integration: idle eyes FOLLOW the detected person (VisionGaze,
+neutral expression only; touch and brain expressions win), CAM window
+draws the raw detection box + faint raw numbers (HUD_FAINT 11 px, user:
+subtle), CAM slot shows OK from frame freshness. DEMO TOGGLE: triple-tap
+the screen within 1 s toggles demo mode at runtime, OFF by default.</p>
+<p>Pipeline stage 2 (2026-07-12, user's diagram): Camera -&gt; YuNet -&gt; CROP+
+ALIGN (rotate on YuNet eye line, 1.7x box margin, 256x256) -&gt; MediaPipe
+FACE LANDMARKER -&gt; behavior. No mediapipe python wheel exists for
+cp313/aarch64, so the .task bundle's face_landmarks_detector.tflite
+(478 pts, in models/) runs directly via ai-edge-litert (pip, installed
+--user on the Pi); its confidence head is a LOGIT (sigmoid it). The
+bundled blendshapes model needs mediapipe's private 146-index subset, so
+expression SIGNALS are geometric from canonical facemesh indices: EAR
+(eyes_closed &lt;0.16), mouth_open (13-14 gap / face height), smile (mouth
+width/jaw width + corner lift), brow_gap -&gt; visible_expression label
+(neutral/happy/surprised/eyes_closed; visible, not felt). Measured live:
+landmarker 26 ms on top of YuNet 16 ms, still 1 Hz. Face BEHAVIOR: smile
+mirror -- person smiles (smile&gt;0.5) -&gt; Parviz goes happy, reverts when
+the smile goes (only if vision set it; touch/demo/brain win). Raw line
+under the cam feed now shows the label + smile score + lmk ms. Verified
+end-to-end on a live smile at the desk.</p>
+<h3 id="brainbrainpy-parviz-brainservice-the-loop-is-closed-2026-07-12">brain/brain.py + parviz-brain.service, THE LOOP IS CLOSED (2026-07-12)</h3>
+<p>The LLM is now the ONLY source of truth for behavior (user directive).
+brain.py ticks every 15 s (inference is 7-15 s; faster ticks ran the
+fanless Pi to 85C throttle): builds a digest of EVERYTHING (all vision
+features incl. raw signals + confidences + timings, cpu/mem/temp, time,
+an event ring of person arrived/left + expression changes + its own past
+actions), asks the local Qwen (v2 prompt/schema imported from
+scenarios.py), writes /tmp/parviz_decision.json, journals to
+brain/journal.log. The face EXECUTES decisions (set_expression /
+look_at -&gt; eye gaze / say -&gt; status line for 6 s) and the smile-mirror +
+person-following reflexes were REMOVED - the LLM sees those signals and
+decides. HEARTBEAT CONTRACT: decision-file mtime stale &gt;45 s (brain or
+LLM down) -&gt; the face puts itself to sleep; verified by killing both
+services (face went sleepy alone) and recovery through llama-server
+restarts (rides the 500/503s). Eyes sized down (188x158) so the HUD
+reads clearly. THERMAL NOTE: sustained brain ticking holds the SoC near
+80-85C on the bare board - a heatsink/active cooler belongs on the buy
+list before longer runs.</p>
+<p>HUD layout v2 (2026-07-12, user: use the sides, label provenance): the
+side bands are now PANELS with hairline headers -- left "VISION" (ghost
+cam feed + detection box + every model value stacked: faces/conf, x/y,
+size, facing, looks+smile+ear, model timings), right "BRAIN" (LIVE/STALE
++ decision age, the LLM's action list, reason word-wrapped with
+ellipsis). Top row stays system (SYS/PWR/NET), bottom stays robot
+(status line, sensor slots, pip). The old scattered decision line +
+bottom-left cam block are gone; cam is 128x96 to fit the panel column.
+Self-reviewed via frame dumps; fixed text/eye clipping and truncation.</p>
+<p>Prompt v3 (2026-07-12, user: "LLM doesn't react to emotion/position"):
+audit found the model never used look_at with real coordinates, never
+mirrored emotion, and ignored person-left/late-night/hot-cpu. v3 fixes
+it with explicit priority rules (person present -&gt; BOTH look_at using
+the digest's head-aim numbers AND set_expression matching their visible
+emotion; person left -&gt; center + sad; late night -&gt; sleepy; cpu &gt;80C -&gt;
+log) and 4 few-shots in the LIVE digest format demonstrating each. The
+digest's EVENT line now leads with the current person state (tiny
+models act on the top line). Verified live: look_at pan -11.6 vs actual
+-11.8 (real numbers, not few-shot copies) and the journal shows "They
+are smiling at me; smile back and keep eye contact" -- the emotion
+mirror through the LLM. Face executor gain fixed: +-35 deg = full eye
+deflection (/88 made tracking invisible). KNOWN TRADEOFF: LLM-only gaze
+tracking has the tick latency (10-15 s); smooth fast tracking would
+need a reflex, which the user explicitly removed in favor of LLM truth.</p>
+<p>Gestures + tracking bypass + latency (2026-07-12, user round):
+- TRACKING BYPASS: person-following eyes are a fast reflex again;
+  look_at REMOVED from the LLM vocabulary (v3 prompt states "you do NOT
+  control gaze"), executor ignores stray look_at. LLM keeps expressions,
+  say, log, escalate, move.
+- GESTURES: hands.py runs the gesture_recognizer.task internals via
+  LiteRT (no mediapipe wheel): palm detector (192x192 SSD, anchors
+  generated + decoded by hand), rotated crop, 21-pt hand landmarks,
+  GEOMETRIC classification (open_palm/fist/thumbs_up/thumbs_down/
+  pointing/victory). Validated 3/3 on mediapipe reference images; ~85 ms
+  per tick when a person is present. Gesture flows into the digest +
+  VISION panel; v3 rule 1 maps gestures to reactions (wave -&gt; happy +
+  greeting). Verified live: "Person is neutral; showing victory."
+- LATENCY: cache_prompt=True keeps the ~1400-token system+few-shot
+  prefix in llama-server KV cache -- cycles dropped 10-25 s to ~6-8 s
+  (prompt ~2.5 s + gen ~4 s); reasons capped at 10 words; the BRAIN
+  panel now shows "cycle X.Xs (prompt+gen)" prominently.
+- FACE: a grand rigid-line MUSTACHE (user: much bigger), bottom-band
+  hairline separator, panel line spacing 14 px.</p>
+<p>Expressiveness + optimization pass (2026-07-12): mustache removed (user).
+Why the face felt non-expressive: vision under-labeled (smile&gt;0.5 was a
+high bar) and the fixed 15 s tick outlived the user's expressions. Fixes:
+smile threshold 0.4 + more sensitive formula, new "sad" label (corner
+droop), perception rate ADAPTIVE (2 Hz person present / 0.5 Hz empty
+desk), and the brain is EVENT-DRIVEN: polls vision every 1 s and ticks
+IMMEDIATELY on presence/expression/gesture change, 20 s heartbeat
+otherwise, 4 s cooldown floor (thermals). max_tokens 120. Verified live:
+victory sign -&gt; "Person is showing victory; surprised" -&gt; face went
+SURPRISED within one ~9 s cycle. Sustained load still parks the bare
+SoC at ~84 C: the active cooler is now the single biggest optimization
+available for this app.</p>
+<p>Cycle/OS optimization audit (2026-07-12, user): found REAL issues --
+(1) ACTIVE THERMAL THROTTLE: throttled=0xf0006, ARM pinned at 1.5 of
+2.4 GHz; every stage runs ~40% slow. Software cannot fix this: BUY THE
+ACTIVE COOLER. (2) Memory pressure: 470 MB into zram swap; fixed with
+llama-server --flash-attn + q8_0 KV cache and service restarts -- used
+1670-&gt;1040 MB, zram 470-&gt;69 MB, mem 82-&gt;51%. (3) Perception 44% of a
+core: hand pipeline now runs every OTHER tick (result carried so the
+brain's event key doesn't flap) -&gt; 24%. (4) Load avg 5.4 on 4 cores:
+reduced by 2+3. DEMO MODE REMOVED entirely per user (DemoDirector,
+scenes, --demo, triple-tap; the brain is the only behavior source now).
+BRAIN panel cycle line + action lines truncate to panel width (text ran
+off-screen), panel margins widened. NOTE the demo removal initially
+deleted Telemetry/CamPreview/VisionGaze with it (face crash-looped;
+restored from git HEAD) -- deletion by text-range needs the range
+checked against class boundaries.</p>
+<p>Stress tint + polish (2026-07-12): the FACE COLOR is now a health
+indicator -- orange drifts toward RED with the WORST of cpu temp
+(60-85C), load (50-100%) and mem (60-95%), eased at 1.2/s so it
+breathes. Verified live: at 85C throttle the whole face runs deep red.
+Executor de-dupes contradictory duplicate set_expression actions in one
+decision (last wins). HUD margins equalized: content sits 26 px from
+ALL four edges (top/bottom rows were 6 px tighter than the sides).</p>
+<p>No-brain mode (2026-07-12, user): when the decision file goes stale the
+face enters a proper NO-BRAIN state instead of plain sleepy: new
+face-internal "dozing" expression (near-shut lids with a slow 0.7 Hz
+breathing drift, the LLM cannot select it), animated status "BRAIN
+STARTING..." (never had a decision since face start; LLM warming) vs
+"BRAIN OFFLINE..." (had one, lost it), and the BRAIN panel shows
+WARMING UP vs OFFLINE -&gt; dozing (red). Wakes to neutral the moment
+decisions resume. Verified by killing brain+llm (dozed at 55 s) and
+recovery (caught the user waving within one cycle of restart).</p>
+<p>Thermal cooldown mode (2026-07-12, user): a circuit breaker across all
+three daemons. brain.py and perceive.py watch the SoC temp (enter &gt;=80C = the
+OFFICIAL soft-throttle onset (hard throttle 85C, per raspberrypi.com
+docs); resume &lt;=70C hysteresis; PARVIZ_COOL_ENTER/EXIT env overrides for
+testing): while hot the brain stops ticking the LLM (writes
+/dev/shm/parviz_cooling as the state marker) and perception skips all
+inference (publishes {"cooling":true}). The face sees the marker and
+shows the cooldown state instead of no-brain dozing: face-internal
+"hot" expression (droopy lids, panting mouth oscillation), pale-blue
+SWEAT DROPS sliding from the brow line, "COOLING DOWN <temp>C..."
+status, amber "COOLING (paused)" in the BRAIN panel. Verified via the
+marker (visuals) and a lowered-threshold live run (real trigger +
+resume). NOTE: at current bare-board thermals (80-85C under brain load)
+the breaker WILL trip in normal use -- that is its job until the active
+cooler (task #1) arrives.</p>
+<p>Eyes = camera (2026-07-12, user): when vision is OFF the face closes
+its eyes. VisionGaze tracks <code>online</code> (fresh vision json AND not
+cooling); a blind factor eases the lids fully shut when offline and
+reopens on frames (waking-eyes effect at perception boot). VISION panel
+states: "OFFLINE, eyes shut" (amber) vs "paused: cooling". Composes
+with cooldown: while cooling, vision is paused, so Parviz sweats WITH
+its eyes closed.</p>
+<h2 id="airpods-audio-paired-2026-07-12">AirPods audio (paired 2026-07-12)</h2>
+<p>"Mohsen's AirPods" (14:98:77:F0:ED:40) are paired/trusted -&gt; auto-
+reconnect. Default sink: bluez_output.14_98_77_F0_ED_40.1. Stack:
+pipewire+wireplumber user services with <code>loginctl enable-linger moshe</code>
+(survive reboot/no-SSH), <code>libspa-0.2-bluetooth</code> (A2DP; NOT installed by
+default), pulseaudio-utils for pactl.</p>
+<p>THE lesson: on a busy-RF desk, BlueZ's default dual-mode discovery
+NEVER saw the AirPods (btmon showed zero packets from them during scans)
+while raw classic inquiry (<code>hcitool scan</code>) saw them fine. Fix =
+<code>ControllerMode = bredr</code> in /etc/bluetooth/main.conf + restart: classic-
+only discovery found them in 18 s. NOTE this disables BLE on the Pi
+(fine: sensors go through the Arduino). bluetoothd also runs with -E
+(experimental drop-in) from debugging; harmless, can be removed. Pairing
+UX: hold the case button (lid open) ~10 s PAST the green/amber status
+blink until the light PULSES WHITE; iPhone Bluetooth must be OFF or iOS
+re-captures them. audio/pair_airpods.sh re-pairs after a factory reset.</p>
+</main>
+</body>
+</html>
