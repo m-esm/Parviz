@@ -25,7 +25,7 @@ some Thingiverse "models" are low-poly illustrations, not mechanical CAD.
 | Component | Role | Status | Reference model |
 |---|---|---|---|
 | 28BYJ-48 stepper x4 | Pan (2:1 spur), tilt (3-start worm), 2x antenna deploy | OWNED x6 (Bags 5, 14) | [MajicDesigns (thing:4919536)](https://www.thingiverse.com/thing:4919536) -- Fusion360 + IGES + STL; also [CastorX (thing:3247370)](https://www.thingiverse.com/thing:3247370) |
-| ULN2003 driver x4 | Stepper drivers | OWNED x9 | [seandoughtie clearance model (thing:3781347)](https://www.thingiverse.com/thing:3781347) |
+| ULN2003 driver x4 | Stepper drivers | OWNED x9 | [seandoughtie clearance model (thing:3781347)](https://www.thingiverse.com/thing:3781347), CC0 -- NOT downloaded (Chrome silently swallows this thing's download; grab manually if needed) |
 | TT gearmotor 1:120 x2 | Track drive (2 more OPTIONAL for twin-drive) | OWNED x3 (Bag 5); buy 1 only for the 4th station | [CCFIVE yellow TT motor (thing:1079893)](https://www.thingiverse.com/thing:1079893), CC BY, DOWNLOADED to `reference/electronics/tt-motor-1079893/` (STL + STEP, 69.5x22.4x29.9); also [mademodeller (thing:4890871)](https://www.thingiverse.com/thing:4890871) |
 | MX1588 H-bridge | Drives both TTs | OWNED x5 | none found; trivial 2-layer module, model from measurement |
 
@@ -33,8 +33,8 @@ some Thingiverse "models" are low-poly illustrations, not mechanical CAD.
 
 | Component | Role | Status | Reference model |
 |---|---|---|---|
-| Arduino Uno R3 | I/O plane: sensors + reflexes, one USB to the Pi | OWNED x3 (Bag 6) | [DesignSpark CAD (thing:346338)](https://www.thingiverse.com/thing:346338); also [1:1 replica (thing:6564384)](https://www.thingiverse.com/thing:6564384) |
-| HC-SR04 x4 | Forward + rear obstacle, 2x cliff | BUY (none owned) | [dvemac outline (thing:3653635)](https://www.thingiverse.com/thing:3653635); [markbenson OpenSCAD (thing:122136)](https://www.thingiverse.com/thing:122136) |
+| Arduino Uno R3 | I/O plane: sensors + reflexes, one USB to the Pi | OWNED x3 (Bag 6) | [DesignSpark CAD (thing:346338)](https://www.thingiverse.com/thing:346338), CC BY-SA, DOWNLOADED to `reference/electronics/arduino-uno-r3-346338/` (OBJ + RSDOC); also [1:1 replica (thing:6564384)](https://www.thingiverse.com/thing:6564384) |
+| HC-SR04 x4 | Forward + rear obstacle, 2x cliff | BUY (none owned) | [dvemac (thing:3653635)](https://www.thingiverse.com/thing:3653635), CC BY, DOWNLOADED to `reference/electronics/hcsr04-dvemac-3653635/` (STL+STEP/SLDPRT+3MF, 45.2x18.5x26.5 = 45x20 board + barrels); also [markbenson OpenSCAD (thing:122136)](https://www.thingiverse.com/thing:122136), CC BY-NC, in `hcsr04-markbenson-122136/` |
 | LD2410-class mmWave | Presence, boresight-forward behind the front hex grille | BUY | dims VERIFY_ON_ARRIVAL (LD2450 does NOT fit the bay) |
 | BME688 | Env sensing over the y-96 left vent | BUY | dims VERIFY_ON_ARRIVAL |
 | MPU6050/ICM-20948 IMU | Motion, near the pan axis | BUY | dims VERIFY_ON_ARRIVAL |
