@@ -344,10 +344,9 @@ bearings under shrink wrap, not plastic rings); still unused in the design.
   passive heatsink** and the soak test improved from clocks PINNED at 1.5 GHz to
   2.1-2.4 GHz sustained (85 °C peaks, recovers 85→70 °C in <1 min off-load). The 80 °C
   thermal breaker still trips briefly under long brain bursts; an active cooler would
-  eliminate that entirely. **CAD clearance CONFIRMED MARGINAL-FAIL (2026-07-13, see
-  the head-thermal pass below): the official keep-out fits statically but the tilt
-  sweep eats ~2.7 mm into it nose-down -- don't buy until the worm-stub/cradle
-  retreat is designed or a physical cooler measures out.**
+  eliminate that entirely. **CAD clearance CLEARED (2026-07-13 evening, see the
+  head-thermal pass below): the worm-tail retreat landed, tools/probe_cooler.py passes
+  static + full tilt sweep with >=0.60 mm to the keep-out -- OK to buy.**
 - ~~USB-A→USB-B cable~~ COVERED: user has one cable per Uno (3× Uno R3 compatible in
   Bag 6; no board purchase needed either). The Arduino I/O plane is fully stocked.
 - **Sensor suite (AWARENESS.md; decide exact parts with the wiring pass, NONE owned):**
@@ -811,15 +810,28 @@ pattern (58.000 x 49.000 exact at world x -34.652/23.348, z 130.766/179.766 -> b
 origin (-38.152, 127.266), component face y 5.98). World envelope: x -37.4..26.1,
 y -7.72..5.98, z 134..176.5 -- PARAMS "pi5_cooler_*", part `build_pi5_cooler()`
 (silver keep-out, never printed), added by **COOLER=1 only (default OFF)**.
-VERDICT (tools/probe_cooler.py, re-runnable): STATIC fit OK -- worst neutral
-clearances neck_clevis 0.78 / worm_wheel 1.22 / clamp-tube frames 3.3 -- but the
-TILT SWEEP fails nose-down: first envelope contact ~-19 deg, worst ~+2.7 mm
-(tilt_worm TAIL STUB) and ~+1.8 mm (neck_clevis cradle post) at the -33.8 homing
-stall, contact zone x -6..+4 / y ~-12.5 / z ~138.5. The real part's fin/slab tops sit
-1-2.5 below the envelope face there, so the physical cooler is a 0..1 mm coin flip at
-the stall: NOT integrable as-is. Clean unblock = retreat the worm tail stub + clevis
-cradle ~3 mm in +y reach (local tilt_worm/neck_clevis pass); capping nose-down tilt at
-~-15 deg was rejected (kills the +-30 spec and stall homing). AIRFLOW is a non-issue:
+VERDICT (tools/probe_cooler.py, re-runnable): **CLEAR, static + full +-33.8 sweep**
+since the same-evening WORM-TAIL RETREAT -- static worst neck_clevis 0.78 /
+worm_wheel 2.0; sweep worst neck_clevis -0.60 / tilt_worm -0.61 at the -33.8
+nose-down stall (was +2.7 at the old bare Ø5 tail stub / +1.9 at the cradle pad).
+The binding surface is the envelope's swung REAR face, y = -20.0 + 0.669(z - 131.5)
+at the stall, so low-z material had to recede most. Fix (worm + neck only; plate,
+motor, carrier, can pocket all HELD at y -34.5 by bumping the face_y offset 9.5 ->
+10.0): worm threads shortened to y -30.5..-17.5 + 0.6 crest end chamfers (worm_len
+14 -> 13, real pair REGENERATED per docs/WORM.md -- mesh re-verified 0.000 mm3,
+contact onset CD-0.05..-0.10 unchanged, clocking 17.75 -> 17.88; the wheel contact
+plane y=-18 keeps 0.5 of full flank past it, the trimmed rear end was dead thread);
+the tail stub is DELETED and the neck's bare-stub cradle (pad front y=-13) replaced
+by a CREST-RIDING r5.5 half-groove directly under the mesh (bearing land y -21..-18,
+0.225 running clearance on the crest envelope, grease shared with the mesh --
+mechanically better than the old past-the-mesh band, and it also kills the
+wallcheck feather-wedge sliver the old groove punched through the pad bottom);
+the support/riser/gusset/cheek front-bottom corners are shaped by subtracting the
+STALL-POSED keep-out inflated 0.6 (build_neck_clevis "STALL-ENVELOPE TRIM" -- the
+envelope corner arc, r 21.58 about the axle, used to graze the cheek corners within
+~0.06). Cartridge extraction unchanged (worm still screws out through the Ø12.2
+plate bore and the open-top groove). Capping nose-down tilt at ~-15 deg stayed
+rejected (kills the +-30 spec and stall homing). AIRFLOW is a non-issue:
 the fan's own intake window is ~Ø21 (~268 mm^2 net, measured center board (41.7,
 33.7) = world (3.5, 161.0)) and the head already offers 684 mm^2 of louvres directly
 above it + the 255 mm^2 I/O slot + the open bottom bay -- no new vent slots added.

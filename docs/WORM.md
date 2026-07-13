@@ -146,6 +146,34 @@ on ANY mismatch -- the honesty gate is the sidecar now, not `worm_starts != 1`.
 FDM caveat: flank gap measures ~0.05-0.10 radial (tighter than the pan spurs); confirm
 the first printed pair doesn't bind at +0.1 oversize before greasing.
 
+## worm_len 13 + end-chamfer regeneration (2026-07-13 evening, Pi 5 cooler pass)
+
+PARAMS `worm_len` = **13.0** (was 14.0) and the generator grew a **0.6 mm 45 deg crest
+END CHAMFER** on both thread ends (`END_CH` in gen_worm_drive.py, implemented as a
+per-ring radius clamp in the helix sweep, recorded in the meta as `end_chamfer`).
+Why: at the -33.8 nose-down tilt stall the Pi 5 active-cooler keep-out's swung rear
+face reaches y = -20.0 + 0.669(z - 131.5); the old front thread end (y -17, crest
+bottom z 135.8) penetrated ~0.1 and the Ø5 tail stub past it +2.7. New span: world
+y -30.5..-17.5 (full crest to -18.1), stall margins +0.81 full-crest end / +0.64
+chamfer edge (tools/probe_cooler.py reports tilt_worm -0.61). The wheel contact
+plane (y -18) keeps 0.5 mm of full flank past it; the rear trim (-31 -> -30.5) is
+dead thread (wheel-envelope overlap ends ~-22.9). `WORM_LEN` now reads from PARAMS
+(single source of truth). Assembly knock-on: worm center stays y -24 (build.py's
+plate-face offset 9.5 -> 10.0 and thread-start gap 3.5 -> 4.0, so plate/motor/
+carrier/can-pocket all HOLD at face_y -34.5); the TAIL STUB union in build.py is
+GONE -- the tail is now carried by a crest-riding r5.5 half-groove in the neck
+(build_neck_clevis), riding the thread crest envelope at 0.225 radial clearance.
+Verification (same tooling): both meshes watertight; static min intersection 0.000
+mm3 at CD 11.9 (worst deliberate misphase 16.5); hand check wrong-hand 7.40 mm3;
+contact onset between CD-0.05 and CD-0.10 (unchanged); coupled full-worm-rev sweep
+0.000 mm3; assembly-pose zero window center **17.88 deg** (build.py clocking
+constant, was 17.75). Wheel blank unchanged (byte-identical regeneration).
+Wallcheck: tilt_worm.stl p1 0.25-0.27 = thread RUN-OUT FEATHERS where the helical
+rib meets the flat trim faces (machined worms carry the same edge unless a run-out
+relief is cut) + crest grazing rays; unloaded dead-thread ends, prints vertical
+(bottom wedge on the bed, top wedge tip-rounded by the slicer) -- dispositioned as
+a documented whitelist floor of 0.2 in src/wallcheck.py, not a generator defect.
+
 ## Pan spur pair (2026-07-13)
 
 `tools/gears/gen_pan_spurs.py`: m 0.8, PA 20 deg, **32T** (width 5.0, D-bore cut in

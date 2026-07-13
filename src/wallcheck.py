@@ -75,10 +75,18 @@ PRINTED = [
 # regression under the known-thin feature must not hide behind the whitelist).
 # ---------------------------------------------------------------------------
 WHITELIST = {
-    # Placeholder 3-start worm: helical thread CRESTS taper below 0.8 by nature
-    # of the m1.25 profile; the printed part is the generated-teeth regen per
-    # docs/WORM.md, this placeholder only holds the envelope. Measured p1 0.79.
-    "tilt_worm.stl": (0.6, "placeholder worm thread crests (real teeth per docs/WORM.md)"),
+    # REAL generated 3-start worm (docs/WORM.md; the old 0.60 floor was set against
+    # the placeholder). Thin population censused 2026-07-13 (20k samples): ~2.4% read
+    # < 0.6, median 0.04 mm from a trim face = the thread RUN-OUT WEDGES where the
+    # helical rib meets the flat end cuts at the 25 deg flank angle (machined worms
+    # carry the same feather unless a run-out relief is cut), plus grazing rays on the
+    # 1.147-wide crest band. None sit in the mesh zone (the ends are dead thread past
+    # the wheel-envelope overlap, zero load); prints VERTICAL, so the bottom wedge
+    # lies on the bed and the slicer tip-rounds the top one -- cosmetic on a greased
+    # drive gear. The 0.6 crest end chamfers (cooler pass) already broke the sharpest
+    # corners. Measured p1 0.25-0.27.
+    "tilt_worm.stl": (0.2, "3-start thread run-out feathers at the trim faces (unloaded "
+                           "dead-thread ends, prints vertical) + crest grazing rays"),
     # Pan spur pair: every sub-0.8 sample sits at r 13.58..13.60 off the motor gear
     # axis (-19.2, 0) in the z 45..50 gear band = the 32T m0.8 ADDENDUM circle
     # (tip r = 12.8 + 0.8 = 13.6, probed 2026-07-13 at 6000 samples, p1 0.77).

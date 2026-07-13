@@ -15,9 +15,12 @@ gate-fail), then reports:
 screen_ref is skipped everywhere (not watertight; and the cooler CONTAINS its
 own Pi components by construction -- that overlap is the point of a keep-out).
 
-Verdict as of 2026-07-13 (see the COOLER block in src/build.py): static OK
-(min 0.78 to neck_clevis), sweep FAILS nose-down from ~-19 deg, worst +2.71
-(tilt_worm tail stub) / +1.76 (neck_clevis cradle) at the -33.8 stall.
+Verdict as of 2026-07-13 evening (see the COOLER block in src/build.py): PASS.
+Static min 0.78 (neck_clevis); sweep worst -0.60 (neck_clevis) / -0.61
+(tilt_worm) at the -33.8 stall, after the worm-tail redesign (worm_len 13 +
+0.6 crest end chamfers, tail stub deleted, crest-riding cradle + stall-swept
+front trim in build_neck_clevis). The morning fail was +2.71 (tail stub) /
++1.76 (cradle pad) at the same pose.
 
 Python 3.9; trimesh + manifold3d. Run: python3 tools/probe_cooler.py
 """

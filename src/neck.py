@@ -72,11 +72,14 @@ def build_neck_clevis():
     wx = P["worm_wheel_x"]
     cd = worm_cd()
     wz = zt - cd
-    # Stage 2R: the worm group sits behind the axle (face_y offset 4 -> 8 -> 9.5 in stage 5):
-    # at -30 tilt the stack's rear (GPIO pins) sweeps down-back past the worm tail. The 9.5
-    # offset + worm_len 14 puts the thread span at y -32..-16 (still covering the wheel
-    # contact at yt) with a bare Ø5 stub forward of -16 for the cradle (stage-4 D2 fix).
-    face_y = yt - 0.5 * P["worm_len"] - 9.5              # motor mount face (behind the worm)
+    # Stage 2R: the worm group sits behind the axle (face_y offset 4 -> 8 -> 9.5 in stage 5,
+    # 9.5 -> 10.0 with worm_len 14 -> 13 in the cooler pass 2026-07-13 so the plate, motor,
+    # can pocket and carrier all HOLD at y -34.5): at -30 tilt the stack's rear (GPIO pins)
+    # sweeps down-back past the worm tail. Threads span y -30.5..-17.5, still covering the
+    # wheel contact at yt (see PARAMS worm_len for the cooler-clearance derivation).
+    face_y = yt - 0.5 * P["worm_len"] - 10.0             # motor mount face (behind the worm)
+                                                         # keep in sync with build.py +
+                                                         # build_tilt_carrier()
     # plate shortened 46 -> 36 tall (same bottom): the old top (wz+23) clipped the head's back
     # wall above the neck slot during the +10..+25 deg sweep
     plate = box(46, 4, 36); plate.apply_translation((wx, face_y, wz - 5))
@@ -87,20 +90,23 @@ def build_neck_clevis():
     gus = box(10, abs(gy1 - gy0) + 4, 22)
     gus.apply_translation((wx + 19, (gy0 + gy1) / 2, (wz + P["neck_top_z"]) / 2))
     parts.append(gus)
-    # outboard support for the worm's far end (the 28BYJ shaft only reaches ~6 mm into the worm;
-    # the Ø5 tail stub rides an open-top CRADLE groove; worm separation force presses DOWN into
-    # it, so the open top is load-correct). Stage 2R shape: at -30 tilt the stack's rear sweeps
-    # to y -18.2 in the z 148..160 band but frees everything above z~168. Stage 5 (D2 fix):
-    # the worm's full-radius threads (r 5.34, now ending at y=-16) used to run THROUGH the
-    # cradle band; the groove band now sits at y -15.5..-13 on the bare Ø5 tail stub, and the
-    # cradle material behind it (riser top + pad rear, y<=-15.5) is split into two side PRONGS
-    # by an envelope-relief bore (r 5.9 > thread r 5.34, cut below after the union) about the
-    # worm axis so the worm can rotate. The arm stays under the thread envelope (top z=160
-    # < wz-5.34); the pad keeps its stage-2R-proven front (y=-13) and z band (164..166.5).
+    # outboard support for the worm's far end (the 28BYJ shaft only reaches ~6 mm into the
+    # worm; worm separation force presses DOWN, so an open-top support is load-correct).
+    # CREST-RIDING since the Pi 5 cooler pass 2026-07-13: the old scheme (bare Ø5 tail stub
+    # in a Ø5.4 half-groove at y -15.5..-13, stage-5 D2 fix) reached y=-12 and penetrated
+    # the cooler keep-out +2.7/+1.9 at the -33.8 nose-down stall. The stub and its pad are
+    # GONE; instead a support block under the THREAD SPAN carries an open-top r5.5
+    # half-groove (crest r 5.275 + 0.225 running clearance, same class as the old 0.2)
+    # whose bottom land sits at y -21..-18 -- DIRECTLY under the wheel contact plane
+    # (y=-18), mechanically better than the old past-the-mesh band. The wheel never
+    # reaches it (wheel tip bottom z 144.75 >> block top z=wz); grease shared with the
+    # mesh; extraction just screws the crests through the open groove. Behind it the
+    # riser top is still split into side prongs by the r5.9 free-rotation relief
+    # (y -34..-21). The support's front face is shaped by the STALL-ENVELOPE trim below.
     arm = box(18, 16, 6); arm.apply_translation((wx, yt - 10.0, wz - 9.5))        # y -36..-20
-    riser = box(18, 5, 16.5); riser.apply_translation((wx, yt - 4.5, wz - 8.25))  # z 150..166.5
-    pad = box(18, 12, 2.5); pad.apply_translation((wx, -19.0, wz - 1.25))         # y -25..-13
-    parts += [arm, riser, pad]
+    riser = box(18, 5, 16.5); riser.apply_translation((wx, yt - 4.5, wz - 8.25))  # z 124.6..141.1
+    supp = box(18, 7, 9.5); supp.apply_translation((wx, -17.5, wz - 4.75))        # y -21..-14
+    parts += [arm, riser, supp]
 
     neck = uni(parts)
     # column front CHIN NOTCH, re-derived for the stage-5 inboard column (front face now
@@ -167,14 +173,16 @@ def build_neck_clevis():
     erelief = box(46.0, 4.0, 10.0)
     erelief.apply_translation((wx, face_y - 11.5, can_z))
     neck = sub(neck, erelief)
-    # worm-thread envelope relief: Ø11.8 bore (thread tip r 5.34 + 0.56 running clearance)
-    # about the worm axis over the threaded span (y -34..-15.5) -- splits the riser top / pad
-    # rear into the two side prongs and lets the worm rotate free of the cradle (D2)
-    relief = cyl(5.9, 18.5, axis="y"); relief.apply_translation((wx, -24.75, wz))
+    # worm-thread envelope relief: Ø11.8 bore (thread tip r 5.275 + 0.625 running clearance)
+    # about the worm axis over the REAR thread span (y -34..-21) -- splits the riser top
+    # into the two side prongs and lets the worm rotate free (D2)
+    relief = cyl(5.9, 13.0, axis="y"); relief.apply_translation((wx, -27.5, wz))
     neck = sub(neck, relief)
-    # Ø5.4 half-groove across the cradle pad top (worm tail stub rides here, open top),
-    # only over the bare-stub band forward of the threads (threads end y=-16)
-    bush = cyl(2.7, 4.5, axis="y"); bush.apply_translation((wx, -14.25, wz)); neck = sub(neck, bush)
+    # Ø11 CREST-RIDING half-groove across the support block (open top; the thread crests
+    # ride it, 0.225 radial running clearance -- see the support-block note above). Runs
+    # y -21.5..-13; the stall-envelope trim below owns the actual front face.
+    groove = cyl(5.5, 8.5, axis="y"); groove.apply_translation((wx, -17.25, wz))
+    neck = sub(neck, groove)
     # vertical cable channel down the column: 16x8 obround (was Ø12 -- a 5-pos JST-XH head
     # is 14.9 x 5.9 and must pass pre-crimped). Long axis along X, at (0, neck_chan_y):
     # pushed behind the column center so the chin notch (rear y=-19.5) leaves a full wall
@@ -235,6 +243,28 @@ def build_neck_clevis():
             gr = box(2.4, 17.0, 2.6)
             gr.apply_translation((gsx * 24.0, -29.5, gz))
             neck = sub(neck, gr)
+    # STALL-ENVELOPE TRIM (Pi 5 cooler pass 2026-07-13): subtract the cooler keep-out
+    # (PARAMS pi5_cooler_*, the head-riding envelope tools/probe_cooler.py sweeps) POSED
+    # AT THE -33.8 NOSE-DOWN HOMING STALL and inflated 0.6/side. The envelope's swung
+    # bottom-rear corner passes lowest/furthest-back at the stall (binding pose for every
+    # z >= ~131.5, spot-checked vs -25/-29/-30 deg), so this one cut shapes the support
+    # block's front into the correct 33.8 deg slope (bearing land y -21..-18 at the groove
+    # bottom, y ~-14.3 reach at the top) AND bevels the riser/gusset/cheek front-bottom
+    # corners, which the envelope corner arc (r 21.58 about the axle) grazed within ~0.06.
+    # The bearing hoops + cheek fronts NEAR THE AXLE are never cut: they are r 9.5 about
+    # the tilt axle vs the rear face's constant 10.28 axis distance (0.78 clear at every
+    # pose, 0.18 vs the inflated cutter). The clip box only keeps the far-field tidy.
+    # Margin 0.6 = the probe-reported floor for neck_clevis.
+    cw, cdp, chh = P["pi5_cooler_wdh"]
+    bcx, bcz = P["pi5_cooler_board_c"]
+    X0, Z0 = P["pi5_board_org"]
+    minf = 0.6
+    cut = box(cw + 2 * minf, cdp + 2 * minf, chh + 2 * minf)
+    cut.apply_translation((X0 + bcx, P["pi5_comp_face_y"] - cdp / 2, Z0 + bcz))
+    cut.apply_transform(R(np.radians(-33.8), (1, 0, 0), (0, yt, zt)))
+    clip = box(80.0, 400.0, 400.0)
+    clip.apply_translation((0, 0, 150.0))
+    neck = sub(neck, inter(cut, clip))
     _color(neck, "neck")
     neck.metadata["name"] = "neck_clevis"
     return neck
@@ -306,7 +336,9 @@ def build_tilt_carrier():
     zt, yt = P["tilt_axis_z"], P["tilt_axis_y"]
     wz = zt - worm_cd()
     can_z = wz - P["motor_shaft_off"]
-    face_y = yt - 0.5 * P["worm_len"] - 9.5              # neck bracket-plate front face
+    face_y = yt - 0.5 * P["worm_len"] - 10.0             # neck bracket-plate front face
+                                                         # (keep in sync with build.py +
+                                                         # build_neck_clevis: -34.5)
     cy = -48.55                                          # carrier mid-plane (front -46.55:
     plate = box(46.0, 4.0, 40.0)                         # 0.05 off the motor-ear rear face)
     plate.apply_translation((0, cy, can_z))

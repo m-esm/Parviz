@@ -160,12 +160,13 @@ def build():
         wheel = load_gear_stl("worm_wheel_real.stl")
         # cosmetic mesh clocking: at the assembly's relative pose (wheel midplane crosses the
         # worm at worm-local y +6) the 3-start blank's zero-interference window centers at
-        # 17.75 deg (tools/gears/probe_worm_sweep.py; the old single-start pair was 24.5).
-        # M_head then adds tilt_deg about the SAME axis, so pre-rotate by (17.75 - tilt)
+        # 17.88 deg (tools/gears/probe_worm_sweep.py; 17.75 before the worm_len-13 regen,
+        # 24.5 for the old single-start pair).
+        # M_head then adds tilt_deg about the SAME axis, so pre-rotate by (17.88 - tilt)
         # mod one tooth pitch (30) and the teeth visually mesh at ANY preview/sweep pose.
         # Physically meaningless (the wheel is 30-deg tooth-periodic); the grub pilot
         # below stays clocked +Z regardless.
-        wheel.apply_transform(R(((17.75 - tilt_deg) % 30.0) * DEG, (1, 0, 0)))
+        wheel.apply_transform(R(((17.88 - tilt_deg) % 30.0) * DEG, (1, 0, 0)))
     hub = cyl(5.5, 5.5, axis="x"); hub.apply_translation((6.25, 0, 0))          # x 3.5..9
     tub_p = cyl(4.0, 9.0, axis="x"); tub_p.apply_translation((13.5, 0, 0))      # hub -> +X race
     tub_m = cyl(4.0, 14.5, axis="x"); tub_m.apply_translation((-10.75, 0, 0))   # wheel -> -X race
@@ -197,25 +198,25 @@ def build():
     wheel.apply_translation((wx, yt, zt))
     add(wheel, M_head, "worm_wheel.stl")
     # worm on the motor shaft (axis Y), tangent below the wheel; fixed to the neck frame (M_pan).
-    # FULL-DEPTH double-D bore (the old worm had no bore at all) + a Ø6 tail stub riding the
-    # neck bracket's outboard bushing post (the far end was a free cantilever).
-    face_y = yt - 0.5 * P["worm_len"] - 9.5          # keep in sync with build_neck_clevis()
-    yc = face_y + 3.5 + P["worm_len"] / 2            # real worm thread spans exactly +-7 (the
-                                                     # old placeholder ribs overhung 1 mm/end);
-                                                     # keep 0.5 off the plate front face
+    # FULL-DEPTH double-D bore (the old worm had no bore at all). NO tail stub since the
+    # Pi 5 cooler pass 2026-07-13: the tail rides a CREST-RIDING half-groove under the
+    # threads in the neck (build_neck_clevis) -- the old bare Ø5 stub reached y=-12 and
+    # penetrated the cooler keep-out +2.7 at the -33.8 nose-down stall.
+    face_y = yt - 0.5 * P["worm_len"] - 10.0         # keep in sync with build_neck_clevis()
+                                                     # (10.0 was 9.5: worm_len 14 -> 13 with
+                                                     # plate/motor/carrier HELD at y -34.5)
+    yc = face_y + 4.0 + P["worm_len"] / 2            # worm center y = tilt_axis_y - 6: real
+                                                     # threads span exactly +-worm_len/2 ->
+                                                     # world -30.5..-17.5 (see PARAMS worm_len)
     if placeholder_gears:
         wm = worm(P["worm_od"] / 2, P["worm_len"], starts=P["worm_starts"], axis="y")
     else:
         # real 3-start RH worm (docs/WORM.md): axis Y, OD 10.55, solid core Ø7, thread
-        # span exactly +-7 about origin. The Ø7 core takes the full-depth double-D bore in
-        # SOLID stock (probed: bore surface 100% inside the solid over the thread span;
-        # round wall 0.915 mm, flat wall 1.88 -- thin but the D-flats carry the torque).
+        # span exactly +-6.5 about origin, 0.6 crest chamfer at both ends (cooler pass).
+        # The Ø7 core takes the full-depth double-D bore in SOLID stock (probed: bore
+        # surface 100% inside the solid over the thread span; round wall 0.915 mm, flat
+        # wall 1.88 -- thin but the D-flats carry the torque).
         wm = load_gear_stl("tilt_worm_real.stl")
-    # Ø5 tail stub: bare past the thread end (y=-16, local +8) so the cradle groove band
-    # (y -15.5..-13) grips ROUND stock, not thread (stage-4 D2); r2.5 keeps it under the
-    # wheel-tooth sweep where it emerges
-    stub = cyl(2.5, 8.0, axis="y"); stub.apply_translation((0, 8.0, 0))
-    wm = uni([wm, stub])
     db = dbore_neg(P["worm_len"] + 1.2, axis="y")
     # NO extra clocking: after the motor's two rotations below (shaft +Z -> +Y, then rolled so
     # the offset points up) the shaft flats face +-X, and dbore_neg(axis="y") already cuts its
@@ -341,20 +342,18 @@ def build():
 
     # Pi 5 ACTIVE COOLER keep-out (2026-07-13, COOLER=1 -- default OFF; PARAMS
     # "pi5_cooler_*" for the measured placement). FIT VERDICT (tools/probe_cooler.py):
-    # the envelope FITS STATICALLY -- worst neutral clearances neck_clevis 0.78,
-    # worm_wheel 1.22, head_back clamp-tube frames 3.3 -- but the TILT SWEEP eats
-    # into it nose-down: first envelope contact at ~-19 deg, growing to ~+2.7 mm
-    # (tilt_worm TAIL STUB) and ~+1.8 mm (neck_clevis cradle post) at the -33.8
-    # homing stall; contact zone x -6..+4, y ~-12.5, z ~138.5 = the worm's +y end
-    # support cluster vs the envelope's swung bottom-rear corner. Against the REAL
-    # part that corner is fin-field / logo-slab top, which sits 1-2.5 BELOW the
-    # envelope face (see PARAMS depth note), so the physical cooler is a 0..1 mm
-    # coin flip at the stall -- NOT integrable as-is; default stays OFF so the
-    # gates keep guarding the shipping geometry. Unblock candidates: retreat the
-    # worm tail stub + clevis cradle ~3 mm in +y reach (local tilt_worm/neck_clevis
-    # redesign, the clean fix), or cap nose-down tilt at ~-15 deg (kills the spec
-    # and stall homing -- rejected), or measure a physical cooler's assembled
-    # fin-top height and re-probe before committing. AIRFLOW is NOT a blocker:
+    # CLEAR, static AND full +-33.8 tilt sweep, since the same-day worm-tail
+    # redesign -- static worst neck_clevis 0.78 / worm_wheel 2.0, sweep worst
+    # neck_clevis -0.60 / tilt_worm -0.61 at the -33.8 nose-down stall (the old
+    # bare Ø5 tail stub + cradle pad penetrated +2.7/+1.9 there). The fix: worm
+    # threads shortened to y -30.5..-17.5 with 0.6 crest end chamfers (worm_len
+    # 14 -> 13, regenerated per docs/WORM.md), the tail stub DELETED, and the
+    # neck's bare-stub cradle replaced by a crest-riding half-groove under the
+    # mesh whose front face is the stall-swept envelope plane + 0.6 (see
+    # build_neck_clevis). Against the REAL part the margins are another 1-2.5
+    # better (fin/slab tops sit BELOW the envelope face, PARAMS depth note).
+    # Default stays OFF so the gates keep guarding the shipping geometry;
+    # COOLER=1 previews the keep-out. AIRFLOW is NOT a blocker:
     # the fan moves 1.09 CFM (0.51 L/s) through its own ~Ø21 window (~268 mm^2
     # net); the head already offers 684 mm^2 of louvres DIRECTLY above the window
     # (band z 171..187 vs window top ~171.5) + the 255 mm^2 right-wall I/O slot +

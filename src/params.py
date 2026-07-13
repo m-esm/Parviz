@@ -116,11 +116,18 @@ P = {
     "worm_pitch_r": 4.4,    # REAL worm pitch radius (docs/WORM.md): module 1.25 + the Ø7
                             # solid core force pitch r 4.4 -> CD 11.9 (the old worm_od*0.4
                             # guess gave 11.5, which left the wheel ~no addendum room)
-    # 14 (was 16): threads (body + 1 mm rib overhang each end) span 16 mm = 4.07 axial
-    # pitches (>= 4 teeth-equivalent on the 12T wheel) and END at y=-16, so a bare Ø5 tail
-    # stub emerges BEFORE the cradle groove band (y -15.5..-13). The old 16 ran full-radius
-    # threads to y=-13.5, through the cradle (stage-4 defect D2).
-    "worm_len": 14.0,
+    # 13 (was 14, was 16): thread span, exactly +-worm_len/2 about the worm's local
+    # origin -> world y -30.5..-17.5 (worm center y = tilt_axis_y - 6). Front (+y) end
+    # SHORTENED 0.5 + a 0.6 crest end chamfer (Pi 5 cooler pass 2026-07-13): at the
+    # -33.8 nose-down stall the cooler keep-out's swung rear face reaches y =
+    # -20.0 + 0.669(z - 131.5), so the old full-crest end at y=-17 (crest bottom
+    # z 135.8) penetrated ~0.1 and the Ø5 tail stub past it +2.7. Full crest now ends
+    # at y=-18.1 (margin 0.81), chamfered crest at -17.5 (0.64); the wheel contact
+    # plane (y=-18) keeps 0.5 of usable flank past it. The tail stub + bare-stub
+    # cradle band are GONE -- the tail rides a crest-riding half-groove UNDER the
+    # threads instead (build_neck_clevis). Rear end -30.5 is dead thread (wheel
+    # envelope overlap ends ~-22.9), no mesh cost.
+    "worm_len": 13.0,
 
     # --- Neck column (carries the clevis, rides the pan platform) ---
     "neck_w": 48.0,         # column width (X) -- squarer + rounded reads as a neck, not a plank
