@@ -8,6 +8,7 @@
   "backlash": 0.25,
   "lead_angle_deg": 23.081,
   "face_w": 7.0,
-  "worm_len": 14.0,
-  "hand": 1
+  "worm_len": 13.0,
+  "hand": 1,
+  "end_chamfer": 0.6
 }

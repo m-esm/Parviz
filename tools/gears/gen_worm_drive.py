@@ -55,7 +55,10 @@ BORE_D = 5.2                      # axle bore through the wheel (Ø5 axle + clea
 BACKLASH = 0.25                   # circular backlash, all taken on the wheel tooth
 
 WORM_PITCH_R = 4.4                # derived: 3.5 core + 0.75 wheel addendum + 0.15 clr
-WORM_LEN = 14.0                   # PARAMS["worm_len"], thread span along Y
+WORM_LEN = float(_P["worm_len"])  # thread span along Y (single source of truth: PARAMS)
+END_CH = 0.6                      # 45 deg crest chamfer at both thread ends (cooler pass
+                                  # 2026-07-13: kills the swung-envelope corner hit at the
+                                  # -33.8 tilt stall + the machined-worm-style edge break)
 WORM_ROOT_R = 3.5                 # Ø7 solid core: wall for the Ø~5.2 double-D bore
 WORM_ADD = 0.7 * MODULE           # 0.875 -> worm tip r 5.275 (OD 10.55)
 WHEEL_ADD = 0.6 * MODULE          # 0.75  -> wheel tip r 8.25 (stub, clears the core)
@@ -170,8 +173,16 @@ def build_worm():
         rings = []
         for t in ts:
             yc = HAND * LEAD * t / (2 * np.pi)
-            ring = [(r * np.sin(t + phase), yc + dy, r * np.cos(t + phase))
-                    for dy, r in prof]
+            ring = []
+            for dy, r in prof:
+                y = yc + dy
+                # 45 deg crest END CHAMFER: clamp vertex radius to a cone that starts
+                # END_CH inside each trim face and drops END_CH at it (constant past the
+                # face so the overshoot stays a valid ring; the trim slab discards it).
+                r_cap = R_TIP_W - max(0.0, min(abs(y), WORM_LEN / 2)
+                                      - (WORM_LEN / 2 - END_CH))
+                ring.append((min(r, r_cap) * np.sin(t + phase), y,
+                             min(r, r_cap) * np.cos(t + phase)))
             rings.append(ring)
         rings = np.array(rings)                                 # (T, 4, 3)
 
@@ -235,7 +246,7 @@ def main():
     print(f"lead {LEAD:.5f}  LEAD ANGLE {np.degrees(LEAD_ANGLE):.3f} deg  "
           f"CENTER DISTANCE {CD}")
     hw_tip = PITCH / 4 - WORM_ADD * np.tan(PA)
-    print(f"worm crest width {2*hw_tip:.3f} mm (printable > 0.6)")
+    print(f"worm crest width {2*hw_tip:.3f} mm (printable > 0.6)  end chamfer {END_CH}")
 
     wheel = build_wheel()
     worm = build_worm()
@@ -257,6 +268,7 @@ def main():
         "worm_pitch_r": WORM_PITCH_R, "cd": CD, "pa_deg": PA_DEG,
         "backlash": BACKLASH, "lead_angle_deg": round(float(np.degrees(LEAD_ANGLE)), 3),
         "face_w": FACE_W, "worm_len": WORM_LEN, "hand": HAND,
+        "end_chamfer": END_CH,
     }
     with open(OUT_META, "w") as f:
         json.dump(meta, f, indent=2)
