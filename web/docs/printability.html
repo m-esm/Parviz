@@ -20,11 +20,11 @@
     background:radial-gradient(125% 100% at 50% -10%, #2b313b 0%, #191d23 46%, #0d0f13 100%);
     background-attachment:fixed}
   main{max-width:880px;margin:0 auto;padding:68px 22px 80px}
-  h1,h2,h3,h4{line-height:1.25;letter-spacing:-.01em;scroll-margin-top:56px}
-  h1{font-size:27px;margin:10px 0 6px}
+  h1,h2,h3,h4{line-height:1.2;letter-spacing:-.02em;scroll-margin-top:56px}
+  h1{font-size:31px;font-weight:750;margin:8px 0 8px}
   h2{font-size:19px;margin:34px 0 10px;padding-top:18px;border-top:1px solid var(--hair)}
   h3{font-size:15.5px;margin:24px 0 8px;color:var(--ink)}
-  p{margin:10px 0;color:var(--ink-dim)}
+  p{margin:11px 0;color:var(--ink-dim)}
   li{color:var(--ink-dim);margin:4px 0}
   strong{color:var(--ink)}
   a{color:var(--accent);text-decoration:none}
@@ -41,19 +41,55 @@
   tr:last-child td{border-bottom:0}
   td{color:var(--ink-dim)}
   td:first-child{color:var(--ink)}
-  blockquote{margin:12px 0;padding:2px 16px;border-left:3px solid var(--accent);
-    background:var(--accent-soft);border-radius:0 10px 10px 0}
+  blockquote{margin:12px 0;padding:2px 16px;border-left:3px solid var(--orange);
+    background:rgba(232,116,34,.10);border-radius:0 10px 10px 0}
   hr{border:0;border-top:1px solid var(--hair);margin:26px 0}
-  .crumb{font:600 9.5px/1 var(--mono);letter-spacing:.22em;color:var(--accent);text-transform:uppercase}
-  /* hub cards */
-  .hub h2{border-top:0;padding-top:8px}
-  .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin:14px 0 8px}
-  .card{display:block;padding:14px 16px;background:var(--panel);border:1px solid var(--hair);
-    border-radius:14px;transition:border-color .12s,transform .12s}
-  .card:hover{border-color:var(--accent);text-decoration:none;transform:translateY(-1px)}
-  .card b{display:block;font-size:14px;color:var(--ink);margin-bottom:4px}
-  .card span{font-size:12px;color:var(--ink-dim);line-height:1.5;display:block}
-  .hero{width:100%;border-radius:16px;border:1px solid var(--hair);margin:16px 0 4px;display:block}
+  /* mono instrument labels: ORANGE = identity/structure (the robot's paint),
+     CYAN = interactive/measurement (the tool's voice) */
+  .crumb{font:700 9.5px/1 var(--mono);letter-spacing:.24em;color:var(--orange);text-transform:uppercase}
+
+  /* ---- hub hero: identity thesis + real render + measured spec strip ---- */
+  .hub main{max-width:980px}
+  .hero-wrap{display:grid;grid-template-columns:1.05fr .95fr;gap:30px;align-items:center;margin:6px 0 4px}
+  @media(max-width:760px){.hero-wrap{grid-template-columns:1fr;gap:18px}}
+  .hero-wrap h1{font-size:40px;line-height:1.03;margin:12px 0 14px;letter-spacing:-.03em}
+  .hero-wrap h1 .accent{color:var(--orange)}
+  .lede{font-size:15.5px;color:var(--ink-dim);line-height:1.62;max-width:48ch}
+  .hero-img{width:100%;border-radius:16px;border:1px solid var(--hair);display:block;
+    box-shadow:0 22px 55px -26px rgba(0,0,0,.65)}
+  .specs{display:flex;flex-wrap:wrap;margin:24px 0 8px;border:1px solid var(--hair);
+    border-radius:14px;overflow:hidden;background:var(--panel)}
+  .spec{flex:1 1 120px;padding:13px 17px;border-right:1px solid var(--hair)}
+  .spec:last-child{border-right:0}
+  .spec b{display:block;font:750 18px/1.05 var(--mono);color:var(--ink);letter-spacing:-.02em}
+  .spec b em{font-style:normal;color:var(--orange)}
+  .spec span{display:block;margin-top:5px;font:600 9px/1.3 var(--mono);letter-spacing:.13em;
+    text-transform:uppercase;color:var(--ink-faint)}
+
+  /* ---- section eyebrow + cards ---- */
+  .hub h2{border-top:0;padding-top:0;font:700 12px/1 var(--mono);letter-spacing:.16em;
+    text-transform:uppercase;color:var(--ink-dim);margin:36px 0 13px;
+    display:flex;align-items:center;gap:11px}
+  .hub h2::before{content:"";width:15px;height:2px;background:var(--orange);border-radius:2px}
+  .hub h2 .n{margin-left:auto;color:var(--ink-faint);font-weight:600;letter-spacing:.1em}
+  .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;margin:0 0 8px}
+  .card{position:relative;display:block;padding:15px 17px 16px;background:var(--panel);
+    border:1px solid var(--hair);border-radius:14px;overflow:hidden;
+    transition:border-color .14s,transform .14s,background .14s}
+  .card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--orange);
+    transform:scaleY(0);transform-origin:top;transition:transform .16s}
+  .card:hover{border-color:rgba(92,199,212,.42);text-decoration:none;transform:translateY(-2px);
+    background:rgba(30,34,40,.72)}
+  .card:hover::before{transform:scaleY(1)}
+  .card b{display:block;font-size:14.5px;color:var(--ink);margin-bottom:5px;letter-spacing:-.01em}
+  .card span{font-size:12px;color:var(--ink-dim);line-height:1.55;display:block}
+  .card .go{margin-top:11px;font:700 9px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;
+    color:var(--accent);opacity:0;transform:translateX(-3px);transition:opacity .14s,transform .14s}
+  .card:hover .go{opacity:1;transform:none}
+  @media (prefers-reduced-motion: reduce){
+    .card,.card::before,.card .go{transition:none}
+    .card:hover{transform:none}
+  }
 
   #topnav{position:fixed;top:0;left:0;right:0;z-index:30;display:flex;align-items:center;
     gap:2px;height:42px;padding:0 14px 0 16px;
@@ -89,8 +125,7 @@
   <a class="gh" href="https://github.com/m-esm/parviz" title="source">GitHub</a>
 </nav>
 <main>
-<div class="crumb">desk-pi · Build docs</div>
-<h1 id="printability-audit-styling-cosmetic-parts-design-styling-campaign">Printability audit, styling / cosmetic parts (design-styling campaign)</h1>
+<div class="crumb">Parviz · Build docs</div><h1 id="printability-audit-styling-cosmetic-parts-design-styling-campaign">Printability audit, styling / cosmetic parts (design-styling campaign)</h1>
 <p>Audit of the cosmetic parts added in the design-styling pass, measured from
 <code>web/assembly.glb</code> (trimesh: extents, body splits, cross-sections) and cross-checked against
 the builders in <code>src/build.py</code>. Rules basis: FDM on a 0.4 mm nozzle (Bambu A1 class),
