@@ -363,3 +363,15 @@ Docs: CLAUDE.md drift from stage 4 is resolved (10 parts, 12T, Pins_Out_v8; the 
 **Verdict: READY TO COMMIT.** No defects found. Standing model-only artifacts (not defects):
 static motor_pan shaft vs the swept platform D-bore (shaft co-rotates in reality), placeholder
 worm/wheel tooth interpenetration (regen in BOSL2 before printing), 0.03 mm3 ball-seat tangency.
+
+## Wallcheck gate findings (2026-07-13, skills fix campaign)
+
+The new `make wallcheck` min-wall gate (src/wallcheck.py, in `make all`) surfaced and
+closed these on its first full runs:
+
+| Finding | Verdict | Fix |
+|---|---|---|
+| track_keeper_L/R tab rim 0.65 mm (Ø4.2 M2 counterbore on the 2.6x5.5 tab) | DEFECT, fixed | cb Ø4.2 -> Ø4.0 (M2 pan head Ø3.8 max) + tab 5.5 -> 5.7; rim now 0.85, slot-critical 1.9 bar untouched, keeper-wall clearance 1.35 |
+| head_back_frame_L/R exported STLs non-manifold (float32 write collapses near-equal float64 vertices at the cap-plane junctions; in-memory mesh passed is_watertight) | DEFECT, fixed | geo.export_stl(): float32-quantized watertight check on every export; guarded manifold3d repair (volume < 0.1%, bbox < 0.01 mm, asserts) |
+| neck_clevis 0.12 mm feather wedges (cradle-pad underside vs Ø5.4 tail-stub groove bottoming 0.2 below it) | DEFECT, fixed structurally | cooler-clearance pass deleted the pad+groove; the new crest-riding half-groove bottoms 4 mm above the block bottom; p1 now 1.75 |
+| tilt_worm / worm_wheel / pan_gears sub-0.8 populations | EXPECTED geometry, whitelisted | probe-located to tooth tips, thread run-out feathers, and helical face-edge feathers; mesh probe-verified per docs/WORM.md; documented floors 0.2 / 0.4 / 0.75 |

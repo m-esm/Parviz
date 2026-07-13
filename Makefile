@@ -54,6 +54,7 @@ all:                 ## Full pipeline: build GLB, interference gate, design inva
 	python3 src/build.py
 	python3 src/assembly_check.py web/assembly.glb
 	python3 src/checks.py
+	python3 src/wallcheck.py
 	$(MAKE) export
 
 pages:               ## Force a Pages deploy now (normally AUTOMATIC: pushing web/ to main triggers .github/workflows/pages.yml)

@@ -87,6 +87,14 @@ WHITELIST = {
     # corners. Measured p1 0.25-0.27.
     "tilt_worm.stl": (0.2, "3-start thread run-out feathers at the trim faces (unloaded "
                            "dead-thread ends, prints vertical) + crest grazing rays"),
+    # REAL 12T helical wheel (same regen): thin samples sit at r ~7.5 from the axle
+    # axis (the pitch circle) ON the x +-3.5 face planes (probed 2026-07-13: min spot
+    # (3.5, -17.91, 160.48), r 7.48) = the tooth FACE-EDGE FEATHERS where the 22.8 deg
+    # helix twist meets the flat face cut -- the wheel-side twin of the worm's run-out
+    # wedges. Mesh probe-verified (coupled sweep 0.000 mm3), greased drive gear; the
+    # wheel prints on its face so the feather edge lies in-plane. Measured p1 0.53-0.58.
+    "worm_wheel.stl": (0.4, "helical tooth face-edge feathers at the x +-3.5 face cuts "
+                            "(pitch-circle band, prints on its face)"),
     # Pan spur pair: every sub-0.8 sample sits at r 13.58..13.60 off the motor gear
     # axis (-19.2, 0) in the z 45..50 gear band = the 32T m0.8 ADDENDUM circle
     # (tip r = 12.8 + 0.8 = 13.6, probed 2026-07-13 at 6000 samples, p1 0.77).

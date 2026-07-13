@@ -130,8 +130,12 @@ make fits           # fit/pressure map (ported from finnish-doors 2026-07-08): n
 make invariants     # design-invariant gate (src/checks.py, ~1.3 s, IN make all): one
                     #   assertion per user-approved feature -- ADD A CHECK THE SAME TURN a
                     #   feature is approved, so it can't silently regress later.
-make wallcheck      # min-wall report over the printed STL set (0.8 mm gate + documented
-                    #   whitelist; exits 1 while findings stand -- see docs/FIXES.md)
+make wallcheck      # min-wall gate over the printed STL set (0.8 mm p1 + documented
+                    #   whitelist floors; IN make all since 2026-07-13, all findings
+                    #   dispositioned: keepers fixed Ø4.0 cb + 5.7 tab rim 0.85,
+                    #   head_back frames export watertight via geo.export_stl's
+                    #   quantized check + guarded manifold3d repair, gear tooth
+                    #   tips/run-out feathers whitelisted with probe-verified reasons)
 make tipover        # mass/CoM/tip-margin report (solid-PLA + 50%-infill bounds); a
                     #   report, not a gate -- 2026-07-13 verdict: no ballast needed.
 ```
