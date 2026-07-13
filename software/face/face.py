@@ -67,7 +67,7 @@ SCREEN_W, SCREEN_H = 800, 480
 # The HUD lives in cool muted tones so telemetry never competes with the
 # expression (user 2026-07-12: orange is just for the face).
 BG = (0, 0, 0)
-ORANGE = (232, 116, 34)
+ORANGE = (255, 168, 96)   # bright whitened orange (user 2026-07-13: 'more white in the orange'; was 232,116,34 body accent)
 DIM = (93, 46, 14)            # legacy dim orange (boot label)
 HUD_FG = (176, 179, 183)      # light gray: values
 HUD_MID = (128, 131, 135)     # mid gray: graphs, cursor, pip
@@ -1294,9 +1294,16 @@ class FaceRenderer:
         def norm(v, lo, hi):
             return 0.0 if v is None else max(0.0, min(1.0,
                                                       (v - lo) / (hi - lo)))
-        stress = max(norm(te.temp, 60.0, 85.0),
-                     norm(te.load_pct, 50.0, 100.0),
-                     norm(te.mem_pct, 60.0, 95.0))
+        # Bands start ABOVE this Pi's normal operating point (80C / 75% cpu
+        # / 88% mem on the 2GB board) so the resting face stays bright
+        # orange; only genuine spikes redden it (user 2026-07-13, was
+        # 60-85 / 50-100 / 60-95 = permanently ~0.8 stress = red face).
+        # CPU%% dropped from the mix (2026-07-13): brain bursts peg all 4
+        # cores to 100%% for seconds at a time in NORMAL conversation, which
+        # flashed the face red; temperature already integrates sustained
+        # load and is the signal that actually matters.
+        stress = max(norm(te.temp, 80.0, 90.0),
+                     norm(te.mem_pct, 90.0, 100.0))
         want = tuple(ORANGE[i] + (RED[i] - ORANGE[i]) * stress
                      for i in range(3))
         self.face_col = tuple(
