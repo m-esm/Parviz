@@ -125,6 +125,15 @@ def main():
     check("master links in both loops",
           {"track_L.link_00_master", "track_R.link_00_master"} <= geoms)
 
+    # user 2026-07-13 (integrate downloaded electronics into the assembly): the
+    # real bought meshes (docs/ELECTRONICS.md) must be on disk so refparts poses
+    # them instead of silently falling back to the placeholder boxes.
+    import refparts
+    _repo = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    check("reference electronics meshes present (refparts)",
+          all(os.path.exists(os.path.join(_repo, spec[0]))
+              for spec in refparts._SPEC.values()))
+
     # user 2026-07-12 (fast pan/tilt): pan 2:1 spur stage exists as pan_gears.
     check("pan_gears (fast-pan 2:1 stage) present", "pan_gears" in nodes)
 

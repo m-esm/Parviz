@@ -24,7 +24,10 @@ def _fit_report(geo):
     _FIT_CONTACT_OK -- designed seats, presses, and face-mounted cosmetics only. Anything
     else touching prints a loud failure; that is the whole point of the map."""
     import json as _json
-    SKIP = ("screen_ref",)                # not watertight: signed distance lies (FIXES stage 4)
+    import refparts
+    # not watertight: signed distance lies (FIXES stage 4). Real bought meshes
+    # (refparts) join the screen here when REALPARTS is on -- same reason.
+    SKIP = ("screen_ref",) + tuple(refparts.excluded_nodes())
     _FIT_DESIGNED = set()                 # intended PRESS pairs (none yet; presses are hardware)
     # print-speed sub-splits: pieces alias to their parent; a single-name frozenset
     # (piece touching its sibling at the designed seam) is whitelisted below.

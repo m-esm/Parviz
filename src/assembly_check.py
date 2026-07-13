@@ -39,7 +39,11 @@ THRESHOLD = 0.01  # mm^3 -- anything below is numerical noise / kissing faces
 
 # The screen+Pi reference mesh is NOT watertight; manifold booleans on it
 # raise. It is a bought part posed against measured geometry, so skip it.
-EXCLUDE = {"screen_ref"}
+# The downloaded real bought meshes (refparts: motors, HC-SR04, Uno, CM3) join
+# it when REALPARTS is on -- non-watertight/decimated, same skip. With
+# PLACEHOLDER_PARTS=1 the set is empty and the analytic placeholders are checked.
+import refparts
+EXCLUDE = {"screen_ref"} | refparts.excluded_nodes()
 
 # --- pose-group membership (EDIT ME when parts are added) -------------------
 # Any node that rides the TILT joint (moves with the head) must be listed in

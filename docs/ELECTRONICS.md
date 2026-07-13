@@ -10,6 +10,17 @@ a downloaded mesh is the fastest way to sanity-check a placeholder against the r
 part. **Verify any downloaded mesh against the datasheet before trusting fits** --
 some Thingiverse "models" are low-poly illustrations, not mechanical CAD.
 
+**Integrated into the assembly (2026-07-13):** the downloaded meshes for the
+28BYJ-48, TT gearmotor, HC-SR04, Arduino Uno, and Camera Module 3 now REPLACE
+their box/cylinder placeholders in `web/assembly.glb`, so the viewer shows the
+real part geometry. `src/refparts.py` poses each real mesh onto the placeholder's
+oriented bounding box by a 24-orientation best-fit, so it lands at the exact
+placeholder location and orientation. They are bought parts, never printed, and
+skipped by the boolean interference/fit gates (like the non-watertight screen
+mesh). `PLACEHOLDER_PARTS=1 make build` restores the analytic placeholders and
+their full gate coverage. The ULN2003 has no downloaded mesh (see below), so it
+keeps its placeholder.
+
 ## Compute + head module
 
 | Component | Role | Status | Reference model |

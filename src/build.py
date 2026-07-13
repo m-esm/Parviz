@@ -32,6 +32,7 @@ from gears import (gear_disc, load_gear_stl, pan_gear_mesh_deg, pan_real_ok, wor
 from screen import load_screen, screen_pose
 from tracks import _track_zc, build_tracks
 from motors import motor_28byj, motor_tt
+import refparts
 from pan import build_pan_clips, build_pan_platform, build_pan_race
 from neck import build_neck_clevis, build_tilt_carrier, build_trim_neckfoot
 from head import (build_ant_drive, build_antennas, build_arms, build_cam_pod, build_hatch_frame,
@@ -74,12 +75,21 @@ def build():
             return
         g = mesh.copy()
         g.apply_transform(M)
-        scene.add_geometry(g, node_name=mesh.metadata["name"])
-        fit_geo[mesh.metadata["name"]] = g
+        name = mesh.metadata["name"]
+        # Bought parts: swap the analytic placeholder for the downloaded real mesh
+        # (docs/ELECTRONICS.md), fitted onto the placeholder's world pose. The real
+        # mesh only feeds the scene/viewer -- the placeholder still drives EXPORT
+        # (never printed anyway) and the gates skip refparts like the screen mesh.
+        if refparts.enabled() and name in refparts.NODE_KIND:
+            real = refparts.fit_real(refparts.NODE_KIND[name], g, name)
+            if real is not None:
+                g = real
+        scene.add_geometry(g, node_name=name)
+        fit_geo[name] = g
         if M is M_head:
-            pose_groups["head"].append(mesh.metadata["name"])
+            pose_groups["head"].append(name)
         elif M is M_pan:
-            pose_groups["pan"].append(mesh.metadata["name"])
+            pose_groups["pan"].append(name)
         if EXPORT and export_name:
             export_stl(mesh, stlp(export_name))
 

@@ -301,6 +301,18 @@ too weak to swing a 193mm screen head. `motor_28byj()` is now dimensionally corr
 35 mm, wiring box. The governing rule for both joints: **locate the CAN so the offset shaft lands on
 the target axis, don't fight the offset with an eccentric coupler.**
 
+**Real bought meshes in the assembly (2026-07-13, `src/refparts.py`, default ON):** the
+downloaded Thingiverse meshes (reference/electronics/, see docs/ELECTRONICS.md) for the
+28BYJ, TT gearmotor, HC-SR04 (all 4 sites), Arduino Uno, and Camera Module 3 REPLACE their
+box/cylinder placeholders in the GLB so the viewer shows real geometry. Placement is
+uniform: `add()` fits each real mesh onto the placeholder's world OBB via a 24-cube-
+orientation best-fit (shape distance, not extent order -- extent order mislabels axes when
+the crude placeholder's proportions differ, e.g. HC-SR04 barrels). Bought parts, never
+exported/printed, and skipped by the boolean interference/fit gates (`assembly_check.EXCLUDE`
+/ `fitmap` SKIP now pull `refparts.excluded_nodes()`, joining the non-watertight screen).
+`PLACEHOLDER_PARTS=1` restores the analytic placeholders AND their full gate coverage (the
+gate's exclude set is empty then). ULN2003 keeps its placeholder (no mesh downloaded).
+
 - **Pan (direct D-hub):** 28BYJ upright in the base, can offset `-motor_shaft_off` so the shaft is on
   the pan axis; it keys into a **double-D bore hub** under `pan_platform` (`dbore_neg`/`dbore_hub`;
   flats drive snug, round arcs loose -- mini-Oldham, the race locates). No reduction. Rides the
@@ -484,6 +496,8 @@ src/pan.py       pan platform, BB race, clips, _pan_stack.
 src/chassis.py   chassis core/lower/deck split, belly plate, fascia, pod rails.
 src/tracks.py    raised tank loop, links, master link, sprocket, road wheels.
 src/motors.py    TT gearmotor + 28BYJ placeholder meshes.
+src/refparts.py  downloaded REAL bought meshes (reference/electronics/) posed onto the
+                 placeholder OBBs; default ON (PLACEHOLDER_PARTS=1 restores boxes).
 src/fitmap.py    the FITS=1 clearance/press report + contact audit.
                  Import DAG: params <- geo <- gears/screen/motors <- tracks/pan/neck/head/
                  chassis <- build (fitmap standalone; no cycles -- params imports nothing local).

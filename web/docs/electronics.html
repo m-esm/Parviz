@@ -99,6 +99,16 @@ sensor/board placeholders in <code>src/chassis.py</code> were dimensioned from d
 a downloaded mesh is the fastest way to sanity-check a placeholder against the real
 part. <strong>Verify any downloaded mesh against the datasheet before trusting fits</strong> --
 some Thingiverse "models" are low-poly illustrations, not mechanical CAD.</p>
+<p><strong>Integrated into the assembly (2026-07-13):</strong> the downloaded meshes for the
+28BYJ-48, TT gearmotor, HC-SR04, Arduino Uno, and Camera Module 3 now REPLACE
+their box/cylinder placeholders in <code>web/assembly.glb</code>, so the viewer shows the
+real part geometry. <code>src/refparts.py</code> poses each real mesh onto the placeholder's
+oriented bounding box by a 24-orientation best-fit, so it lands at the exact
+placeholder location and orientation. They are bought parts, never printed, and
+skipped by the boolean interference/fit gates (like the non-watertight screen
+mesh). <code>PLACEHOLDER_PARTS=1 make build</code> restores the analytic placeholders and
+their full gate coverage. The ULN2003 has no downloaded mesh (see below), so it
+keeps its placeholder.</p>
 <h2 id="compute-head-module">Compute + head module</h2>
 <div class="tbl"><table>
 <thead>
