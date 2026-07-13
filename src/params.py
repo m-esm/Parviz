@@ -199,15 +199,23 @@ P = {
     # the last wheel will be hidden inside"): the M8 end-axle NUT stacks protrude to
     # |y| 135.4 (x 55.5..62) in free air ahead of the 120 walls, right over the corner
     # lamps. Four prow blocks (x |32..70|, clear of the +-30 trim rings) extend the
-    # tub tub_nose past each wall, each with an open-top nut pocket (x 47..63.5, 3.0
-    # front skin -- the nut descends into it as the deck+axle drops on; spec M8 NYLOC,
-    # the pocket is clearance not a wrench flat), a pylon notch (x 61..70.5, 1.0
-    # clear), and the glacis plane continued (+tub_nose shift). The CENTER band stays
+    # tub tub_nose past each wall, each with a nut pocket (REAR: open-top drop-in
+    # channel, y-walls grip the flats; FRONT since the 2026-07-13 tension-travel
+    # pass: a closed CAPTURE DUCT whose floor/roof grip the flats +-z across the
+    # whole idler_slot_in/out slide -- see build_chassis_core), a pylon notch
+    # (x 61..70.5, 1.0 clear), and the glacis plane continued (+tub_nose shift).
+    # The CENTER band stays
     # at chassis_l/2: the cliff cone crosses z 46 at y ~131 (probed), a full-width
     # nose would ping itself. Cheek tops cap FLAT at the z 46 seam so they live
     # wholly in chassis_lower; the wedge up to the deck slope stays an open shadow
     # line like the pylon bay. Lamps + rear buzzer pod ride the cheek noses.
-    "tub_nose": 20.0,       # prow cheek reach past the wall (nut face 135.4 + 4.6)
+    "tub_nose": 26.0,       # prow cheek reach past the wall. 20 -> 26 (2026-07-13
+                            # tension-travel pass): at max take-up the FRONT nut
+                            # rides at axle +6.5 and its capture duct/washer cuts
+                            # reach |y| 142.5; 26 keeps the 3.0+ front skin (3.5).
+                            # Noses at 146 now sit 2 PAST the 144 deck tips (tracks
+                            # still 7.5 proud at 153.5); lamps/buzzer/USB corridor
+                            # all key off fw+tub_nose and moved with it.
     # GLACIS (2026-07-10, user: "the chassis shouldn't be a box -- from the side it
     # should have the same form as the tracks"): the hull's front/rear lower corners
     # are cut at the SAME 33 deg as the track ramps, from (|y| 83.1, z 7) up to the
@@ -328,7 +336,21 @@ P = {
                             # the pod-join rail block band y -44.5..-35.5 (the nuts
                             # float in the pod gap there) -> ys <= -68; the tab/rib
                             # at ys-14.15 pushed the -80 vent out of the row
-    "idler_slot": 4.0,      # idler Y-slide for tensioning (M3 set-screw lock)
+    # FRONT tension travel (2026-07-13 PIP-slack budget; replaced idler_slot 4.0,
+    # whose single Ø8.4 circle + 4-wide box never actually cleared the Ø8 shank off
+    # center -- the "+-2 slide" was ~+-0.2 in practice). Loop sensitivity, derived
+    # from the _track_link_poses construction with the front axle y free: d(loop)/
+    # d(idler_y) = 1 + cos(ramp 32.96 deg) = 1.839 at nominal, stiffening to 1.90
+    # across the stroke (the ramp tangent steepens as the axle advances). The
+    # predicted +8 mm PIP chain slack (59 joints x 0.35 radial gap vs the filament
+    # chain's 0.225) therefore needs 4.29 mm of outboard travel; x1.5 margin ->
+    # 6.5 (absorbs 12.2 mm = 1.52x). NOTE the first chain's FULL elongation vs the
+    # solved zero-clearance loop is ~21.8 mm (59x0.35 + 5x0.225 filament/master
+    # joints); the slot does NOT chase drum-taut -- tension only until the ground
+    # run meshes, the rest is designed top-run sag (mid-drive: ground reaction owns
+    # the sprocket bite; the wheel beam caps run lift at 4.5).
+    "idler_slot_in": 2.0,   # inboard retract off nominal: master-link drop-on slack
+    "idler_slot_out": 6.5,  # outboard travel off nominal: PIP slack take-up (above)
     # TT gearmotor drive (own 1x; BUY 1 more -> 2 for skid steer; MX1588 drives both).
     # Measured dims from reference/tt-motor-1079893/NOTES.md (STEP B-rep). Shaft is
     # PERPENDICULAR to the 64.5 body, 11.5 behind the gearbox front face, mid-height.

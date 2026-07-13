@@ -526,10 +526,10 @@ def build_chassis_core():
     # the tub tub_nose past each wall so the M8 end-axle nut stacks (x 55.5..62,
     # protruding to |y| 135.4 over the corner lamps) hide inside. Per cheek: the
     # glacis plane continued (+nose shift), a PYLON NOTCH (x 61..70.5, z 26.3+; the
-    # deck pylons at x 62..69 / z 27.3+ keep 1.0 all around), and an open-top NUT
-    # POCKET (x 47..63.5, |y| 119..fwn-3, z 25 up through the flat z 46 top -- the
-    # pre-torqued nut descends in as the deck+axle assembly drops on; spec M8 NYLOC,
-    # the pocket is clearance, not a wrench flat). Tops cap FLAT at the seam so the
+    # deck pylons at x 62..69 / z 27.3+ keep 1.0 all around), and a NUT POCKET --
+    # REAR: the original open-top drop-in channel; FRONT: the 2026-07-13 closed
+    # capture DUCT that keeps the nut wrench-free across the whole tension stroke
+    # (details at the sgn branch below; spec M8 NYLOC). Tops cap FLAT at the seam so the
     # cheeks live wholly in chassis_lower; the wedge up to the deck slope stays an
     # open shadow line like the pylon bay. The center band (|x| < 32, clearing the
     # +-30 trim rings) keeps the recessed fascia wall: the cliff cone crosses z 46
@@ -551,21 +551,67 @@ def build_chassis_core():
             nt = box(9.5, nose + 6.0, 25.0)
             nt.apply_translation((sx * 65.75, sgn * (fwn - nose / 2), 26.3 + 12.5))
             ck = sub(ck, nt)
-            # nut pocket = NUT CHANNEL + washer slice. The channel's y-walls sit
-            # 13.8 apart (nut flats 13 + 0.4/side drop-in slop) centered on the
-            # axle y, so the descending nut (flats to +-y) self-captures: torque
-            # the bolt from the outboard head, the walls hold the nut -- this is
-            # what lets the FRONT tension axles be snugged after the tracks are
-            # threaded, with zero tool access to the pocket. The washer slice is
-            # wider (Ø14.4 washer + 0.8) and merges into the pylon notch.
             wb2 = P["track_wheelbase"] / 2                     # axle y 128.163
-            nutch = box(13.0, 13.8, 24.0)                      # x 47..60
-            nutch.apply_translation((sx * 53.5, sgn * wb2, 25.0 + 12.0))
-            ck = sub(ck, nutch)
-            wsl = box(3.5, 15.2, 24.0)                         # x 60..63.5
-            wsl.apply_translation((sx * 61.75, sgn * wb2, 25.0 + 12.0))
-            ck = sub(ck, wsl)
+            za_ck = _track_zc() + P["track_raise"]             # end-axle line 34.32
+                                                               # (matches the pylons)
+            if sgn < 0:
+                # REAR nut pocket (no travel) = the original NUT CHANNEL + washer
+                # slice: y-walls 13.8 apart (nut flats 13 + 0.4/side drop-in slop)
+                # centered on the axle y, so the pre-torqued nut (flats to +-y)
+                # descends in as the deck+axle drops on and self-captures: torque
+                # the bolt from the outboard head, the walls hold the nut. The
+                # washer slice is wider (Ø14.4 + 0.8) and merges into the notch.
+                nutch = box(13.0, 13.8, 24.0)                  # x 47..60
+                nutch.apply_translation((sx * 53.5, sgn * wb2, 25.0 + 12.0))
+                ck = sub(ck, nutch)
+                wsl = box(3.5, 15.2, 24.0)                     # x 60..63.5
+                wsl.apply_translation((sx * 61.75, sgn * wb2, 25.0 + 12.0))
+                ck = sub(ck, wsl)
+            else:
+                # FRONT nut CAPTURE DUCT (2026-07-13 tension-travel pass). The old
+                # open-top channel's y-wall grip is geometrically incompatible with
+                # ANY y-travel: the grip walls are perpendicular to the slide, so a
+                # channel long enough to slide (13.8 + 8.5) is wide enough for the
+                # nut (max Ø 15.01) to spin free. The front nut therefore rides
+                # FLATS TO +-Z in a closed duct whose FLOOR LEDGE (z 27.62) and
+                # ROOF STRIP (z 41.02, gap 13.4 = AF 13 + 0.4) grip the flats at
+                # EVERY slot position while y stays the free slide axis. Duct y
+                # covers the corners (+-7.5) over the whole idler_slot_in/out
+                # stroke + 0.3; x 47..60 opens outboard into the washer slice ->
+                # pylon notch, which is the INSERTION PATH: with the deck off,
+                # drop the nut (flats +-z) down the open-top notch, slide it
+                # inboard along x onto the ledge; deck on, tracks threaded, then
+                # the M8 drives in axially from the outboard head, wiggled along
+                # the pylon slot to catch the duct nut (the slot makes bolt-to-nut
+                # y-alignment trivial). The roof prints as a 7-wide flat strip
+                # (x 51..58, bridges) between 45 deg side chamfers (peak 45.02
+                # keeps ~1.0 under the z 46 seam cap) -- self-supporting-ish in
+                # the seam-up chassis_lower print. Replaces "pre-torqued nut
+                # descends in" on the FRONT only; spec M8 NYLOC as before.
+                i_t, o_t = P["idler_slot_in"], P["idler_slot_out"]
+                dy0 = wb2 - i_t - 7.8                          # 118.36 (corner 7.5 + 0.3)
+                dy1 = wb2 + o_t + 7.8                          # 142.46; front skin
+                zf, zr = za_ck - 6.7, za_ck + 6.7              # fwn - dy1 = 3.5 >= 3.0
+                duct_xz = [(47.0, zf), (60.0, zf), (60.0, zr + 2.0),
+                           (58.0, zr), (51.0, zr), (47.0, zr + 4.0)]
+                dpoly = sg.Polygon([(sx * px, -pz) for (px, pz) in duct_xz])
+                duct = extrude_polygon(dpoly, dy1 - dy0)       # extruded along +Z,
+                duct.apply_transform(R(-TAU / 4, (1, 0, 0)))   # rotated onto +Y
+                duct.apply_translation((0, dy0, 0))
+                wsl = box(3.5, dy1 - dy0, 15.4)                # washer slice follows
+                wsl.apply_translation((sx * 61.75, (dy0 + dy1) / 2, za_ck))
+                front_cuts = [duct, wsl]                       # the travel (Ø14.4 + 1)
             body = uni([body, ck])
+            if sgn > 0:
+                # the duct's inboard reach (118.36 at full retract) crosses y 120
+                # into the TUB WALL band, which is already in `body` -- cutting the
+                # cheek block alone leaves the wall's outer skin blocking the nut
+                # (probed: 11 mm^3 bind at -2). Cut from the UNION so the duct
+                # bites the wall's outer 1.64 over its 13 x 13.4 window; the inner
+                # 3.36 web to the cavity stands (plain wall there: grille/US live
+                # at |x| < 30, vents on the side walls).
+                for c_ in front_cuts:
+                    body = sub(body, c_)
     # relocated wall cuts, now through the cheeks:
     # lamp_L/R: Ø2.5 wire pass from the cheek nose (z 23 runs UNDER the pocket floor
     # z 25) through the old wall into the cavity
@@ -844,17 +890,28 @@ def build_chassis_parts():
     # ---- END-IDLER PYLONS (2026-07-11 mid-drive): with the loop ends at |y| 128.16
     # (past the lower tub), each end idler hangs on a Ø8 stub from a PYLON dropping
     # out of the deck overhang's solid wedge at x 62..70 (4 clear of the link plane
-    # 74; flush with the deck side). FRONT pylons carry the tension slot (idler
-    # slides +-idler_slot/2, M3 set-screw from the nose face); REAR pylons take a
-    # blind Ø7.85 press socket. Stub cantilevers 41 to the wheel's outboard face.
+    # 74; flush with the deck side). FRONT pylons carry the tension slot (a true
+    # stadium now: the idler slides -idler_slot_in..+idler_slot_out off nominal,
+    # M8 nut-clamped -- see the slot cut below); REAR pylons take a through Ø8.4.
+    # Stub cantilevers 41 to the wheel's outboard face.
     ey_ = P["track_wheelbase"] / 2
     za_ = 34.32                                       # end-axle line (zc + track_raise)
     for sgn2, dpc in ((1, "f"), (-1, "r")):
         dtgt = deck_f if sgn2 > 0 else deck_r
+        # FRONT pylon stretched OUTBOARD for the 2026-07-13 tension travel: y
+        # 120.5..142.5 -- the extended slot keeps a 3.6 outboard end wall AND a
+        # full washer seat at max take-up (the Ø14.4 washer tops out at y 141.86)
+        # while staying 1.5 behind the 144 deck tips. The INBOARD end stays
+        # clipped at 120.5 (the tub wall corner owns |y| < 120.5; the cheek notch
+        # only relieves the cheek, not the wall), which leaves 1.46 behind the
+        # retract-end slot circle -- acceptable: tension loads the OUTBOARD end,
+        # the inboard end only ever sees the assembly retract stop, and the tub
+        # wall corner stands 0.5 behind it. REAR pylon unchanged (no travel).
+        pl0, pl1 = (120.5, 142.5) if sgn2 > 0 else (120.5, 139.2)
         for sx_ in (-1, 1):
-            py = box(8.0, 18.7, 32.7)                  # clipped at |y| 120.5: the tub
-            py.apply_translation((sx_ * 66.0, sgn2 * (120.5 + 18.7 / 2),      # wall corner
-                                  27.3 + 32.7 / 2))    # z 27.3..60   owns |y| < 120.5
+            py = box(8.0, pl1 - pl0, 32.7)             # front: notch owns |y| < 120.5;
+            py.apply_translation((sx_ * 66.0, sgn2 * (pl0 + pl1) / 2,   # rear: tub
+                                  27.3 + 32.7 / 2))    # z 27.3..60    wall corner does
             hb = cyl(7.0, 8.0, axis="x")               # hub boss around the socket
             hb.apply_translation((sx_ * 66.0, sgn2 * ey_, za_))
             dtgt = uni([dtgt, py, hb])
@@ -867,7 +924,16 @@ def build_chassis_parts():
             # SLOT stays and the nut CLAMPS the slide = tension lock, replacing the
             # old M3 set screw. REAR: through O8.4 clearance hole (was a blind press).
             if sgn2 > 0:                               # front: tension slot, bolt-clamped
-                sl = uni([cyl(4.2, 10.0, axis="x"), box(10.0, P["idler_slot"], 8.4)])
+                # TRUE STADIUM (2026-07-13; the old single-circle + 4-wide-box cut
+                # gave a Ø8 shank ~+-0.2 of real slide): Ø8.4 bores at the stroke
+                # ends -idler_slot_in / +idler_slot_out, hulled by the full-height
+                # web, so the M8 shank clears everywhere on the stroke.
+                i_t, o_t = P["idler_slot_in"], P["idler_slot_out"]
+                c0 = cyl(4.2, 10.0, axis="x"); c0.apply_translation((0, -i_t, 0))
+                c1 = cyl(4.2, 10.0, axis="x"); c1.apply_translation((0, o_t, 0))
+                bwe = box(10.0, i_t + o_t, 8.4)
+                bwe.apply_translation((0, (o_t - i_t) / 2, 0))
+                sl = uni([c0, c1, bwe])
                 sl.apply_translation((sx_ * 66.0, sgn2 * ey_, za_))
                 dtgt = sub(dtgt, sl)
             else:                                      # rear: O8.4 through clearance
