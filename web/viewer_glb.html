@@ -266,7 +266,7 @@
   <label class="chk"><input type="checkbox" id="t_spin"> Auto-spin
     <input type="range" id="spinspd" min="5" max="120" step="5" value="35"></label>
 
-  <div class="foot">drag orbit · scroll zoom · right-drag pan<br>live-reloads on rebuild</div>
+  <div class="foot">drag orbit · scroll zoom · right-drag pan<br>right-click a part or list row · H hide · I isolate · F focus · A all<br>live-reloads on rebuild</div>
 </div>
 <script type="importmap">
 { "imports": {
@@ -513,7 +513,7 @@ new GLTFLoader().load(MODEL, (gltf)=>{
       }
       rec = catBodies.get(pk); cat = pk; label = cname;
     }
-    const row = document.createElement('label'); row.className='part';
+    const row = document.createElement('label'); row.className='part'; row.dataset.pname=name;
     row.innerHTML = `<span class="sw" style="background:${hex(name)}"></span>`+
                     `<span class="nm">${label}</span><input type="checkbox" checked>`;
     row.querySelector('input').addEventListener('change',e=>{
@@ -521,6 +521,7 @@ new GLTFLoader().load(MODEL, (gltf)=>{
       row.classList.toggle('off', !e.target.checked);
       syncCat(cat);
       applyDims();
+      refreshFitsSoon();               // fit map tracks the visible set (2026-07-13)
     });
     rec.body.appendChild(row);
     g.row = row;
@@ -699,6 +700,7 @@ function showFitDots(){
   if(fitDots||!fitData) return;
   fitDots=new THREE.Group(); fitDots.userData.byPair={};
   fitData.forEach((r,idx)=>{
+    if(!pairVisible(r)) return;                     // only patches for visible parts
     const pts=(r.patch&&r.patch.length)?r.patch:[[r.at[0],r.at[1],r.at[2],r.mm]];
     const pos=new Float32Array(pts.length*3), col=new Float32Array(pts.length*3);
     const st=pairStatus(r);
@@ -735,6 +737,19 @@ function focusFitPair(idx){ if(!fitDots) return;
 // fit pairs name PARENT parts; granular children resolve via prefix (2026-07-11)
 const fitGroupsFor = n => groups[n] ? [groups[n]] :
   Object.entries(groups).filter(([k])=>k.startsWith(n+'.')).map(([,g])=>g);
+// a fit pair is shown only when BOTH its parts are currently visible (2026-07-13):
+// hiding a part drops its contacts from the panel + the 3D patches so the map
+// always describes what you're looking at.
+const partVisible = n => fitGroupsFor(n).some(g=>g.meshes.some(o=>o.visible));
+const pairVisible = r => partVisible(r.a) && partVisible(r.b);
+let fitRefreshQueued=false;
+function refreshFitsSoon(){
+  if(!$('t_fits').checked || fitRefreshQueued) return;
+  fitRefreshQueued=true;
+  requestAnimationFrame(()=>{ fitRefreshQueued=false;
+    if(!$('t_fits').checked) return;
+    clearFitSel(); openFits(); hideFitDots(); showFitDots(); });
+}
 function clearFitSel(){
   if(fitSelNames) fitSelNames.forEach(n=> fitGroupsFor(n).forEach(g=>
     g.meshes.forEach(o=>{ if(o.userData._em!==undefined){
@@ -758,15 +773,18 @@ async function openFits(){
     try{ fitData=await (await fetch('fit_report.json?'+Date.now())).json(); }
     catch(e){ panel.innerHTML='<div class="fhd" style="color:var(--ink-dim)">no fit_report.json — run `make fits`</div>'; return; }
   }
-  const bad=fitData.filter(r=>pairStatus(r)==='bad');
-  const nContact=fitData.filter(r=>['ok','bad'].includes(pairStatus(r))).length;
+  const shown=fitData.map((r,idx)=>[r,idx]).filter(([r])=>pairVisible(r));
+  const hiddenN=fitData.length-shown.length;
+  const bad=shown.filter(([r])=>pairStatus(r)==='bad');
+  const nContact=shown.filter(([r])=>['ok','bad'].includes(pairStatus(r))).length;
   $('fits_sum').textContent = bad.length? bad.length+' ✗' : '✓';
   $('fits_sum').style.color = bad.length? FITCOLS.bad : FITCOLS.ok;
+  const hiddenNote = hiddenN? '<span style="color:var(--ink-faint)"> · '+hiddenN+' hidden</span>' : '';
   panel.innerHTML = bad.length
-    ? '<div class="fhd" style="color:#ff6b6b">✗ '+bad.length+' unexpected contact'+(bad.length>1?'s':'')+' — fix before printing</div>'
-    : '<div class="fhd" style="color:#5cc7d4">✓ all '+nContact+' contacts are designed seats/presses</div>';
+    ? '<div class="fhd" style="color:#ff6b6b">✗ '+bad.length+' unexpected contact'+(bad.length>1?'s':'')+' — fix before printing'+hiddenNote+'</div>'
+    : '<div class="fhd" style="color:#5cc7d4">✓ all '+nContact+' visible contacts are designed seats/presses'+hiddenNote+'</div>';
   ['bad','ok','tight','run','free'].forEach(st=>{
-    const rows=fitData.map((r,idx)=>[r,idx]).filter(([r])=>pairStatus(r)===st);
+    const rows=shown.filter(([r])=>pairStatus(r)===st);
     if(!rows.length) return;
     const h=document.createElement('div'); h.className='fhd';
     h.style.color=FITCOLS[st]; h.textContent=FITHEADS[st]; panel.appendChild(h);
@@ -870,7 +888,25 @@ function isolatePart(name){
   for(const n of Object.keys(groups)) setPartVisible(n, n===name);
 }
 function showAllParts(){ for(const n of Object.keys(groups)) setPartVisible(n,true); }
+function isolateOnly(names){ const keep=new Set(names);
+  for(const n of Object.keys(groups)) setPartVisible(n, keep.has(n)); }
+function hideMany(names){ names.forEach(n=>hidePart(n)); }
+// frame the camera on a set of parts: keep the current view direction, re-fit distance
+function focusParts(names){
+  const box=new THREE.Box3();
+  names.forEach(n=>fitGroupsFor(n).forEach(g=>g.meshes.forEach(o=>{ if(o.visible) box.expandByObject(o); })));
+  if(box.isEmpty()) return;
+  const c=box.getCenter(new THREE.Vector3()), r=box.getSize(new THREE.Vector3()).length()/2;
+  const vh=THREE.MathUtils.degToRad(camera.fov)/2, hh=Math.atan(Math.tan(vh)*camera.aspect);
+  const dist=r/Math.sin(Math.min(vh,hh))*1.35;
+  const dir=camera.position.clone().sub(controls.target).normalize();
+  controls.target.copy(c); camera.position.copy(c).add(dir.multiplyScalar(dist)); controls.update();
+}
 function closeCtx(){ ctx.style.display='none'; }
+// place the shared context menu at (x,y), clamped on-screen
+function placeCtx(x,y){ ctx.style.display='block';
+  ctx.style.left=Math.min(x, innerWidth -ctx.offsetWidth -8)+'px';
+  ctx.style.top =Math.min(y, innerHeight-ctx.offsetHeight-8)+'px'; }
 renderer.domElement.addEventListener('contextmenu',e=>{
   e.preventDefault();
   if(!window.__ready) return;
@@ -883,17 +919,49 @@ renderer.domElement.addEventListener('contextmenu',e=>{
   }
   items.push('<div class="cxi" data-act="all">Show all<span class="k">A</span></div>');
   if(name) items.push('<div class="cxi" data-act="copy">Copy name</div>');
-  ctx.innerHTML=items.join(''); ctx.dataset.part=name||'';
-  ctx.style.display='block';                         // measure, then keep it on-screen
-  ctx.style.left=Math.min(e.clientX, innerWidth -ctx.offsetWidth -8)+'px';
-  ctx.style.top =Math.min(e.clientY, innerHeight-ctx.offsetHeight-8)+'px';
+  if(name) items.push('<div class="cxi" data-act="focus">Focus<span class="k">F</span></div>');
+  ctx.innerHTML=items.join(''); ctx.dataset.part=name||''; ctx.dataset.names='';
+  placeCtx(e.clientX, e.clientY);                    // measure, then keep it on-screen
+});
+// right-click a nav row (part) or group header -> the same menu, scoped to the tree item
+$('parts').addEventListener('contextmenu',e=>{
+  const row=e.target.closest('.part'), head=e.target.closest('.chead');
+  if(!row && !head) return;
+  e.preventDefault(); closeCtx();
+  const items=[];
+  if(row){
+    const name=row.dataset.pname;
+    items.push(`<div class="cxn">${name}</div>`);
+    items.push('<div class="cxi" data-act="iso">Isolate<span class="k">I</span></div>');
+    items.push('<div class="cxi" data-act="hide">Hide<span class="k">H</span></div>');
+    items.push('<div class="cxi" data-act="focus">Focus<span class="k">F</span></div>');
+    items.push('<div class="cxi" data-act="all">Show all<span class="k">A</span></div>');
+    items.push('<div class="cxi" data-act="copy">Copy name</div>');
+    ctx.dataset.part=name; ctx.dataset.names='';
+  } else {
+    const grp=head.closest('.cgrp');
+    const names=[...grp.querySelectorAll('.part')].map(r=>r.dataset.pname).filter(Boolean);
+    const label=(head.querySelector('.cname')||{}).textContent||'group';
+    items.push(`<div class="cxn">${label} · ${names.length}</div>`);
+    items.push('<div class="cxi" data-act="isog">Isolate group</div>');
+    items.push('<div class="cxi" data-act="hideg">Hide group</div>');
+    items.push('<div class="cxi" data-act="focusg">Focus group</div>');
+    items.push('<div class="cxi" data-act="all">Show all<span class="k">A</span></div>');
+    ctx.dataset.part=''; ctx.dataset.names=JSON.stringify(names);
+  }
+  ctx.innerHTML=items.join(''); placeCtx(e.clientX, e.clientY);
 });
 ctx.addEventListener('click',e=>{
   const it=e.target.closest('.cxi'); if(!it) return;
   const name=ctx.dataset.part, act=it.dataset.act;
+  const names=ctx.dataset.names?JSON.parse(ctx.dataset.names):[];
   if(act==='hide') hidePart(name);
   else if(act==='iso') isolatePart(name);
+  else if(act==='focus') focusParts([name]);
   else if(act==='all') showAllParts();
+  else if(act==='isog') isolateOnly(names);
+  else if(act==='hideg') hideMany(names);
+  else if(act==='focusg') focusParts(names);
   else if(act==='copy' && name && navigator.clipboard) navigator.clipboard.writeText(name).catch(()=>{});
   closeCtx();
 });
@@ -905,10 +973,10 @@ addEventListener('keydown',e=>{
   if(e.metaKey||e.ctrlKey||e.altKey) return;
   const k=e.key.toLowerCase();
   if(k==='a'){ showAllParts(); closeCtx(); return; }
-  if(k!=='h' && k!=='i') return;
+  if(k!=='h' && k!=='i' && k!=='f') return;
   const name=selName || (hoverIn ? rayPart(hoverNdc) : null);   // selected beats hovered
   if(!name) return;
-  if(k==='h') hidePart(name); else isolatePart(name);
+  if(k==='h') hidePart(name); else if(k==='i') isolatePart(name); else focusParts([name]);
   closeCtx();
 });
 
