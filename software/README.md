@@ -469,9 +469,12 @@ decisions resume. Verified by killing brain+llm (dozed at 55 s) and
 recovery (caught the user waving within one cycle of restart).
 
 Thermal cooldown mode (2026-07-12, user): a circuit breaker across all
-three daemons. brain.py and perceive.py watch the SoC temp (enter >=80C = the
-OFFICIAL soft-throttle onset (hard throttle 85C, per raspberrypi.com
-docs); resume <=70C hysteresis; PARVIZ_COOL_ENTER/EXIT env overrides for
+three daemons. brain.py and perceive.py watch the SoC temp (enter >=85C =
+the firmware HARD-throttle onset per raspberrypi.com docs; RAISED from 80C
+on 2026-07-13, user "it goes to cooling too often" -- the passive-heatsink
+board sits at 80-85C under normal brain load so the old soft-throttle
+threshold tripped constantly; resume <=80C hysteresis, was 70C which took
+minutes to reach off-load; PARVIZ_COOL_ENTER/EXIT env overrides for
 testing): while hot the brain stops ticking the LLM (writes
 /dev/shm/parviz_cooling as the state marker) and perception skips all
 inference (publishes {"cooling":true}). The face sees the marker and
@@ -480,9 +483,9 @@ shows the cooldown state instead of no-brain dozing: face-internal
 SWEAT DROPS sliding from the brow line, "COOLING DOWN <temp>C..."
 status, amber "COOLING (paused)" in the BRAIN panel. Verified via the
 marker (visuals) and a lowered-threshold live run (real trigger +
-resume). NOTE: at current bare-board thermals (80-85C under brain load)
-the breaker WILL trip in normal use -- that is its job until the active
-cooler (task #1) arrives.
+resume). At the 85/80 thresholds the breaker fires only when the firmware
+is actually hard-throttling; normal 80-85C brain load runs uninterrupted.
+The active cooler (task #1) would eliminate even those trips.
 
 Eyes = camera (2026-07-12, user): when vision is OFF the face closes
 its eyes. VisionGaze tracks `online` (fresh vision json AND not

@@ -122,6 +122,14 @@ head only, a countersunk M3 (Ø6.0) will not enter the channel.
 
 ## Software
 
+<p align="center">
+  <img src="face_frame.png" alt="Live frame from Parviz's screen: orange face with HUD, vision panel, and brain telemetry" width="800">
+</p>
+
+A live frame from the running robot (dumped over SSH with `kill -USR1`): the orange
+face mid-conversation, CPU/power/net HUD, the camera vision panel, and the brain
+column showing the cloud LLM tier ticking.
+
 A working spike lives in `software/` (deployed to the Pi over rsync, key auth):
 
 - **`face/`**: fullscreen 800×480 face renderer (pygame): navy background, cyan outlined eyes with

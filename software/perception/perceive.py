@@ -48,8 +48,8 @@ ENROLL_TRIGGER = "/dev/shm/parviz_enroll"   # write a name here to enroll
 READ_TRIGGER = "/dev/shm/parviz_read_text"  # brain's read_text action
 VISION_JSON = "/dev/shm/parviz_vision.json"
 PREVIEW_JPG = "/dev/shm/parviz_preview.jpg"
-COOL_ENTER = float(os.environ.get("PARVIZ_COOL_ENTER", 80.0))
-COOL_EXIT = float(os.environ.get("PARVIZ_COOL_EXIT", 70.0))
+COOL_ENTER = float(os.environ.get("PARVIZ_COOL_ENTER", 85.0))
+COOL_EXIT = float(os.environ.get("PARVIZ_COOL_EXIT", 80.0))
 
 
 def cpu_temp():

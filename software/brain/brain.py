@@ -44,8 +44,8 @@ JOURNAL = os.path.join(HERE, "journal.log")
 # thinker the escalate action calls (one-shot, cloud-only by design).
 HOST = os.environ.get("PARVIZ_LLM", "127.0.0.1:8081")
 BIG = os.environ.get("PARVIZ_BIG", "claude:fable")
-COOL_ENTER = float(os.environ.get("PARVIZ_COOL_ENTER", 80.0))
-COOL_EXIT = float(os.environ.get("PARVIZ_COOL_EXIT", 70.0))
+COOL_ENTER = float(os.environ.get("PARVIZ_COOL_ENTER", 85.0))
+COOL_EXIT = float(os.environ.get("PARVIZ_COOL_EXIT", 80.0))
 COOLING_MARK = "/dev/shm/parviz_cooling"
 
 
