@@ -991,10 +991,16 @@ renderer.domElement.addEventListener('contextmenu',e=>{
     placeCtx(e.clientX, e.clientY);
     return;
   }
+  ctx.dataset.gnames='';
   if(name){
     items.push(`<div class="cxn">${name}</div>`);
     items.push('<div class="cxi" data-act="hide">Hide<span class="k">H</span></div>');
     items.push('<div class="cxi" data-act="iso">Isolate<span class="k">I</span></div>');
+    // hide the whole nav-tree group this part belongs to (user 2026-07-14):
+    // resolve via the part's own row in the parts panel -> nearest .cgrp
+    const gi=groupInfoFor(name);
+    if(gi) items.push(`<div class="cxi" data-act="hidegrp">Hide group · ${gi.label}</div>`);
+    if(gi) ctx.dataset.gnames=JSON.stringify(gi.names);
   }
   items.push('<div class="cxi" data-act="all">Show all<span class="k">A</span></div>');
   if(name) items.push('<div class="cxi" data-act="copy">Copy name</div>');
@@ -1002,6 +1008,16 @@ renderer.domElement.addEventListener('contextmenu',e=>{
   ctx.innerHTML=items.join(''); ctx.dataset.part=name||''; ctx.dataset.names='';
   placeCtx(e.clientX, e.clientY);                    // measure, then keep it on-screen
 });
+// part name -> its leaf nav group ({label, names}) via the parts-panel DOM,
+// so viewport right-clicks can act on the same grouping the tree shows
+function groupInfoFor(name){
+  const row=document.querySelector(`#parts .part[data-pname="${CSS.escape(name)}"]`);
+  const grp=row && row.closest('.cgrp');
+  if(!grp) return null;
+  const names=[...grp.querySelectorAll('.part')].map(r=>r.dataset.pname).filter(Boolean);
+  const label=(grp.querySelector('.chead .cname')||{}).textContent||'group';
+  return names.length ? {label, names} : null;
+}
 // right-click a nav row (part) or group header -> the same menu, scoped to the tree item
 $('parts').addEventListener('contextmenu',e=>{
   const row=e.target.closest('.part'), head=e.target.closest('.chead');
@@ -1013,10 +1029,13 @@ $('parts').addEventListener('contextmenu',e=>{
     items.push(`<div class="cxn">${name}</div>`);
     items.push('<div class="cxi" data-act="iso">Isolate<span class="k">I</span></div>');
     items.push('<div class="cxi" data-act="hide">Hide<span class="k">H</span></div>');
+    const gi=groupInfoFor(name);                     // hide the row's whole group
+    if(gi) items.push(`<div class="cxi" data-act="hidegrp">Hide group · ${gi.label}</div>`);
     items.push('<div class="cxi" data-act="focus">Focus<span class="k">F</span></div>');
     items.push('<div class="cxi" data-act="all">Show all<span class="k">A</span></div>');
     items.push('<div class="cxi" data-act="copy">Copy name</div>');
     ctx.dataset.part=name; ctx.dataset.names='';
+    ctx.dataset.gnames=gi?JSON.stringify(gi.names):'';
   } else {
     const grp=head.closest('.cgrp');
     const names=[...grp.querySelectorAll('.part')].map(r=>r.dataset.pname).filter(Boolean);
@@ -1040,6 +1059,10 @@ ctx.addEventListener('click',e=>{
   else if(act==='all') showAllParts();
   else if(act==='isog') isolateOnly(names);
   else if(act==='hideg') hideMany(names);
+  else if(act==='hidegrp'){                          // hide the clicked part's group
+    const gn=ctx.dataset.gnames?JSON.parse(ctx.dataset.gnames):[];
+    hideMany(gn);
+  }
   else if(act==='focusg') focusParts(names);
   else if(act==='copy' && name && navigator.clipboard) navigator.clipboard.writeText(name).catch(()=>{});
   closeCtx();
