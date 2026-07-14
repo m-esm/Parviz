@@ -39,6 +39,13 @@ _SPEC = {
                "pi", 0.6, []),
 }
 
+# kinds whose real mesh TOP-ALIGNS to the placeholder after the centroid fit:
+# the Uno OBJ carries under-board pin bulk that drags its centroid ~2 low, so
+# the centered fit sank the board through its seat posts (user: "board_arduino
+# has housing issues", 2026-07-14). Top-aligning leaves the pin tails hanging
+# realistically between the posts instead.
+_TOP_ALIGN = {"uno"}
+
 # placeholder node name -> real kind
 NODE_KIND = {
     "motor_pan": "28byj", "motor_tilt": "28byj",
@@ -149,6 +156,9 @@ def fit_real(kind, placeholder, name):
         return None
     real = _load(kind).copy()
     real.apply_transform(_fit_transform(real, placeholder))
+    if kind in _TOP_ALIGN:
+        real.apply_translation((0.0, 0.0,
+                                float(placeholder.bounds[1][2] - real.bounds[1][2])))
     real.metadata["name"] = name
     real.metadata["refpart"] = True
     return real
