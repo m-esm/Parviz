@@ -68,6 +68,20 @@ def build_head_shell():
     window = box(P["screen_w"] - 2 * ov, 60.0, P["screen_h"] - 2 * ov)
     window.apply_transform(screen_pose() @ _T(0, 20, 0))     # pierce the front face -> lip
     shell = sub(shell, window)
+    # SIDE-REVEAL FIN CLEARANCE (user 2026-07-14, "the line in the frame where
+    # the LCD sits"): the gl-ceiling x window-wall junction leaves a genuine
+    # full-height boolean-fold FIN (~1.0 x 0.5 triangular section at
+    # (+-93..94, y 31.1..31.6), section-verified) hanging in the side reveal --
+    # the visible line beside the glass. The sides have NO lip by design (the
+    # r16 corner arc rolls the surface behind y 31.1 past |x| 94), so a clean
+    # per-side clearance box removes the fin and nothing else; z stops 0.5
+    # short of the window's top/bottom edges where the REAL lips root.
+    wz0 = P["screen_cz"] - (P["screen_h"] - 2 * ov) / 2      # window bottom edge
+    wz1 = P["screen_cz"] + (P["screen_h"] - 2 * ov) / 2      # window top edge
+    for sx in (-1, 1):
+        fin = box(2.5, 3.4, (wz1 - 0.5) - (wz0 + 0.5))
+        fin.apply_translation((sx * (92.0 + 94.5) / 2, 32.3, (wz0 + wz1) / 2))
+        shell = sub(shell, fin)
 
     # (the old rear cable port is gone: the deep-head motor BAY below now opens the same
     # back-wall zone x +-24, z 113..147 and is the cable route out of the head)
