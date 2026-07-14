@@ -388,7 +388,8 @@ def build_chassis_core():
       for s in (-1, 1):
         ph = cyl(4.0, 12, axis="x"); ph.apply_translation((s * (xw - 2.5), ys, zs))
         body = sub(body, ph)                          # Ø8 shaft pass-through (clears Ø7.2 boss)
-        rec = cyl(8.5, 2.2, axis="x"); rec.apply_translation((s * (xw - 0.9), ys, zs))
+        rec = teardrop(8.5, 2.2, axis="x")     # 45deg-capped: prints support-
+        rec.apply_translation((s * (xw - 0.9), ys, zs))        # free upright
         body = sub(body, rec)                         # outer recess -> 3 mm web, hub sits close
         for dz in (-8.75, 8.75):                      # M3 through gearbox + wall, nut in the gap
             mh = cyl(1.6, 12, axis="x"); mh.apply_translation((s * (xw - 2.5), ys + o * 20.3, zs + dz))
@@ -865,9 +866,9 @@ def build_chassis_parts():
                 pnl = sub(pnl, sl_)
                 cage_y0, cage_y1 = ey_s - 9.8, ey_s + 14.3   # nut travel window
             else:                                  # rear: Ø8.4 through clearance
-                sk_ = cyl(4.2, 12.0, axis="x")
-                sk_.apply_translation((s * 66.0, ey_s, za_ax))
-                pnl = sub(pnl, sk_)
+                sk_ = teardrop(4.2, 12.0, axis="x")        # 45deg roof: apex 44.3
+                sk_.apply_translation((s * 66.0, ey_s, za_ax))   # stays under the
+                pnl = sub(pnl, sk_)                        # tower top 46
                 cage_y0, cage_y1 = ey_s - 7.8, ey_s + 7.8
             # M8 NUT CAGE (v2 end simplification: the cheek ducts/channels are
             # GONE; the nut rides the tower's inboard face). LEDGE + ROOF strips
@@ -875,7 +876,7 @@ def build_chassis_parts():
             # whole travel window; axial tension lands on the tower face around
             # the slot, the strips only stop rotation. Nut slides in from
             # inboard, wrench-free -- and the bare track module can tension
-            # WITHOUT any hull piece. Strips print with tree support (small).
+            # WITHOUT any hull piece.
             for z0_, z1_ in ((za_ax - 6.7 - 3.0, za_ax - 6.7),
                              (za_ax + 6.7, 46.0)):
                 strip = box(64.95 - 54.5, cage_y1 - cage_y0, z1_ - z0_)
@@ -883,6 +884,35 @@ def build_chassis_parts():
                                          (cage_y0 + cage_y1) / 2,    # the thickening
                                          (z0_ + z1_) / 2))           # into the slab
                 pnl = uni([pnl, strip])
+            # CAGE END WALLS (support pass 2026-07-14, user: the flat strip
+            # undersides tree'd heavily in the upright print). One wall past
+            # each end of the travel window, ledge-bottom to roof-top, dropped
+            # onto the captured cheek-skin top (z 26.3) so the wall itself has
+            # ZERO overhang -- and both strips become end-anchored BRIDGES the
+            # slicer spans without support. Walls sit OUTSIDE the nut travel,
+            # so insertion (from inboard) and the slide are untouched.
+            for wy0, wy1 in ((cage_y0 - 2.5, cage_y0), (cage_y1, cage_y1 + 2.5)):
+                wy0c = max(wy0, ky0 + 0.2); wy1c = min(wy1, ky1 - 0.2)
+                if wy1c - wy0c < 1.0:
+                    continue
+                wall = box(64.95 - 54.5, wy1c - wy0c, 46.0 - 26.3)
+                wall.apply_translation((s * (54.5 + 64.95) / 2,
+                                        (wy0c + wy1c) / 2, (26.3 + 46.0) / 2))
+                pnl = uni([pnl, wall])
+            # DECK-BOSS SCARFS (support pass 2026-07-14): the six deck hold-down
+            # bosses' flat undersides (z 37, protruding ~4.9 from the wall) each
+            # demanded a support tower in the upright print. Cut a 45deg wedge
+            # under the protruding part (x <= 64.85 -- the in-wall part has no
+            # exposed underside) so the boss bottom self-supports; the Ø2.5
+            # pilot keeps z ~40.9..46 = 5.1 of thread (clamp screw, plenty).
+            # Removal-only, so the TT-pocket clearances can only improve.
+            for by_ in ((60.0, 8.0) if fi == 0 else (-26.0,)):
+                scf = extrude_polygon(sg.Polygon(
+                    [(s * 64.85, -39.7), (s * 64.85, -33.0),
+                     (s * 58.5, -33.0), (s * 58.5, -46.05)]), 10.0)
+                scf.apply_transform(R(-TAU / 4, (1, 0, 0)))    # (x,-z) convention
+                scf.apply_translation((0, by_ - 5.0, 0))
+                pnl = sub(pnl, scf)
             # splice screw: 1x M3x10 vertical through the lap at (75.4, -18.5)
             if fi == 0:
                 spc = cyl(1.65, 8.0); spc.apply_translation((s * 75.4, -18.5, 24.0))
@@ -907,8 +937,9 @@ def build_chassis_parts():
                     continue
                 hn = cyl(6.75, 12.0, axis="x")             # Ø13.5 notch (open-top:
                 hn.apply_translation((s * 75.2, sy_, zc_tt))   # r reaches past z26)
-                rec2 = cyl(8.5, 2.2, axis="x")             # re-cut the Ø17 hub recess
+                rec2 = teardrop(8.5, 2.2, axis="x")        # re-cut the Ø17 hub recess
                 rec2.apply_translation((s * (70.0 - 0.9), sy_, zc_tt))   # the web
+                # (teardrop like the core cut -- the two must stay congruent)
                 pnl = sub(sub(pnl, hn), rec2)              # extrusion refilled
                 # LOWER TT M3 "nut in the gap" (fittings audit 2026-07-14): the
                 # web filled the pod gap where the z 16.57 gearbox screw's nut

@@ -61,6 +61,10 @@ def R(axis, deg):
 X, Y, Z = [1, 0, 0], [0, 1, 0], [0, 0, 1]
 
 # per-object overrides
+# threshold stays 30 (support pass 2026-07-14): in Bambu semantics the value is
+# the overhang slope BELOW which support generates -- RAISING it adds support
+# (measured: +15-30 min/plate at 45). Overhang reduction is done in GEOMETRY
+# (teardrops, 45deg scarfs, bridge-anchored cage strips), not the threshold.
 TREE = {"enable_support": "1", "support_type": "tree(auto)", "support_threshold_angle": "30"}
 NOSUP = {"enable_support": "0"}
 STRUCT = {**TREE, "wall_loops": "6", "sparse_infill_density": "8%"}   # load parts: 6 walls +
