@@ -354,7 +354,7 @@ def main():
     # forehead flange pad must be FUSED to the face (it floated loose in bezel_R
     # after the 2026-07-11 face move) -- and each bezel piece is ONE body.
     check("bezel forehead seam pad fused to the face",
-          inside(M("head_bezel_R"), [(28.0, 27.6, 216.0), (28.0, 22.0, 219.5)])
+          inside(M("head_bezel_R"), [(28.0, 27.6, 216.0), (28.0, 24.5, 210.5)])
           and len(M("head_bezel_R").split(only_watertight=False)) == 1
           and len(M("head_bezel_L").split(only_watertight=False)) == 1)
 
