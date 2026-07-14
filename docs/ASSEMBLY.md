@@ -131,7 +131,10 @@ not. Printing a seat before its part has arrived is how reprints happen.
 | 12V PD trigger | board LxW, jack position + height above board, mounting-hole spread | rear-wall USB-C slot (14x8 at x -38, z0+24) + the 2x Ø1.7 M2 pilots at x -38±9 |
 | HC-SR04 x4 | barrel c-c (26.0 assumed -- stable), barrel Ø (16.0/16.6 bores), board LxW, **mounting-hole positions (vary by clone!)** | front/rear grille recesses + fascia pilots; both cliff recesses in the deck slopes (1.2 skin-back recess + 4x Ø1.6 M2 pilots each, `sensor_cliff*`) |
 | Gooseneck mic windscreen | foam Ø (17 assumed) + gooseneck stem Ø | ear grommet Ø15 compress-fit bores + Ø19/Ø15 trim rings in the head_back side walls (`ear_*` params) |
-| LD2410 / BME688 / IMU / SW-420 / TTP223 | board LxW + hole pattern each | chassis sensor seats (being added parametrized -- treat every one as VERIFY_ON_ARRIVAL, exact modules not yet chosen) |
+| LD2410 / SW-420 / TTP223 | board LxW + hole pattern each | chassis sensor seats (being added parametrized -- treat every one as VERIFY_ON_ARRIVAL, exact modules not yet chosen) |
+| Sense HAT Rev2 (ordered 2026-07-14) | 65x56.5 outline, M2.5 holes on the 58x49 pattern, component heights | replaces the IMU posts + BME bosses on chassis_base with a 4-standoff HAT seat (next base iteration; the HAT covers IMU + temp/humidity/pressure, BME688 now optional-for-gas) |
+| Joy-IT RPI5-HEATSINK5 (ordered 2026-07-14) | true installed envelope incl. fan | 65x45x15 EXCEEDS the verified official-cooler keep-out 63.5x42.5x13.7 -- re-run tools/probe_cooler.py with measured dims BEFORE head install |
+| AI Camera IMX500 (ordered 2026-07-14) | module depth + lens barrel vs CM3 | forehead cam pod is CM3-sized; re-fit pass needed before swapping the eye |
 | M8x60 + NYLOC | nut across-flats (13.0 nom) + nut height, washer OD | prow-cheek nut channels (walls 13.8 apart grip the flats) + Ø14.4 washer slice |
 | M8 shank / Ø8 stubs | actual shank Ø | pylon Ø8.4 through holes + F688 8 mm bores (a fat zinc bolt binds) |
 | F688ZZ | flange Ø (18) + width (5) + OD (16) | idler Ø15.95 press seats + Ø18.5x1.0 flange recesses |

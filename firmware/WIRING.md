@@ -29,7 +29,8 @@ wall 27W+ USB-C PD brick
         │     ├── ULN2003 #1 (pan stepper, chassis)
         │     ├── ULN2003 #2 (tilt stepper, neck column; 5V rides the pan loop)
         │     ├── MX1588 VCC (TT track motors)
-        │     └── chassis LEDs / HC-SR04P
+        │     ├── chassis LEDs / HC-SR04P
+        │     └── Sense HAT 5V pin (LED matrix; ~40 mA class, 2026-07-14)
         └── (common ground everywhere; star point at the tray)
 ```
 
@@ -38,7 +39,11 @@ wall 27W+ USB-C PD brick
   not just the one blessed Raspberry Pi unit.
 - **Buck A (Pi rail):** trimmed to 5.25 V at the tray so the head end sees ~5.1 V
   after the neck run. Only Pi + display + camera + head LEDs load this rail
-  (~13-16 W worst case, inside the buck's 25 W envelope).
+  (~13-16 W worst case, inside the buck's 25 W envelope). The head cooler fan
+  (Joy-IT / official) plugs into the Pi 5's own 4-pin fan header and is counted
+  inside the Pi figure (<0.5 W). The Sense HAT's 3V3 sensors ride the Pi's 3V3
+  regulator via the neck drop (tens of mA); its 5V LED matrix feeds from Buck B
+  locally in the chassis (~40 mA class, 0.95 mA/LED design).
 - **Buck B (motor rail):** steppers + TT + chassis accessories. A TT stall folds
   THIS buck, not the Pi rail. 28BYJ ~240 mA each energized, TT ~0.5 A cruise.
 - **Budget (honest version, review 2026-07-08):** 27 W at the wall is ~24 W after ~90 %
@@ -64,22 +69,40 @@ board's input protection).
 
 | Joint | Wires | Notes |
 |---|---|---|
-| pan (service loop) | Pi-rail pair (18 AWG silicone) + 5V/GND motor-rail feed for ULN#2 + 4x tilt-stepper IN lines (or SDA/SCL, see below) | 8 thin + 1 fat pair; the 16x8 platform obround and neck channel pass a 5-pos JST-XH head, verified stage 4/6 |
+| pan (service loop) | Pi-rail pair (18 AWG silicone) + 5V/GND motor-rail feed for ULN#2 + 4x tilt-stepper IN lines + **I2C drop: 3V3 + SDA + SCL (Sense HAT, 2026-07-14)** | 11 thin + 1 fat pair; the 16x8 platform obround and neck channel pass a 5-pos JST-XH head, verified stage 4/6 |
 | tilt (drape) | Pi-rail pair ONLY | ribbons (DSI/CSI) never leave the head |
 
 Pan is software-limited to +-90 (hard stops at +-93.3), so the loop never over-winds.
 
-## Signals: bundle now, I2C drop later
+## Signals: bundle now, I2C drop NOW (Sense HAT, 2026-07-14)
 
 The Pi lives in the head; the drivers live below. Today: GPIO lines run down the
 neck bundle (4 pan-ULN IN + 4 tilt-ULN IN + 2 MX1588 PWM + optional sonar pair).
 That is ~10 thin wires in the pan loop -- ugly but passes, and it is zero extra
 hardware.
 
-Upgrade path (when the bundle annoys you): a Pico or PCA9685 in the chassis on the
-power tray (stacks on the buck grid with 20 mm standoffs), talking UART or I2C to
-the Pi. Then the pan loop shrinks to: Pi-rail pair + 5V/GND + SDA/SCL (or TX/RX) =
-6 wires, and the tilt ULN's IN lines come from the chassis board instead.
+**The Sense HAT Rev2 makes the I2C drop day-one, not an upgrade.** The HAT can NOT
+stack on the Pi: the head has no volume above the board (the cooler keep-out owns
+the component face at millimeter margins) and stacking would also block the cooler.
+It mounts REMOTELY in the chassis on the equipment base (`chassis_base`), where its
+IMU is exactly where the awareness plan wants one: rigid, near the pan axis, sensing
+BASE motion unpolluted by head moves. Electrically the HAT is pure I2C (0x6a/0x1c
+IMU, 0x5c pressure, 0x5f humidity, 0x29 color, 0x46 LED matrix + joystick), so the
+drop is 3 thin wires added to the pan loop -- 3V3 + SDA + SCL (ground is already
+common) -- plus a LOCAL 5V feed from Buck B for the LED matrix. Do NOT route a
+40-pin ribbon down the neck; only round wires cross the joints.
+
+Bus integrity over the ~0.5 m run: clock I2C at 100 kHz, twist SDA and SCL each
+with a ground return, and keep the stubs short. If the bus is flaky on hardware,
+add 2.2 kΩ pullups to 3V3 at the HAT end; the LTC4311-class bus extender is the
+escalation, not the default.
+
+Upgrade path unchanged (when the ULN bundle annoys you): a Pico or PCA9685 in the
+chassis on the power tray (stacks on the buck grid with 20 mm standoffs), riding
+THE SAME I2C drop (or UART). Then the pan loop shrinks to: Pi-rail pair + 5V/GND +
+3V3/SDA/SCL = 7 wires, and the tilt ULN's IN lines come from the chassis board
+instead. Mind the address map above when adding devices; note TCS3400 squats 0x29
+(collides with a VL53L1X ToF if one ever joins).
 
 ## Connectors and harness rules
 
@@ -114,6 +137,12 @@ the Pi. Then the pan loop shrinks to: Pi-rail pair + 5V/GND + SDA/SCL (or TX/RX)
   is stale); tilt ULN on the neck-column standoffs, board centered at z 93 (dropped
   from 110: the tilt_carrier occupies z 113..153 in the same y band; rides the pan
   frame).
+- **Sense HAT seat (pending CAD, 2026-07-14):** goes on the removable
+  `chassis_base` equipment base -- exactly the in-flux-mount case the base exists
+  for. Next base iteration replaces the (14,-12) IMU posts with 4x M2.5 standoffs
+  on the HAT's 58x49 pattern (65x56.5 outline), LED matrix + joystick facing UP
+  under the deck (service = lift the deck). Measure the delivered board first
+  (VERIFY_ON_ARRIVAL); reprint is one small flat plate.
 
 ## Bringup order (first power)
 

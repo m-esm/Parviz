@@ -152,9 +152,9 @@ specific tasks or when the user asks for it.</strong></p>
 </tr>
 <tr>
 <td>Vision</td>
-<td>Camera Module 3 (imx708) in the forehead; AI-camera upgrade path (IMX500-class or Hailo HAT) is an open decision</td>
-<td>CM3 owned, verified</td>
-<td>person/face detect, motion, scene description on demand</td>
+<td>Camera Module 3 (imx708) in the forehead; <strong>AI Camera (IMX500) ordered 2026-07-14</strong> -- on-sensor NPU runs detection on the camera itself, decision resolved (cam pod re-fit VERIFY_ON_ARRIVAL)</td>
+<td>CM3 owned; IMX500 ordered</td>
+<td>person/face detect ON-SENSOR, motion, scene description on demand</td>
 </tr>
 <tr>
 <td>Obstacle / cliff</td>
@@ -164,15 +164,21 @@ specific tasks or when the user asks for it.</strong></p>
 </tr>
 <tr>
 <td>Temp / humidity / pressure</td>
-<td>BME688-class environmental sensor (also VOC/gas)</td>
-<td>candidate</td>
-<td>ambient log, "room feels stuffy" events</td>
+<td><strong>Sense HAT Rev2</strong> (LPS25H pressure/temp + HTS221 humidity/temp), on the chassis equipment base via the neck I2C drop; BME688 now only if VOC/gas is wanted</td>
+<td>ordered 2026-07-14</td>
+<td>ambient log ("room feels stuffy" needs the optional BME688)</td>
 </tr>
 <tr>
 <td>Tilt / angle / accel</td>
-<td>IMU (MPU6050/ICM-20948-class)</td>
-<td>candidate</td>
-<td>fall/pickup detect, incline, head pose sanity</td>
+<td><strong>Sense HAT Rev2</strong> LSM9DS1 9-DoF (accel + gyro + magnetometer -- compass heading is new)</td>
+<td>ordered 2026-07-14</td>
+<td>fall/pickup detect, incline, heading, head pose sanity</td>
+</tr>
+<tr>
+<td>Light / color</td>
+<td><strong>Sense HAT Rev2</strong> TCS3400 ambient light + color</td>
+<td>ordered 2026-07-14</td>
+<td>lights-on/off events, day/night rhythm, "someone turned the lights off"</td>
 </tr>
 <tr>
 <td>Vibration</td>
@@ -188,9 +194,9 @@ specific tasks or when the user asks for it.</strong></p>
 </tr>
 <tr>
 <td>Touch</td>
-<td>capacitive touch pads + the 7" touchscreen (done: face reacts to touch)</td>
-<td>screen done</td>
-<td>petting/attention events</td>
+<td>capacitive touch pads + the 7" touchscreen (done: face reacts to touch) + <strong>Sense HAT 5-way joystick</strong> (hidden physical input on the base)</td>
+<td>screen done; joystick ordered</td>
+<td>petting/attention events, service-menu input</td>
 </tr>
 <tr>
 <td>Odometry</td>
@@ -200,6 +206,10 @@ specific tasks or when the user asks for it.</strong></p>
 </tr>
 </tbody>
 </table></div>
+<p>The Sense HAT also brings an <strong>8x8 RGB LED matrix</strong> (an OUTPUT, not a sense):
+mounted on the equipment base it is invisible with the deck on, so treat it as
+a service/debug display (world-state heartbeat visible when the deck is lifted)
+unless a later pass gives it a window.</p>
 <h2 id="tiered-processing-the-efficiency-contract">Tiered processing (the efficiency contract)</h2>
 <p><strong>Tier 0, reflexes (no model, &lt;10 ms):</strong> cliff = stop, obstacle = stop/avoid,
 over-tilt = motors off. Hard-coded in the motion daemon; the LLM is advisory
@@ -242,12 +252,19 @@ HC-SR04 ─ reflex ────┘        (reflexes act directly)              �
                     face / neck / tracks / TTS     ▼
                                         remote brain (Claude API / Mac)
 </code></pre>
-<h2 id="ram-budget-the-hard-constraint-pi-5-2gb">RAM budget (the hard constraint, Pi 5 2GB)</h2>
+<h2 id="ram-budget-the-hard-constraint-pi-5-2gb-8gb-ordered-2026-07-14">RAM budget (the hard constraint, Pi 5 2GB -- 8GB ORDERED 2026-07-14)</h2>
 <p>face ~130 MB + local LLM server ~0.9 GB (0.6B, ctx 2048) + whisper-tiny
 ~0.2 GB + daemons/summarizer leaves ~0.4 GB headroom. This is exactly why
 the ambient model is 0.6B-class: the 1.7B ceiling model fits ONLY alone,
 not next to the ears. Bigger ambient brains mean a bigger-RAM Pi or an
 accelerator, not a config change.</p>
+<p><strong>Both halves of that sentence were ordered 2026-07-14:</strong> a Pi 5 <strong>8GB</strong>
+(the bigger-RAM Pi -- the 1.7B-class ambient model plus a larger ASR now
+fit NEXT TO the face, with room for longer context) and the <strong>AI Camera</strong>
+(the accelerator -- detection moves onto the sensor's NPU, freeing the CPU
+share the 1-2 Hz vision loop eats today). Re-run the software/README.md
+benchmarks on the 8GB board when it arrives; the 0.6B numbers stay valid
+as the fallback/2GB profile.</p>
 <h2 id="arduino-io-plane-decided-direction-2026-07-12">Arduino I/O plane (decided direction, 2026-07-12)</h2>
 <p>Most of the electrical components do NOT wire to the Pi's GPIO: they
 connect to an <strong>Arduino dev board</strong>, and the Arduino connects to the Pi 5
@@ -275,12 +292,15 @@ more headroom — check the parts inventory before buying), and which of
 pan/tilt steppers + TT motors move behind it vs stay on Pi GPIO/ULN2003.</p>
 <h2 id="open-decisions">Open decisions</h2>
 <ul>
-<li>"AI camera": keep plain CM3 + on-CPU detect, vs IMX500 AI Camera or a
-  Hailo-8L HAT (offloads vision entirely, frees CPU/RAM; costs money, a
-  CSI/PCIe slot, and mounting changes).</li>
-<li>Exact sensor parts + wiring (I2C bus budget, GPIO map) — decide with the
-  power/wiring pass (firmware/WIRING.md).</li>
-<li>Wake-word vs continuous small-ASR duty cycle (battery/thermal tradeoff).</li>
+<li>~~"AI camera"~~ <strong>RESOLVED 2026-07-14: IMX500 AI Camera ordered.</strong> Remaining
+  sub-decision: swap it into the forehead pod (needs a cam-pod re-fit,
+  VERIFY_ON_ARRIVAL) vs bench-validate first with CM3 staying in the head.</li>
+<li>~~Exact IMU/env sensor parts~~ <strong>RESOLVED 2026-07-14: Sense HAT Rev2</strong> on the
+  chassis equipment base over the neck I2C drop (firmware/WIRING.md has the
+  wire-level plan + I2C address map). Still open: mmWave exact module, TTP223
+  head-top placement.</li>
+<li>Wake-word vs continuous small-ASR duty cycle (battery/thermal tradeoff) —
+  the 8GB Pi widens the options here.</li>
 <li>Where TTS runs (Piper local fits; voice choice open).</li>
 </ul>
 </main>

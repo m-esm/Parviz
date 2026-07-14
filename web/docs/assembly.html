@@ -498,9 +498,24 @@ not. Printing a seat before its part has arrived is how reprints happen.</p>
 <td>ear grommet Ø15 compress-fit bores + Ø19/Ø15 trim rings in the head_back side walls (<code>ear_*</code> params)</td>
 </tr>
 <tr>
-<td>LD2410 / BME688 / IMU / SW-420 / TTP223</td>
+<td>LD2410 / SW-420 / TTP223</td>
 <td>board LxW + hole pattern each</td>
 <td>chassis sensor seats (being added parametrized -- treat every one as VERIFY_ON_ARRIVAL, exact modules not yet chosen)</td>
+</tr>
+<tr>
+<td>Sense HAT Rev2 (ordered 2026-07-14)</td>
+<td>65x56.5 outline, M2.5 holes on the 58x49 pattern, component heights</td>
+<td>replaces the IMU posts + BME bosses on chassis_base with a 4-standoff HAT seat (next base iteration; the HAT covers IMU + temp/humidity/pressure, BME688 now optional-for-gas)</td>
+</tr>
+<tr>
+<td>Joy-IT RPI5-HEATSINK5 (ordered 2026-07-14)</td>
+<td>true installed envelope incl. fan</td>
+<td>65x45x15 EXCEEDS the verified official-cooler keep-out 63.5x42.5x13.7 -- re-run tools/probe_cooler.py with measured dims BEFORE head install</td>
+</tr>
+<tr>
+<td>AI Camera IMX500 (ordered 2026-07-14)</td>
+<td>module depth + lens barrel vs CM3</td>
+<td>forehead cam pod is CM3-sized; re-fit pass needed before swapping the eye</td>
 </tr>
 <tr>
 <td>M8x60 + NYLOC</td>

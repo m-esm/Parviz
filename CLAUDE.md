@@ -361,21 +361,29 @@ NOT yet in inventory (verify the Ø17 windscreen on arrival, docs/ASSEMBLY.md). 
 are covered by the owned kits. The "608zz ×30" SETTLED: bag label reads "10pcs-608ZZ" (real
 bearings under shrink wrap, not plastic rings); still unused in the design.
 
-**Buy-list additions (software side, 2026-07-12, inventory-checked):**
-- **Pi 5 active cooler — downgraded to NICE-TO-HAVE (2026-07-12): the user added a
-  passive heatsink** and the soak test improved from clocks PINNED at 1.5 GHz to
-  2.1-2.4 GHz sustained (85 °C peaks, recovers 85→70 °C in <1 min off-load). The 80 °C
-  thermal breaker still trips briefly under long brain bursts; an active cooler would
-  eliminate that entirely. **CAD clearance CLEARED (2026-07-13 evening, see the
-  head-thermal pass below): the worm-tail retreat landed, tools/probe_cooler.py passes
-  static + full tilt sweep with >=0.60 mm to the keep-out -- OK to buy.**
+**Buy-list additions (software side, 2026-07-12; 2026-07-14 order batch folded in):**
+- **Pi 5 cooler — BOUGHT 2026-07-14: 2x Joy-IT RPI5-HEATSINK5 (Tray 1, not delivered),
+  BUT its 65x45x15 envelope (+30x30x10 fan) EXCEEDS the verified official-cooler
+  keep-out (63.5x42.5x13.7) on every axis and the tilt-sweep margin was only 0.60 mm:
+  re-run tools/probe_cooler.py with the Joy-IT dims BEFORE installing in the head**
+  (fallback: official Active Cooler, whose envelope is the verified one, or duct the
+  separately bought 30x10 5V fan at the louvres). History: downgraded to nice-to-have
+  2026-07-12 after the passive heatsink (2.1-2.4 GHz sustained, 85 °C peaks); official
+  envelope CAD-cleared 2026-07-13 (worm-tail retreat, >=0.60 mm static + sweep).
 - ~~USB-A→USB-B cable~~ COVERED: user has one cable per Uno (3× Uno R3 compatible in
   Bag 6; no board purchase needed either). The Arduino I/O plane is fully stocked.
-- **Sensor suite (AWARENESS.md; decide exact parts with the wiring pass, NONE owned):**
-  mmWave presence LD2410/LD2450-class, BME688 (or BME280 if gas sensing is dropped),
-  IMU (MPU6050/ICM-20948-class), SW-420 vibration module, TTP223 cap-touch pads ×2-4.
-  All of these land on the Arduino per the I/O-plane decision, so 5 V-tolerant modules
-  are fine.
+- **Sensor suite (AWARENESS.md) — largely RESOLVED 2026-07-14 by 2x Sense HAT Rev2
+  (ordered, Tray 1):** the HAT covers IMU (LSM9DS1 9-DoF, off the buy list) + env
+  temp/humidity/pressure (BME688 now OPTIONAL, only for VOC/gas) and adds TCS3400
+  light/color + 8x8 LED matrix + joystick. It is a Pi I2C peripheral, NOT an Arduino
+  part: it mounts on the chassis_base over a 3-wire neck I2C drop (firmware/WIRING.md;
+  it can NOT stack on the Pi -- no head clearance + the cooler owns that space).
+  STILL BUY for the Arduino plane: mmWave LD2410-class, SW-420, TTP223 ×2-4, 4x HC-SR04.
+- **Also in the 2026-07-14 batch:** Pi 5 **8GB** (lifts the AWARENESS 2GB RAM ceiling;
+  re-run the software/README.md benchmarks on arrival), **AI Camera IMX500** (resolves
+  the AI-camera decision; cam pod re-fit VERIFY_ON_ARRIVAL), A4988 driver + 6x N20
+  gearmotors (no station yet; bipolar-28BYJ torque option / gripper-arm candidates,
+  see docs/ELECTRONICS.md).
 
 ## Tank chassis (the mobile base)
 

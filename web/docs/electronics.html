@@ -128,7 +128,15 @@
 <div class="crumb">Parviz · Build docs</div><h1 id="electronics">Electronics</h1>
 <p>Every electronic component in the Parviz build: what it does, whether it is owned,
 and where to download a reference CAD model. Status comes from the 2026-07-13
-inventory re-audit (see ASSEMBLY.md for the full BOM including mechanical hardware).</p>
+inventory re-audit plus the <strong>2026-07-14 order batch</strong> (Tray 1, ordered NOT yet
+delivered; see ASSEMBLY.md for the full BOM including mechanical hardware).</p>
+<p><strong>2026-07-14 order batch (changes the plan):</strong> Pi 5 <strong>8GB</strong> (lifts the 2GB RAM
+ceiling), 2x <strong>Sense HAT Rev2</strong> (covers the IMU + env-sensor buys, adds
+color/light + LED matrix + joystick), <strong>AI Camera IMX500</strong> (resolves the
+AWARENESS.md "AI camera" open decision), 2x <strong>Joy-IT RPI5-HEATSINK5</strong> coolers
+(bigger than the verified head keep-out -- see its row), a 30x10 5V fan, an
+A4988 bipolar stepper driver and 6x N20 gearmotors (no design use yet, options
+noted below). Everything in this batch is VERIFY_ON_ARRIVAL for dims.</p>
 <p>Reference models matter because the CAD placeholders in <code>src/motors.py</code> and the
 sensor/board placeholders in <code>src/chassis.py</code> were dimensioned from datasheets;
 a downloaded mesh is the fastest way to sanity-check a placeholder against the real
@@ -162,6 +170,12 @@ keeps its placeholder.</p>
 <td>No board model on Thingiverse; official STEP at <a href="https://www.raspberrypi.com/products/raspberry-pi-5/">rpi products page</a> -- and the repo already carries the combined screen+Pi mesh in <code>reference/rpi-7in-touchscreen-model/</code></td>
 </tr>
 <tr>
+<td>Raspberry Pi 5 <strong>8GB</strong></td>
+<td>Brain upgrade: lifts the 2GB RAM ceiling (AWARENESS.md budget: 1.7B-class ambient LLM + bigger ASR fit NEXT TO the face now)</td>
+<td>ORDERED 2026-07-14 (Tray 1)</td>
+<td>same board mechanically; drop-in on the display standoffs</td>
+</tr>
+<tr>
 <td>Official 7" Touch Display</td>
 <td>The face</td>
 <td>OWNED</td>
@@ -174,10 +188,22 @@ keeps its placeholder.</p>
 <td><a href="https://www.thingiverse.com/thing:6939162">CM3 Wide mockup (thing:6939162)</a>, CC BY-SA, DOWNLOADED to <code>reference/electronics/rpi-cam3-wide-mockup-6939162/</code> (mesh 25.0x23.9 = official 25x24 board; Wide lens barrel differs)</td>
 </tr>
 <tr>
-<td>Pi 5 Active Cooler</td>
+<td>AI Camera (IMX500)</td>
+<td>Eye upgrade: on-sensor NPU runs detection ON the camera, freeing Pi CPU/RAM for the brain (resolves the AWARENESS "AI camera" decision)</td>
+<td>ORDERED 2026-07-14 (Tray 1)</td>
+<td>25x24 board like CM3 but DEEPER module + different lens barrel: the forehead cam pod (Ø6.3 lens bore + recess depth) is CM3-sized, so the pod needs a re-fit pass -- VERIFY_ON_ARRIVAL, keep CM3 as the modeled default until measured</td>
+</tr>
+<tr>
+<td>Joy-IT RPI5-HEATSINK5 x2</td>
 <td>Head thermal (80C breaker trips under brain bursts)</td>
-<td>BUY (nice-to-have; CAD clearance CLEARED 2026-07-13)</td>
-<td>Official envelope modeled in <code>build_pi5_cooler()</code> from RP-008188/RP-008187</td>
+<td>ORDERED 2026-07-14 (Tray 1). <strong>WARNING: 65x45x15 mm (+ 30x30x10 fan) EXCEEDS the verified official-cooler keep-out (63.5x42.5x13.7) on every axis, and the tilt-sweep margin was only 0.60 mm</strong> -- re-run <code>tools/probe_cooler.py</code> with the Joy-IT envelope before installing in the head; if it fails, fall back to the official Active Cooler (envelope already verified) or duct the separate 30x10 fan at the louvres</td>
+<td>dims from the <a href="https://joy-it.net/en/products/RB-Heatsink5">Joy-IT manual</a></td>
+</tr>
+<tr>
+<td>Fan 5VDC 30x10 (B-3010-D05-MLA)</td>
+<td>Spare / louvre-duct option if the Joy-IT cooler fails the head probe</td>
+<td>ORDERED 2026-07-14 (Tray 1)</td>
+<td>n/a</td>
 </tr>
 <tr>
 <td>Gooseneck mics x2 + CM108</td>
@@ -222,9 +248,24 @@ keeps its placeholder.</p>
 <td>OWNED x5</td>
 <td>none found; trivial 2-layer module, model from measurement</td>
 </tr>
+<tr>
+<td>A4988 (Pololu)</td>
+<td>No station yet. Option it enables: rewire a 28BYJ-48 bipolar (cut the red common) for ~+40% torque on pan or tilt if the 4:1/2:1 margins prove thin on hardware</td>
+<td>ORDERED 2026-07-14 (Tray 1)</td>
+<td>n/a</td>
+</tr>
+<tr>
+<td>N20 gearmotor 6V (240RPM x4, 400RPM x2)</td>
+<td>No station yet. Prime candidate: the deferred gripper-arm actuation (rack-and-sector parallel gripper, reference/hand-mechanism/)</td>
+<td>ORDERED 2026-07-14 (Tray 1)</td>
+<td>n/a</td>
+</tr>
 </tbody>
 </table></div>
-<h2 id="sensors-arduino-io-plane-docsawarenessmd">Sensors (Arduino I/O plane, docs/AWARENESS.md)</h2>
+<h2 id="sensors">Sensors</h2>
+<p>Two planes since 2026-07-14: the <strong>Sense HAT Rev2 rides the Pi's I2C bus</strong> (it is a
+Pi peripheral with kernel/python support, not an Arduino part) while the timing-
+critical and 5V modules stay on the <strong>Arduino I/O plane</strong> (docs/AWARENESS.md).</p>
 <div class="tbl"><table>
 <thead>
 <tr>
@@ -236,8 +277,14 @@ keeps its placeholder.</p>
 </thead>
 <tbody>
 <tr>
+<td><strong>Sense HAT Rev2 x2</strong></td>
+<td>One board covers THREE former buy-list rows: LSM9DS1 9-DoF IMU (accel+gyro+MAG), LPS25H pressure/temp, HTS221 humidity/temp -- plus NEW capabilities: TCS3400 color/ambient-light sensor, 8x8 RGB LED matrix, 5-way joystick. All I2C (0x6a/0x1c IMU, 0x5c, 0x5f, 0x29 color, 0x46 matrix+joystick). Mounts REMOTELY on the chassis equipment base (65x56.5 HAT outline, M2.5 at the 58x49 pattern) fed by a thin I2C drop down the neck -- it can NOT stack on the Pi (no head clearance + the cooler owns that space), see firmware/WIRING.md. 2nd unit = spare / bench Pi</td>
+<td>ORDERED 2026-07-14 x2 (Tray 1)</td>
+<td>official; dims VERIFY_ON_ARRIVAL</td>
+</tr>
+<tr>
 <td>Arduino Uno R3</td>
-<td>I/O plane: sensors + reflexes, one USB to the Pi</td>
+<td>I/O plane: sonar timing, vibration, mmWave, touch, LEDs, reflexes; one USB to the Pi</td>
 <td>OWNED x3 (Bag 6)</td>
 <td><a href="https://www.thingiverse.com/thing:346338">DesignSpark CAD (thing:346338)</a>, CC BY-SA, DOWNLOADED to <code>reference/electronics/arduino-uno-r3-346338/</code> (OBJ + RSDOC); also <a href="https://www.thingiverse.com/thing:6564384">1:1 replica (thing:6564384)</a></td>
 </tr>
@@ -255,15 +302,15 @@ keeps its placeholder.</p>
 </tr>
 <tr>
 <td>BME688</td>
-<td>Env sensing over the y-96 left vent</td>
-<td>BUY</td>
+<td>~~Env sensing~~ DOWNGRADED to optional: the Sense HAT covers temp/humidity/pressure; buy a BME688 only if VOC/gas sensing ("room feels stuffy") is wanted</td>
+<td>OPTIONAL (was BUY)</td>
 <td>dims VERIFY_ON_ARRIVAL</td>
 </tr>
 <tr>
 <td>MPU6050/ICM-20948 IMU</td>
-<td>Motion, near the pan axis</td>
-<td>BUY</td>
-<td>dims VERIFY_ON_ARRIVAL</td>
+<td>~~Motion, near the pan axis~~ COVERED by the Sense HAT's LSM9DS1 -- off the buy list. NOTE the chassis_base IMU posts at (14,-12) become the Sense HAT seat in the next base iteration (cheap reprint by design)</td>
+<td>COVERED (was BUY)</td>
+<td>n/a</td>
 </tr>
 <tr>
 <td>SW-420</td>
@@ -279,6 +326,9 @@ keeps its placeholder.</p>
 </tr>
 </tbody>
 </table></div>
+<p><strong>I2C address note:</strong> the Sense HAT's TCS3400 sits at <strong>0x29, the same address as
+the VL53L1X ToF</strong> that was once a cliff-sensing candidate -- if a VL53L1X ever
+joins the bus it needs its XSHUT re-address dance or a mux.</p>
 <h2 id="power-firmwarewiringmd">Power (firmware/WIRING.md)</h2>
 <div class="tbl"><table>
 <thead>
