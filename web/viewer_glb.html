@@ -291,7 +291,7 @@
   <label class="chk"><input type="checkbox" id="t_spin"> Auto-spin
     <input type="range" id="spinspd" min="5" max="120" step="5" value="35"></label>
 
-  <div class="foot">drag orbit · scroll zoom · right-drag pan<br>right-click a part or list row · H hide · I isolate · F focus · A all<br>live-reloads on rebuild</div>
+  <div class="foot">drag orbit · scroll zoom · right-drag pan<br>click select · ⇧/⌘ click multi-select · right-click menu<br>H hide · I isolate · F focus · A all · live-reloads on rebuild</div>
 </div>
 <script type="importmap">
 { "imports": {
@@ -854,39 +854,68 @@ addEventListener('resize',()=>{
   renderer.setSize(innerWidth,innerHeight); labelRnd.setSize(innerWidth,innerHeight);
 });
 
-// ---- click-to-select: raycast on click (not drag): glow the part, mark its row,
-// show its name + world-space L/W/H (posed). Click empty space / same part / Esc clears.
-let selName=null, selDown=null;
+// ---- click-to-select: raycast on click (not drag). A plain click selects ONE part
+// (glow + the navigator opens its ancestor groups and scrolls the row into view);
+// SHIFT/CTRL/CMD-click toggles parts in and out of a MULTI selection. Hotkeys and
+// the context menu act on the whole selection. Empty space / same single part /
+// Esc clears.
+let selSet=new Set(), selDown=null;
 const selRay=new THREE.Raycaster(), selNdc=new THREE.Vector2();
-function selectPart(name){
-  if(selName && groups[selName]){
-    const g=groups[selName];
-    g.meshes.forEach(o=>{ if(o.userData._selEm!==undefined){
+function glowSel(name,on){
+  const g=groups[name]; if(!g) return;
+  g.meshes.forEach(o=>{
+    if(on){
+      if(o.userData._selEm===undefined){
+        o.userData._selEm=o.material.emissive.getHex();
+        o.userData._selEi=o.material.emissiveIntensity; }
+      o.material.emissive.setHex(0xE87422); o.material.emissiveIntensity=.5;
+    } else if(o.userData._selEm!==undefined){
       o.material.emissive.setHex(o.userData._selEm);
       o.material.emissiveIntensity=o.userData._selEi;
-      delete o.userData._selEm; }});
-    if(g.row) g.row.classList.remove('sel');
+      delete o.userData._selEm;
+    }
+  });
+  if(g.row) g.row.classList.toggle('sel',on);
+}
+function revealRow(row){               // open EVERY ancestor group (not just the
+  let el=row.parentElement;            // innermost), then center the row in the list
+  while(el && el.id!=='parts'){
+    if(el.classList && el.classList.contains('cgrp')) el.classList.remove('closed');
+    el=el.parentElement;
   }
-  $('selinfo').style.display='none';
-  if(name===selName){ selName=null; return; }
-  selName=name||null;
-  if(!selName) return;
-  const g=groups[selName];
-  g.meshes.forEach(o=>{
-    o.userData._selEm=o.material.emissive.getHex();
-    o.userData._selEi=o.material.emissiveIntensity;
-    o.material.emissive.setHex(0xE87422); o.material.emissiveIntensity=.5; });
-  if(g.row){
-    const grp=g.row.closest('.cgrp'); if(grp) grp.classList.remove('closed');
-    g.row.classList.add('sel'); g.row.scrollIntoView({block:'nearest'});
-  }
-  const gb=new THREE.Box3(); g.meshes.forEach(o=>gb.expandByObject(o));
-  const s=gb.getSize(new THREE.Vector3());
-  $('selinfo').innerHTML='<span class="ax" style="color:#E87422">▶</span><b>'+selName+'</b>'+
+  row.scrollIntoView({block:'center'});
+}
+function updateSelInfo(){
+  if(!selSet.size){ $('selinfo').style.display='none'; return; }
+  const box=new THREE.Box3();
+  selSet.forEach(n=>{ const g=groups[n]; if(g) g.meshes.forEach(o=>box.expandByObject(o)); });
+  const s=box.getSize(new THREE.Vector3());
+  const label = selSet.size===1 ? [...selSet][0] : selSet.size+' parts selected';
+  $('selinfo').innerHTML='<span class="ax" style="color:#E87422">▶</span><b>'+label+'</b>'+
     '<span class="ax" style="color:'+TXT.x+'">L</span><b>'+s.x.toFixed(1)+'</b>'+
     '<span class="ax" style="color:'+TXT.y+'">W</span><b>'+s.y.toFixed(1)+'</b>'+
     '<span class="ax" style="color:'+TXT.z+'">H</span><b>'+s.z.toFixed(1)+'</b>';
   $('selinfo').style.display='flex';
+}
+function selectPart(name, additive){
+  if(additive && name){                              // toggle membership
+    if(selSet.has(name)){ glowSel(name,false); selSet.delete(name); }
+    else{ selSet.add(name); glowSel(name,true);
+      const g=groups[name]; if(g&&g.row) revealRow(g.row); }
+  } else {                                           // replace (or clear/toggle-off)
+    const wasOnlyThis = name && selSet.size===1 && selSet.has(name);
+    selSet.forEach(n=>glowSel(n,false)); selSet.clear();
+    if(name && !wasOnlyThis){
+      selSet.add(name); glowSel(name,true);
+      const g=groups[name]; if(g&&g.row) revealRow(g.row);
+    }
+  }
+  updateSelInfo();
+}
+function clearSel(){ selectPart(null,false); }
+function dropFromSel(name){                          // part vanished (hidden): unmark
+  if(!selSet.has(name)) return;
+  glowSel(name,false); selSet.delete(name); updateSelInfo();
 }
 function rayPart(ndc){                               // topmost visible part under an NDC point
   if(!window.__ready) return null;
@@ -902,7 +931,7 @@ renderer.domElement.addEventListener('pointerup',e=>{
   const moved=Math.hypot(e.clientX-selDown[0], e.clientY-selDown[1]); selDown=null;
   if(moved>6 || !window.__ready) return;             // it was an orbit drag, not a click
   selNdc.x=(e.clientX/innerWidth)*2-1; selNdc.y=-(e.clientY/innerHeight)*2+1;
-  selectPart(rayPart(selNdc));
+  selectPart(rayPart(selNdc), e.shiftKey||e.ctrlKey||e.metaKey);
 });
 
 // ---- right-click context menu + hotkeys (H hide · I isolate · A show all) ----
@@ -919,7 +948,7 @@ function setPartVisible(name,on){                    // drive the tree checkbox 
 }
 function hidePart(name){
   if(!name) return;
-  if(name===selName) selectPart(selName);            // deselect before it vanishes
+  dropFromSel(name);                                 // deselect before it vanishes
   setPartVisible(name,false);
 }
 function isolatePart(name){
@@ -951,6 +980,17 @@ renderer.domElement.addEventListener('contextmenu',e=>{
   if(!window.__ready) return;
   const name=rayPart(new THREE.Vector2((e.clientX/innerWidth)*2-1, -(e.clientY/innerHeight)*2+1));
   const items=[];
+  if(name && selSet.size>1 && selSet.has(name)){     // clicked inside a multi-selection:
+    const names=[...selSet];                         // scope the actions to the whole set
+    items.push(`<div class="cxn">${names.length} parts selected</div>`);
+    items.push('<div class="cxi" data-act="hideg">Hide selection<span class="k">H</span></div>');
+    items.push('<div class="cxi" data-act="isog">Isolate selection<span class="k">I</span></div>');
+    items.push('<div class="cxi" data-act="focusg">Focus selection<span class="k">F</span></div>');
+    items.push('<div class="cxi" data-act="all">Show all<span class="k">A</span></div>');
+    ctx.innerHTML=items.join(''); ctx.dataset.part=''; ctx.dataset.names=JSON.stringify(names);
+    placeCtx(e.clientX, e.clientY);
+    return;
+  }
   if(name){
     items.push(`<div class="cxn">${name}</div>`);
     items.push('<div class="cxi" data-act="hide">Hide<span class="k">H</span></div>');
@@ -1006,7 +1046,7 @@ ctx.addEventListener('click',e=>{
 });
 addEventListener('pointerdown',e=>{ if(!ctx.contains(e.target)) closeCtx(); });
 addEventListener('keydown',e=>{
-  if(e.key==='Escape'){ closeCtx(); if(selName) selectPart(selName); return; }
+  if(e.key==='Escape'){ closeCtx(); clearSel(); return; }
   const k=e.key.toLowerCase();
   if((e.metaKey||e.ctrlKey) && !e.altKey && (k==='z'||k==='y')){    // undo/redo, even
     e.preventDefault();                                             // with a slider focused
@@ -1018,9 +1058,10 @@ addEventListener('keydown',e=>{
   if(e.metaKey||e.ctrlKey||e.altKey) return;
   if(k==='a'){ showAllParts(); closeCtx(); return; }
   if(k!=='h' && k!=='i' && k!=='f') return;
-  const name=selName || (hoverIn ? rayPart(hoverNdc) : null);   // selected beats hovered
-  if(!name) return;
-  if(k==='h') hidePart(name); else if(k==='i') isolatePart(name); else focusParts([name]);
+  const names = selSet.size ? [...selSet]                       // selection beats hovered
+              : (hoverIn ? [rayPart(hoverNdc)].filter(Boolean) : []);
+  if(!names.length) return;
+  if(k==='h') hideMany(names); else if(k==='i') isolateOnly(names); else focusParts(names);
   closeCtx();
 });
 

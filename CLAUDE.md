@@ -567,7 +567,9 @@ docs/ASSEMBLY.md BOM + assembly order
   node matches none -- a new part needs its TREE entry the same turn it enters the scene. The
   viewer also has UNDO/REDO (floating top-right ↶↷ toolbar with an n/N depth counter,
   ⌘Z / ⇧⌘Z / Ctrl+Y) over one debounced history of part visibility + sliders + toggles
-  (camera orbit and tree collapse deliberately untracked).
+  (camera orbit and tree collapse deliberately untracked). Selection: click = single,
+  ⇧/⌘-click = multi-set; the navigator auto-opens every ancestor group and centers the
+  row; H/I/F hotkeys + the right-click menu act on the whole selection.
 
 **Trim + rear-sensor pass (2026-07-11, user rounds 4-5):** the REAR wall is now a TWIN
 of the front: the same grille ring (grille_* params) frames a rear obstacle HC-SR04
