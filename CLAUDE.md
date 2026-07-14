@@ -850,6 +850,19 @@ Hull group (chassis_ regex). All green: interference PASS, 35/35 invariants, wal
 PASS, 20/20 plates slice clean, fits 55 pairs all expected. To iterate the electronics
 layout, edit build_chassis_base + the *_c PARAMS and reprint ONLY chassis_base.
 
+**DESIGN RULE — SEPARATE BY STABILITY (baseline, applies to every future part):**
+partition every enclosure/chassis/head volume by CHANGE FREQUENCY before modeling.
+Frozen shells (structural + cosmetic, slow prints) stay CLEAN: no screw pockets or
+bosses for any component marked VERIFY_ON_ARRIVAL or otherwise in flux. All such
+mounts go on a removable equipment base/tray that bolts to the shell at a few generic
+points, so iterating a mount reprints only a small flat support-free plate. What may
+stay fused in a shell: kinematic/structural-critical seats (pan pedestal, bearing
+bores) and skin-coupled features (sensor barrels, vents, light pipes). Build bases by
+RE-LAYING-OUT the components onto them and RELIEVING against the shell union
+(sub + _despeck), never by notching a tray around an existing packed layout — the
+2026-07-14 retrofit attempt collided with the belly rebate until the layout moved
+onto the base. Same rule applies when the head electronics ever need seats.
+
 **Electronics seats (2026-07-13 -> moved to the base 2026-07-14):** the Uno R3 seat (4
 posts to z 21 + a rear-wall shelf for the glacis-side hole;
 hole pattern verified vs the Adafruit Arduino-dimensions drawing, USB-B faces +X, cable
