@@ -72,6 +72,7 @@ PARTS = {  # name: (subsystem, [rotations], obj_settings)
     "chassis_lower_rear":  ("base", [],         STRUCT),
     "chassis_lower_tail":  ("base", [],         STRUCT),   # rear cap (cheeks + rear wall)
     "chassis_base":        ("base", [],         TREE),     # drop-in equipment base, flat
+    "chassis_pedestal":    ("base", [],         TREE),     # pan pedestal, flange down
     "chassis_side_L_front": ("base", [], STRUCT),  # bolt-in wall panels w/ integral
     "chassis_side_L_rear":  ("base", [], STRUCT),  #  wheel beam: print UPRIGHT as
     "chassis_side_R_front": ("base", [], STRUCT),  #  built (z12 edge + rib feet +
@@ -113,7 +114,7 @@ CATEGORIES = [
                       "chassis_side_L_front", "chassis_side_L_rear",
                       "chassis_side_R_front", "chassis_side_R_rear",
                       "chassis_deck_front", "chassis_deck_center", "chassis_deck_rear",
-                      "belly_plate", "chassis_base"]),
+                      "belly_plate", "chassis_base", "chassis_pedestal"]),
     ("Head",         ["head_back_frame_L", "head_back_frame_R", "head_back_panel_L",
                       "head_back_panel_R", "head_bezel_L", "head_bezel_R",
                       "head_door", "screen_tray", "cam_cover", "sd_plug"]),

@@ -39,7 +39,7 @@ from head import (build_ant_drive, build_antennas, build_arms, build_cam_pod, bu
                   build_ear_jacks, build_head_parts, build_head_rails, build_led_strip,
                   build_pi5_cooler, build_screen_tray, build_sd_plug)
 from chassis import (build_belly_plate, build_chassis_electronics, build_chassis_parts,
-                     build_chassis_base, build_fascia)
+                     build_chassis_base, build_fascia, build_pan_pedestal)
 from fitmap import _fit_report
 
 
@@ -97,6 +97,8 @@ def build():
     for ch in build_chassis_parts():
         add(ch, np.eye(4), f"{ch.metadata['name']}.stl")
     add(build_belly_plate(), np.eye(4), "belly_plate.stl")   # bolt-on floor access plate
+    add(build_pan_pedestal(), np.eye(4), "chassis_pedestal.stl")   # pan-motor pedestal
+    # (round 5: bolts to the belly plate -- drop the plate, drop the pan stage)
     for fp in build_fascia():                        # front fascia set (design ref)
         add(fp, np.eye(4))
     for ep in build_chassis_electronics():           # Arduino I/O plane seat

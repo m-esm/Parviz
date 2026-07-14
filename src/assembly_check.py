@@ -98,6 +98,10 @@ WHITELIST = {
     # equipment base (2026-07-14): drops into the rear bay, bolts to the hull floor,
     # carries the Arduino/IMU/SW-420 seats (SW-420 rides its fence nubs).
     frozenset(("chassis_base", "chassis_lower")),   # base rests on the hull floor + bolts
+    frozenset(("chassis_pedestal", "belly_plate")),  # pedestal seats + pins + bolts on the
+                                                     # plate plug (round 5)
+    frozenset(("chassis_pedestal", "motor_pan")),    # can/ears in the pedestal
+                                                     # (placeholder-mode runs)
     frozenset(("chassis_base", "sensor_vib")),      # SW-420 in its seat fence
     frozenset(("chassis_base", "sensor_imu")),      # IMU on its posts
     frozenset(("chassis_base", "board_arduino")),   # Uno on its posts (refpart, excl.)
@@ -137,13 +141,19 @@ def bbox_overlap(a, b):
 
 
 def overlap_volume(a, b):
-    """Boolean-intersection volume in mm^3 (0.0 if AABBs are disjoint)."""
+    """Boolean-intersection volume in mm^3 (0.0 if AABBs are disjoint).
+    DIRECT manifold3d (2026-07-14): trimesh's boolean wrapper injected phantom
+    slivers on complex meshes (see geo.py) -- the gate must not report them."""
     if not bbox_overlap(a, b):
         return 0.0
-    inter = trimesh.boolean.intersection([a, b], engine="manifold")
-    if inter is None or inter.is_empty or len(inter.faces) == 0:
-        return 0.0
-    return abs(float(inter.volume))
+    import manifold3d as m3
+    import numpy as np
+
+    def _man(t):
+        return m3.Manifold(m3.Mesh(
+            vert_properties=np.asarray(t.vertices, dtype=np.float64),
+            tri_verts=np.asarray(t.faces, dtype=np.uint32)))
+    return abs(float((_man(a) ^ _man(b)).volume()))
 
 
 def check_pairs(meshes, pairs, context, violations):

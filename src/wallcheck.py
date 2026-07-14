@@ -53,7 +53,7 @@ PRINTED = [
     "chassis_side_L_front.stl", "chassis_side_L_rear.stl",
     "chassis_side_R_front.stl", "chassis_side_R_rear.stl",
     "chassis_deck_front.stl", "chassis_deck_center.stl", "chassis_deck_rear.stl",
-    "belly_plate.stl", "chassis_base.stl",
+    "belly_plate.stl", "chassis_base.stl", "chassis_pedestal.stl",
     "track_strip_L1.stl", "track_strip_L2.stl", "track_strip_L3.stl", "track_strip_L4.stl",
     "track_strip_R1.stl", "track_strip_R2.stl", "track_strip_R3.stl", "track_strip_R4.stl",
     "track_wheels_L.stl", "track_wheels_R.stl",
@@ -84,6 +84,12 @@ WHITELIST = {
     # Prints seam-up so the wedge lies flat on the floor slab; cosmetic.
     "chassis_lower_tail.stl": (0.2, "rear glacis/floor-top tangent knife wedge "
                                     "(designed 33deg hull bevel; tail first gated 2026-07-14)"),
+    # FRONT twin of the tail's glacis wedge (y +110.8): always present, but it only
+    # crossed the p1 percentile 2026-07-14 round 5 when the keep strap + pedestal +
+    # ULN posts left the part (smaller sample population, same designed geometry).
+    "chassis_lower_front.stl": (0.2, "front glacis/floor-top tangent knife wedge "
+                                     "(designed 33deg hull bevel; surfaced when the "
+                                     "belly strap left the part, round 5)"),
     # Equipment base: the boolean hull-relief (sub(base, hull shells)) thins the
     # plate edge to ~0.75 where the belly-opening lip pocket crosses it at
     # (44.4, -62.3, 12.3). Local skin over a clearance pocket, not a load wall;

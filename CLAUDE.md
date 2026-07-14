@@ -928,6 +928,41 @@ drive module. Hull knock-ons: chassis_lower_rear is now a floor tray (top z 32),
 the tub keeps floor + end walls + cheeks (minus their outer skins) + corner stubs
 past |y| 142.8/139.5.
 
+**PAN PEDESTAL + FULL-TRAY BELLY PLATE (2026-07-14 round 5, user: "the neck motor
+mount built into chassis_lower_* -- separate it, bolt+nuts to the belly plate;
+bigger belly plate containing many parts").** The pan-motor pedestal left the hull:
+`chassis_pedestal` (28 cm3, exact old geometry re-rooted on the plate plug top z 10 --
+48x48 body to ear_z 30.75, through O29 can bore, wbox relief, ear pilots, seat pads +
+collar, cable-pass corner cut) bolts DOWN to the belly plate with 4x M3x12 csk from
+below (flush at z 7, the belly-screw convention) into captive hex nuts in its feet,
+located by 2 printed O4 pins (pan-gear CD is position-critical: pins locate, screws
+clamp). The belly KEEP STRAP is retired (_belly_polys: full rounded 100x110 opening)
+and BOTH ULN2003 driver mounts moved onto the plate (uln1_c (27,20), uln2_c (26,-14)
+-- posts z 10..16, board tops where they always were), the REAR TIE + its plate relief
+died with the strap, and the plate already carried the power tray + zip anchors +
+ballast ribs: DROP THE PLATE = the pan motor + pedestal + both drivers + the power
+stage leave as ONE service tray. Hull floor is now just the opening rim (lower_rear =
+a 36 cm3 ring). BME moved back 0.45 (bme_cy -97.65: 0.6 to the rib face; 0.15 was
+inside the boolean facet-residue margin). Gates: (chassis_pedestal, belly_plate)
+pairs + wallcheck/plates/invariants wiring; the derived `_ped_c()` keeps the pedestal
+center in lockstep with the pan-gear params.
+
+**CSG ROBUSTNESS (2026-07-14, learned chasing phantom slivers):** trimesh 4.12's
+`boolean.*` wrapper INJECTS PHANTOM GEOMETRY on complex meshes (an inter() grew a 0.2
+bulge on a rib face neither input had; a compound union grew 150 mm3 inside a capture
+window its inputs could not fill). geo.py's uni/sub/inter now call manifold3d
+DIRECTLY (f32 Mesh; the f64 Mesh64 path produced its own artifacts on this trimesh/
+manifold combo) with a process=False rewrap, and assembly_check's overlap_volume does
+the same. RULES: (1) never trimesh.boolean.* -- always geo.uni/sub/inter; (2) never
+union many overlapping coplanar volumes in one call -- build capture regions as ONE
+shapely 2D unary_union extruded once (`_prism` in build_chassis_parts), and union
+added bodies PAIRWISE; (3) trimesh `.contains()` is ray-parity and LIES near
+coincident faces -- probe with a manifold-cube intersection instead (the oracle
+pattern); (4) design clearances own the last ~0.02 mm3 of facet residue: keep
+placeholder-to-part gaps >= 0.3, never 0.15; (5) capture volumes that bottom exactly
+on an open face plane leave zero-thickness sheets -- the panels' 1-micron scrub slice
+handles it.
+
 **Electronics seats (2026-07-13 -> moved to the base 2026-07-14):** the Uno R3 seat (4
 posts to z 21 + a rear-wall shelf for the glacis-side hole;
 hole pattern verified vs the Adafruit Arduino-dimensions drawing, USB-B faces +X, cable

@@ -67,6 +67,8 @@ def _fit_report(geo):
         frozenset(("pan_clips", "chassis_deck")),    # clips screwed into deck pockets
         frozenset(("motor_pan", "chassis_deck")),    # ear bar clamped on the pedestal pads
         frozenset(("motor_pan", "chassis_lower")),
+        frozenset(("motor_pan", "chassis_pedestal")),  # can in the bolt-on pedestal
+                                                       # (round 5; placeholder runs)
         frozenset(("drive_L", "chassis_lower")), frozenset(("drive_R", "chassis_lower")),
         frozenset(("motor_tilt", "neck_clevis")),    # gear face on the bracket plate
         frozenset(("camera_ref", "head_bezel")),     # board front on the M2 boss tips
@@ -100,6 +102,7 @@ def _fit_report(geo):
         # its seat, but the pairs ARE designed seats -- whitelisted so a future
         # gap-close doesn't trip the audit
         frozenset(("chassis_base", "chassis_lower")),    # equipment base on the hull floor
+        frozenset(("chassis_pedestal", "belly_plate")),  # pedestal seat/pins on the plate
         frozenset(("board_arduino", "chassis_base")),    # Uno on the base posts/shelf
         frozenset(("sensor_imu", "chassis_base")),       # IMU posts on the base
         frozenset(("sensor_vib", "chassis_base")),       # SW-420 seat on the base

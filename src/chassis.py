@@ -142,16 +142,24 @@ def build_fascia():
     return parts
 
 
+def _ped_c():
+    """Pan-motor CAN center (the pedestal center), derived from the fast-pan gear
+    geometry exactly like build_chassis_core derives it -- one source, no drift:
+    shaft on the CD circle at pan_shaft_azim, can offset motor_shaft_off in +Y."""
+    cd_pan = P["pan_gear_m"] * (P["pan_gear_motor_t"] + P["pan_gear_pinion_t"]) / 2
+    paz = np.radians(P["pan_shaft_azim"])
+    return cd_pan * np.cos(paz), cd_pan * np.sin(paz) + P["motor_shaft_off"]
+
+
 def _belly_polys():
     """(opening, rebate) shapely polys for the belly access plate (task #26).
-    Opening = rounded 100x110 MINUS the retained strap (keeps the pedestal + inboard
-    ULN posts rooted); rebate = one bigger rounded rect, cut 1.5 up from the belly
-    face EVERYWHERE inside it (incl. under the strap, thinned to 3.5 there) so the
-    plate is a single flat flange."""
+    Opening = the full rounded 100x110 (the KEEP STRAP was deleted 2026-07-14
+    round 5: the pan pedestal + inboard ULN posts it rooted moved onto the plate
+    itself, so the plate is now the full equipment tray); rebate = one bigger
+    rounded rect, cut 1.5 up from the belly face everywhere inside it."""
     w, l = P["belly_open_wl"]; cx, cy = P["belly_open_c"]
     op = sg.box(cx - w / 2, cy - l / 2, cx + w / 2, cy + l / 2)
     op = op.buffer(-8, join_style=1).buffer(8, join_style=1)
-    op = op.difference(sg.box(*P["belly_keep"]))
     g = P["belly_rebate_grow"]
     reb = sg.box(cx - w / 2 - g, cy - l / 2 - g, cx + w / 2 + g, cy + l / 2 + g)
     reb = reb.buffer(-10, join_style=1).buffer(10, join_style=1)
@@ -262,84 +270,15 @@ def build_chassis_core():
     # (cbl is SUBTRACTED after the pedestal union below: subtracting here let the pedestal
     # refill the pass below z 44.25 to a 4.0 mm window -- CABLE-CHECK defect A.)
 
-    # pan-motor PEDESTAL: top face AT the ear-bar underside so the M3s clamp the ears down.
-    # (The old 6-thick pad sank the can 5.5 into the floor while the ears floated 12.4 above.)
-    # Fast-pan: the motor DROPPED ~13.5 (32T gear on the flats in the 45..50 band) and the
-    # pedestal follows the can to (-19.2, 7.875) -- x -43.2..4.8 stays 2.4 off the drive_L
-    # can (-45.6) and on the widened belly strap (belly_keep x0 -44); ears run along X
-    # (the motor is clocked -90 in build()), wiring box exits +Y.
-    zsh = (P["pan_gear_z"][0] - 4.25) - (P["motor_body_h"] + P["motor_gear_h"])  # can bottom
-    ear_z = zsh + P["motor_body_h"] - 1.0            # ear-bar underside (30.75)
-    ped = rounded_box(48, 48, ear_z - (z0 + floor), 6.0)
-    ped.apply_translation((mx, my, z0 + floor))
-    body = uni([body, ped])
-    # deck cable pass, now boring through deck AND pedestal corner in one shot (z 29..51,
-    # only the corner sliver x 4..16, y -24..-19 comes out of the pedestal); the shaft's
-    # -y side is open to the cavity the whole way (pedestal stops at y -24), so the wire
-    # swings straight back into the service-loop band.
+    # (pan-motor PEDESTAL + BOTH ULN2003 standoff sets MOVED OFF THE HULL
+    # 2026-07-14 round 5, user: "I want it separate and connected with bolt and
+    # nuts to the belly plate... bigger belly plate that contains many parts".
+    # The pedestal is now the bolt-on `build_pan_pedestal()` (chassis_pedestal)
+    # riding the ENLARGED belly plate; the ULN posts moved onto the plate too
+    # (build_belly_plate). The _belly_polys keep strap is gone, so the floor
+    # here is just the opening rim -- drop the plate = drop the whole power +
+    # driver + pan-motor stage as one service tray.)
     body = sub(body, cbl)
-    # ULN2003 standoffs (x2 boards eventually; second mount is a deferred detailing task).
-    # Board centre shifted +20 in Y: at y=0 the board envelope hit the drive_R TT can
-    # (y -23.4..-9.9, x up to 52.5).
-    for sx in (-1, 1):
-        for sy in (-1, 1):
-            b = cyl(3.0, 8); b.apply_translation((38 + sx * P["uln_w"] / 2, 20 + sy * P["uln_h"] / 2, z0 + floor))
-            body = uni([body, b])
-    # 2nd ULN2003 standoff set (tilt / MX1588 driver) at uln2_c -- see the PARAMS note for
-    # why the mirrored (-38,+-20) spot is blocked by the pedestal. Same post style as ULN#1
-    # (Ø6 x 8 half-buried in the floor) + Ø2.5 M3 self-tap pilots (stop 1.0 above the floor
-    # underside so no through-holes appear in the belly).
-    for sx in (-1, 1):
-        for sy in (-1, 1):
-            px = P["uln2_c"][0] + sx * P["uln_w"] / 2
-            py = P["uln2_c"][1] + sy * P["uln_h"] / 2
-            b = cyl(3.0, 8); b.apply_translation((px, py, z0 + floor))
-            body = uni([body, b])
-            pil = cyl(1.25, 8); pil.apply_translation((px, py, z0 + floor))
-            body = sub(body, pil)
-    # Ø29 can relief bored from the pedestal top down to the floor (can Ø28.25 drops in,
-    # bottom hovers 0.45 above the floor; the ears take the clamp load)
-    canb = cyl(29.0 / 2, ear_z + 2 - (z0 + floor))
-    canb.apply_translation((mx, my, (z0 + floor + ear_z + 2) / 2))
-    body = sub(body, canb)
-    # wiring-box relief: the blue box now protrudes past the can on +Y (motor clocked -90);
-    # open the pocket clear through the pedestal's +Y face so the leads route out sideways
-    wrel = box(P["motor_wbox_w"] + 3, 22, ear_z + 2 - (z0 + floor))
-    wrel.apply_translation((mx, my + 16, (z0 + floor + ear_z + 2) / 2))
-    body = sub(body, wrel)
-    # M3 PILOTS Ø2.5 at the ear holes (can-axis X = +-17.5 -- ears along X now)
-    for dxe in (-P["motor_ear_cc"] / 2, P["motor_ear_cc"] / 2):
-        e = cyl(1.25, 16); e.apply_translation((mx + dxe, my, ear_z - 4))
-        body = sub(body, e)
-    # ear-bar SEAT PADS: drop the pedestal top ped_relief (0.8) everywhere EXCEPT two pads
-    # under the ear ends and the collar's footing annulus -> the 7x1 bar clamps on defined
-    # pads (a full 48x48 print-top face rocks on seam blobs; two 9x10 pads don't).
-    pw, pd = P["ped_pad_wxy"]
-    relief = rounded_box(50, 50, P["ped_relief"], 6.0)      # oversize slab over the ped top
-    relief.apply_translation((mx, my, ear_z - P["ped_relief"]))
-    for dxe in (-P["motor_ear_cc"] / 2, P["motor_ear_cc"] / 2):
-        pad = box(pd, pw, P["ped_relief"] + 2)              # pads rotated with the ear bar
-        pad.apply_translation((mx + dxe, my, ear_z - P["ped_relief"] / 2))
-        relief = sub(relief, pad)
-    keep = cyl(P["ped_collar_od"] / 2 + 0.5, P["ped_relief"] + 2)   # collar keeps footing
-    keep.apply_translation((mx, my, ear_z - P["ped_relief"] / 2))
-    relief = sub(relief, keep)
-    body = sub(body, relief)
-    # can-locating COLLAR: Ø32/Ø29 x 1.5 ring on the pedestal top. The Ø29 bore already
-    # guides the can below, but its top 1.0 (can top 45.25) + the Ø27.25 gear-stack root
-    # get a dedicated register here (0.375/side to the Ø28.25 can, 0.875 to the stack).
-    # Notched where the ear bar crosses (|x-mx| < 4.1 vs the 7-wide bar) and over the
-    # wiring-relief window on -X so the wbox leads still exit sideways.
-    collar = sub(cyl(P["ped_collar_od"] / 2, P["ped_collar_h"]),
-                 cyl(29.0 / 2, P["ped_collar_h"] + 2))
-    collar.apply_translation((mx, my, ear_z + P["ped_collar_h"] / 2))
-    ncut = box(P["ped_collar_od"] + 4, 8.2, P["ped_collar_h"] + 2)  # ear bar crosses in X
-    ncut.apply_translation((mx, my, ear_z + P["ped_collar_h"] / 2))
-    collar = sub(collar, ncut)
-    wcut = box(P["motor_wbox_w"] + 3, 12, P["ped_collar_h"] + 2)    # matches wrel footprint
-    wcut.apply_translation((mx, my + 11, ear_z + P["ped_collar_h"] / 2))
-    collar = sub(collar, wcut)
-    body = uni([body, collar])
 
     # pan-clip pockets: 3 at 120deg around the seat rim, floors 7 below the deck top so the
     # clips finish FLUSH (see build_pan_clips for why nothing may stand proud of the deck).
@@ -645,17 +584,9 @@ def build_chassis_core():
         body = sub(body, _belly_csk_neg(bx_, by_))
         pil = cyl(1.25, 8.3); pil.apply_translation((bx_, by_, 9.2 + 8.3 / 2))
         body = sub(body, pil)                                # pilot z 9.2..17.5
-    # REAR TIE for the pedestal island (2026-07-10 probe pass): the y 26 sub-split put
-    # the belly strap's only anchor in the FRONT tub piece, leaving the pedestal +
-    # strap a LOOSE 55 cm3 body inside chassis_lower_rear (pre-existing since the
-    # split). A 14-wide bar in the strap's thinned z 8.5..12 band runs from the strap
-    # across the belly opening onto the solid floor rim behind it (y -63); the belly
-    # PLATE passes beneath in the z 7..8.5 rebate band, so the plate outline is
-    # untouched and stays one piece. x -26..-12 clears the tray posts (-38.8..-32.8),
-    # the +X zip anchors and the belly screws.
-    tie = box(14.0, 39.0, 3.5)
-    tie.apply_translation((-19.0, -43.5, 10.25))
-    body = uni([body, tie])
+    # (REAR TIE deleted 2026-07-14 round 5: it re-anchored the belly-strap pedestal
+    # island, and both the strap and the pedestal left the hull -- the floor is a
+    # plain opening rim now.)
 
     # --- ELECTRONICS SEATS (2026-07-13, Arduino I/O plane; see the PARAMS block
     # for every placement derivation + VERIFY_ON_ARRIVAL markers). Added AFTER the
@@ -857,53 +788,52 @@ def build_chassis_parts():
     foot_x = 62.9                     # foot band x 60.5..65.3 (fused 0.3 into the wall)
     foot_pts = ((4.0, -3.0, 11.0), (-95.25, -102.0, -88.5))   # (screw y, y0, y1)
 
-    def _rib_cap(s, ry0, ry1):
-        # full height to pz1, not just the rib band: at |y| > 103 the CAVITY's r12
-        # corner round pulls the wall inner face inboard of the px0 plane, so an
-        # x-only band cut would slice the wall LENGTHWISE and leave a 0-thickness
-        # feather crescent on the hull (wallcheck caught it at (-64.8, 104.8, 43.2)).
-        # Capturing the full wall depth here gives the panel tip the whole (locally
-        # thicker) wall and leaves the hull a clean vertical butt face.
-        rb = box(69.5 - 51.3, ry1 - ry0, pz1 - pz0)
-        rb.apply_translation((s * (51.3 + 69.5) / 2, (ry0 + ry1) / 2, (pz0 + pz1) / 2))
-        return rb
+    from shapely.ops import unary_union
 
-    def _tail_cap(s, ry0, ry1):
-        # rear-end twin of the crescent fix: the cavity corner round reaches x 63.9
-        # at y -108, so the rear panel tip captures inboard to x 62 over y < -102.5.
-        tb = box(71.0 - 62.0, ry1 - ry0, pz1 - pz0)
-        tb.apply_translation((s * (62.0 + 71.0) / 2, (ry0 + ry1) / 2, (pz0 + pz1) / 2))
-        return tb
+    def _prism(fps):
+        """ONE capture solid from 2D (x,y) footprints: shapely-union the rects/
+        discs, extrude z 12..47. A single clean prism per boolean -- compound 3D
+        unions of these overlapping coplanar boxes made manifold HALLUCINATE
+        ~150 mm3 of phantom material (probe-verified 2026-07-14: the captured
+        window volume exceeded what `lower` holds there), plus z12 sheets and
+        wall-face curtains that broke wallcheck + the BME gate."""
+        pr = extrude_polygon(unary_union(fps), pz1 - pz0)
+        pr.apply_translation((0, 0, pz0))
+        return pr
 
-    def _boss_cap(s, by_):
-        bc_ = cyl(P["chassis_split_boss_r"] + 0.35, 10.6)
-        bc_.apply_translation((s * 64.0, by_, (36.4 + 47.0) / 2))
-        return bc_
+    def _xb(s, xa, xb_, ya, yb):
+        lo, hi = min(s * xa, s * xb_), max(s * xa, s * xb_)
+        return sg.box(lo, ya, hi, yb)
 
-    def _bme_cap():
-        bb_ = box(8.6, 18.8, 8.5)     # x -71..-62.4 swallows the 2 wall bosses
-        bb_.apply_translation((-(62.4 + 71.0) / 2, P["bme_cy"], 30.25))
-        return bb_
+    # rib/corner captures run FULL DEPTH (x to 51.3) so the r12 cavity-corner
+    # rounds aren't sliced lengthwise into feather crescents (wallcheck, round 2).
+    # Ends restored to the round-4 extents 2026-07-14 evening: the round-5 "whole
+    # arc to the end wall" captures SEVERED the hull's only floor<->end-block
+    # ligaments (the corner crescents past |y|~109), and the 0.5 p1 wedge they
+    # chased turned out to be an artifact of the compound-union boolean glitch
+    # (fixed for real by the single-prism captures below).
 
     panels = []
     band_cuts = []
     for s in (-1, 1):
         side = "L" if s < 0 else "R"
-        # end captures come in CUT (hull opening, to y 109 / -108) and KEEP (panel,
-        # 0.3 shorter) flavors so the butt gap survives at the thickened tips too
-        caps_front = [_rib_cap(s, 101.2, 108.7), _boss_cap(s, 60.0), _boss_cap(s, 8.0)]
-        caps_front_cut = [_rib_cap(s, 101.2, 109.0), _boss_cap(s, 60.0), _boss_cap(s, 8.0)]
-        caps_rear = [_tail_cap(s, -107.7, -102.5), _rib_cap(s, -87.0, -79.2),
-                     _boss_cap(s, -26.0)]
-        caps_rear_cut = [_tail_cap(s, -108.0, -102.5), _rib_cap(s, -87.0, -79.2),
-                         _boss_cap(s, -26.0)]
+        caps_front = [_xb(s, 51.3, 69.5, 101.2, 108.7),
+                      sg.Point(s * 64.0, 60.0).buffer(4.35, 32),
+                      sg.Point(s * 64.0, 8.0).buffer(4.35, 32)]
+        caps_front_cut = [_xb(s, 51.3, 69.5, 101.2, 109.0)] + caps_front[1:]
+        caps_rear = [_xb(s, 51.3, 69.5, -87.0, -79.2),
+                     _xb(s, 62.0, 71.0, -107.7, -102.5),
+                     sg.Point(s * 64.0, -26.0).buffer(4.35, 32)]
+        caps_rear_cut = [_xb(s, 51.3, 69.5, -87.0, -79.2),
+                         _xb(s, 62.0, 71.0, -108.0, -102.5),
+                         sg.Point(s * 64.0, -26.0).buffer(4.35, 32)]
         if s < 0:
-            caps_rear.append(_bme_cap())
-            caps_rear_cut.append(_bme_cap())
-        bcut = box(px1 - px0, 282.3, pz1 - pz0)   # y -139.5..142.8: corner skins,
-        bcut.apply_translation((s * (px0 + px1) / 2, 1.65,   # end-wall notches +
-                                (pz0 + pz1) / 2))            # cheek outer skins go
-        band_cuts.append(uni([bcut] + caps_front_cut + caps_rear_cut))   # to panels
+            bmefp = sg.box(-71.0, -106.6, -62.4, -87.8)
+            caps_rear.append(bmefp)
+            caps_rear_cut.append(bmefp)
+        cut_prism = _prism([_xb(s, px0, px1, -139.5, 142.8)]
+                           + caps_front_cut + caps_rear_cut)
+        band_cuts.append(cut_prism)      # ONE prism per side, subtracted below
         zc_tt = _track_zc()                       # 25.32: sprocket/TT shaft line
         rr_z = (zc_tt - P["track_wheel_r"]) + 3.5 + P["roadwheel_d"] / 2 + 0.1
         za_ax = zc_tt + P["track_raise"]          # 34.32: end-axle line (ex-pylons)
@@ -914,9 +844,7 @@ def build_chassis_parts():
                                          caps_front, 0),
                                         (f"chassis_side_{side}_rear", -139.2, -18.65,
                                          caps_rear, 1)):
-            kp = box(px1 - px0, ky1 - ky0, pz1 - pz0)
-            kp.apply_translation((s * (px0 + px1) / 2, (ky0 + ky1) / 2, (pz0 + pz1) / 2))
-            pnl = inter(lower, uni([kp] + caps))
+            pnl = inter(lower, _prism([_xb(s, px0, px1, ky0, ky1)] + caps))
             fy, fy0, fy1 = foot_pts[fi]
             foot = box(4.8, fy1 - fy0, 4.0)
             foot.apply_translation((s * foot_x, (fy0 + fy1) / 2, 14.0))
@@ -966,7 +894,11 @@ def build_chassis_parts():
             ey_s = ey_ax if fi == 0 else -ey_ax
             hb = cyl(7.0, 8.0, axis="x")
             hb.apply_translation((s * 66.0, ey_s, za_ax))
-            pnl = uni([pnl, foot, lsec, lap, slab, thk, hb])
+            # pairwise unions on purpose: a single 7-mesh union hit the same
+            # manifold compound-boolean glitch as the caps (it grew the rear rib
+            # face 0.39 into the BME board's clearance, gate-caught at 0.07 mm3)
+            for extra_ in (foot, lsec, lap, slab, thk, hb):
+                pnl = uni([pnl, extra_])
             if fi == 0:                            # tension slot (true stadium)
                 i_t, o_t = P["idler_slot_in"], P["idler_slot_out"]
                 c0 = cyl(4.2, 12.0, axis="x"); c0.apply_translation((0, -i_t, 0))
@@ -1009,14 +941,25 @@ def build_chassis_parts():
                 pnl = sub(sub(pnl, hn), rec2)              # extrusion refilled
             fcl = cyl(1.65, 5.0); fcl.apply_translation((s * foot_x, fy, 13.5))
             fcb = cyl(3.3, 2.7); fcb.apply_translation((s * foot_x, fy, 13.8 + 2.7 / 2))
-            pnl = _despeck(sub(sub(pnl, fcl), fcb), 0.05)
+            pnl = sub(sub(pnl, fcl), fcb)
+            # DEGENERATE-SHEET SCRUB: the capture volumes bottom out exactly on the
+            # OPEN floor top (z 12), and inter() leaves a zero-thickness skin fused
+            # to the panel there (it broke contains() parity, read as a 0.2 p1 in
+            # wallcheck, and produced a garbage 8.9 mm^3 boolean vs the BME
+            # placeholder). Shave 1 micron off the bottom: everything real (wall
+            # band, feet, rib roots) legitimately bottoms at 12.0 and loses nothing.
+            pnl = slice_mesh_plane(pnl, plane_normal=(0, 0, 1),
+                                   plane_origin=(0, 0, 12.001), cap=True)
+            pnl = _despeck(pnl, 0.05)
             _color(pnl, "base"); pnl.metadata["name"] = nm_
             panels.append(pnl)
         for fy, _f0, _f1 in foot_pts:              # blind Ø2.5 floor pilots under the
             fpil = cyl(1.25, 4.5)                  # feet (stop 0.7 over the belly face)
             fpil.apply_translation((s * foot_x, fy, 7.7 + 4.5 / 2))
             lower = sub(lower, fpil)
-    lower = _despeck(sub(lower, uni(band_cuts)))
+    for bc_ in band_cuts:                          # sequential subs (see above)
+        lower = sub(lower, bc_)
+    lower = _despeck(lower)
 
     lower_f = _despeck(slice_mesh_plane(lower, plane_normal=(0, 1, 0),
                                         plane_origin=(0, ysl, 0), cap=True))
@@ -1245,13 +1188,35 @@ def build_belly_plate():
             rib.apply_translation((sx * (P["blst_usb_hw"] + rib_l / 2), ry,
                                    z0 + 3.0 + P["blst_rib_h"] / 2))   # z 10..14
             plate = uni([plate, rib])
-    # relief for the chassis' rear pedestal TIE (see build_chassis_core, 2026-07-10):
-    # the tie bar crosses the plug and the -X plate-rib runs in the z 8.5..12 band;
-    # the plate passes under it on the 1.45 flange alone (0.05 vertical + 0.15
-    # lateral clearance; the severed rib segments stay rooted in the plug)
-    trel = box(14.3, 39.3, 6.0)
-    trel.apply_translation((-19.0, -43.5, 8.45 + 3.0))
-    plate = sub(plate, trel)
+    # (the REAR-TIE relief left with the tie itself, round 5 -- the plug is a full
+    # uninterrupted panel now that the keep strap is gone.)
+    # --- PAN PEDESTAL interface (round 5, user: pedestal separate, "bolt and
+    # nuts" to the plate): 4x M3x12 csk from below (flush at z 7, the belly-screw
+    # convention) into captive hex nuts in the pedestal feet, + 2 Ø4.2 holes for
+    # the pedestal's printed registration pins (pan-gear CD is position-critical;
+    # screws clamp, pins locate).
+    mxp, myp = _ped_c()
+    for dx_, dy_ in ((-18.0, -18.0), (18.0, -18.0), (-18.0, 18.0), (18.0, 18.0)):
+        plate = sub(plate, _belly_csk_neg(mxp + dx_, myp + dy_))
+        thr = cyl(1.75, 2.6)                          # csk_neg's clearance stops at
+        thr.apply_translation((mxp + dx_, myp + dy_,  # z 9.2 (hull-pilot handoff);
+                               10.3))                 # bore on through the 3-plug
+        plate = sub(plate, thr)
+    for dx_ in (-18.0, 18.0):
+        dh = cyl(2.1, 8.0); dh.apply_translation((mxp + dx_, myp, 8.5))
+        plate = sub(plate, dh)
+    # --- ULN2003 standoffs x2 (round 5: BOTH driver boards ride the plate now --
+    # they were hull-floor posts rooted on the deleted keep strap / at (0,80)).
+    # Same Ø6 posts, tops at z 16 like before, Ø2.5 pilots stopping in the post.
+    for cx_, cy_ in (P["uln1_c"], P["uln2_c"]):
+        for sx in (-1, 1):
+            for sy in (-1, 1):
+                px_ = cx_ + sx * P["uln_w"] / 2
+                py_ = cy_ + sy * P["uln_h"] / 2
+                post = cyl(3.0, 6.0); post.apply_translation((px_, py_, z0 + 3.0 + 3.0))
+                plate = uni([plate, post])
+                pil = cyl(1.25, 5.0); pil.apply_translation((px_, py_, 16.0 - 2.5))
+                plate = sub(plate, pil)
     # POWER TRAY (wiring pass 2026-07-08, see firmware/WIRING.md): the main 5.1 V buck
     # mounts on the plug's rear bay, so dropping the belly plate drops the power stage
     # as a service tray (leave harness slack). Posts Ø6 x 6 with Ø2.5 M3 self-tap
@@ -1276,6 +1241,86 @@ def build_belly_plate():
     plate.metadata["name"] = "belly_plate"
     return plate
 
+
+def build_pan_pedestal():
+    """Bolt-on PAN-MOTOR PEDESTAL (2026-07-14 round 5, user: "I don't like that
+    the neck motor mount is built in chassis_lower_* -- separate it, bolt+nuts to
+    the belly plate"). The exact hull pedestal geometry, re-rooted on the belly
+    plate's plug top (z 10) instead of the hull floor (z 12): rounded 48x48 body
+    to the ear-bar underside (ear_z 30.75), Ø29 through can-drop bore, +Y wiring-
+    box relief, M3 ear pilots, the 0.8 seat-pad relief (two ear pads + collar
+    footing), the Ø32/Ø29 can-locating collar (ear-bar + wbox notches), and the
+    deck-cable-pass corner cut. NEW: 4 corner feet with side-slide M3 hex-nut
+    traps (bolts = M3x12 csk from below, flush at the z 7 belly face like every
+    belly screw) + 2 printed Ø4 registration pins into plate holes -- the pan
+    gear CD is position-critical, so pins locate and screws only clamp. Service:
+    drop the belly plate and the pan motor + pedestal + both ULN drivers + the
+    power tray leave as ONE tray."""
+    z0 = P["chassis_clear"]
+    zb = z0 + 3.0 + 0.05                              # plug top 10 + 0.05 seat air
+    mx, my = _ped_c()
+    zsh = (P["pan_gear_z"][0] - 4.25) - (P["motor_body_h"] + P["motor_gear_h"])
+    ear_z = zsh + P["motor_body_h"] - 1.0             # ear-bar underside (30.75)
+    ped = rounded_box(48, 48, ear_z - zb, 6.0)
+    ped.apply_translation((mx, my, zb))
+    # Ø29 can relief: THROUGH bore now (the can bottom hovers ~2.9 over the plug)
+    canb = cyl(29.0 / 2, ear_z + 2 - zb + 2)
+    canb.apply_translation((mx, my, (zb + ear_z + 2) / 2))
+    ped = sub(ped, canb)
+    wrel = box(P["motor_wbox_w"] + 3, 22, ear_z + 2 - zb + 2)   # wbox leads exit +Y
+    wrel.apply_translation((mx, my + 16, (zb + ear_z + 2) / 2))
+    ped = sub(ped, wrel)
+    for dxe in (-P["motor_ear_cc"] / 2, P["motor_ear_cc"] / 2):
+        e = cyl(1.25, 16); e.apply_translation((mx + dxe, my, ear_z - 4))
+        ped = sub(ped, e)
+    pw, pd = P["ped_pad_wxy"]
+    relief = rounded_box(50, 50, P["ped_relief"], 6.0)
+    relief.apply_translation((mx, my, ear_z - P["ped_relief"]))
+    for dxe in (-P["motor_ear_cc"] / 2, P["motor_ear_cc"] / 2):
+        pad = box(pd, pw, P["ped_relief"] + 2)
+        pad.apply_translation((mx + dxe, my, ear_z - P["ped_relief"] / 2))
+        relief = sub(relief, pad)
+    keep = cyl(P["ped_collar_od"] / 2 + 0.5, P["ped_relief"] + 2)
+    keep.apply_translation((mx, my, ear_z - P["ped_relief"] / 2))
+    relief = sub(relief, keep)
+    ped = sub(ped, relief)
+    collar = sub(cyl(P["ped_collar_od"] / 2, P["ped_collar_h"]),
+                 cyl(29.0 / 2, P["ped_collar_h"] + 2))
+    collar.apply_translation((mx, my, ear_z + P["ped_collar_h"] / 2))
+    ncut = box(P["ped_collar_od"] + 4, 8.2, P["ped_collar_h"] + 2)
+    ncut.apply_translation((mx, my, ear_z + P["ped_collar_h"] / 2))
+    collar = sub(collar, ncut)
+    wcut = box(P["motor_wbox_w"] + 3, 12, P["ped_collar_h"] + 2)
+    wcut.apply_translation((mx, my + 11, ear_z + P["ped_collar_h"] / 2))
+    collar = sub(collar, wcut)
+    ped = uni([ped, collar])
+    # deck cable pass corner cut (the same cbl bore build_chassis_core drills
+    # through the deck membrane: corner sliver x 4..16 / y -24..-19, z from 29)
+    ex, ey = P["cable_exit"]
+    u = np.array([ex - 0.0, ey - P["neck_chan_y"]]); u = u / np.linalg.norm(u)
+    plate_bot, ring_top, seat_floor, zball = _pan_stack()
+    cbl = extrude_polygon(sg.LineString([(ex - 4 * u[0], ey - 4 * u[1]),
+                                         (ex + 4 * u[0], ey + 4 * u[1])]).buffer(4.0), 24.0)
+    cbl.apply_translation((0, 0, seat_floor - 22))
+    ped = sub(ped, cbl)
+    # mounting: 4x Ø3.4 vertical bores + side-slide hex nut traps (M3 AF 5.5 +
+    # 0.2, 2.6 thick + 0.2, slot opens to the NEAREST side face); the csk heads
+    # live in the plate (see build_belly_plate). Nut seat at z 14.5 puts an
+    # M3x12 tip at ~19 -- 2 threads past the nut.
+    for dx_, dy_ in ((-18.0, -18.0), (18.0, -18.0), (-18.0, 18.0), (18.0, 18.0)):
+        bx_, by_ = mx + dx_, my + dy_
+        bore = cyl(1.7, 12.0); bore.apply_translation((bx_, by_, zb + 3.0))
+        ped = sub(ped, bore)
+        trap = box(5.7, 14.0, 2.8)                    # slides in from the +-y face
+        trap.apply_translation((bx_, by_ + np.sign(dy_) * 7.0, 14.5 + 1.4))
+        ped = sub(ped, trap)
+    for dx_ in (-18.0, 18.0):                         # printed registration pins:
+        pin = cyl(2.0, 2.8)                           # 0.3 fused into the body, 2.45
+        pin.apply_translation((mx + dx_, my, zb - 1.4 + 0.3))   # proud into the
+        ped = uni([ped, pin])                         # plate's Ø4.2 holes
+    _color(ped, "base")
+    ped.metadata["name"] = "chassis_pedestal"
+    return ped
 
 
 def build_chassis_electronics():

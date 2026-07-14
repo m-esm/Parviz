@@ -171,16 +171,50 @@ def blind_socket(r, deep, out_dir, face_pt, overshoot=1.0):
     return m
 
 
+# DIRECT manifold3d booleans IN FLOAT64 END TO END (2026-07-14): trimesh 4.12's
+# boolean wrapper (and any float32 mesh roundtrip -- Manifold.to_mesh() returns
+# f32!) INJECTED PHANTOM GEOMETRY on complex meshes. Probe-verified: an
+# inter(lower, prism) grew a 0.2-thick bulge on a rib face that neither input
+# had; the pure Manifold chain (L ^ PR) ^ cube read exactly 0.0 there, while
+# re-manifolding the f32 to_mesh() output read 0.016 -- f32 quantization folds
+# the boolean's thin facets into macroscopic slivers. Every CSG call routes
+# through these three, so they talk to manifold3d directly with Mesh64/
+# to_mesh64 and re-wrap with process=False.
+import manifold3d as _m3
+
+
+def _to_man(mesh):
+    # np.array(...) not asarray: trimesh hands out TrackedArray subclasses that
+    # nanobind's strict ndarray signature rejects; force plain C-ordered arrays.
+    # f32 Mesh on purpose: the f64 Mesh64 path produced its own artifacts here
+    # (a non-watertight panel + a split deck on this trimesh/manifold combo),
+    # while f32 direct gave every part single + watertight. Sub-0.02 mm3 facet
+    # residue can survive near coincident faces -- design clearances, not the
+    # pipeline, own that margin (keep placeholder gaps >= 0.3).
+    return _m3.Manifold(_m3.Mesh(
+        vert_properties=np.array(mesh.vertices, dtype=np.float32, order="C", subok=False),
+        tri_verts=np.array(mesh.faces, dtype=np.uint32, order="C", subok=False)))
+
+
+def _from_man(man):
+    out = man.to_mesh()
+    return trimesh.Trimesh(vertices=np.asarray(out.vert_properties)[:, :3],
+                           faces=np.asarray(out.tri_verts), process=False)
+
+
 def sub(a, b):
-    return trimesh.boolean.difference([a, b], engine="manifold")
+    return _from_man(_to_man(a) - _to_man(b))
 
 
 def uni(parts):
-    return trimesh.boolean.union(parts, engine="manifold")
+    m = _to_man(parts[0])
+    for p in parts[1:]:
+        m = m + _to_man(p)
+    return _from_man(m)
 
 
 def inter(a, b):
-    return trimesh.boolean.intersection([a, b], engine="manifold")
+    return _from_man(_to_man(a) ^ _to_man(b))
 
 
 def dbore_neg(length, axis="z", clear=0.12, round_clear=None, flat_clear=None):

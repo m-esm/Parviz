@@ -433,12 +433,17 @@ P = {
     # y -24..24). (-38, 45) clears everything: board y 29..61 > pedestal 24, < US board
     # 71.4; x -55.5..-20.5 clear of ULN#1 (x >= 20.5) and both TT cans (|x| >= 44.4 only
     # at y < -10).
-    "uln2_c": (0.0, 80.0),  # moved 2026-07-11 (dual motors): the old (-38, 45) posts
-                            # sat inside the flipped front TT_L's envelope (y 37..102,
-                            # x -68..-40); pedestal x -37..10 blocks every left-side
-                            # spot, so the board rides the empty front-center floor
-                            # (posts +-17.5 x, y 64..96 -- clear of both TT columns,
-                            # the pedestal, the belly opening rim at y 49, and walls)
+    # ROUND 5 (2026-07-14): BOTH ULN boards ride the BELLY PLATE now (the keep
+    # strap + hull pedestal are gone; drop the plate = drop the whole driver +
+    # power + pan-motor tray). Positions re-derived on the plate (x +-49.85,
+    # y -60.85..48.85; pedestal owns x -43.2..4.8 / y -16.1..31.9; power tray
+    # y <= -33; TT cans |x| >= 44.4 at y -23..-10):
+    "uln1_c": (27.0, 20.0),   # posts x 9.5..44.5 / y 4..36: 4.7 off the pedestal
+                              # foot lug, clear of the drive_R can band (y-sep)
+    "uln2_c": (26.0, -14.0),  # posts x 8.5..43.5 / y -30..2: between pedestal
+                              # (+x side) and the power tray (y <= -33); the old
+                              # (0, 80) hull-floor spot is outside the opening
+                              # and was deleted with the hull posts
     # Ballast bay: rear cavity floor (head+Pi CoM is forward-high -> mass low + rearward).
     # 3 ribs across X make three ~9.5-wide pockets against the rear wall (inner face y=-73)
     # for steel bar / coins / shot; the front rib at -40 fences the mass. Ribs end at
@@ -517,9 +522,12 @@ P = {
     # (2.0 web to the outside face). Wiring: the SW-420 pad (-48,-95) and the
     # Uno are right there -- the rear-left corner is the sensor cluster.
     "bme_vent_y": -96.0,
-    "bme_cy": -97.2,        # board/hole-pair center: board edge -86.7 keeps 0.15
-                            # to the TT rib -- if the real board is longer than
-                            # 21, shift this back or trim. VERIFY_ON_ARRIVAL
+    "bme_cy": -97.65,       # board/hole-pair center: board edge -87.15 keeps 0.6
+                            # to the TT rib face -86.55 (was 0.15 at -97.2 --
+                            # too tight for a VERIFY_ON_ARRIVAL envelope, and
+                            # inside the f32 boolean pipeline's facet-residue
+                            # margin, 2026-07-14). If the real board is longer
+                            # than 21, shift this back or trim. VERIFY_ON_ARRIVAL
     "bme_hole_cc": 13.0,    # hole pitch along Y. VERIFY_ON_ARRIVAL (bosses at
                             # -103.7/-90.7 flank the slot y -98.5..-93.5 with
                             # 0.3+ and stay off the -112 vent)
@@ -585,10 +593,8 @@ P = {
     # filling the opening; the two inboard ballast ribs move ONTO the plug.
     "belly_open_wl": (100.0, 110.0),        # opening W(X) x L(Y), corners r8
     "belly_open_c": (0.0, -6.0),            # centre (rear-biased toward the ballast bay)
-    "belly_keep": (-44.0, -26.0, 25.0, 51.0),   # retained strap (x0, y0, x1, y1). x0 -34
-                            # -> -44 (fast-pan 2026-07-12): the pedestal followed the
-                            # off-axis can to x -43.2..4.8 and must stay rooted on
-                            # fixed floor, not the removable plug
+    # ("belly_keep" strap RETIRED 2026-07-14 round 5: the pedestal it rooted is the
+    # bolt-on chassis_pedestal on the plate now, so the opening is the full 100x110)
     "belly_rebate_grow": 8.0,               # rebate ledge past the opening, per side
     "belly_lip_t": 1.5,                     # rebate depth (up from the belly face z=7)
     "belly_fit": 0.15,                      # plate<->rebate/opening clearance per side

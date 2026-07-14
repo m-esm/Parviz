@@ -22,3 +22,4 @@
     at eval (eval at <anonymous> (eval at evaluate (:303:30)), <anonymous>:35:3)
     at async eval (eval at evaluate (:303:30), <anonymous>:4:30)
     at async <anonymous>:329:30
+[ 1190486ms] [WARNING] uncategorized part (add a TREE regex + it fails make invariants): chassis_pedestal @ http://localhost:8770/viewer_glb.html:495
