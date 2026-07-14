@@ -137,22 +137,22 @@ def main():
     # shaft pass Ø8 open through each panel at both stations, and the HULL wall
     # absent in the band (the tub must not grow the wall back).
     check("TT shaft bore open through chassis_side_R_rear",
-          bore_pierces(M("chassis_side_R_rear"), (64.0, P["spr_y"], 25.32), (1, 0, 0), 7.0))
+          bore_pierces(M("chassis_side_R_rear"), (64.0, P["spr_y"], 28.4698), (1, 0, 0), 7.0))
     check("TT shaft bore open through chassis_side_R_front",
-          bore_pierces(M("chassis_side_R_front"), (64.0, P["spr_y2"], 25.32), (1, 0, 0), 7.0))
+          bore_pierces(M("chassis_side_R_front"), (64.0, P["spr_y2"], 28.4698), (1, 0, 0), 7.0))
     check("hull wall OPEN in the panel band (lower_rear)",
           clear(M("chassis_lower_rear"), [(67.5, P["spr_y"], 30.0), (-67.5, P["spr_y"], 30.0)]))
     # fittings audit 2026-07-14: the integral web buried the LOWER TT gearbox M3
     # (z 16.57) + its gap nut -- the bore must pierce wall AND web, with the nut
     # slot open from below.
     check("lower TT M3 open through wall + web (rear station, R panel)",
-          bore_pierces(M("chassis_side_R_rear"), (64.0, P["spr_y"] + 20.3, 25.32 - 8.75),
+          bore_pierces(M("chassis_side_R_rear"), (64.0, P["spr_y"] + 20.3, 28.4698 - 8.75),
                        (1, 0, 0), 10.0)
-          and clear(M("chassis_side_R_rear"), [(72.0, P["spr_y"] + 20.3, 12.5)]))
+          and clear(M("chassis_side_R_rear"), [(72.0, P["spr_y"] + 20.3, 14.8)]))
     check("lower TT M3 open through wall + web (front station, R panel)",
-          bore_pierces(M("chassis_side_R_front"), (64.0, P["spr_y2"] - 20.3, 25.32 - 8.75),
+          bore_pierces(M("chassis_side_R_front"), (64.0, P["spr_y2"] - 20.3, 28.4698 - 8.75),
                        (1, 0, 0), 10.0)
-          and clear(M("chassis_side_R_front"), [(72.0, P["spr_y2"] - 20.3, 12.5)]))
+          and clear(M("chassis_side_R_front"), [(72.0, P["spr_y2"] - 20.3, 14.8)]))
     check("panels span the hull seams (front: y26, rear: y-88)",
           M("chassis_side_R_front").bounds[0][1] < 20.0
           and M("chassis_side_R_front").bounds[1][1] > 32.0
@@ -175,20 +175,20 @@ def main():
     ey_ax = P["track_wheelbase"] / 2
     check("front END TOWER on the panel carries the tension slot",
           inside(M("chassis_side_R_front"), [(67.4, 140.0, 44.0), (67.4, 122.0, 44.0)])
-          and all(bore_pierces(M("chassis_side_R_front"), (60.0, ey_ax + dy, 34.32),
+          and all(bore_pierces(M("chassis_side_R_front"), (60.0, ey_ax + dy, 38.3185),
                                (1, 0, 0), 12.0)
                   for dy in (-P["idler_slot_in"], 0.0, P["idler_slot_out"])))
     check("rear END TOWER on the panel carries the Ø8.4 end-axle bore",
           inside(M("chassis_side_R_rear"), [(67.4, -136.0, 44.0), (67.4, -122.0, 44.0)])
-          and bore_pierces(M("chassis_side_R_rear"), (60.0, -ey_ax, 34.32), (1, 0, 0), 12.0))
+          and bore_pierces(M("chassis_side_R_rear"), (60.0, -ey_ax, 38.3185), (1, 0, 0), 12.0))
     check("deck pylons deleted (overhang open at the axle line)",
-          clear(M("chassis_deck_front"), [(66.0, ey_ax, 34.32), (-66.0, ey_ax, 34.32)])
-          and clear(M("chassis_deck_rear"), [(66.0, -ey_ax, 34.32), (-66.0, -ey_ax, 34.32)]))
+          clear(M("chassis_deck_front"), [(66.0, ey_ax, 38.3185), (-66.0, ey_ax, 38.3185)])
+          and clear(M("chassis_deck_rear"), [(66.0, -ey_ax, 38.3185), (-66.0, -ey_ax, 38.3185)]))
     # splice: the two pieces half-lap in the L-return and screw together, so a side
     # assembles rigid without any chassis_lower_* piece.
     check("panel splice lap present (front upper tongue over rear lower tongue)",
-          inside(M("chassis_side_R_front"), [(72.0, -20.0, 22.5)])
-          and inside(M("chassis_side_R_rear"), [(72.0, -20.0, 15.0)]))
+          inside(M("chassis_side_R_front"), [(72.0, -20.0, 24.0)])
+          and inside(M("chassis_side_R_rear"), [(72.0, -20.0, 17.0)]))
 
     # user 2026-07-08 (master link + keepers): loop closes tool-openable.
     check("master links in both loops",
@@ -326,39 +326,29 @@ def main():
         cliff_ok &= inside(M(part), [pb - 2.5 * nn])   # skin between the barrels
     check("cliff US barrels pierce both slopes (33.7 deg normal)", bool(cliff_ok))
 
-    # ---------------- prow cheeks: M8 nut channels + USB corridor --------------
+    # ---------------- end axles: TOWER NUT CAGES (v2, cheeks deleted) ---------
     wb2 = P["track_wheelbase"] / 2.0
-    # REAR cheeks, user 2026-07-11 (prow cheeks): open-top NUT CHANNELS,
-    # y-walls 13.8 apart centered on the end-axle y, self-capture the
-    # descending M8 nut.
-    nut_ok = True
-    for sxb in (1, -1):
-        m = M("chassis_lower_tail")     # rear cheeks moved to the tail cap (2026-07-13 split)
-        nut_ok &= clear(m, [(sxb * 53.5, -wb2, z) for z in (28.0, 35.0, 42.0)])
-        nut_ok &= inside(m, [(sxb * 53.5, -(wb2 + 8.2), 30.0),
-                             (sxb * 53.5, -(wb2 - 8.2), 30.0)])
-    check("M8 nut channels in both REAR cheeks (y-walls 13.8 apart)", bool(nut_ok))
-    # FRONT cheeks, tension-travel pass 2026-07-13: y-wall grip is impossible
-    # over slide travel, so the front nut rides FLATS +-Z in a closed capture
-    # DUCT: floor ledge (top z 27.62) + roof grip strip (z 41.02, gap 13.4)
-    # about the end-axle line z 34.32, void open across the whole
-    # -idler_slot_in..+idler_slot_out stroke.
-    za = 34.32
-    duct_ok = True
-    for sxb in (1, -1):
-        m = M("chassis_lower_front")
-        for dy in (-P["idler_slot_in"], 0.0, P["idler_slot_out"]):
-            duct_ok &= clear(m, [(sxb * 53.5, wb2 + dy, za),
-                                 (sxb * 53.5, wb2 + dy, za - 5.8),
-                                 (sxb * 53.5, wb2 + dy, za + 5.8)])
-        duct_ok &= inside(m, [(sxb * 54.0, wb2, 26.2),      # ledge below
-                              (sxb * 54.5, wb2, 42.5)])     # roof strip above
-    check("front M8 capture ducts (flats +-Z, ledge+roof, full stroke)",
-          bool(duct_ok))
-    # user 2026-07-11 (trim + rear-sensor pass): USB-C entry is a recessed
-    # corridor through the REAR-LEFT cheek at x -38, z 31.
-    check("USB-C corridor through rear-left cheek",
-          bore_pierces(M("chassis_lower_rear"), (-38.0, -139.0, 31.0), (0, 1, 0), 35.0))
+    za = 38.3185                      # end-axle line at track_raise 13
+    # v2 end simplification (2026-07-14): the prow cheeks + their M8 ducts/
+    # channels are GONE; the NYLOC rides LEDGE+ROOF cage strips on each panel
+    # tower's inboard face (gap 13.4 = AF 13 + 0.4, axial load on the tower
+    # face, strips stop rotation; FRONT cage spans the tension travel). A bare
+    # track module can tension with zero hull pieces.
+    cage_ok = True
+    for pnl_, ey_ in (("chassis_side_R_front", wb2), ("chassis_side_R_rear", -wb2)):
+        m = M(pnl_)
+        dys = (-P["idler_slot_in"], 0.0, P["idler_slot_out"]) if ey_ > 0 else (0.0,)
+        for dy in dys:
+            cage_ok &= clear(m, [(58.0, ey_ + dy, za),          # nut void between
+                                 (58.0, ey_ + dy, za - 5.9),    # the strips
+                                 (58.0, ey_ + dy, za + 5.9)])
+        cage_ok &= inside(m, [(58.0, ey_, za - 6.7 - 1.5),      # ledge below
+                              (58.0, ey_, za + 6.7 + 0.5)])     # roof above
+    check("M8 tower nut cages (ledge+roof, front spans the travel)", bool(cage_ok))
+    # USB-C entry: recessed slot through the plain rear wall at x -38 (the cheek
+    # corridor died with the cheeks).
+    check("USB-C slot through the rear wall (x -38)",
+          bore_pierces(M("chassis_lower_tail"), (-38.0, -123.0, 34.0), (0, 1, 0), 8.0))
 
     # ---------------- head wall passages ---------------------------------------
     hw2 = P["head_w"] / 2.0

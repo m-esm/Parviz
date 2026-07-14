@@ -63,7 +63,8 @@ X, Y, Z = [1, 0, 0], [0, 1, 0], [0, 0, 1]
 # per-object overrides
 TREE = {"enable_support": "1", "support_type": "tree(auto)", "support_threshold_angle": "30"}
 NOSUP = {"enable_support": "0"}
-STRUCT = {**TREE, "wall_loops": "4", "sparse_infill_density": "20%"}   # big shells / load parts
+STRUCT = {**TREE, "wall_loops": "6", "sparse_infill_density": "8%"}   # load parts: 6 walls +
+                                                        # token infill for top-skin bridging
 
 # print orientation per STL-loaded part (rotations applied to the as-built mesh) + its overrides
 # Goal: best print face on the bed, shortest sensible height, cavities/detail up.
@@ -127,9 +128,13 @@ CATEGORIES = [
 ]
 
 # single shared profile: Generic PLA @ A1, 0.20 mm standard
+# 0% INFILL + MORE WALLS (2026-07-14, user: "0% infill and more walls to save
+# time and cost"): shells carry the strength; grid infill mostly heated air in
+# these wall-dominated parts. Exceptions stay per-object (STRUCT keeps a token
+# 8% for the load-bearing shells' long bridging top skins).
 PROFILE = {
-    "layer_height": "0.2", "wall_loops": "3", "top_shell_layers": "4", "bottom_shell_layers": "3",
-    "sparse_infill_density": "15%", "sparse_infill_pattern": "grid",
+    "layer_height": "0.2", "wall_loops": "5", "top_shell_layers": "5", "bottom_shell_layers": "4",
+    "sparse_infill_density": "0%", "sparse_infill_pattern": "grid",
     "enable_support": "1", "support_type": "tree(auto)", "support_threshold_angle": "30",
     "brim_type": "auto_brim", "brim_width": "5",
     "curr_bed_type": "Textured PEI Plate",

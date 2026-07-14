@@ -10,7 +10,7 @@ from trimesh.creation import extrude_polygon
 from trimesh.transformations import rotation_matrix as R
 from params import DEG, P, TAU
 from geo import (_color, _orient, blind_socket, box, cyl, fix_pin, frustum, hex_prism, inter, rounded_box, sub, teardrop, uni)
-from tracks import _track_zc
+from tracks import _track_zc, _spr_cz
 from pan import _pan_stack
 
 
@@ -356,15 +356,16 @@ def build_chassis_core():
         usr = cyl(P["us_d"] / 2 + 0.3, 12, axis="y")  # rear obstacle HC-SR04 barrel
         usr.apply_translation((sx * P["us_dx"], -(fw - 2.5), P["us_cz"]))
         body = sub(body, usr)                         # passes (2026-07-11, twin ring)
-    # (-112 vent DELETED, fittings audit 2026-07-14: with the round-4 panel band
-    # running to the end walls, that vent's rear rim became a 0.5 web against the
-    # end-wall notch face inside the panel. The round-6 end redesign owns any
-    # replacement rear-side venting.)
-    for vy in (-96.0, 16.0, 32.0, 48.0, 64.0, 96.0):   # y80 -> the 2nd nub
+    # SIDE VENT ROW DELETED (2026-07-14, user: "remove the cosmetic holes on the
+    # chassis sides") -- only the y -96 slot survives: it is FUNCTIONAL, the
+    # BME688's air window (its bosses flank it; sensor placement keys off it).
+    # (-112 died in the fittings audit; 16/32/48/64/96 were the cosmetic row.)
+    for vy in (-96.0,):
         # side ventilation slots, RE-CLOCKED 2026-07-11 (mid-drive): the TT feature
         # zone moved to y ~ -87..-15 (motor at spr_y -68), so the old row shifted
         # out of it into the now feature-free bands of the 240 tub
-        v = box(12, 5, 16); v.apply_translation((0, vy, z0 + h / 2))
+        v = box(12, 5, 16); v.apply_translation((0, vy, 36.0))   # FIXED z 28..44:
+        # z0+h/2 crossed the 46 deck seam once chassis_clear rose to 10 (v2)
         v2 = v.copy(); v.apply_translation((P["chassis_w"] / 2, 0, 0))
         v2.apply_translation((-P["chassis_w"] / 2, 0, 0))
         body = sub(sub(body, v), v2)
@@ -380,7 +381,7 @@ def build_chassis_core():
     # optional but all fittings ready"): the rear station (spr_y, orientation +1) and
     # a mirrored FRONT station (spr_y2, orientation -1: the TT flips about its shaft,
     # so every y-offset changes sign -- gearbox trails -y, tab/rib sit forward).
-    zs = _track_zc()                                  # 25.32
+    zs = _spr_cz()                                    # 28.47: 14T mid-drive
     xw = P["chassis_w"] / 2                           # wall outer face (70); inner face 65
     axm = xw - 5.0 - P["tt_gearbox"][2] / 2 - 0.1     # motor axis x
     for ys, o in ((P["spr_y"], 1.0), (P["spr_y2"], -1.0)):
@@ -403,8 +404,10 @@ def build_chassis_core():
         body = sub(body, crn)
         # TT tab RIB: floor-to-z40, bridged to the side wall; the tab pocket + hole
         # cuts land in it (0.3 shy of the gearbox face plane)
-        rib = box(69.1 - (axm - 4.0), 6.9, 28.0)
-        rib.apply_translation((s * ((axm - 4.0 + 69.1) / 2), ys - o * 15.1, 26.0))
+        rib = box(69.1 - (axm - 4.0), 6.9, 25.0)
+        rib.apply_translation((s * ((axm - 4.0 + 69.1) / 2), ys - o * 15.1, 27.5))
+        # (rib z 15..40: roots on the raised floor top, TOP HELD at 40 -- the deck
+        # corner material starts at 42; tab pocket keyed to zs 28.47 sits inside)
         body = uni([body, rib])
         tabp = box(4.2, 5.7, 6.4); tabp.apply_translation((s * axm, ys - o * 14.15, zs))
         body = sub(body, tabp)                        # front-tab pocket in the rib (1+ skin)
@@ -456,97 +459,16 @@ def build_chassis_core():
         wedge.apply_translation(c_)
         body = sub(body, wedge)
 
-    # --- PROW CHEEKS (2026-07-11; see PARAMS tub_nose): four blocks x |32..70| extend
-    # the tub tub_nose past each wall so the M8 end-axle nut stacks (x 55.5..62,
-    # protruding to |y| 135.4 over the corner lamps) hide inside. Per cheek: the
-    # glacis plane continued (+nose shift), a PYLON NOTCH (x 61..70.5, z 26.3+; the
-    # deck pylons at x 62..69 / z 27.3+ keep 1.0 all around), and a NUT POCKET --
-    # REAR: the original open-top drop-in channel; FRONT: the 2026-07-13 closed
-    # capture DUCT that keeps the nut wrench-free across the whole tension stroke
-    # (details at the sgn branch below; spec M8 NYLOC). Tops cap FLAT at the seam so the
-    # cheeks live wholly in chassis_lower; the wedge up to the deck slope stays an
-    # open shadow line like the pylon bay. The center band (|x| < 32, clearing the
-    # +-30 trim rings) keeps the recessed fascia wall: the cliff cone crosses z 46
-    # at y ~131 (probed 2026-07-11), a full-width nose would ping itself.
-    nose = P["tub_nose"]
-    fwn = fw + nose
-    seam_ck = P["chassis_split_z"]
-    for sgn in (1, -1):
-        for sx in (-1, 1):
-            ck = box(38.0, nose + 4.0, seam_ck - z0)
-            ck.apply_translation((sx * 51.0, sgn * (fwn - (nose + 4.0) / 2),
-                                  z0 + (seam_ck - z0) / 2))
-            gwdg = box(60.0, 100.0, 60.0)
-            gwdg.apply_transform(R(sgn * ga, (1, 0, 0)))
-            gn_ = np.array([0.0, -sgn * np.sin(ga), np.cos(ga)])
-            gc_ = np.array([sx * 51.0, sgn * (gy0 + nose), z0g]) - 30.0 * gn_
-            gwdg.apply_translation(gc_)
-            ck = sub(ck, gwdg)
-            nt = box(9.5, nose + 6.0, 25.0)
-            nt.apply_translation((sx * 65.75, sgn * (fwn - nose / 2), 26.3 + 12.5))
-            ck = sub(ck, nt)
-            wb2 = P["track_wheelbase"] / 2                     # axle y 128.163
-            za_ck = _track_zc() + P["track_raise"]             # end-axle line 34.32
-                                                               # (matches the pylons)
-            if sgn < 0:
-                # REAR nut pocket (no travel) = the original NUT CHANNEL + washer
-                # slice: y-walls 13.8 apart (nut flats 13 + 0.4/side drop-in slop)
-                # centered on the axle y, so the pre-torqued nut (flats to +-y)
-                # descends in as the deck+axle drops on and self-captures: torque
-                # the bolt from the outboard head, the walls hold the nut. The
-                # washer slice is wider (Ø14.4 + 0.8) and merges into the notch.
-                nutch = box(13.0, 13.8, 24.0)                  # x 47..60
-                nutch.apply_translation((sx * 53.5, sgn * wb2, 25.0 + 12.0))
-                ck = sub(ck, nutch)
-                wsl = box(3.5, 15.2, 24.0)                     # x 60..63.5
-                wsl.apply_translation((sx * 61.75, sgn * wb2, 25.0 + 12.0))
-                ck = sub(ck, wsl)
-            else:
-                # FRONT nut CAPTURE DUCT (2026-07-13 tension-travel pass). The old
-                # open-top channel's y-wall grip is geometrically incompatible with
-                # ANY y-travel: the grip walls are perpendicular to the slide, so a
-                # channel long enough to slide (13.8 + 8.5) is wide enough for the
-                # nut (max Ø 15.01) to spin free. The front nut therefore rides
-                # FLATS TO +-Z in a closed duct whose FLOOR LEDGE (z 27.62) and
-                # ROOF STRIP (z 41.02, gap 13.4 = AF 13 + 0.4) grip the flats at
-                # EVERY slot position while y stays the free slide axis. Duct y
-                # covers the corners (+-7.5) over the whole idler_slot_in/out
-                # stroke + 0.3; x 47..60 opens outboard into the washer slice ->
-                # pylon notch, which is the INSERTION PATH: with the deck off,
-                # drop the nut (flats +-z) down the open-top notch, slide it
-                # inboard along x onto the ledge; deck on, tracks threaded, then
-                # the M8 drives in axially from the outboard head, wiggled along
-                # the pylon slot to catch the duct nut (the slot makes bolt-to-nut
-                # y-alignment trivial). The roof prints as a 7-wide flat strip
-                # (x 51..58, bridges) between 45 deg side chamfers (peak 45.02
-                # keeps ~1.0 under the z 46 seam cap) -- self-supporting-ish in
-                # the seam-up chassis_lower print. Replaces "pre-torqued nut
-                # descends in" on the FRONT only; spec M8 NYLOC as before.
-                i_t, o_t = P["idler_slot_in"], P["idler_slot_out"]
-                dy0 = wb2 - i_t - 7.8                          # 118.36 (corner 7.5 + 0.3)
-                dy1 = wb2 + o_t + 7.8                          # 142.46; front skin
-                zf, zr = za_ck - 6.7, za_ck + 6.7              # fwn - dy1 = 3.5 >= 3.0
-                duct_xz = [(47.0, zf), (60.0, zf), (60.0, zr + 2.0),
-                           (58.0, zr), (51.0, zr), (47.0, zr + 4.0)]
-                dpoly = sg.Polygon([(sx * px, -pz) for (px, pz) in duct_xz])
-                duct = extrude_polygon(dpoly, dy1 - dy0)       # extruded along +Z,
-                duct.apply_transform(R(-TAU / 4, (1, 0, 0)))   # rotated onto +Y
-                duct.apply_translation((0, dy0, 0))
-                wsl = box(3.5, dy1 - dy0, 15.4)                # washer slice follows
-                wsl.apply_translation((sx * 61.75, (dy0 + dy1) / 2, za_ck))
-                front_cuts = [duct, wsl]                       # the travel (Ø14.4 + 1)
-            body = uni([body, ck])
-            if sgn > 0:
-                # the duct's inboard reach (118.36 at full retract) crosses y 120
-                # into the TUB WALL band, which is already in `body` -- cutting the
-                # cheek block alone leaves the wall's outer skin blocking the nut
-                # (probed: 11 mm^3 bind at -2). Cut from the UNION so the duct
-                # bites the wall's outer 1.64 over its 13 x 13.4 window; the inner
-                # 3.36 web to the cavity stands (plain wall there: grille/US live
-                # at |x| < 30, vents on the side walls).
-                for c_ in front_cuts:
-                    body = sub(body, c_)
-    # relocated wall cuts, now through the cheeks:
+    # (PROW CHEEKS + M8 NUT DUCTS/CHANNELS DELETED 2026-07-14 running-gear v2 +
+    # end simplification, user: the tail/front ends got "way more complex than
+    # they should". The end axles live on the panel END TOWERS since round 4;
+    # the M8 nuts now ride LEDGE+ROOF CAGES on the towers' inboard faces (see
+    # build_chassis_parts), which also lets a bare track module tension without
+    # any hull. The raised axle line (za 38.32) had broken the old duct's roof
+    # against the z 46 seam anyway. The hull ends are plain glacis walls at
+    # y +-120 now; tub_nose is 0 and the wall features below re-key to fw.)
+    # wall cuts (ex-cheek features, re-keyed to the plain end walls):
+    fwn = fw + P["tub_nose"]                         # = fw (tub_nose 0, v2)
     # lamp_L/R: Ø2.5 wire pass from the cheek nose (z 23 runs UNDER the pocket floor
     # z 25) through the old wall into the cavity
     for s in (-1, 1):
@@ -576,7 +498,9 @@ def build_chassis_core():
     # with the plate so the M3 flat heads finish flush at z=7 (ground clearance 7).
     op_poly, reb_poly = _belly_polys()
     op_cut = extrude_polygon(op_poly, 9.0)
-    op_cut.apply_translation((0, 0, 4.0))                    # z 4..13, through the floor
+    op_cut.apply_translation((0, 0, z0 - 3.0))               # z0-3..z0+6, through the floor
+    # (was a hardcoded 4..13 -- it silently stopped piercing when chassis_clear
+    # rose to 10 in v2 and left a 2-thick skin sealing the belly opening)
     body = sub(body, op_cut)
     reb_cut = extrude_polygon(reb_poly, P["belly_lip_t"] + 2.0)
     reb_cut.apply_translation((0, 0, z0 + P["belly_lip_t"] - (P["belly_lip_t"] + 2.0)))
@@ -586,7 +510,7 @@ def build_chassis_core():
         b.apply_translation((bx_, by_, z0 + floor + P["belly_boss_h"] / 2))   # z 12..18
         body = uni([body, b])
         body = sub(body, _belly_csk_neg(bx_, by_))
-        pil = cyl(1.25, 8.3); pil.apply_translation((bx_, by_, 9.2 + 8.3 / 2))
+        pil = cyl(1.25, 8.3); pil.apply_translation((bx_, by_, z0 + 2.2 + 8.3 / 2))
         body = sub(body, pil)                                # pilot z 9.2..17.5
     # (REAR TIE deleted 2026-07-14 round 5: it re-anchored the belly-strap pedestal
     # island, and both the strap and the pedestal left the hull -- the floor is a
@@ -671,7 +595,8 @@ def build_chassis_parts():
         # stops at x 64.7 with 0.15 running clearance to the panel's inner face;
         # screw/dowel re-clocked inboard to match -- see _seam_join call below)
         pad = box(14.7, 26.0, 8.0)
-        pad.apply_translation((sx_ * 57.35, ysl, 15.0))      # x 50..64.7, z 11..19
+        pad.apply_translation((sx_ * 57.35, ysl, 18.0))      # x 50..64.7, z 14..22
+        # (rooted 1 into the raised floor top 15 -- v2 clear 10)
         core = uni([core, pad])
 
     lower = slice_mesh_plane(core, plane_normal=(0, 0, -1), plane_origin=(0, 0, seam), cap=True)
@@ -703,16 +628,16 @@ def build_chassis_parts():
         # The Ø4 dowel stays round: it's small (bridges fine) and wants full-round grip.
         for sx_ in (-1, 1):
             scr = teardrop(P["m3_clear_r"], 14.0, axis="y")  # M3x12 through the +y pad
-            scr.apply_translation((sx_ * xs, sy + 6.0, 15.0))
+            scr.apply_translation((sx_ * xs, sy + 6.0, 18.0))
             mesh = sub(mesh, scr)
             cbf = teardrop(3.4, 4.5, axis="y")               # head counterbore, +y face
-            cbf.apply_translation((sx_ * xs, sy + 11.2, 15.0))
+            cbf.apply_translation((sx_ * xs, sy + 11.2, 18.0))
             mesh = sub(mesh, cbf)
             pilr = cyl(1.25, 10.0, axis="y")                 # -y thread-form pilot
-            pilr.apply_translation((sx_ * xs, sy - 6.0, 15.0))
+            pilr.apply_translation((sx_ * xs, sy - 6.0, 18.0))
             mesh = sub(mesh, pilr)
             dwl = cyl(2.05, 16.0, axis="y")                  # Ø4 dowel across the seam
-            dwl.apply_translation((sx_ * xd, sy, 15.0))      # (+0.1 slip; press the -y
+            dwl.apply_translation((sx_ * xd, sy, 18.0))      # (+0.1 slip; press the -y
             mesh = sub(mesh, dwl)                            #  side on assembly with glue)
         return mesh
 
@@ -788,7 +713,7 @@ def build_chassis_parts():
     # Service: master link open -> deck off -> foot screws -> the whole side
     # (panel + wheels + TT motors) lifts out as a drive module.
     px0, px1 = 64.85, 71.0            # band: 0.15 off the pad face .. past the wall
-    pz0, pz1 = 12.0, 47.0             # floor top .. past the z46 cap
+    pz0, pz1 = 15.0, 47.0             # floor top (clear 10 + 5) .. past the z46 cap
     foot_x = 62.9                     # foot band x 60.5..65.3 (fused 0.3 into the wall)
     foot_pts = ((4.0, -3.0, 11.0), (-95.25, -102.0, -88.5))   # (screw y, y0, y1)
 
@@ -825,6 +750,16 @@ def build_chassis_parts():
     # chased turned out to be an artifact of the compound-union boolean glitch
     # (fixed for real by the single-prism captures below).
 
+    # M8 NUT WINDOW notches in the hull end walls (v2 end simplification): the
+    # tower nut cages' travel windows cross the y +-120 wall faces by ~1-3 mm
+    # (the old cheek duct "bit the wall" the same way). Small blind notches,
+    # hidden behind the towers.
+    for s_ in (-1, 1):
+        for sgn_, y0_, y1_ in ((1, 116.8, 120.001), (-1, -120.001, -118.7)):
+            ntc = box(8.5, y1_ - y0_, 18.0)
+            ntc.apply_translation((s_ * 58.25, (y0_ + y1_) / 2, 37.0))
+            lower = sub(lower, ntc)
+
     panels = []
     band_cuts = []
     for s in (-1, 1):
@@ -846,12 +781,17 @@ def build_chassis_parts():
         cut_prism = _prism([_xb(s, px0, px1, -139.5, 142.8)]
                            + caps_front_cut + caps_rear_cut)
         band_cuts.append(cut_prism)      # ONE prism per side, subtracted below
-        zc_tt = _track_zc()                       # 25.32: sprocket/TT shaft line
-        rr_z = (zc_tt - P["track_wheel_r"]) + 3.5 + P["roadwheel_d"] / 2 + 0.1
-        za_ax = zc_tt + P["track_raise"]          # 34.32: end-axle line (ex-pylons)
+        zc_tt = _spr_cz()                         # 28.47: sprocket/TT shaft line
+        rr_z = (_track_zc() - P["track_wheel_r"]) + 3.5 + P["roadwheel_d"] / 2 + 0.1
+        # (LOOP-keyed: the road wheels ride the ground run; only the TT/sprocket
+        # cluster moved up to _spr_cz with the 14T)
+        za_ax = _track_zc() + P["track_raise"]    # 38.32: end-axle line (ex-pylons)
         ey_ax = P["track_wheelbase"] / 2          # 128.163
-        lpoly = [(s * 69.5, -12.0), (s * 74.0, -12.0), (s * 76.0, -14.0),
-                 (s * 80.4, -14.0), (s * 80.4, -26.0), (s * 69.5, -26.0)]
+        # v2: the raised floor top (15) equals the beam bottom (anti-buckle cap
+        # 9.5 -> 15 = 5.5, was 4.5 -- documented), so the L-return is a plain
+        # rect block and the upright print's bed plane is one flat z 15.
+        lpoly = [(s * 69.5, -15.0), (s * 80.4, -15.0),
+                 (s * 80.4, -27.0), (s * 69.5, -27.0)]
         for nm_, ky0, ky1, caps, fi in ((f"chassis_side_{side}_front", -18.35, 142.5,
                                          caps_front, 0),
                                         (f"chassis_side_{side}_rear", -139.2, -18.65,
@@ -859,7 +799,7 @@ def build_chassis_parts():
             pnl = inter(lower, _prism([_xb(s, px0, px1, ky0, ky1)] + caps))
             fy, fy0, fy1 = foot_pts[fi]
             foot = box(4.8, fy1 - fy0, 4.0)
-            foot.apply_translation((s * foot_x, (fy0 + fy1) / 2, 14.0))
+            foot.apply_translation((s * foot_x, (fy0 + fy1) / 2, 17.0))
             # L-RETURN web + wheel beam (see the block comment above): the full
             # cross-section (69.5,12)-(74,12)-(76,14)-(80.4,14)-(80.4,26)-(69.5,26)
             # runs the loop's flat band (clipped |y| <= 112 -- the ramps rise from
@@ -874,18 +814,17 @@ def build_chassis_parts():
                 # the WALL (x 65..70) belongs to the OTHER piece for part of the
                 # span (wall butt at -18.5, lap at -21.5..-15.55 -- staggered),
                 # and a 69.5-rooted tongue pressed 0.5 into it (fits caught it)
-                lap = box(80.4 - 70.0, 21.35 - 15.55, 26.0 - 19.15)   # upper tongue
+                lap = box(80.4 - 70.0, 21.35 - 15.55, 27.0 - 21.15)   # upper tongue
                 lap.apply_translation((s * (70.0 + 80.4) / 2, -(21.35 + 15.55) / 2,
-                                       (19.15 + 26.0) / 2))
+                                       (21.15 + 27.0) / 2))
             else:
                 lsec = extrude_polygon(sg.Polygon(lpoly), -21.5 - (-112.0))
                 lsec.apply_transform(R(-TAU / 4, (1, 0, 0)))
                 lsec.apply_translation((0, -112.0, 0))
                 lap = extrude_polygon(sg.Polygon(                  # lower tongue =
-                    [(s * 70.0, -12.0), (s * 74.0, -12.0),         # L-section under
-                     (s * 76.0, -14.0), (s * 80.4, -14.0),         # the z 19 lap
-                     (s * 80.4, -19.0), (s * 70.0, -19.0)]),       # plane; x from
-                    21.5 - 15.7)                                   # 70 (see above)
+                    [(s * 70.0, -15.0), (s * 80.4, -15.0),         # L-block under
+                     (s * 80.4, -21.0), (s * 70.0, -21.0)]),       # the z 21 lap
+                    21.5 - 15.7)                                   # plane
                 lap.apply_transform(R(-TAU / 4, (1, 0, 0)))
                 lap.apply_translation((0, -21.5, 0))
             # END TOWER (round 4): outer slab fused over the captured skin +
@@ -893,7 +832,11 @@ def build_chassis_parts():
             # slot, rear the Ø8.4 bore (exact ex-pylon geometry, see the block
             # comment). Slab spans the pylon band; keep band ends 0.3 inside
             # the hull cut so the cheek-tip butt gap survives.
-            ty0, ty1 = (119.5, 142.5) if fi == 0 else (-139.2, -119.5)
+            # slab reaches back to |y| 114: the corner-arc wedge (x >= 64.85
+            # tapers out at |y| 116.85) is the only captured material there since
+            # the cheeks died -- the slab bridges tower <-> panel through it and
+            # doubles as the panel's own skin over the end-wall notch band.
+            ty0, ty1 = (114.0, 142.5) if fi == 0 else (-139.2, -114.0)
             slab = box(70.0 - 64.85, ty1 - ty0, 46.0 - 26.3)
             slab.apply_translation((s * (64.85 + 70.0) / 2, (ty0 + ty1) / 2,
                                     (26.3 + 46.0) / 2))
@@ -920,17 +863,33 @@ def build_chassis_parts():
                 sl_ = uni([c0, c1, bwe])
                 sl_.apply_translation((s * 66.0, ey_s, za_ax))
                 pnl = sub(pnl, sl_)
+                cage_y0, cage_y1 = ey_s - 9.8, ey_s + 14.3   # nut travel window
             else:                                  # rear: Ø8.4 through clearance
                 sk_ = cyl(4.2, 12.0, axis="x")
                 sk_.apply_translation((s * 66.0, ey_s, za_ax))
                 pnl = sub(pnl, sk_)
+                cage_y0, cage_y1 = ey_s - 7.8, ey_s + 7.8
+            # M8 NUT CAGE (v2 end simplification: the cheek ducts/channels are
+            # GONE; the nut rides the tower's inboard face). LEDGE + ROOF strips
+            # grip the NYLOC's flats +-z (gap 13.4 = AF 13 + 0.4) across the
+            # whole travel window; axial tension lands on the tower face around
+            # the slot, the strips only stop rotation. Nut slides in from
+            # inboard, wrench-free -- and the bare track module can tension
+            # WITHOUT any hull piece. Strips print with tree support (small).
+            for z0_, z1_ in ((za_ax - 6.7 - 3.0, za_ax - 6.7),
+                             (za_ax + 6.7, 46.0)):
+                strip = box(64.95 - 54.5, cage_y1 - cage_y0, z1_ - z0_)
+                strip.apply_translation((s * (54.5 + 64.95) / 2,     # rooted through
+                                         (cage_y0 + cage_y1) / 2,    # the thickening
+                                         (z0_ + z1_) / 2))           # into the slab
+                pnl = uni([pnl, strip])
             # splice screw: 1x M3x10 vertical through the lap at (75.4, -18.5)
             if fi == 0:
-                spc = cyl(1.65, 8.0); spc.apply_translation((s * 75.4, -18.5, 22.5))
-                spb = cyl(3.4, 3.0); spb.apply_translation((s * 75.4, -18.5, 25.2))
+                spc = cyl(1.65, 8.0); spc.apply_translation((s * 75.4, -18.5, 24.0))
+                spb = cyl(3.4, 3.0); spb.apply_translation((s * 75.4, -18.5, 26.2))
                 pnl = sub(sub(pnl, spc), spb)
             else:
-                spp = cyl(1.25, 5.5); spp.apply_translation((s * 75.4, -18.5, 16.3))
+                spp = cyl(1.25, 5.5); spp.apply_translation((s * 75.4, -18.5, 18.2))
                 pnl = sub(pnl, spp)
             for ry in P["roadwheel_ys"]:                   # M4 bolt-axle stations
                 if not (ky0 + 4.0 < ry < ky1 - 4.0):
@@ -939,9 +898,9 @@ def build_chassis_parts():
                 ab.apply_translation((s * 75.7, ry, rr_z))  # the upright print. Runs
                 # x 69.7..81.7 -- THROUGH the web: the M4x40 shank tip reaches x 71.4
                 # (it hung in gap air beside the old rail; the web owns that band now)
-                slot = box(3.6, 7.3, 23.65 - 11.5)         # nut slide-up slot, now
-                slot.apply_translation((s * 75.7, ry,      # through the web to 11.5
-                                        (11.5 + 23.65) / 2))
+                slot = box(3.6, 7.3, 23.65 - 14.5)         # nut slide-up slot, open
+                slot.apply_translation((s * 75.7, ry,      # under the z 15 block base
+                                        (14.5 + 23.65) / 2))
                 pnl = sub(sub(pnl, ab), slot)
             for sy_, o_ in ((P["spr_y"], 1.0), (P["spr_y2"], -1.0)):   # TT stations
                 if not (ky0 < sy_ < ky1):
@@ -962,15 +921,15 @@ def build_chassis_parts():
                 mzl = zc_tt - 8.75
                 mb_ = teardrop(1.6, 6.5, axis="x")
                 mb_.apply_translation((s * 71.4, my_, mzl))
-                ns_ = box(2.8, 5.7, (mzl + 2.85) - 11.5)
-                ns_.apply_translation((s * 72.0, my_, (11.5 + mzl + 2.85) / 2))
+                ns_ = box(2.8, 5.7, (mzl + 2.85) - 14.5)
+                ns_.apply_translation((s * 72.0, my_, (14.5 + mzl + 2.85) / 2))
                 pnl = sub(sub(pnl, mb_), ns_)
             # NO counterbore (fittings audit 2026-07-14): a O6.6 cb broke out of
             # the 4.8-wide foot's side walls (0.1-0.5 remnants in wallcheck) --
             # the M3 socket head seats PROUD on the foot top instead (O5.5 on a
             # 4.8 face = 0.35/side overhang, torque-fine; z 16..19 is clear air,
             # the BME board starts z 21 and x inboard).
-            fcl = cyl(1.65, 9.0); fcl.apply_translation((s * foot_x, fy, 13.5))
+            fcl = cyl(1.65, 9.0); fcl.apply_translation((s * foot_x, fy, 16.5))
             pnl = sub(pnl, fcl)
             # DEGENERATE-SHEET SCRUB: the capture volumes bottom out exactly on the
             # OPEN floor top (z 12), and inter() leaves a zero-thickness skin fused
@@ -979,13 +938,13 @@ def build_chassis_parts():
             # placeholder). Shave 1 micron off the bottom: everything real (wall
             # band, feet, rib roots) legitimately bottoms at 12.0 and loses nothing.
             pnl = slice_mesh_plane(pnl, plane_normal=(0, 0, 1),
-                                   plane_origin=(0, 0, 12.001), cap=True)
+                                   plane_origin=(0, 0, 15.001), cap=True)
             pnl = _despeck(pnl, 0.05)
             _color(pnl, "base"); pnl.metadata["name"] = nm_
             panels.append(pnl)
         for fy, _f0, _f1 in foot_pts:              # blind Ø2.5 floor pilots under the
             fpil = cyl(1.25, 4.5)                  # feet (stop 0.7 over the belly face)
-            fpil.apply_translation((s * foot_x, fy, 7.7 + 4.5 / 2))
+            fpil.apply_translation((s * foot_x, fy, 10.7 + 4.5 / 2))
             lower = sub(lower, fpil)
     for bc_ in band_cuts:                          # sequential subs (see above)
         lower = sub(lower, bc_)
@@ -1226,6 +1185,12 @@ def build_belly_plate():
     # the pedestal's printed registration pins (pan-gear CD is position-critical;
     # screws clamp, pins locate).
     mxp, myp = _ped_c()
+    # pan-can relief pocket (v2, chassis_clear 10): the can bottom z 12.95 is
+    # PINNED by the pan gear band while the plug top rose to z0+3 = 13 -- give
+    # the can a O30 x 1.25 pocket (plug keeps 1.75 under it)
+    cpk = cyl(15.0, 1.25)
+    cpk.apply_translation((mxp, myp, z0 + 3.0 - 1.25 / 2))
+    plate = sub(plate, cpk)
     for dx_, dy_ in ((-18.0, -18.0), (18.0, -18.0), (-18.0, 18.0), (18.0, 18.0)):
         plate = sub(plate, _belly_csk_neg(mxp + dx_, myp + dy_))
         thr = cyl(1.75, 2.6)                          # csk_neg's clearance stops at

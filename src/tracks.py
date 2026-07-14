@@ -77,6 +77,23 @@ def _track_zc():
     return P["track_wheel_r"] + P["track_pad_th"] + P["track_grouser_h"]
 
 
+def _spr_pin_r():
+    """MID drive sprocket pin-circle radius from tooth count (roller-pinion:
+    R = pitch / (2 sin(pi/N))). 14T -> 22.4698: the drive sprocket OUTGREW the
+    end-wrap radius track_wheel_r (2026-07-14 running-gear v2, user: bigger
+    sprocket = better bottom-run bite; the loop's end wraps stay on 19.3185)."""
+    return P["track_pitch"] / (2.0 * np.sin(np.pi / P["sprocket_teeth"]))
+
+
+def _spr_cz():
+    """MID drive sprocket / TT shaft center z: ground-run pin line + pin circle.
+    28.4698 at 14T (was _track_zc() = 25.32 when the sprocket shared the end
+    radius). Top-run clearance at track_raise 13: 51.64 interior - 47.30 tip
+    O = 4.34 -- the sprocket must NOT touch the top run (user canceled the
+    dual-run engagement idea outright)."""
+    return (_track_zc() - P["track_wheel_r"]) + _spr_pin_r()
+
+
 # Link knuckle X-comb (half-width 14): near set A (outer pair) interleaves the neighbour's far
 # set B (inner pair) around the shared pin; the central +-4.9 stays OPEN so the sprocket teeth
 # sweep between the B knuckles and engage the (unmodelled Ø1.75 filament) pins.
@@ -263,7 +280,7 @@ def _sprocket_profile():
     (D-socket clocks 2 ways, pins self-seat on tension)."""
     from shapely.ops import unary_union
     import shapely.affinity as sa
-    rp = P["track_wheel_r"]
+    rp = _spr_pin_r()
     # 2026-07-12 print-in-place strips: the driven pin is now the links' INTEGRAL
     # Ø2.0 printed rod (track_pin_print_d), so the swept envelope radius is
     # 1.0 + 0.275 running clearance = 1.275 (was 1.15 for the Ø1.75 filament pin).
@@ -409,8 +426,8 @@ def build_tracks():
             # (nearest pin offset)/rp about +X (probe convention: pin at +s <-> disc
             # +s/rp). spr_y -68 -> -2/19.32 = -5.93 deg; spr_y2 +90 is on-grid (0).
             s_rel = ((-sy_ + P["track_pitch"] / 2) % P["track_pitch"]) - P["track_pitch"] / 2
-            spr = _sprocket(sx, s_rel / P["track_wheel_r"])  # two stations (the front
-            spr.apply_translation((cx, sy_, (zc - R) + R))   # one rides the OPTIONAL
+            spr = _sprocket(sx, s_rel / _spr_pin_r())  # two stations (the front
+            spr.apply_translation((cx, sy_, _spr_cz()))      # one rides the OPTIONAL
             wheel_pieces.append((snm, spr))                  # 2nd TT's shaft)
         # END WHEELS (both ends are now FREE IDLERS on Ø8 stubs in the deck-overhang
         # pylons; the front pair tensions): rides the knuckle crowns with 0.12 running

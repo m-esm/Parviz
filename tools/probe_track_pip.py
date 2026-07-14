@@ -99,7 +99,7 @@ def _pen(poly, c, r):
 def sprocket_metrics():
     print("== 2. sprocket 2D metrics (integral Ø%.1f pin, envelope r %.3f) ==" %
           (P["track_pin_print_d"], P["track_pin_print_d"] / 2 + 0.275))
-    rp = P["track_wheel_r"]
+    rp = tracks._spr_pin_r()      # 14T v2: the mid sprocket's own pitch radius
     tip = P["sprocket_outer_d"] / 2
     pin_r = P["track_pin_print_d"] / 2
     pitch = P["track_pitch"]
@@ -179,9 +179,10 @@ def sprocket_metrics():
 
 def mesh_sweep_3d():
     print("== 3. 3D sweep: sprocket disc vs conjugately advancing keeled links ==")
-    rp = P["track_wheel_r"]
+    rp = tracks._spr_pin_r()      # roll ratio = the 14T pitch radius (v2)
     pitch = P["track_pitch"]
-    zc = tracks._track_zc()
+    zc = tracks._spr_cz()         # disc center; the pin line stays the loop's
+    zpin = tracks._track_zc() - P["track_wheel_r"]   # 6.0
     mid = tracks._track_link()
     disc0 = tracks._sprocket_disc(8.0)
     worst_v = 0.0
@@ -193,7 +194,7 @@ def mesh_sweep_3d():
         links = []
         for k in range(-2, 3):
             lk = mid.copy()
-            lk.apply_translation((0, k * pitch + s, zc - rp))   # pin line z = zc - rp
+            lk.apply_translation((0, k * pitch + s, zpin))      # pin line z = 6.0
             links.append(lk)
         chain = trimesh.util.concatenate(links)
         v = ivol(disc, chain)

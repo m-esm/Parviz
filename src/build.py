@@ -30,7 +30,7 @@ from geo import _T, _color, box, cyl, dbore_neg, export_stl, inter, sub, uni
 from gears import (gear_disc, load_gear_stl, pan_gear_mesh_deg, pan_real_ok, worm,
                    worm_cd, worm_real_ok)
 from screen import load_screen, screen_pose
-from tracks import _track_zc, build_tracks
+from tracks import _spr_cz, build_tracks
 from motors import motor_28byj, motor_tt
 import refparts
 from pan import build_pan_clips, build_pan_platform, build_pan_race
@@ -111,21 +111,21 @@ def build():
     # track drive: 2x TT gearmotor (own 1, BUY 1 more) INSIDE the chassis, gearbox face 0.1 off
     # the side-wall inner face; the shaft crosses the wall (Ø8 pass, wall thinned to a 3 mm web)
     # and the sprocket's inboard hub grips the flats just outside. Shaft axis = sprocket axis
-    # (y=spr_y, z=_track_zc()). Tab registers in a rib pocket; nub in a wall pocket;
+    # (y=spr_y, z=_spr_cz(), 14T v2). Tab registers in a rib pocket; nub in a wall pocket;
     # 2x M3 through gearbox + wall, nuts in the pod gap. Skid steer.
     ax = P["chassis_w"] / 2 - 5.0 - P["tt_gearbox"][2] / 2 - 0.1
     for sx in (-1, 1):
         dm = motor_tt("drive_L" if sx < 0 else "drive_R")
         if sx < 0:
             dm.apply_transform(R(TAU / 2, (0, 1, 0)))   # mirror about Y: shaft -X, tab stays rear
-        dm.apply_translation((sx * ax, P["spr_y"], _track_zc()))   # mid-drive: shaft on
+        dm.apply_translation((sx * ax, P["spr_y"], _spr_cz()))     # mid-drive: shaft on
         # the ground-run sprocket axis (pin line + pin circle = 25.32), see PARAMS spr_y
         add(dm, np.eye(4))
         dm2 = motor_tt("drive2_L" if sx < 0 else "drive2_R")   # OPTIONAL 2nd TT
         dm2.apply_transform(R(TAU / 2, (1, 0, 0)))   # (2026-07-11): flipped about its
         if sx < 0:                                   # shaft so the gearbox trails -y;
             dm2.apply_transform(R(TAU / 2, (0, 1, 0)))   # then side-mirrored like dm
-        dm2.apply_translation((sx * ax, P["spr_y2"], _track_zc()))
+        dm2.apply_translation((sx * ax, P["spr_y2"], _spr_cz()))
         add(dm2, np.eye(4))                          # all fittings modeled -- populate
         # this station when the 2nd motor pair is bought (BOM: optional)
 

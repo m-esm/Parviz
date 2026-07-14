@@ -200,7 +200,10 @@ P = {
                             # (user: "longer, same shape as the RC-tank refs"), paired with
                             # track_wheelbase so the TT front tabs still pocket the rear
                             # wall (inner face 95 ~= |ys| 80.66 + tab reach ~14.5)
-    "chassis_clear": 7.0,   # ground clearance under the body
+    "chassis_clear": 10.0,  # ground clearance under the body. 7 -> 10 (2026-07-14
+                            # running-gear v2, user: "more distance from the floor";
+                            # the belly plate got a O30 pocket under the pan can,
+                            # whose absolute z is pinned by the pan gear band)
     # PROW CHEEKS (2026-07-11, user: "drive axle blocking the front and rear view
     # LEDs... the chassis should be a bit longer from both side so the axle shaft of
     # the last wheel will be hidden inside"): the M8 end-axle NUT stacks protrude to
@@ -216,7 +219,8 @@ P = {
     # nose would ping itself. Cheek tops cap FLAT at the z 46 seam so they live
     # wholly in chassis_lower; the wedge up to the deck slope stays an open shadow
     # line like the pylon bay. Lamps + rear buzzer pod ride the cheek noses.
-    "tub_nose": 26.0,       # prow cheek reach past the wall. 20 -> 26 (2026-07-13
+    "tub_nose": 0.0,        # CHEEKS DELETED (2026-07-14 v2 end simplification;
+                            # was 26). Wall features key off fw + tub_nose = fw. (old note: 2026-07-13
                             # tension-travel pass): at max take-up the FRONT nut
                             # rides at axle +6.5 and its capture duct/washer cuts
                             # reach |y| 142.5; 26 keeps the 3.0+ front skin (3.5).
@@ -233,12 +237,13 @@ P = {
     # features (motor mounts z>=31 at the glacis x) clear the cut.
     "glacis_y0": 103.1,     # glacis starts on the belly plane here (83.1 + the 20 tub
                             # stretch: keeps the 33 deg slope to z 18 at the y 120 wall)
-    "glacis_z1": 18.0,      # meets the front/rear walls here (slope = the ramp 33 deg)
+    "glacis_z1": 21.0,      # meets the front/rear walls here (slope = the ramp 33 deg;
+                            # 18 -> 21 with chassis_clear 10 to KEEP the 33 deg family)
     "track_gap": 4.0,       # body side <-> track inner face
     # Modular positive-drive track (advancedvb 'Tank track' 3062624 geometry): printed link pads
     # on filament-rod hinge pins, a 12-tooth sprocket meshing the pins -> no slip on a desk.
     "track_wheel_r": 19.32,  # pin-circle radius = exact 12T x 10.0-pitch polygon (audit corr. 1)
-    "track_wheelbase": 256.326,  # sprocket-axis <-> idler-axis (Y). SOLVED value: with the
+    "track_wheelbase": 253.5899,  # sprocket-axis <-> idler-axis (Y). SOLVED value: with the
                             # raised loop (track_raise/track_ground_hy below) the perimeter
                             # closes at exactly 64 x 10.0 -- _track_link_poses asserts it.
                             # STRETCHED 161.325 -> ... -> 256.326 2026-07-11 (user chose
@@ -262,7 +267,11 @@ P = {
     # the sprocket rides the TT shaft, and at zs 34.32 the motor's upper M3 mount hole
     # (zs+8.75, r1.6 -> 44.7) and the gearbox top (45.5) still stay under the z46 deck
     # seam, so the deck stays screw-free over the motors.
-    "track_raise": 9.0,     # axle z = _track_zc() + raise (34.32); loop top pin z 53.64
+    "track_raise": 13.0,    # axle z = _track_zc() + raise (38.32); loop top pin z 57.64.
+                            # 9 -> 13 (2026-07-14 running-gear v2): the 14T sprocket
+                            # tip O47.3 needs interior 51.64 for a 4.3 top-run
+                            # clearance (dual-run engagement evaluated AND CANCELED
+                            # by the user -- the sprocket must NOT touch the top run)
     "track_ground_hy": 120.0,  # flat ground-run half-span (ramp tangent leaves here)
     "track_width": 44.8,    # link body width (X): 2x design-ref chunk, then -20% per user
                             # (28 -> 56 -> 44.8); sprocket engages only the central ~8 mm channel
@@ -296,8 +305,12 @@ P = {
                             # fuse the joint, small enough that the sprocket's 1.275
                             # conjugate envelope still swallows the slop. Strip-end
                             # (boundary) far bores revert to track_pin_bore_d.
-    "sprocket_teeth": 12,
-    "sprocket_outer_d": 41.0,   # TIP r 20.5 = pin circle 19.32 + 1.18 ADDENDUM (2026-07-11
+    "sprocket_teeth": 14,   # 12 -> 14 (2026-07-14, user: bigger sprocket, better
+                            # bite; links unchanged). Pin circle = pitch/(2 sin(pi/N))
+                            # = 22.4698 (tracks._spr_pin_r); center z = tracks._spr_cz()
+                            # = 28.4698 -- NO LONGER _track_zc(): the mid sprocket
+                            # outgrew the end-wrap radius
+    "sprocket_outer_d": 47.30,  # TIP r 23.65 = pin circle 22.47 + 1.18 ADDENDUM (2026-07-11
                             # conjugate-tooth fix; the old 37.6 tip sat BELOW the pin
                             # circle -- pockets, no teeth: 35% of every pitch was dead
                             # gap and the 0.355 skip barrier was inside FDM tolerance).
@@ -823,7 +836,7 @@ P = {
                             # CHEEK noses (2026-07-11; z 26 -> 23 so the wire drill at
                             # lamp_cz passes UNDER the nut pocket floor z 25; bottom
                             # 19.5 stays 1.5 above the glacis crease z 18 at the nose)
-    "fled_cz": 12.0,        # white dot strip now ON the glacis face, tilted 33 deg with it
+    "fled_cz": 15.0,   # crease+5 (v2: z0 10);  was 12 =        # white dot strip now ON the glacis face, tilted 33 deg with it
     # Chassis REAR styling (design-ref back.jpg): orange frame panel (the wall shows
     # through the opening as the 'hatch') above the USB-C slot (x +-7, z 15..23), and a
     # silver cylinder pod low-right (speaker/buzzer placeholder).

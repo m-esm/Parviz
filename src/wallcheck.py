@@ -76,6 +76,13 @@ PRINTED = [
 # regression under the known-thin feature must not hide behind the whitelist).
 # ---------------------------------------------------------------------------
 WHITELIST = {
+    # 14T conjugate sprocket tooth tips (running-gear v2 2026-07-14): the larger
+    # pitch radius makes the swept-envelope tooth tips taper thinner than the old
+    # 12T's. Mesh probe-verified (tools/probe_track_pip.py: CR 1.48, skip barrier
+    # 2.14, conjugate penetration -0.187 = clearance, 3D keeled sweep clean);
+    # tips ride greased pins under weight preload, no wall-normal load.
+    "track_wheels_L.stl": (0.6, "14T conjugate tooth-tip lands (probe-verified mesh)"),
+    "track_wheels_R.stl": (0.6, "14T conjugate tooth-tip lands (probe-verified mesh)"),
     # Rear glacis / floor-top tangent: the 33 deg hull bevel (2026-07-10 toy-tank
     # glacis) exits through the floor top plane at y -110.8, leaving a designed
     # full-width knife wedge that tapers to zero (spot (22.7, -110.7, 12.0)). Same

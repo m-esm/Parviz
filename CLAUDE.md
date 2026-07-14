@@ -963,6 +963,33 @@ placeholder-to-part gaps >= 0.3, never 0.15; (5) capture volumes that bottom exa
 on an open face plane leave zero-thickness sheets -- the panels' 1-micron scrub slice
 handles it.
 
+**RUNNING-GEAR V2 (2026-07-14 evening, user rounds: bigger sprockets + taller
+stance; dual-run engagement CANCELED mid-design; "remove the cosmetic side holes";
+simplify the over-complex ends; 0% infill profile).** The mid-drive sprockets are
+14T (pin circle 22.4698 = pitch/(2 sin(pi/14)), tip O47.3; tracks._spr_pin_r/_spr_cz
+-- the sprocket OUTGREW the end-wrap radius, center z 28.47, and the whole TT
+cluster followed it up; road wheels stay loop-keyed at rr_z 19.6). track_raise 13
+(interior 51.64 leaves the tip 4.3 CLEAR of the top run -- the sprocket must NOT
+touch it), track_wheelbase re-solved 253.5899, end axles +-126.94 / za 38.32,
+chassis_clear 10 (floor top 15; the belly opening cut + seam pads + panel bottoms/
+feet/L-block all re-keyed; the pan can got a O30 x 1.25 plug pocket -- its z is
+pinned by the gear band; fled_cz 15 keeps the LED mid-slope; glacis_z1 21 keeps the
+33 deg family). The panel L-return is now a plain RECT block x 69.5..80.4 / z 15..27
+(floor top == beam bottom == one flat bed plane; anti-buckle cap 4.5 -> 5.5).
+probe_track_pip re-keyed to the sprocket frame: CR 1.37 -> 1.48, skip barrier 2.14,
+conjugate penetration -0.187 (clearance), keeled 3D sweep clean; 14T tooth-tip lands
+whitelisted in wallcheck (probe-verified). SIDE VENT ROW DELETED (cosmetic) except
+the functional y -96 BME window. ENDS SIMPLIFIED: prow cheeks + tub_nose + M8 nut
+ducts/channels DELETED from the hull (lower_front 114 -> 67 cm3, tail 75 -> 32);
+the hull ends are plain glacis walls at y +-120 (lamps/USB/rear pod re-key via
+tub_nose 0); the M8 NYLOCs ride LEDGE+ROOF CAGES on the panel towers' inboard faces
+(gap 13.4 = AF13+0.4, front cage spans the tension travel, axial load on the tower
+face, strips only stop rotation; small blind nut-window notches in the end walls) --
+a bare track module can TENSION with zero hull pieces. Tower slabs reach back to
+|y| 114 to fuse through the corner-arc wedge (the cheek skin used to bridge them).
+Print profile: 0% infill + 5 walls global, STRUCT 6 walls + token 8%. All gates
+green: check + sweep + 50/50 invariants + wallcheck + fits + probe + 20/20 slices.
+
 **Electronics seats (2026-07-13 -> moved to the base 2026-07-14):** the Uno R3 seat (4
 posts to z 21 + a rear-wall shelf for the glacis-side hole;
 hole pattern verified vs the Adafruit Arduino-dimensions drawing, USB-B faces +X, cable
