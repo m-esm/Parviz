@@ -578,6 +578,19 @@ def build_head_parts():
         pad = box(21.0, 8.0, 2 * pdz)
         pad.apply_translation((25.0, 22.0, pz_))     # x 14.5..35.5 (0.5 off the camera
         bezel = uni([bezel, pad])                    # bosses), y 18..26 behind the face
+        if pz_ > 100:
+            # FUSE the forehead pad to the face (user 2026-07-14: "long hanging
+            # thread in the LCD frame" = this pad FLOATING loose in bezel_R). The
+            # 2026-07-11 face-thickening pass (body_front_y 31 -> 33) moved the
+            # face's interior surface from y ~26 to ~28.4 and orphaned the pad --
+            # the x=22 seam then severed its only tie on the R side, leaving the
+            # seam screw threading into a detached block. Extension y 26..29.2
+            # bridges pad -> face, z-clipped 209.4..223: above the glass band
+            # (pocket top 208.9, so it can never press the LCD) and 0.5 under
+            # the led_slot floor (223.5). The chin pad (z 92) is still fused.
+            ext = box(21.0, 3.2, 223.0 - 209.4)
+            ext.apply_translation((25.0, 27.6, (209.4 + 223.0) / 2))
+            bezel = uni([bezel, ext])
         scr = cyl(P["m3_clear_r"], 14.0, axis="x")
         scr.apply_translation((28.0, 22.0, pz_)); bezel = sub(bezel, scr)
         cbx = cyl(3.4, 4.0, axis="x")

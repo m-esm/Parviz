@@ -350,6 +350,14 @@ def main():
     check("USB-C slot through the rear wall (x -38)",
           bore_pierces(M("chassis_lower_tail"), (-38.0, -123.0, 34.0), (0, 1, 0), 8.0))
 
+    # user 2026-07-14 ("hanging thread in the LCD frame"): the bezel seam's
+    # forehead flange pad must be FUSED to the face (it floated loose in bezel_R
+    # after the 2026-07-11 face move) -- and each bezel piece is ONE body.
+    check("bezel forehead seam pad fused to the face",
+          inside(M("head_bezel_R"), [(28.0, 27.6, 216.0), (28.0, 22.0, 219.5)])
+          and len(M("head_bezel_R").split(only_watertight=False)) == 1
+          and len(M("head_bezel_L").split(only_watertight=False)) == 1)
+
     # ---------------- head wall passages ---------------------------------------
     hw2 = P["head_w"] / 2.0
     # user 2026-07-11 ear v2 + centered ("only the tip of the microphone out",
