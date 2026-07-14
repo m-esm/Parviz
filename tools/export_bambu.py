@@ -72,6 +72,12 @@ PARTS = {  # name: (subsystem, [rotations], obj_settings)
     "chassis_lower_rear":  ("base", [],         STRUCT),
     "chassis_lower_tail":  ("base", [],         STRUCT),   # rear cap (cheeks + rear wall)
     "chassis_base":        ("base", [],         TREE),     # drop-in equipment base, flat
+    "chassis_side_L_front": ("base", [], STRUCT),  # bolt-in wall panels w/ integral
+    "chassis_side_L_rear":  ("base", [], STRUCT),  #  wheel beam: print UPRIGHT as
+    "chassis_side_R_front": ("base", [], STRUCT),  #  built (z12 edge + rib feet +
+    "chassis_side_R_rear":  ("base", [], STRUCT),  #  foot pads coplanar on the bed;
+                                                   #  beam chamfer self-supports,
+                                                   #  tree catches the boss bottoms)
     "chassis_deck_front":  ("base", [(X, 180)], STRUCT),   # deck pieces, top face down
     "chassis_deck_center": ("base", [(X, 180)], STRUCT),
     "chassis_deck_rear":   ("base", [(X, 180)], STRUCT),
@@ -97,8 +103,6 @@ PARTS = {  # name: (subsystem, [rotations], obj_settings)
     "pan_clips":       ("neck", [],          TREE),     # 3 flat clips (H 7)
     "worm_wheel_real": ("neck", [(Y, 90)],   TREE),     # gear face -> bed (H 7)
     "tilt_worm_real":  ("neck", [(X, 90)],   TREE),     # stand on shaft end (H 14)
-    "track_pod_rail_L": ("base", [(Y, 90)],  TREE),     # outer face -> bed (H 8)
-    "track_pod_rail_R": ("base", [(Y, 90)],  TREE),
     "track_keeper_L":  ("base", [(X, 90)],   NOSUP),    # rolled onto the wide face
     "track_keeper_R":  ("base", [(X, 90)],   NOSUP),    # (bed 14->29 mm2, overhang halved)
 }
@@ -106,6 +110,8 @@ PARTS = {  # name: (subsystem, [rotations], obj_settings)
 # category -> ordered part names (or generated-unit tokens); each becomes 1+ named plates
 CATEGORIES = [
     ("Chassis",      ["chassis_lower_front", "chassis_lower_rear", "chassis_lower_tail",
+                      "chassis_side_L_front", "chassis_side_L_rear",
+                      "chassis_side_R_front", "chassis_side_R_rear",
                       "chassis_deck_front", "chassis_deck_center", "chassis_deck_rear",
                       "belly_plate", "chassis_base"]),
     ("Head",         ["head_back_frame_L", "head_back_frame_R", "head_back_panel_L",
@@ -148,13 +154,14 @@ def load_part(name):
 
 
 def drivegear_units():
-    """Rails + keepers + EVERY running-gear body split straight out of the exported
+    """Keepers + EVERY running-gear body split straight out of the exported
     track_wheels STLs (2026-07-11: recipe duplication drifted -- roadwheel_count died,
     end idlers were missing, dual sprockets landed). Per side: 2 sprockets (one for
     the OPTIONAL 2nd motor -- print it anyway, it's cheap) + 2 end idlers + 5 road
-    wheels = 9 bodies. Wheels stand on a face (axis was X in-assembly -> R(Y,90))."""
-    out = [load_part(n) for n in ("track_pod_rail_L", "track_pod_rail_R",
-                                  "track_keeper_L", "track_keeper_R")]
+    wheels = 9 bodies. Wheels stand on a face (axis was X in-assembly -> R(Y,90)).
+    (pod rails deleted 2026-07-14 round 3: the wheel beam is integral to the
+    chassis_side panels on the Chassis plates.)"""
+    out = [load_part(n) for n in ("track_keeper_L", "track_keeper_R")]
     for side in ("L", "R"):
         m = trimesh.load(os.path.join(ROOT, "stl", "base", f"track_wheels_{side}.stl"))
         bodies = m.split(only_watertight=False)

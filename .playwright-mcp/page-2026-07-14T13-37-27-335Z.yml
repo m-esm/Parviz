@@ -1,0 +1,321 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - banner [ref=e5]:
+      - generic [ref=e6]:
+        - link [ref=e8] [cursor=pointer]:
+          - /url: /
+          - img "Craftcloud®" [ref=e10]
+        - generic [ref=e11]:
+          - generic:
+            - button "Our Services" [ref=e12] [cursor=pointer]
+            - button "Why Craftcloud?" [ref=e13] [cursor=pointer]
+            - link "Materials" [ref=e14] [cursor=pointer]:
+              - /url: /en/material-guide
+            - link "Help & Support" [ref=e15] [cursor=pointer]:
+              - /url: /en/p/help
+        - generic [ref=e16]:
+          - link "Upload 3D Models" [ref=e498] [cursor=pointer]:
+            - /url: /en/upload
+          - generic [ref=e17]:
+            - link "Ask AI" [ref=e19] [cursor=pointer]:
+              - /url: "#"
+            - generic [ref=e22]:
+              - link "FI, EUR" [ref=e23] [cursor=pointer]:
+                - /url: "#"
+              - link "My Models" [ref=e26] [cursor=pointer]:
+                - /url: /en/account/models
+              - link "My Cart" [ref=e29] [cursor=pointer]:
+                - /url: /en/cart
+              - link "Sign In" [ref=e32] [cursor=pointer]:
+                - /url: "#"
+    - generic [ref=e501]:
+      - complementary [ref=e502]:
+        - generic [ref=e503]:
+          - generic [ref=e505]:
+            - generic [ref=e506]:
+              - generic [ref=e507]: "1."
+              - generic [ref=e508]: Material
+              - generic [ref=e509]: •
+            - generic [ref=e510]:
+              - generic [ref=e511]: "2."
+              - generic [ref=e512]: Finish
+            - generic [ref=e514]:
+              - generic [ref=e515]: "3."
+              - generic [ref=e516]: Color
+          - generic [ref=e518]:
+            - heading "Your models (2)" [level=1] [ref=e521]
+            - generic [ref=e522]:
+              - paragraph [ref=e523]:
+                - strong [ref=e524]: Did you know?
+                - text: You can choose different materials, finishes, or colors for each model by toggling off the models you don’t want to configure.
+              - generic [ref=e525]:
+                - generic [ref=e526]:
+                  - generic [ref=e528] [cursor=pointer]:
+                    - checkbox [checked]
+                  - generic [ref=e531]:
+                    - generic [ref=e532]: avg_part_46cm3
+                    - generic [ref=e533]: .stl
+                  - button [ref=e536] [cursor=pointer]:
+                    - img "Delete" [ref=e538]
+                - generic [ref=e539]:
+                  - button [ref=e541] [cursor=pointer]:
+                    - img "Preview image of avg_part_46cm3.stl" [ref=e543]
+                  - generic [ref=e544]:
+                    - generic "58 × 40 × 20 mm" [ref=e545]:
+                      - generic [ref=e546]: 58 × 40 × 20
+                      - generic [ref=e547]:
+                        - text: mm
+                        - button "scale" [ref=e548] [cursor=pointer]
+                    - paragraph [ref=e550]: 46,400 mm³
+                    - button "Add attachments & notes" [ref=e551] [cursor=pointer]
+                - generic [ref=e555]:
+                  - generic [ref=e556]:
+                    - button [disabled] [ref=e557]
+                    - textbox [ref=e558]: "1"
+                    - button [ref=e559] [cursor=pointer]
+                  - button "All options More" [ref=e560] [cursor=pointer]:
+                    - generic [ref=e561]: All options
+                    - img "More" [ref=e563]
+              - generic [ref=e564]:
+                - generic [ref=e565]:
+                  - generic [ref=e567] [cursor=pointer]:
+                    - checkbox [checked]
+                  - generic [ref=e570]:
+                    - generic [ref=e571]: small_part_4cm3
+                    - generic [ref=e572]: .stl
+                  - button [ref=e575] [cursor=pointer]:
+                    - img "Delete" [ref=e577]
+                - generic [ref=e578]:
+                  - button [ref=e580] [cursor=pointer]:
+                    - img "Preview image of small_part_4cm3.stl" [ref=e582]
+                  - generic [ref=e583]:
+                    - generic "20 × 20 × 10 mm" [ref=e584]:
+                      - generic [ref=e585]: 20 × 20 × 10
+                      - generic [ref=e586]:
+                        - text: mm
+                        - button "scale" [ref=e587] [cursor=pointer]
+                    - paragraph [ref=e589]: 4,000 mm³
+                    - button "Add attachments & notes" [ref=e590] [cursor=pointer]
+                - generic [ref=e594]:
+                  - generic [ref=e595]:
+                    - button [disabled] [ref=e596]
+                    - textbox [ref=e597]: "1"
+                    - button [ref=e598] [cursor=pointer]
+                  - button "All options More" [ref=e599] [cursor=pointer]:
+                    - generic [ref=e600]: All options
+                    - img "More" [ref=e602]
+          - link "Upload more" [ref=e604] [cursor=pointer]:
+            - /url: /en/upload
+      - main [ref=e607]:
+        - generic [ref=e613]:
+          - generic [ref=e616]:
+            - heading [level=1] [ref=e617]:
+              - text: Select material for your
+              - generic [ref=e618]: 2 models
+            - generic [ref=e621]:
+              - img "search" [ref=e623]
+              - textbox "Search…" [ref=e624]
+          - generic [ref=e625]:
+            - generic [ref=e626]:
+              - generic [ref=e627]:
+                - generic [ref=e629]:
+                  - generic [ref=e630] [cursor=pointer]:
+                    - radio "3D Printing" [checked]
+                    - generic [ref=e632]: 3D Printing
+                  - generic [ref=e633] [cursor=pointer]:
+                    - radio "CNC Machining"
+                    - generic [ref=e635]: CNC Machining
+                - button "Help me choose a material" [ref=e636] [cursor=pointer]
+              - generic [ref=e640]:
+                - button "Material groups" [ref=e641] [cursor=pointer]
+                - button "Production technology" [ref=e644] [cursor=pointer]
+                - button "Material properties" [ref=e647] [cursor=pointer]
+                - button "Production location" [ref=e650] [cursor=pointer]
+                - button "Show all filters" [ref=e653] [cursor=pointer]
+              - button "Relevance" [ref=e657] [cursor=pointer]
+            - generic [ref=e661]:
+              - generic [ref=e662]: 148 materials available
+              - generic [ref=e663]: Properties
+              - generic [ref=e664]: Technical Details
+          - generic [ref=e667]:
+            - generic [ref=e669]:
+              - generic [ref=e670]:
+                - button [ref=e671] [cursor=pointer]
+                - generic [ref=e672]:
+                  - generic [ref=e673]: SLS Nylon PA12
+                  - paragraph [ref=e675]: Nylon PA12 (Polyamide) is a strong and heat-resistant material commonly used to print strong and functional parts.
+                  - generic [ref=e676]: SLS
+                  - generic [ref=e680]:
+                    - strong [ref=e681]: "Finishes:"
+                    - text: Standard, Polished, Satin, Vapor Smoothed, Shot Peened, Waterproof, Sandblasted, Dyed Velvet, Electroplated, Cerakote Ceramic Coating
+                  - generic [ref=e682]: "+56"
+              - list [ref=e695]:
+                - listitem [ref=e696]: Strong
+                - listitem [ref=e697]: Heat resistant
+                - listitem [ref=e698]: Functional
+                - listitem [ref=e699]: Visual
+                - listitem [ref=e700]: Wear resistant
+                - listitem [ref=e701]:
+                  - link "+ 1 more" [ref=e702] [cursor=pointer]:
+                    - /url: "#"
+              - generic [ref=e704]:
+                - generic [ref=e705]:
+                  - generic [ref=e706]: "Accuracy:"
+                  - text: ±0.3% (lower limit of ±0.3 mm)
+                - generic [ref=e707]:
+                  - generic [ref=e708]: "Min. wall thickness:"
+                  - text: 0.8 mm
+                - button "Download datasheet" [ref=e709] [cursor=pointer]
+              - generic [ref=e712]:
+                - generic [ref=e713]:
+                  - generic [ref=e714]: 27,06 €
+                  - button "+ 23,85 € shipping" [ref=e1232] [cursor=pointer]
+                  - generic [ref=e719]:
+                    - button "Select material" [ref=e720] [cursor=pointer]
+                    - button "Material details" [ref=e722] [cursor=pointer]
+                - generic [ref=e1234]: 329 offers available
+            - generic [ref=e1235]:
+              - generic [ref=e1236]:
+                - button [ref=e1237] [cursor=pointer]
+                - generic [ref=e1238]:
+                  - generic [ref=e1239]: PLA
+                  - paragraph [ref=e1241]: PLA is a low-cost plastic, perfect for prototypes and functional parts that do not require strength or heat resistance.
+                  - generic [ref=e1242]: FDM
+                  - generic [ref=e1246]:
+                    - strong [ref=e1247]: "Infill:"
+                    - text: 20%, 40%, 60%, 80%, 95%, 100%
+                  - generic [ref=e1248]:
+                    - strong [ref=e1249]: "Finishes:"
+                    - text: Standard, Sanded
+                  - generic [ref=e1250]: "+128"
+              - list [ref=e1263]:
+                - listitem [ref=e1264]: Visual
+              - generic [ref=e1266]:
+                - generic [ref=e1267]:
+                  - generic [ref=e1268]: "Accuracy:"
+                  - text: ±0.3% (lower limit of ±0.2 mm)
+                - generic [ref=e1269]:
+                  - generic [ref=e1270]: "Min. wall thickness:"
+                  - text: 1 mm
+                - button "Download datasheet" [ref=e1271] [cursor=pointer]
+              - generic [ref=e1274]:
+                - generic [ref=e1275]:
+                  - generic [ref=e1276]: 28,92 €
+                  - button [ref=e1286] [cursor=pointer]:
+                    - strong [ref=e1288]: Free shipping
+                  - generic [ref=e1289]:
+                    - button "Select material" [ref=e1290] [cursor=pointer]
+                    - button "Material details" [ref=e1292] [cursor=pointer]
+                - generic [ref=e1294]: 258 offers available
+            - generic [ref=e1295]:
+              - generic [ref=e1296]:
+                - button [ref=e1297] [cursor=pointer]
+                - generic [ref=e1298]:
+                  - generic [ref=e1299]: HP® MJF Nylon PA12
+                  - paragraph [ref=e1301]: Developed by HP, MJF Nylon is a widely used material for strong and detailed end-use parts and prototypes.
+                  - generic [ref=e1302]: MJF
+                  - generic [ref=e1306]:
+                    - strong [ref=e1307]: "Finishes:"
+                    - text: Standard, Polished, Vapor Smoothed, Shot Peened, Electroplated, UV Powder Coating
+                  - generic [ref=e1308]: "+25"
+              - list [ref=e1321]:
+                - listitem [ref=e1322]: Strong
+                - listitem [ref=e1323]: Impact resistant
+                - listitem [ref=e1324]: Functional
+                - listitem [ref=e1325]: Visual
+                - listitem [ref=e1326]: Water resistant
+                - listitem [ref=e1327]:
+                  - link "+ 1 more" [ref=e1328] [cursor=pointer]:
+                    - /url: "#"
+              - generic [ref=e1330]:
+                - generic [ref=e1331]:
+                  - generic [ref=e1332]: "Accuracy:"
+                  - text: ±0.3% (lower limit of ±0.3 mm)
+                - generic [ref=e1333]:
+                  - generic [ref=e1334]: "Min. wall thickness:"
+                  - text: 0.8 mm
+                - button "Download datasheet" [ref=e1335] [cursor=pointer]
+              - generic [ref=e1338]:
+                - generic [ref=e1339]:
+                  - generic [ref=e1340]: 12,87 €
+                  - button "+ 39,29 € shipping" [ref=e1350] [cursor=pointer]
+                  - generic [ref=e1352]:
+                    - button "Select material" [ref=e1353] [cursor=pointer]
+                    - button "Material details" [ref=e1355] [cursor=pointer]
+                - generic [ref=e1357]: 271 offers available
+            - generic [ref=e1358]:
+              - generic [ref=e1359]:
+                - button [ref=e1360] [cursor=pointer]
+                - generic [ref=e1361]:
+                  - generic [ref=e1362]: Standard Resin
+                  - paragraph [ref=e1364]: Standard resin is a low-cost material, best used for visual models, figurines, and prototypes.
+                  - generic [ref=e1366]:
+                    - generic [ref=e1367]: SLA
+                    - generic [ref=e1368]: DLP
+                    - generic [ref=e1369]: MSLA
+                    - generic [ref=e1370]: LCD
+                    - generic [ref=e1371]: LFS
+                    - generic [ref=e1372]: "+1"
+                  - generic [ref=e1373]:
+                    - strong [ref=e1374]: "Finishes:"
+                    - text: Standard, Matte, Glossy, Electroplated, Electroplated Colored
+                  - generic [ref=e1375]: "+58"
+              - list [ref=e1388]:
+                - listitem [ref=e1389]: High detail
+                - listitem [ref=e1390]: Visual
+                - listitem [ref=e1391]: Smooth
+              - generic [ref=e1393]:
+                - generic [ref=e1394]:
+                  - generic [ref=e1395]: "Accuracy:"
+                  - text: ±0.2% (lower limit of ±0.2 mm)
+                - generic [ref=e1396]:
+                  - generic [ref=e1397]: "Min. wall thickness:"
+                  - text: 0.6 - 1 mm • • • • • •
+                - button "Download datasheet" [ref=e1398] [cursor=pointer]
+              - generic [ref=e1401]:
+                - generic [ref=e1402]:
+                  - generic [ref=e1403]: 37,24 €
+                  - button "+ 15,87 € shipping" [ref=e1413] [cursor=pointer]
+                  - generic [ref=e1415]:
+                    - button "Select material" [ref=e1416] [cursor=pointer]
+                    - button "Material details" [ref=e1418] [cursor=pointer]
+                - generic [ref=e1420]: 281 offers available
+            - generic [ref=e1421]:
+              - generic [ref=e1422]:
+                - button [ref=e1423] [cursor=pointer]
+                - generic [ref=e1424]:
+                  - generic [ref=e1425]: 316L Stainless Steel
+                  - paragraph [ref=e1427]: 316L Stainless Steel is a highly durable alloy known for its corrosion resistance and versatility in both industrial and aesthetic applications.
+                  - generic [ref=e1429]:
+                    - generic [ref=e1430]: SLM / DMLS
+                    - generic [ref=e1431]: LMM
+                    - generic [ref=e1432]: DMP
+                  - generic [ref=e1434]:
+                    - strong [ref=e1435]: "Finishes:"
+                    - text: Sandblasted Matte, Polished & Sandblasted, Satin Glossy, Mirror Polished, Standard, Glass Blasted
+              - list [ref=e1443]:
+                - listitem [ref=e1444]: Chemical resistant
+                - listitem [ref=e1445]: Strong
+                - listitem [ref=e1446]: Heat resistant
+                - listitem [ref=e1447]: Corrosion resistant
+                - listitem [ref=e1448]: Water resistant
+                - listitem [ref=e1449]:
+                  - link "+ 1 more" [ref=e1450] [cursor=pointer]:
+                    - /url: "#"
+              - generic [ref=e1452]:
+                - generic [ref=e1453]:
+                  - generic [ref=e1454]: "Accuracy:"
+                  - text: ±0.3% (lower limit of ±0.3 mm)
+                - generic [ref=e1455]:
+                  - generic [ref=e1456]: "Min. wall thickness:"
+                  - text: 1 mm
+                - button "Download datasheet" [ref=e1457] [cursor=pointer]
+              - generic [ref=e1460]:
+                - generic [ref=e1461]:
+                  - generic [ref=e1462]: 91,39 €
+                  - button "+ 23,92 € shipping" [ref=e1472] [cursor=pointer]
+                  - generic [ref=e1474]:
+                    - button "Select material" [ref=e1475] [cursor=pointer]
+                    - button "Material details" [ref=e1477] [cursor=pointer]
+                - generic [ref=e1479]: 98 offers available
+  - alert [ref=e258]: 3D Printing Service Marketplace | Craftcloud®

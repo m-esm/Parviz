@@ -1,0 +1,163 @@
+- generic [ref=e3]:
+  - banner [ref=e5]:
+    - generic [ref=e6]:
+      - link [ref=e8] [cursor=pointer]:
+        - /url: /
+        - img "Craftcloud®" [ref=e10]
+      - generic [ref=e11]:
+        - generic:
+          - button "Our Services" [ref=e12] [cursor=pointer]
+          - button "Why Craftcloud?" [ref=e13] [cursor=pointer]
+          - link "Materials" [ref=e14] [cursor=pointer]:
+            - /url: /en/material-guide
+          - link "Help & Support" [ref=e15] [cursor=pointer]:
+            - /url: /en/p/help
+      - generic [ref=e17]:
+        - link "Ask AI" [ref=e19] [cursor=pointer]:
+          - /url: "#"
+        - generic [ref=e22]:
+          - link "Select location" [ref=e23] [cursor=pointer]:
+            - /url: "#"
+          - link "My Models" [ref=e26] [cursor=pointer]:
+            - /url: /en/account/models
+          - link "My Cart" [ref=e29] [cursor=pointer]:
+            - /url: /en/cart
+          - link "Sign In" [ref=e32] [cursor=pointer]:
+            - /url: "#"
+  - generic [ref=e36]:
+    - generic [ref=e38]:
+      - generic [ref=e41]:
+        - generic [ref=e43]:
+          - heading "Upload your 3D models" [level=1] [ref=e44]
+          - paragraph [ref=e45]:
+            - text: for an
+            - strong [ref=e46]: instant quote
+            - text: and get them delivered directly to you
+            - strong [ref=e47]: no matter where you are in the world!
+        - generic [ref=e49]:
+          - generic [ref=e52]:
+            - generic [ref=e53]:
+              - heading "Select technology" [level=2] [ref=e54]
+              - generic [ref=e56]:
+                - generic [ref=e57] [cursor=pointer]:
+                  - radio "3D Printing" [checked]
+                  - generic [ref=e59]: 3D Printing
+                - generic [ref=e60] [cursor=pointer]:
+                  - radio "CNC Machining"
+                  - generic [ref=e62]: CNC Machining
+            - generic [ref=e65] [cursor=pointer]:
+              - generic [ref=e66]:
+                - generic [ref=e67]: Drop your 3D models for 3D printing here
+                - paragraph [ref=e69]: or click to browse (500 MB file size limit)
+              - button "Upload 3D Models" [ref=e71]
+            - generic [ref=e75]:
+              - generic [ref=e76]: All uploads are end-to-end encrypted
+              - generic [ref=e78]:
+                - paragraph [ref=e79]: "Supported file formats:"
+                - generic [ref=e80]:
+                  - generic [ref=e81]: STL
+                  - generic [ref=e82]: OBJ
+                  - generic [ref=e83]: 3MF
+                  - generic [ref=e84]: STEP
+                  - generic [ref=e85]: STP
+                  - paragraph [ref=e86]: +25 more
+          - generic [ref=e87]:
+            - generic [ref=e90]:
+              - strong [ref=e91]: ISO certified
+              - generic [ref=e92]: Partner network
+            - generic [ref=e95]:
+              - strong [ref=e96]: Shipping worldwide
+              - generic [ref=e97]: from +190 suppliers
+            - generic [ref=e98]:
+              - strong [ref=e99]: 8 Million+
+              - generic [ref=e100]: Parts Produced
+            - generic [ref=e101]:
+              - strong [ref=e102]: 200+
+              - generic [ref=e103]: Materials available
+      - generic [ref=e105]:
+        - paragraph [ref=e106]: Trusted by leading industry professionals since 2017
+        - generic [ref=e108]:
+          - img "Google" [ref=e110]
+          - img "Saint-Gobain" [ref=e112]
+          - img "Nasa" [ref=e114]
+          - img "Microsoft" [ref=e116]
+          - img "Nvidia" [ref=e118]
+    - contentinfo [ref=e120]:
+      - generic [ref=e125]:
+        - generic [ref=e126]:
+          - generic [ref=e129]:
+            - img "Craftcloud®" [ref=e131]
+            - generic [ref=e133]:
+              - link "Home" [ref=e134] [cursor=pointer]:
+                - /url: /
+              - link "English" [ref=e135] [cursor=pointer]:
+                - /url: /en/upload
+              - link "Deutsch" [ref=e136] [cursor=pointer]:
+                - /url: /de/upload
+              - link "Français" [ref=e137] [cursor=pointer]:
+                - /url: /fr/upload
+              - link "Español" [ref=e138] [cursor=pointer]:
+                - /url: /es/upload
+              - link "Português" [ref=e139] [cursor=pointer]:
+                - /url: /pt/upload
+          - generic [ref=e141]:
+            - strong [ref=e143]: More
+            - link "Craftcloud Blog" [ref=e145] [cursor=pointer]:
+              - /url: https://blog.craftcloud3d.com
+            - link "About Us" [ref=e147] [cursor=pointer]:
+              - /url: /en/p/about
+            - link "Materials" [ref=e149] [cursor=pointer]:
+              - /url: /en/material-guide
+            - link "Partners" [ref=e151] [cursor=pointer]:
+              - /url: /en/partner
+            - link "Knowledge Base" [ref=e153] [cursor=pointer]:
+              - /url: https://support.craftcloud3d.com/en
+            - button "Contact Sales" [ref=e155] [cursor=pointer]
+            - link "Need Help?" [ref=e157] [cursor=pointer]:
+              - /url: /en/p/help
+            - link "Become a Partner" [ref=e159] [cursor=pointer]:
+              - /url: /en/become-a-partner
+          - generic [ref=e161]:
+            - strong [ref=e163]: Follow us
+            - link [ref=e165] [cursor=pointer]:
+              - /url: https://www.instagram.com/craftcloud3d/
+            - link [ref=e168] [cursor=pointer]:
+              - /url: https://www.linkedin.com/company/craftcloud3d/
+            - link [ref=e171] [cursor=pointer]:
+              - /url: https://www.facebook.com/Craftcloud3D/
+            - link [ref=e174] [cursor=pointer]:
+              - /url: https://www.reddit.com/r/craftcloud3d/
+            - link [ref=e177] [cursor=pointer]:
+              - /url: https://www.tiktok.com/@craftcloud3d
+            - link [ref=e180] [cursor=pointer]:
+              - /url: https://x.com/craftcloud3d
+          - generic [ref=e183]:
+            - strong [ref=e185]: Links
+            - link "All3DP.com" [ref=e187] [cursor=pointer]:
+              - /url: https://all3dp.com/
+            - link "All3DP Pro" [ref=e189] [cursor=pointer]:
+              - /url: https://all3dp.com/pro/
+            - link "Metal 3D Printing Services" [ref=e191] [cursor=pointer]:
+              - /url: /en/lp/metal-3d-printing-services
+        - generic [ref=e192]:
+          - generic [ref=e193]:
+            - link "Your Privacy Choices" [ref=e195] [cursor=pointer]:
+              - /url: "#"
+            - link "Terms and Conditions" [ref=e197] [cursor=pointer]:
+              - /url: /en/p/terms-and-conditions
+            - link "Terms of Use" [ref=e199] [cursor=pointer]:
+              - /url: /documents/Craftcloud_-_Terms_of_Use.pdf
+            - link "Privacy Policy" [ref=e201] [cursor=pointer]:
+              - /url: https://www.iubenda.com/privacy-policy/52465807
+            - link "Data Protection Policy" [ref=e203] [cursor=pointer]:
+              - /url: https://i.all3dp.com/wp-content/uploads/2020/11/24140044/Data-Protection-Policy-All3DP-November-2020-English.pdf
+            - link "Confidentiality Notice" [ref=e205] [cursor=pointer]:
+              - /url: /documents/Craftcloud_-_Confidentiality_Notice.pdf
+            - link "Modern Slavery Policy" [ref=e207] [cursor=pointer]:
+              - /url: /documents/Modern_Slavery_Statement_Craftcloud_All3DP_GmbH.pdf
+            - link "Imprint" [ref=e209] [cursor=pointer]:
+              - /url: https://all3dp.com/imprint/
+          - generic [ref=e210]:
+            - text: ©
+            - strong [ref=e211]: "2026"
+            - text: Craftcloud®

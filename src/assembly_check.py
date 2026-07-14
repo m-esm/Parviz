@@ -70,6 +70,11 @@ SPLIT_ALIAS = {
     "head_bezel_L": "head_bezel", "head_bezel_R": "head_bezel",
     "chassis_lower_front": "chassis_lower", "chassis_lower_rear": "chassis_lower",
     "chassis_lower_tail": "chassis_lower",
+    # bolt-in side panels (2026-07-14 round 2): carved from the lower tub's wall
+    # bands, so they alias to it like the tail cap -- inherits the drive/rail/BME/
+    # deck/base pairs and allows the designed floor-rest + deck-edge contact.
+    "chassis_side_L_front": "chassis_lower", "chassis_side_L_rear": "chassis_lower",
+    "chassis_side_R_front": "chassis_lower", "chassis_side_R_rear": "chassis_lower",
     "chassis_deck_front": "chassis_deck", "chassis_deck_center": "chassis_deck",
     "chassis_deck_rear": "chassis_deck",
 }
@@ -86,8 +91,10 @@ WHITELIST = {
     frozenset(("ant_gears_R", "antenna_R")),     #  real generated pass later, cf WORM.md)
     frozenset(("ant_gears_L", "motor_ant_L")),   # G1 bored onto each 28BYJ D-shaft
     frozenset(("ant_gears_R", "motor_ant_R")),
-    frozenset(("axle_hw_L", "chassis_deck")),    # Ø8 end stubs PRESSED into the deck
-    frozenset(("axle_hw_R", "chassis_deck")),    # pylons' Ø7.85 sockets (designed press)
+    frozenset(("axle_hw_L", "chassis_lower")),   # M4 nuts in the panel beam slots +
+    frozenset(("axle_hw_R", "chassis_lower")),   # M8 washers on the panel END TOWERS
+                                                 # (pylons deleted 2026-07-14 round 4;
+                                                 # panels alias to chassis_lower)
     # equipment base (2026-07-14): drops into the rear bay, bolts to the hull floor,
     # carries the Arduino/IMU/SW-420 seats (SW-420 rides its fence nubs).
     frozenset(("chassis_base", "chassis_lower")),   # base rests on the hull floor + bolts

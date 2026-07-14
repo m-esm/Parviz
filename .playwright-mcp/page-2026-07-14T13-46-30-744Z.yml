@@ -1,0 +1,462 @@
+- generic [active] [ref=f1e1]:
+  - navigation [ref=f1e2]:
+    - link "PARVIZ desk-pi" [ref=f1e3] [cursor=pointer]:
+      - /url: viewer_glb.html
+      - text: PARVIZ
+      - generic [ref=f1e4]: desk-pi
+    - link "Viewer" [ref=f1e5] [cursor=pointer]:
+      - /url: viewer_glb.html
+    - link "Electronics" [ref=f1e6] [cursor=pointer]:
+      - /url: docs/electronics.html
+    - link "Assembly" [ref=f1e7] [cursor=pointer]:
+      - /url: docs/assembly.html
+    - link "Wiring & power" [ref=f1e8] [cursor=pointer]:
+      - /url: docs/wiring.html
+    - button "Docs ▾" [ref=f1e10] [cursor=pointer]
+    - link "GitHub" [ref=f1e11] [cursor=pointer]:
+      - /url: https://github.com/m-esm/parviz
+  - generic [ref=f1e12]:
+    - generic [ref=f1e13]: desk-pi · pan/tilt head
+    - generic [ref=f1e14]: assembly.glb
+    - generic [ref=f1e15]:
+      - generic [ref=f1e16]: L
+      - generic [ref=f1e17]: "247"
+      - generic [ref=f1e18]: W
+      - generic [ref=f1e19]: "310"
+      - generic [ref=f1e20]: H
+      - generic [ref=f1e21]: "277"
+      - generic [ref=f1e22]: mm
+    - generic [ref=f1e23]:
+      - text: Navigation
+      - button "↶ Undo" [disabled]
+      - button "↷ Redo" [disabled]
+      - button "Reset UI" [ref=f1e24] [cursor=pointer]
+    - generic [ref=f1e25]:
+      - generic [ref=f1e26]:
+        - generic [ref=f1e27] [cursor=pointer]:
+          - generic [ref=f1e28]: ▾
+          - generic [ref=f1e29]: Chassis
+          - checkbox [checked] [ref=f1e30]
+        - generic [ref=f1e31]:
+          - generic [ref=f1e32]:
+            - generic [ref=f1e33] [cursor=pointer]:
+              - generic [ref=f1e34]: ▾
+              - generic [ref=f1e35]: Hull
+              - checkbox [checked] [ref=f1e36]
+            - generic [ref=f1e37]:
+              - generic [ref=f1e38] [cursor=pointer]:
+                - generic [ref=f1e40]: chassis_lower_front
+                - checkbox "chassis_lower_front" [checked] [ref=f1e41]
+              - generic [ref=f1e42] [cursor=pointer]:
+                - generic [ref=f1e44]: chassis_lower_rear
+                - checkbox "chassis_lower_rear" [checked] [ref=f1e45]
+              - generic [ref=f1e46] [cursor=pointer]:
+                - generic [ref=f1e48]: chassis_lower_tail
+                - checkbox "chassis_lower_tail" [checked] [ref=f1e49]
+              - generic [ref=f1e50] [cursor=pointer]:
+                - generic [ref=f1e52]: belly_plate
+                - checkbox "belly_plate" [checked] [ref=f1e53]
+          - generic [ref=f1e54]:
+            - generic [ref=f1e55] [cursor=pointer]:
+              - generic [ref=f1e56]: ▾
+              - generic [ref=f1e57]: Deck
+              - checkbox [checked] [ref=f1e58]
+            - generic [ref=f1e59]:
+              - generic [ref=f1e60] [cursor=pointer]:
+                - generic [ref=f1e62]: chassis_deck_front
+                - checkbox "chassis_deck_front" [checked] [ref=f1e63]
+              - generic [ref=f1e64] [cursor=pointer]:
+                - generic [ref=f1e66]: chassis_deck_center
+                - checkbox "chassis_deck_center" [checked] [ref=f1e67]
+              - generic [ref=f1e68] [cursor=pointer]:
+                - generic [ref=f1e70]: chassis_deck_rear
+                - checkbox "chassis_deck_rear" [checked] [ref=f1e71]
+          - generic [ref=f1e72]:
+            - generic [ref=f1e73] [cursor=pointer]:
+              - generic [ref=f1e74]: ▾
+              - generic [ref=f1e75]: Side panels
+              - checkbox [checked] [ref=f1e76]
+            - generic [ref=f1e77]:
+              - generic [ref=f1e78] [cursor=pointer]:
+                - generic [ref=f1e80]: chassis_side_L_front
+                - checkbox "chassis_side_L_front" [checked] [ref=f1e81]
+              - generic [ref=f1e82] [cursor=pointer]:
+                - generic [ref=f1e84]: chassis_side_L_rear
+                - checkbox "chassis_side_L_rear" [checked] [ref=f1e85]
+              - generic [ref=f1e86] [cursor=pointer]:
+                - generic [ref=f1e88]: chassis_side_R_front
+                - checkbox "chassis_side_R_front" [checked] [ref=f1e89]
+              - generic [ref=f1e90] [cursor=pointer]:
+                - generic [ref=f1e92]: chassis_side_R_rear
+                - checkbox "chassis_side_R_rear" [checked] [ref=f1e93]
+          - generic [ref=f1e94]:
+            - generic [ref=f1e95] [cursor=pointer]:
+              - generic [ref=f1e96]: ▾
+              - generic [ref=f1e97]: Electronics
+              - checkbox [checked] [ref=f1e98]
+            - generic [ref=f1e99]:
+              - generic [ref=f1e100] [cursor=pointer]:
+                - generic [ref=f1e102]: chassis_base
+                - checkbox "chassis_base" [checked] [ref=f1e103]
+              - generic [ref=f1e104] [cursor=pointer]:
+                - generic [ref=f1e106]: board_arduino
+                - checkbox "board_arduino" [checked] [ref=f1e107]
+          - generic [ref=f1e108]:
+            - generic [ref=f1e109] [cursor=pointer]:
+              - generic [ref=f1e110]: ▾
+              - generic [ref=f1e111]: Fascia & trim
+              - checkbox [checked] [ref=f1e112]
+            - generic [ref=f1e113]:
+              - generic [ref=f1e114] [cursor=pointer]:
+                - generic [ref=f1e116]: trim_fascia
+                - checkbox "trim_fascia" [checked] [ref=f1e117]
+              - generic [ref=f1e118] [cursor=pointer]:
+                - generic [ref=f1e120]: lamp_L
+                - checkbox "lamp_L" [checked] [ref=f1e121]
+              - generic [ref=f1e122] [cursor=pointer]:
+                - generic [ref=f1e124]: lamp_R
+                - checkbox "lamp_R" [checked] [ref=f1e125]
+              - generic [ref=f1e126] [cursor=pointer]:
+                - generic [ref=f1e128]: led_front
+                - checkbox "led_front" [checked] [ref=f1e129]
+              - generic [ref=f1e130] [cursor=pointer]:
+                - generic [ref=f1e132]: trim_rear
+                - checkbox "trim_rear" [checked] [ref=f1e133]
+          - generic [ref=f1e134]:
+            - generic [ref=f1e135] [cursor=pointer]:
+              - generic [ref=f1e136]: ▾
+              - generic [ref=f1e137]: Sensors
+              - checkbox [checked] [ref=f1e138]
+            - generic [ref=f1e139]:
+              - generic [ref=f1e140] [cursor=pointer]:
+                - generic [ref=f1e142]: sensor_us
+                - checkbox "sensor_us" [checked] [ref=f1e143]
+              - generic [ref=f1e144] [cursor=pointer]:
+                - generic [ref=f1e146]: sensor_us_rear
+                - checkbox "sensor_us_rear" [checked] [ref=f1e147]
+              - generic [ref=f1e148] [cursor=pointer]:
+                - generic [ref=f1e150]: sensor_cliff
+                - checkbox "sensor_cliff" [checked] [ref=f1e151]
+              - generic [ref=f1e152] [cursor=pointer]:
+                - generic [ref=f1e154]: sensor_cliff_rear
+                - checkbox "sensor_cliff_rear" [checked] [ref=f1e155]
+              - generic [ref=f1e156] [cursor=pointer]:
+                - generic [ref=f1e158]: sensor_rear
+                - checkbox "sensor_rear" [checked] [ref=f1e159]
+              - generic [ref=f1e160] [cursor=pointer]:
+                - generic [ref=f1e162]: sensor_imu
+                - checkbox "sensor_imu" [checked] [ref=f1e163]
+              - generic [ref=f1e164] [cursor=pointer]:
+                - generic [ref=f1e166]: sensor_bme
+                - checkbox "sensor_bme" [checked] [ref=f1e167]
+              - generic [ref=f1e168] [cursor=pointer]:
+                - generic [ref=f1e170]: sensor_vib
+                - checkbox "sensor_vib" [checked] [ref=f1e171]
+              - generic [ref=f1e172] [cursor=pointer]:
+                - generic [ref=f1e174]: sensor_mmwave
+                - checkbox "sensor_mmwave" [checked] [ref=f1e175]
+      - generic [ref=f1e176]:
+        - generic [ref=f1e177] [cursor=pointer]:
+          - generic [ref=f1e178]: ▾
+          - generic [ref=f1e179]: Drive
+          - checkbox [checked] [ref=f1e180]
+        - generic [ref=f1e181]:
+          - generic [ref=f1e182]:
+            - generic [ref=f1e183] [cursor=pointer]:
+              - generic [ref=f1e184]: ▾
+              - generic [ref=f1e185]: Axle hardware
+              - checkbox [checked] [ref=f1e186]
+            - generic [ref=f1e187]:
+              - generic [ref=f1e189] [cursor=pointer]:
+                - generic [ref=f1e190]: ▾
+                - generic [ref=f1e191]: axle_hw_L
+                - checkbox [checked] [ref=f1e192]
+              - generic [ref=f1e194] [cursor=pointer]:
+                - generic [ref=f1e195]: ▾
+                - generic [ref=f1e196]: axle_hw_R
+                - checkbox [checked] [ref=f1e197]
+          - generic [ref=f1e198]:
+            - generic [ref=f1e199] [cursor=pointer]:
+              - generic [ref=f1e200]: ▾
+              - generic [ref=f1e201]: Track L
+              - checkbox [checked] [ref=f1e202]
+            - generic [ref=f1e203]:
+              - generic [ref=f1e205] [cursor=pointer]:
+                - generic [ref=f1e206]: ▾
+                - generic [ref=f1e207]: track_L
+                - checkbox [checked] [ref=f1e208]
+              - generic [ref=f1e210] [cursor=pointer]:
+                - generic [ref=f1e211]: ▾
+                - generic [ref=f1e212]: track_keeper_L
+                - checkbox [checked] [ref=f1e213]
+          - generic [ref=f1e214]:
+            - generic [ref=f1e215] [cursor=pointer]:
+              - generic [ref=f1e216]: ▾
+              - generic [ref=f1e217]: Running gear
+              - checkbox [checked] [ref=f1e218]
+            - generic [ref=f1e219]:
+              - generic [ref=f1e221] [cursor=pointer]:
+                - generic [ref=f1e222]: ▾
+                - generic [ref=f1e223]: drivewheels_L
+                - checkbox [checked] [ref=f1e224]
+              - generic [ref=f1e226] [cursor=pointer]:
+                - generic [ref=f1e227]: ▾
+                - generic [ref=f1e228]: drivewheels_R
+                - checkbox [checked] [ref=f1e229]
+          - generic [ref=f1e230]:
+            - generic [ref=f1e231] [cursor=pointer]:
+              - generic [ref=f1e232]: ▾
+              - generic [ref=f1e233]: Track R
+              - checkbox [checked] [ref=f1e234]
+            - generic [ref=f1e235]:
+              - generic [ref=f1e237] [cursor=pointer]:
+                - generic [ref=f1e238]: ▾
+                - generic [ref=f1e239]: track_R
+                - checkbox [checked] [ref=f1e240]
+              - generic [ref=f1e242] [cursor=pointer]:
+                - generic [ref=f1e243]: ▾
+                - generic [ref=f1e244]: track_keeper_R
+                - checkbox [checked] [ref=f1e245]
+          - generic [ref=f1e246]:
+            - generic [ref=f1e247] [cursor=pointer]:
+              - generic [ref=f1e248]: ▾
+              - generic [ref=f1e249]: Motors
+              - checkbox [checked] [ref=f1e250]
+            - generic [ref=f1e251]:
+              - generic [ref=f1e252] [cursor=pointer]:
+                - generic [ref=f1e254]: drive_L
+                - checkbox "drive_L" [checked] [ref=f1e255]
+              - generic [ref=f1e256] [cursor=pointer]:
+                - generic [ref=f1e258]: drive2_L
+                - checkbox "drive2_L" [checked] [ref=f1e259]
+              - generic [ref=f1e260] [cursor=pointer]:
+                - generic [ref=f1e262]: drive_R
+                - checkbox "drive_R" [checked] [ref=f1e263]
+              - generic [ref=f1e264] [cursor=pointer]:
+                - generic [ref=f1e266]: drive2_R
+                - checkbox "drive2_R" [checked] [ref=f1e267]
+      - generic [ref=f1e268]:
+        - generic [ref=f1e269] [cursor=pointer]:
+          - generic [ref=f1e270]: ▾
+          - generic [ref=f1e271]: Pan & neck
+          - checkbox [checked] [ref=f1e272]
+        - generic [ref=f1e273]:
+          - generic [ref=f1e274]:
+            - generic [ref=f1e275] [cursor=pointer]:
+              - generic [ref=f1e276]: ▾
+              - generic [ref=f1e277]: Pan stage
+              - checkbox [checked] [ref=f1e278]
+            - generic [ref=f1e279]:
+              - generic [ref=f1e280] [cursor=pointer]:
+                - generic [ref=f1e282]: pan_platform
+                - checkbox "pan_platform" [checked] [ref=f1e283]
+              - generic [ref=f1e284] [cursor=pointer]:
+                - generic [ref=f1e286]: trim_neckfoot
+                - checkbox "trim_neckfoot" [checked] [ref=f1e287]
+              - generic [ref=f1e288] [cursor=pointer]:
+                - generic [ref=f1e290]: motor_pan
+                - checkbox "motor_pan" [checked] [ref=f1e291]
+              - generic [ref=f1e292] [cursor=pointer]:
+                - generic [ref=f1e294]: pan_gears
+                - checkbox "pan_gears" [checked] [ref=f1e295]
+              - generic [ref=f1e296] [cursor=pointer]:
+                - generic [ref=f1e298]: pan_race
+                - checkbox "pan_race" [checked] [ref=f1e299]
+              - generic [ref=f1e300] [cursor=pointer]:
+                - generic [ref=f1e302]: pan_balls
+                - checkbox "pan_balls" [checked] [ref=f1e303]
+              - generic [ref=f1e304] [cursor=pointer]:
+                - generic [ref=f1e306]: pan_cage
+                - checkbox "pan_cage" [checked] [ref=f1e307]
+              - generic [ref=f1e308] [cursor=pointer]:
+                - generic [ref=f1e310]: pan_clips
+                - checkbox "pan_clips" [checked] [ref=f1e311]
+          - generic [ref=f1e312]:
+            - generic [ref=f1e313] [cursor=pointer]:
+              - generic [ref=f1e314]: ▾
+              - generic [ref=f1e315]: Neck & tilt
+              - checkbox [checked] [ref=f1e316]
+            - generic [ref=f1e317]:
+              - generic [ref=f1e318] [cursor=pointer]:
+                - generic [ref=f1e320]: neck_clevis
+                - checkbox "neck_clevis" [checked] [ref=f1e321]
+              - generic [ref=f1e322] [cursor=pointer]:
+                - generic [ref=f1e324]: worm_wheel
+                - checkbox "worm_wheel" [checked] [ref=f1e325]
+              - generic [ref=f1e326] [cursor=pointer]:
+                - generic [ref=f1e328]: tilt_worm
+                - checkbox "tilt_worm" [checked] [ref=f1e329]
+              - generic [ref=f1e330] [cursor=pointer]:
+                - generic [ref=f1e332]: motor_tilt
+                - checkbox "motor_tilt" [checked] [ref=f1e333]
+              - generic [ref=f1e334] [cursor=pointer]:
+                - generic [ref=f1e336]: tilt_carrier
+                - checkbox "tilt_carrier" [checked] [ref=f1e337]
+              - generic [ref=f1e338] [cursor=pointer]:
+                - generic [ref=f1e340]: tilt_axle
+                - checkbox "tilt_axle" [checked] [ref=f1e341]
+      - generic [ref=f1e342]:
+        - generic [ref=f1e343] [cursor=pointer]:
+          - generic [ref=f1e344]: ▾
+          - generic [ref=f1e345]: Head
+          - checkbox [checked] [ref=f1e346]
+        - generic [ref=f1e347]:
+          - generic [ref=f1e348]:
+            - generic [ref=f1e349] [cursor=pointer]:
+              - generic [ref=f1e350]: ▾
+              - generic [ref=f1e351]: Shell
+              - checkbox [checked] [ref=f1e352]
+            - generic [ref=f1e353]:
+              - generic [ref=f1e354] [cursor=pointer]:
+                - generic [ref=f1e356]: head_bezel_L
+                - checkbox "head_bezel_L" [checked] [ref=f1e357]
+              - generic [ref=f1e358] [cursor=pointer]:
+                - generic [ref=f1e360]: head_bezel_R
+                - checkbox "head_bezel_R" [checked] [ref=f1e361]
+              - generic [ref=f1e362] [cursor=pointer]:
+                - generic [ref=f1e364]: head_back_frame_L
+                - checkbox "head_back_frame_L" [checked] [ref=f1e365]
+              - generic [ref=f1e366] [cursor=pointer]:
+                - generic [ref=f1e368]: head_back_frame_R
+                - checkbox "head_back_frame_R" [checked] [ref=f1e369]
+              - generic [ref=f1e370] [cursor=pointer]:
+                - generic [ref=f1e372]: head_back_panel_L
+                - checkbox "head_back_panel_L" [checked] [ref=f1e373]
+              - generic [ref=f1e374] [cursor=pointer]:
+                - generic [ref=f1e376]: head_back_panel_R
+                - checkbox "head_back_panel_R" [checked] [ref=f1e377]
+              - generic [ref=f1e378] [cursor=pointer]:
+                - generic [ref=f1e380]: head_door
+                - checkbox "head_door" [checked] [ref=f1e381]
+              - generic [ref=f1e382] [cursor=pointer]:
+                - generic [ref=f1e384]: trim_rail_L
+                - checkbox "trim_rail_L" [checked] [ref=f1e385]
+              - generic [ref=f1e386] [cursor=pointer]:
+                - generic [ref=f1e388]: trim_rail_R
+                - checkbox "trim_rail_R" [checked] [ref=f1e389]
+              - generic [ref=f1e390] [cursor=pointer]:
+                - generic [ref=f1e392]: sd_plug
+                - checkbox "sd_plug" [checked] [ref=f1e393]
+              - generic [ref=f1e394] [cursor=pointer]:
+                - generic [ref=f1e396]: trim_hatch_frame
+                - checkbox "trim_hatch_frame" [checked] [ref=f1e397]
+          - generic [ref=f1e398]:
+            - generic [ref=f1e399] [cursor=pointer]:
+              - generic [ref=f1e400]: ▾
+              - generic [ref=f1e401]: Screen & camera
+              - checkbox [checked] [ref=f1e402]
+            - generic [ref=f1e403]:
+              - generic [ref=f1e404] [cursor=pointer]:
+                - generic [ref=f1e406]: screen_tray
+                - checkbox "screen_tray" [checked] [ref=f1e407]
+              - generic [ref=f1e408] [cursor=pointer]:
+                - generic [ref=f1e410]: camera_pod
+                - checkbox "camera_pod" [checked] [ref=f1e411]
+              - generic [ref=f1e412] [cursor=pointer]:
+                - generic [ref=f1e414]: screen_ref
+                - checkbox "screen_ref" [checked] [ref=f1e415]
+              - generic [ref=f1e416] [cursor=pointer]:
+                - generic [ref=f1e418]: camera_ref
+                - checkbox "camera_ref" [checked] [ref=f1e419]
+              - generic [ref=f1e420] [cursor=pointer]:
+                - generic [ref=f1e422]: cam_cover
+                - checkbox "cam_cover" [checked] [ref=f1e423]
+          - generic [ref=f1e424]:
+            - generic [ref=f1e425] [cursor=pointer]:
+              - generic [ref=f1e426]: ▾
+              - generic [ref=f1e427]: Lights & ears
+              - checkbox [checked] [ref=f1e428]
+            - generic [ref=f1e429]:
+              - generic [ref=f1e430] [cursor=pointer]:
+                - generic [ref=f1e432]: ear_mic_L
+                - checkbox "ear_mic_L" [checked] [ref=f1e433]
+              - generic [ref=f1e434] [cursor=pointer]:
+                - generic [ref=f1e436]: ear_mic_R
+                - checkbox "ear_mic_R" [checked] [ref=f1e437]
+              - generic [ref=f1e438] [cursor=pointer]:
+                - generic [ref=f1e440]: led_strip
+                - checkbox "led_strip" [checked] [ref=f1e441]
+          - generic [ref=f1e442]:
+            - generic [ref=f1e443] [cursor=pointer]:
+              - generic [ref=f1e444]: ▾
+              - generic [ref=f1e445]: Antennas
+              - checkbox [checked] [ref=f1e446]
+            - generic [ref=f1e447]:
+              - generic [ref=f1e448] [cursor=pointer]:
+                - generic [ref=f1e450]: antenna_L
+                - checkbox "antenna_L" [checked] [ref=f1e451]
+              - generic [ref=f1e452] [cursor=pointer]:
+                - generic [ref=f1e454]: antenna_R
+                - checkbox "antenna_R" [checked] [ref=f1e455]
+              - generic [ref=f1e456] [cursor=pointer]:
+                - generic [ref=f1e458]: ant_gears_L
+                - checkbox "ant_gears_L" [checked] [ref=f1e459]
+              - generic [ref=f1e460] [cursor=pointer]:
+                - generic [ref=f1e462]: ant_gears_R
+                - checkbox "ant_gears_R" [checked] [ref=f1e463]
+              - generic [ref=f1e464] [cursor=pointer]:
+                - generic [ref=f1e466]: ant_bracket
+                - checkbox "ant_bracket" [checked] [ref=f1e467]
+              - generic [ref=f1e468] [cursor=pointer]:
+                - generic [ref=f1e470]: motor_ant_L
+                - checkbox "motor_ant_L" [checked] [ref=f1e471]
+              - generic [ref=f1e472] [cursor=pointer]:
+                - generic [ref=f1e474]: motor_ant_R
+                - checkbox "motor_ant_R" [checked] [ref=f1e475]
+    - generic [ref=f1e476]: Pose
+    - generic [ref=f1e477]:
+      - text: Pan
+      - generic [ref=f1e478]: 22°
+      - slider "Pan 22°" [ref=f1e479] [cursor=pointer]: "22"
+    - generic [ref=f1e480]:
+      - text: Tilt
+      - generic [ref=f1e481]: "-12°"
+      - slider "Tilt -12°" [ref=f1e482] [cursor=pointer]: "-12"
+    - generic [ref=f1e483]:
+      - text: Antenna L
+      - generic [ref=f1e484]: 15mm
+      - slider "Antenna L 15mm" [ref=f1e485] [cursor=pointer]: "15"
+    - generic [ref=f1e486]:
+      - text: Antenna R
+      - generic [ref=f1e487]: 15mm
+      - slider "Antenna R 15mm" [ref=f1e488] [cursor=pointer]: "15"
+    - generic [ref=f1e489] [cursor=pointer]:
+      - checkbox "Sweep (animate head)" [ref=f1e490]
+      - text: Sweep (animate head)
+    - generic [ref=f1e491]: Appearance
+    - generic [ref=f1e492]:
+      - text: Transparency
+      - generic [ref=f1e493]: 0%
+      - slider "Transparency 0%" [ref=f1e494] [cursor=pointer]: "0"
+    - generic [ref=f1e495]:
+      - text: Explode
+      - generic [ref=f1e496]: 0%
+      - slider "Explode 0%" [ref=f1e497] [cursor=pointer]: "0"
+    - generic [ref=f1e498]: Measure
+    - generic [ref=f1e499] [cursor=pointer]:
+      - checkbox "Overall size" [ref=f1e500]
+      - text: Overall size
+    - generic [ref=f1e501] [cursor=pointer]:
+      - checkbox "Per-part size" [ref=f1e502]
+      - text: Per-part size
+    - generic [ref=f1e503]: Fits
+    - generic [ref=f1e504] [cursor=pointer]:
+      - checkbox "Fit map" [ref=f1e505]
+      - text: Fit map
+    - generic [ref=f1e506]: View
+    - generic [ref=f1e507] [cursor=pointer]:
+      - checkbox "Section cut X" [ref=f1e508]
+      - text: Section cut
+      - combobox [ref=f1e509]:
+        - option "X" [selected]
+        - option "Y"
+        - option "Z"
+    - generic [ref=f1e510]:
+      - text: Cut plane
+      - generic [ref=f1e511]: 50%
+      - slider "Cut plane 50%" [ref=f1e512] [cursor=pointer]: "0.5"
+    - generic [ref=f1e513] [cursor=pointer]:
+      - checkbox "Auto-spin 35" [ref=f1e514]
+      - text: Auto-spin
+      - slider [ref=f1e515]: "35"
+    - generic [ref=f1e516]: drag orbit · scroll zoom · right-drag panright-click a part or list row · H hide · I isolate · F focus · A all⌘Z undo · ⇧⌘Z redo · live-reloads on rebuild

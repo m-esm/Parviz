@@ -1,0 +1,449 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - banner [ref=e5]:
+      - generic [ref=e6]:
+        - link [ref=e8] [cursor=pointer]:
+          - /url: /
+          - img "Craftcloud®" [ref=e10]
+        - generic [ref=e11]:
+          - generic:
+            - button "Our Services" [ref=e12] [cursor=pointer]
+            - button "Why Craftcloud?" [ref=e13] [cursor=pointer]
+            - link "Materials" [ref=e14] [cursor=pointer]:
+              - /url: /en/material-guide
+            - link "Help & Support" [ref=e15] [cursor=pointer]:
+              - /url: /en/p/help
+        - generic [ref=e16]:
+          - link "Upload 3D Models" [ref=e498] [cursor=pointer]:
+            - /url: /en/upload
+          - generic [ref=e17]:
+            - link "Ask AI" [ref=e19] [cursor=pointer]:
+              - /url: "#"
+            - generic [ref=e22]:
+              - link "FI, EUR" [ref=e23] [cursor=pointer]:
+                - /url: "#"
+              - link "My Models" [ref=e26] [cursor=pointer]:
+                - /url: /en/account/models
+              - link "My Cart" [ref=e29] [cursor=pointer]:
+                - /url: /en/cart
+              - link "Sign In" [ref=e32] [cursor=pointer]:
+                - /url: "#"
+    - generic [ref=e501]:
+      - complementary [ref=e502]:
+        - generic [ref=e503]:
+          - generic [ref=e505]:
+            - link "1. Material — PETG" [ref=e1995] [cursor=pointer]:
+              - /url: /en/material
+              - generic [ref=e1996]: "1."
+              - generic [ref=e1997]:
+                - text: Material
+                - generic [ref=e1998]: —
+                - text: PETG
+            - link "2. Finish — Standard" [ref=e2184] [cursor=pointer]:
+              - /url: /en/material/finish?materialId=0e379ece-53b6-5aa3-8cdf-7afce73c9873
+              - generic [ref=e2185]: "2."
+              - generic [ref=e2186]:
+                - text: Finish
+                - generic [ref=e2187]: —
+                - text: Standard
+            - link "3. Color — White" [ref=e2847] [cursor=pointer]:
+              - /url: /en/material/color?materialId=0e379ece-53b6-5aa3-8cdf-7afce73c9873&finishGroupId=8011f7f9-8a99-55b3-989b-40d4babbd649&option=
+              - generic [ref=e2848]: "3."
+              - generic [ref=e2849]:
+                - text: Color
+                - generic [ref=e2850]: —
+                - text: White
+          - generic [ref=e518]:
+            - heading "Your models (2)" [level=1] [ref=e521]
+            - generic [ref=e522]:
+              - paragraph [ref=e523]:
+                - strong [ref=e524]: Did you know?
+                - text: You can choose different materials, finishes, or colors for each model by toggling off the models you don’t want to configure.
+              - generic [ref=e525]:
+                - generic [ref=e526]:
+                  - generic [ref=e528] [cursor=pointer]:
+                    - checkbox [checked]
+                  - generic [ref=e531]:
+                    - generic [ref=e532]: avg_part_46cm3
+                    - generic [ref=e533]: .stl
+                  - button [ref=e536] [cursor=pointer]:
+                    - img "Delete" [ref=e538]
+                - generic [ref=e539]:
+                  - button [ref=e541] [cursor=pointer]:
+                    - img "Preview image of avg_part_46cm3.stl" [ref=e543]
+                  - generic [ref=e544]:
+                    - generic "58 × 40 × 20 mm" [ref=e545]:
+                      - generic [ref=e546]: 58 × 40 × 20
+                      - generic [ref=e547]:
+                        - text: mm
+                        - button "scale" [ref=e548] [cursor=pointer]
+                    - paragraph [ref=e550]: 46,400 mm³
+                    - button "Add attachments & notes" [ref=e551] [cursor=pointer]
+                - generic [ref=e555]:
+                  - generic [ref=e556]:
+                    - button [disabled] [ref=e557]
+                    - textbox [ref=e558]: "1"
+                    - button [ref=e559] [cursor=pointer]
+                  - button "All options More" [ref=e560] [cursor=pointer]:
+                    - generic [ref=e561]: All options
+                    - img "More" [ref=e563]
+              - generic [ref=e564]:
+                - generic [ref=e565]:
+                  - generic [ref=e567] [cursor=pointer]:
+                    - checkbox [checked]
+                  - generic [ref=e570]:
+                    - generic [ref=e571]: small_part_4cm3
+                    - generic [ref=e572]: .stl
+                  - button [ref=e575] [cursor=pointer]:
+                    - img "Delete" [ref=e577]
+                - generic [ref=e578]:
+                  - button [ref=e580] [cursor=pointer]:
+                    - img "Preview image of small_part_4cm3.stl" [ref=e582]
+                  - generic [ref=e583]:
+                    - generic "20 × 20 × 10 mm" [ref=e584]:
+                      - generic [ref=e585]: 20 × 20 × 10
+                      - generic [ref=e586]:
+                        - text: mm
+                        - button "scale" [ref=e587] [cursor=pointer]
+                    - paragraph [ref=e589]: 4,000 mm³
+                    - button "Add attachments & notes" [ref=e590] [cursor=pointer]
+                - generic [ref=e594]:
+                  - generic [ref=e595]:
+                    - button [disabled] [ref=e596]
+                    - textbox [ref=e597]: "1"
+                    - button [ref=e598] [cursor=pointer]
+                  - button "All options More" [ref=e599] [cursor=pointer]:
+                    - generic [ref=e600]: All options
+                    - img "More" [ref=e602]
+          - link "Upload more" [ref=e604] [cursor=pointer]:
+            - /url: /en/upload
+      - main [ref=e607]:
+        - generic [ref=e2852]:
+          - generic [ref=e2855]:
+            - heading [level=1] [ref=e2856]:
+              - text: Offers for your
+              - generic [ref=e2857]: 2 models
+            - generic [ref=e2859]:
+              - generic [ref=e2860]: Craftcloud® quality guarantee
+              - generic [ref=e2862]: IP protected ordering
+          - generic [ref=e2864]:
+            - generic [ref=e2867]:
+              - button "Material groups" [disabled]
+              - button "Production technology" [disabled]
+              - button "Material properties" [disabled]
+              - button "Production location" [ref=e2868] [cursor=pointer]
+              - button "Show all filters" [ref=e2871] [cursor=pointer]
+            - generic [ref=e2874]: 86 offers available
+          - generic [ref=e2880]:
+            - generic [ref=e2881]:
+              - generic [ref=e2883]:
+                - generic [ref=e2884]: Recommendation
+                - generic [ref=e2887]:
+                  - generic [ref=e2888]:
+                    - generic [ref=e2889]:
+                      - definition [ref=e2890]:
+                        - text: Total price
+                        - button [ref=e2891] [cursor=pointer]
+                      - term [ref=e2893]: 46,28 €
+                    - generic:
+                      - generic:
+                        - term [ref=e2894]: Est. delivery date
+                        - definition [ref=e2895]:
+                          - strong [ref=e2896]: Jul. 20 - 22
+                        - term [ref=e2897]: Produced in
+                        - definition [ref=e2898]:
+                          - generic [ref=e2899]:
+                            - strong [ref=e2901]: Germany
+                            - generic [ref=e2902]:
+                              - text: by
+                              - link "Nologo Design" [ref=e2903] [cursor=pointer]:
+                                - /url: "#"
+                            - generic [ref=e2904]: Excellence
+                            - generic "4.51 of 5" [ref=e2906]: (369)
+                        - term [ref=e2920]: Production technology
+                        - definition [ref=e2921]:
+                          - strong [ref=e2923]: FDM
+                        - term [ref=e2924]: Minimum production cost
+                        - definition [ref=e2925]:
+                          - strong [ref=e2926]: 18,08 €
+                  - generic [ref=e2927]:
+                    - list [ref=e2929]:
+                      - listitem [ref=e2930]:
+                        - generic [ref=e2932]: Best mix of price and delivery time
+                    - button "Add to cart" [ref=e2934] [cursor=pointer]
+              - generic [ref=e2937]:
+                - generic [ref=e2938]: Best Price
+                - generic [ref=e2941]:
+                  - generic [ref=e2942]:
+                    - generic [ref=e2943]:
+                      - definition [ref=e2944]:
+                        - text: Total price
+                        - button [ref=e2945] [cursor=pointer]
+                      - term [ref=e2947]: 28,92 €
+                    - generic:
+                      - generic:
+                        - term [ref=e2948]: Est. delivery date
+                        - definition [ref=e2949]:
+                          - strong [ref=e2950]: Jul. 21 - 28
+                        - term [ref=e2951]: Produced in
+                        - definition [ref=e2952]:
+                          - generic [ref=e2953]:
+                            - strong [ref=e2955]: Lithuania
+                            - generic [ref=e2956]:
+                              - text: by
+                              - link "Amber Layer" [ref=e2957] [cursor=pointer]:
+                                - /url: "#"
+                            - generic "4.66 of 5" [ref=e2958]: (354)
+                        - term [ref=e2972]: Production technology
+                        - definition [ref=e2973]:
+                          - strong [ref=e2975]: FDM
+                        - term [ref=e2976]: Minimum production cost
+                        - definition [ref=e2977]:
+                          - strong [ref=e2978]: 28,92 €
+                  - generic [ref=e2979]:
+                    - list [ref=e2981]:
+                      - listitem [ref=e2982]:
+                        - generic [ref=e2984]: Lowest priced offer
+                    - button "Add to cart" [ref=e2986] [cursor=pointer]
+            - generic [ref=e2988]:
+              - generic [ref=e2989]:
+                - heading "All Offers" [level=1] [ref=e2990]
+                - generic [ref=e2991]:
+                  - combobox [ref=e2992] [cursor=pointer]:
+                    - option "Lowest price first" [selected]
+                    - option "Shortest delivery first"
+                    - option "Production country (A-Z)"
+                  - button "Lowest price first" [ref=e2993] [cursor=pointer]
+              - generic [ref=e2997]:
+                - generic [ref=e2998]:
+                  - generic [ref=e2999]:
+                    - generic [ref=e3000]: Price
+                    - generic [ref=e3001]: Est. delivery date
+                    - generic [ref=e3002]: Produced in
+                  - generic [ref=e3004]:
+                    - generic [ref=e3005]:
+                      - generic [ref=e3006]:
+                        - generic [ref=e3007]: 28,92 €
+                        - generic [ref=e3008]:
+                          - text: 28,92 € - Production (incl. minimum)
+                          - button [ref=e3009] [cursor=pointer]
+                          - paragraph [ref=e3011]: Free shipping (Lietuvos Paštas)
+                      - generic [ref=e3012]:
+                        - strong [ref=e3014]: Jul. 21 - 28
+                        - generic [ref=e3015]: 3-5 business days (Production)2-5 business days (Shipping)
+                      - generic [ref=e3016]:
+                        - generic [ref=e3017]: Lithuania
+                        - generic [ref=e3019]:
+                          - generic [ref=e3021]:
+                            - text: by
+                            - link "Amber Layer" [ref=e3022] [cursor=pointer]:
+                              - /url: "#"
+                          - generic "4.66 of 5" [ref=e3023]: (354)
+                          - paragraph [ref=e3038]: "Technology: FDM"
+                      - button "Add to cart" [ref=e3041] [cursor=pointer]
+                    - generic [ref=e3043]:
+                      - generic [ref=e3044]:
+                        - generic [ref=e3045]: 40,93 €
+                        - generic [ref=e3046]:
+                          - text: 12,89 € - Production
+                          - paragraph [ref=e3047]: 28,04 € - Shipping (DPD)
+                      - generic [ref=e3048]:
+                        - strong [ref=e3050]: Jul. 24 - 27
+                        - generic [ref=e3051]: 3 business days (Production)5-6 business days (Shipping)
+                      - generic [ref=e3052]:
+                        - generic [ref=e3053]: Romania
+                        - generic [ref=e3055]:
+                          - generic [ref=e3056]:
+                            - generic [ref=e3057]:
+                              - text: by
+                              - link "Imagination 3D Fashion SRL" [ref=e3058] [cursor=pointer]:
+                                - /url: "#"
+                            - generic [ref=e3059]: Excellence
+                          - generic "4.78 of 5" [ref=e3060]: (350)
+                          - paragraph [ref=e3075]: "Technology: FDM"
+                      - button "Add to cart" [ref=e3078] [cursor=pointer]
+                    - generic [ref=e3080]:
+                      - generic [ref=e3081]:
+                        - generic [ref=e3082]: 42,99 €
+                        - generic [ref=e3083]:
+                          - text: 9,10 € - Production
+                          - paragraph [ref=e3084]: 33,89 € - Shipping (DHL Express)
+                      - generic [ref=e3085]:
+                        - strong [ref=e3087]: Jul. 24 - 30
+                        - generic [ref=e3088]:
+                          - text: 5-7 business days (Production)
+                          - generic [ref=e3089]: Economy
+                          - text: 3-5 business days (Shipping)
+                      - generic [ref=e3090]:
+                        - generic [ref=e3091]: Bulgaria
+                        - generic [ref=e3093]:
+                          - generic [ref=e3094]:
+                            - generic [ref=e3095]:
+                              - text: by
+                              - link "INNOVATIVE PRO ENGINEERING LTD" [ref=e3096] [cursor=pointer]:
+                                - /url: "#"
+                            - generic [ref=e3097]: Excellence
+                          - generic "4.84 of 5" [ref=e3098]: (205)
+                          - paragraph [ref=e3113]: "Technology: FDM"
+                      - button "Add to cart" [ref=e3116] [cursor=pointer]
+                    - generic [ref=e3118]:
+                      - generic [ref=e3119]:
+                        - generic [ref=e3120]: 45,32 €
+                        - generic [ref=e3121]:
+                          - text: 11,43 € - Production
+                          - paragraph [ref=e3122]: 33,89 € - Shipping (DHL Express)
+                      - generic [ref=e3123]:
+                        - strong [ref=e3125]: Jul. 22 - 28
+                        - generic [ref=e3126]: 3-5 business days (Production)3-5 business days (Shipping)
+                      - generic [ref=e3127]:
+                        - generic [ref=e3128]: Bulgaria
+                        - generic [ref=e3130]:
+                          - generic [ref=e3131]:
+                            - generic [ref=e3132]:
+                              - text: by
+                              - link "INNOVATIVE PRO ENGINEERING LTD" [ref=e3133] [cursor=pointer]:
+                                - /url: "#"
+                            - generic [ref=e3134]: Excellence
+                          - generic "4.84 of 5" [ref=e3135]: (205)
+                          - paragraph [ref=e3150]: "Technology: FDM"
+                      - button "Add to cart" [ref=e3153] [cursor=pointer]
+                    - generic [ref=e3155]:
+                      - generic [ref=e3156]:
+                        - generic [ref=e3157]: 45,78 €
+                        - generic [ref=e3158]:
+                          - text: 20,16 € - Production (incl. minimum)
+                          - button [ref=e3159] [cursor=pointer]
+                          - paragraph [ref=e3161]: 25,62 € - Shipping (Asendia)
+                          - generic [ref=e3162]:
+                            - button [ref=e3163] [cursor=pointer]
+                            - paragraph [ref=e3165]: Import fees may apply
+                      - generic [ref=e3166]:
+                        - strong [ref=e3168]: Jul. 31 - Aug. 18
+                        - generic [ref=e3169]: 3-4 business days (Production)10-21 business days (Shipping)
+                      - generic [ref=e3170]:
+                        - generic [ref=e3171]: Kansas, United States
+                        - generic [ref=e3173]:
+                          - generic [ref=e3175]:
+                            - text: by
+                            - link "3D For Me Studio" [ref=e3176] [cursor=pointer]:
+                              - /url: "#"
+                          - generic "4.67 of 5" [ref=e3177]: (543)
+                          - paragraph [ref=e3192]: "Technology: FDM"
+                      - button "Add to cart" [ref=e3195] [cursor=pointer]
+                    - generic [ref=e3197]:
+                      - generic [ref=e3198]:
+                        - generic [ref=e3199]: 45,79 €
+                        - generic [ref=e3200]:
+                          - text: 16,76 € - Production
+                          - paragraph [ref=e3201]: 29,03 € - Shipping
+                          - generic [ref=e3202]:
+                            - button [ref=e3203] [cursor=pointer]
+                            - paragraph [ref=e3205]: Import fees may apply
+                      - generic [ref=e3206]:
+                        - strong [ref=e3208]: Jul. 23 - 28
+                        - generic [ref=e3209]: 3-4 business days (Production)4-6 business days (Shipping)
+                      - generic [ref=e3210]:
+                        - generic [ref=e3211]: China
+                        - generic [ref=e3213]:
+                          - generic [ref=e3215]:
+                            - text: by
+                            - link "IN3DTEC" [ref=e3216] [cursor=pointer]:
+                              - /url: "#"
+                          - generic "4.52 of 5" [ref=e3217]: (221)
+                          - paragraph [ref=e3232]: "Technology: FDM"
+                      - button "Add to cart" [ref=e3235] [cursor=pointer]
+                    - generic [ref=e3237]:
+                      - generic [ref=e3238]:
+                        - generic [ref=e3239]: 46,28 €
+                        - generic [ref=e3240]:
+                          - text: 18,08 € - Production (incl. minimum)
+                          - button [ref=e3241] [cursor=pointer]
+                          - paragraph [ref=e3243]: 28,20 € - Shipping (UPS)
+                      - generic [ref=e3244]:
+                        - strong [ref=e3246]: Jul. 20 - 22
+                        - generic [ref=e3247]: 3-4 business days (Production)1-2 business days (Shipping)
+                      - generic [ref=e3248]:
+                        - generic [ref=e3249]: Germany
+                        - generic [ref=e3251]:
+                          - generic [ref=e3252]:
+                            - generic [ref=e3253]:
+                              - text: by
+                              - link "Nologo Design" [ref=e3254] [cursor=pointer]:
+                                - /url: "#"
+                            - generic [ref=e3255]: Excellence
+                          - generic "4.51 of 5" [ref=e3256]: (369)
+                          - paragraph [ref=e3271]: "Technology: FDM"
+                      - button "Add to cart" [ref=e3274] [cursor=pointer]
+                    - generic [ref=e3276]:
+                      - generic [ref=e3277]:
+                        - generic [ref=e3278]: 50,42 €
+                        - generic [ref=e3279]:
+                          - text: 15,37 € - Production (incl. minimum)
+                          - button [ref=e3280] [cursor=pointer]
+                          - paragraph [ref=e3282]: 35,05 € - Shipping
+                      - generic [ref=e3283]:
+                        - strong [ref=e3285]: Jul. 22
+                        - generic [ref=e3286]: 3 business days (Production)3 business days (Shipping)
+                      - generic [ref=e3287]:
+                        - generic [ref=e3288]: Slovakia
+                        - generic [ref=e3290]:
+                          - generic [ref=e3292]:
+                            - text: by
+                            - link "Ľubomír Pavliš" [ref=e3293] [cursor=pointer]:
+                              - /url: "#"
+                          - generic "4.52 of 5" [ref=e3294]: (933)
+                          - paragraph [ref=e3309]: "Technology: FDM"
+                      - button "Add to cart" [ref=e3312] [cursor=pointer]
+                    - generic [ref=e3314]:
+                      - generic [ref=e3315]:
+                        - generic [ref=e3316]: 50,92 €
+                        - generic [ref=e3317]:
+                          - text: 16,76 € - Production
+                          - paragraph [ref=e3318]: 34,16 € - Shipping
+                          - generic [ref=e3319]:
+                            - button [ref=e3320] [cursor=pointer]
+                            - paragraph [ref=e3322]: Import fees may apply
+                      - generic [ref=e3323]:
+                        - strong [ref=e3325]: Jul. 21 - 23
+                        - generic [ref=e3326]:
+                          - text: 3-4 business days (Production)2-3 business days (Shipping)
+                          - generic [ref=e3327]: Express
+                      - generic [ref=e3328]:
+                        - generic [ref=e3329]: China
+                        - generic [ref=e3331]:
+                          - generic [ref=e3333]:
+                            - text: by
+                            - link "IN3DTEC" [ref=e3334] [cursor=pointer]:
+                              - /url: "#"
+                          - generic "4.52 of 5" [ref=e3335]: (221)
+                          - paragraph [ref=e3350]: "Technology: FDM"
+                      - button "Add to cart" [ref=e3353] [cursor=pointer]
+                    - generic [ref=e3355]:
+                      - generic [ref=e3356]:
+                        - generic [ref=e3357]: 53,11 €
+                        - generic [ref=e3358]:
+                          - text: 37,24 € - Production (incl. minimum)
+                          - button [ref=e3359] [cursor=pointer]
+                          - paragraph [ref=e3361]: 15,87 € - Shipping
+                          - generic [ref=e3362]:
+                            - button [ref=e3363] [cursor=pointer]
+                            - paragraph [ref=e3365]: Import fees may apply
+                      - generic [ref=e3366]:
+                        - strong [ref=e3368]: Jul. 21 - 23
+                        - generic [ref=e3369]:
+                          - text: 3 business days (Production)
+                          - generic [ref=e3370]: Expedited
+                          - text: 2-4 business days (Shipping)
+                          - generic [ref=e3371]: Express
+                      - generic [ref=e3372]:
+                        - generic [ref=e3373]: Switzerland
+                        - generic [ref=e3375]:
+                          - generic [ref=e3377]:
+                            - text: by
+                            - link "3D Easyprint" [ref=e3378] [cursor=pointer]:
+                              - /url: "#"
+                          - generic "4.28 of 5" [ref=e3379]: (60)
+                          - paragraph [ref=e3394]: "Technology: FDM"
+                      - button "Add to cart" [ref=e3397] [cursor=pointer]
+                - button "Show more" [ref=e3400] [cursor=pointer]
+  - alert [ref=e258]: Your models (2)

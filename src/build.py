@@ -39,7 +39,7 @@ from head import (build_ant_drive, build_antennas, build_arms, build_cam_pod, bu
                   build_ear_jacks, build_head_parts, build_head_rails, build_led_strip,
                   build_pi5_cooler, build_screen_tray, build_sd_plug)
 from chassis import (build_belly_plate, build_chassis_electronics, build_chassis_parts,
-                     build_chassis_base, build_fascia, build_pod_rails)
+                     build_chassis_base, build_fascia)
 from fitmap import _fit_report
 
 
@@ -103,8 +103,8 @@ def build():
         add(ep, np.eye(4))                           # placeholders (2026-07-13)
     for trk in build_tracks():
         add(trk, np.eye(4), trk.metadata["export"])
-    for rail in build_pod_rails():                   # body<->pod join receiving rails
-        add(rail, np.eye(4), rail.metadata["export"])
+    # (pod_rail_L/R deleted 2026-07-14 round 3: the chassis_side panels grow the
+    # wheel beam directly -- see build_chassis_parts.)
 
     # track drive: 2x TT gearmotor (own 1, BUY 1 more) INSIDE the chassis, gearbox face 0.1 off
     # the side-wall inner face; the shaft crosses the wall (Ø8 pass, wall thinned to a 3 mm web)

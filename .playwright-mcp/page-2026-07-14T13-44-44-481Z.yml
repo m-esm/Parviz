@@ -1,0 +1,987 @@
+- generic [active] [ref=e1]:
+  - navigation [ref=e2]:
+    - link "PARVIZ desk-pi" [ref=e3] [cursor=pointer]:
+      - /url: viewer_glb.html
+      - text: PARVIZ
+      - generic [ref=e4]: desk-pi
+    - link "Viewer" [ref=e5] [cursor=pointer]:
+      - /url: viewer_glb.html
+    - link "Electronics" [ref=e6] [cursor=pointer]:
+      - /url: docs/electronics.html
+    - link "Assembly" [ref=e7] [cursor=pointer]:
+      - /url: docs/assembly.html
+    - link "Wiring & power" [ref=e8] [cursor=pointer]:
+      - /url: docs/wiring.html
+    - button "Docs ▾" [ref=e10] [cursor=pointer]
+    - link "GitHub" [ref=e11] [cursor=pointer]:
+      - /url: https://github.com/m-esm/parviz
+  - generic [ref=e12]:
+    - generic [ref=e13]: desk-pi · pan/tilt head
+    - generic [ref=e14]: assembly.glb
+    - generic [ref=e15]:
+      - generic [ref=e16]: L
+      - generic [ref=e17]: "247"
+      - generic [ref=e18]: W
+      - generic [ref=e19]: "310"
+      - generic [ref=e20]: H
+      - generic [ref=e21]: "277"
+      - generic [ref=e22]: mm
+    - generic [ref=e23]:
+      - text: Navigation
+      - button "↶ Undo" [disabled]
+      - button "↷ Redo" [disabled]
+      - button "Reset UI" [ref=e24] [cursor=pointer]
+    - generic [ref=e25]:
+      - generic [ref=e26]:
+        - generic [ref=e27] [cursor=pointer]:
+          - generic [ref=e28]: ▾
+          - generic [ref=e29]: Chassis
+          - checkbox [checked] [ref=e30]
+        - generic [ref=e31]:
+          - generic [ref=e32]:
+            - generic [ref=e33] [cursor=pointer]:
+              - generic [ref=e34]: ▾
+              - generic [ref=e35]: Hull
+              - checkbox [checked] [ref=e36]
+            - generic [ref=e37]:
+              - generic [ref=e38] [cursor=pointer]:
+                - generic [ref=e40]: chassis_lower_front
+                - checkbox "chassis_lower_front" [checked] [ref=e41]
+              - generic [ref=e42] [cursor=pointer]:
+                - generic [ref=e44]: chassis_lower_rear
+                - checkbox "chassis_lower_rear" [checked] [ref=e45]
+              - generic [ref=e46] [cursor=pointer]:
+                - generic [ref=e48]: chassis_lower_tail
+                - checkbox "chassis_lower_tail" [checked] [ref=e49]
+              - generic [ref=e50] [cursor=pointer]:
+                - generic [ref=e52]: belly_plate
+                - checkbox "belly_plate" [checked] [ref=e53]
+          - generic [ref=e54]:
+            - generic [ref=e55] [cursor=pointer]:
+              - generic [ref=e56]: ▾
+              - generic [ref=e57]: Deck
+              - checkbox [checked] [ref=e58]
+            - generic [ref=e59]:
+              - generic [ref=e60] [cursor=pointer]:
+                - generic [ref=e62]: chassis_deck_front
+                - checkbox "chassis_deck_front" [checked] [ref=e63]
+              - generic [ref=e64] [cursor=pointer]:
+                - generic [ref=e66]: chassis_deck_center
+                - checkbox "chassis_deck_center" [checked] [ref=e67]
+              - generic [ref=e68] [cursor=pointer]:
+                - generic [ref=e70]: chassis_deck_rear
+                - checkbox "chassis_deck_rear" [checked] [ref=e71]
+          - generic [ref=e72]:
+            - generic [ref=e73] [cursor=pointer]:
+              - generic [ref=e74]: ▾
+              - generic [ref=e75]: Side panels
+              - checkbox [checked] [ref=e76]
+            - generic [ref=e77]:
+              - generic [ref=e78] [cursor=pointer]:
+                - generic [ref=e80]: chassis_side_L_front
+                - checkbox "chassis_side_L_front" [checked] [ref=e81]
+              - generic [ref=e82] [cursor=pointer]:
+                - generic [ref=e84]: chassis_side_L_rear
+                - checkbox "chassis_side_L_rear" [checked] [ref=e85]
+              - generic [ref=e86] [cursor=pointer]:
+                - generic [ref=e88]: chassis_side_R_front
+                - checkbox "chassis_side_R_front" [checked] [ref=e89]
+              - generic [ref=e90] [cursor=pointer]:
+                - generic [ref=e92]: chassis_side_R_rear
+                - checkbox "chassis_side_R_rear" [checked] [ref=e93]
+          - generic [ref=e94]:
+            - generic [ref=e95] [cursor=pointer]:
+              - generic [ref=e96]: ▾
+              - generic [ref=e97]: Electronics
+              - checkbox [checked] [ref=e98]
+            - generic [ref=e99]:
+              - generic [ref=e100] [cursor=pointer]:
+                - generic [ref=e102]: chassis_base
+                - checkbox "chassis_base" [checked] [ref=e103]
+              - generic [ref=e104] [cursor=pointer]:
+                - generic [ref=e106]: board_arduino
+                - checkbox "board_arduino" [checked] [ref=e107]
+          - generic [ref=e108]:
+            - generic [ref=e109] [cursor=pointer]:
+              - generic [ref=e110]: ▾
+              - generic [ref=e111]: Fascia & trim
+              - checkbox [checked] [ref=e112]
+            - generic [ref=e113]:
+              - generic [ref=e114] [cursor=pointer]:
+                - generic [ref=e116]: trim_fascia
+                - checkbox "trim_fascia" [checked] [ref=e117]
+              - generic [ref=e118] [cursor=pointer]:
+                - generic [ref=e120]: lamp_L
+                - checkbox "lamp_L" [checked] [ref=e121]
+              - generic [ref=e122] [cursor=pointer]:
+                - generic [ref=e124]: lamp_R
+                - checkbox "lamp_R" [checked] [ref=e125]
+              - generic [ref=e126] [cursor=pointer]:
+                - generic [ref=e128]: led_front
+                - checkbox "led_front" [checked] [ref=e129]
+              - generic [ref=e130] [cursor=pointer]:
+                - generic [ref=e132]: trim_rear
+                - checkbox "trim_rear" [checked] [ref=e133]
+          - generic [ref=e134]:
+            - generic [ref=e135] [cursor=pointer]:
+              - generic [ref=e136]: ▾
+              - generic [ref=e137]: Sensors
+              - checkbox [checked] [ref=e138]
+            - generic [ref=e139]:
+              - generic [ref=e140] [cursor=pointer]:
+                - generic [ref=e142]: sensor_us
+                - checkbox "sensor_us" [checked] [ref=e143]
+              - generic [ref=e144] [cursor=pointer]:
+                - generic [ref=e146]: sensor_us_rear
+                - checkbox "sensor_us_rear" [checked] [ref=e147]
+              - generic [ref=e148] [cursor=pointer]:
+                - generic [ref=e150]: sensor_cliff
+                - checkbox "sensor_cliff" [checked] [ref=e151]
+              - generic [ref=e152] [cursor=pointer]:
+                - generic [ref=e154]: sensor_cliff_rear
+                - checkbox "sensor_cliff_rear" [checked] [ref=e155]
+              - generic [ref=e156] [cursor=pointer]:
+                - generic [ref=e158]: sensor_rear
+                - checkbox "sensor_rear" [checked] [ref=e159]
+              - generic [ref=e160] [cursor=pointer]:
+                - generic [ref=e162]: sensor_imu
+                - checkbox "sensor_imu" [checked] [ref=e163]
+              - generic [ref=e164] [cursor=pointer]:
+                - generic [ref=e166]: sensor_bme
+                - checkbox "sensor_bme" [checked] [ref=e167]
+              - generic [ref=e168] [cursor=pointer]:
+                - generic [ref=e170]: sensor_vib
+                - checkbox "sensor_vib" [checked] [ref=e171]
+              - generic [ref=e172] [cursor=pointer]:
+                - generic [ref=e174]: sensor_mmwave
+                - checkbox "sensor_mmwave" [checked] [ref=e175]
+      - generic [ref=e176]:
+        - generic [ref=e177] [cursor=pointer]:
+          - generic [ref=e178]: ▾
+          - generic [ref=e179]: Drive
+          - checkbox [checked] [ref=e180]
+        - generic [ref=e181]:
+          - generic [ref=e182]:
+            - generic [ref=e183] [cursor=pointer]:
+              - generic [ref=e184]: ▾
+              - generic [ref=e185]: Axle hardware
+              - checkbox [checked] [ref=e186]
+            - generic [ref=e187]:
+              - generic [ref=e188] [cursor=pointer]:
+                - generic [ref=e190]: axle_hw_Lwheel_bolt_1
+                - checkbox "axle_hw_Lwheel_bolt_1" [checked] [ref=e191]
+              - generic [ref=e192] [cursor=pointer]:
+                - generic [ref=e194]: axle_hw_Lwheel_nut_1
+                - checkbox "axle_hw_Lwheel_nut_1" [checked] [ref=e195]
+              - generic [ref=e196] [cursor=pointer]:
+                - generic [ref=e198]: axle_hw_Lwheel_bolt_2
+                - checkbox "axle_hw_Lwheel_bolt_2" [checked] [ref=e199]
+              - generic [ref=e200] [cursor=pointer]:
+                - generic [ref=e202]: axle_hw_Lwheel_nut_2
+                - checkbox "axle_hw_Lwheel_nut_2" [checked] [ref=e203]
+              - generic [ref=e204] [cursor=pointer]:
+                - generic [ref=e206]: axle_hw_Lwheel_bolt_3
+                - checkbox "axle_hw_Lwheel_bolt_3" [checked] [ref=e207]
+              - generic [ref=e208] [cursor=pointer]:
+                - generic [ref=e210]: axle_hw_Lwheel_nut_3
+                - checkbox "axle_hw_Lwheel_nut_3" [checked] [ref=e211]
+              - generic [ref=e212] [cursor=pointer]:
+                - generic [ref=e214]: axle_hw_Lwheel_bolt_4
+                - checkbox "axle_hw_Lwheel_bolt_4" [checked] [ref=e215]
+              - generic [ref=e216] [cursor=pointer]:
+                - generic [ref=e218]: axle_hw_Lwheel_nut_4
+                - checkbox "axle_hw_Lwheel_nut_4" [checked] [ref=e219]
+              - generic [ref=e220] [cursor=pointer]:
+                - generic [ref=e222]: axle_hw_Lwheel_bolt_5
+                - checkbox "axle_hw_Lwheel_bolt_5" [checked] [ref=e223]
+              - generic [ref=e224] [cursor=pointer]:
+                - generic [ref=e226]: axle_hw_Lwheel_nut_5
+                - checkbox "axle_hw_Lwheel_nut_5" [checked] [ref=e227]
+              - generic [ref=e228] [cursor=pointer]:
+                - generic [ref=e230]: axle_hw_Lend_bolt_front
+                - checkbox "axle_hw_Lend_bolt_front" [checked] [ref=e231]
+              - generic [ref=e232] [cursor=pointer]:
+                - generic [ref=e234]: axle_hw_Lend_brg_front_o
+                - checkbox "axle_hw_Lend_brg_front_o" [checked] [ref=e235]
+              - generic [ref=e236] [cursor=pointer]:
+                - generic [ref=e238]: axle_hw_Lend_brg_front_i
+                - checkbox "axle_hw_Lend_brg_front_i" [checked] [ref=e239]
+              - generic [ref=e240] [cursor=pointer]:
+                - generic [ref=e242]: axle_hw_Lend_bolt_rear
+                - checkbox "axle_hw_Lend_bolt_rear" [checked] [ref=e243]
+              - generic [ref=e244] [cursor=pointer]:
+                - generic [ref=e246]: axle_hw_Lend_brg_rear_o
+                - checkbox "axle_hw_Lend_brg_rear_o" [checked] [ref=e247]
+              - generic [ref=e248] [cursor=pointer]:
+                - generic [ref=e250]: axle_hw_Lend_brg_rear_i
+                - checkbox "axle_hw_Lend_brg_rear_i" [checked] [ref=e251]
+              - generic [ref=e252] [cursor=pointer]:
+                - generic [ref=e254]: axle_hw_Rwheel_bolt_1
+                - checkbox "axle_hw_Rwheel_bolt_1" [checked] [ref=e255]
+              - generic [ref=e256] [cursor=pointer]:
+                - generic [ref=e258]: axle_hw_Rwheel_nut_1
+                - checkbox "axle_hw_Rwheel_nut_1" [checked] [ref=e259]
+              - generic [ref=e260] [cursor=pointer]:
+                - generic [ref=e262]: axle_hw_Rwheel_bolt_2
+                - checkbox "axle_hw_Rwheel_bolt_2" [checked] [ref=e263]
+              - generic [ref=e264] [cursor=pointer]:
+                - generic [ref=e266]: axle_hw_Rwheel_nut_2
+                - checkbox "axle_hw_Rwheel_nut_2" [checked] [ref=e267]
+              - generic [ref=e268] [cursor=pointer]:
+                - generic [ref=e270]: axle_hw_Rwheel_bolt_3
+                - checkbox "axle_hw_Rwheel_bolt_3" [checked] [ref=e271]
+              - generic [ref=e272] [cursor=pointer]:
+                - generic [ref=e274]: axle_hw_Rwheel_nut_3
+                - checkbox "axle_hw_Rwheel_nut_3" [checked] [ref=e275]
+              - generic [ref=e276] [cursor=pointer]:
+                - generic [ref=e278]: axle_hw_Rwheel_bolt_4
+                - checkbox "axle_hw_Rwheel_bolt_4" [checked] [ref=e279]
+              - generic [ref=e280] [cursor=pointer]:
+                - generic [ref=e282]: axle_hw_Rwheel_nut_4
+                - checkbox "axle_hw_Rwheel_nut_4" [checked] [ref=e283]
+              - generic [ref=e284] [cursor=pointer]:
+                - generic [ref=e286]: axle_hw_Rwheel_bolt_5
+                - checkbox "axle_hw_Rwheel_bolt_5" [checked] [ref=e287]
+              - generic [ref=e288] [cursor=pointer]:
+                - generic [ref=e290]: axle_hw_Rwheel_nut_5
+                - checkbox "axle_hw_Rwheel_nut_5" [checked] [ref=e291]
+              - generic [ref=e292] [cursor=pointer]:
+                - generic [ref=e294]: axle_hw_Rend_bolt_front
+                - checkbox "axle_hw_Rend_bolt_front" [checked] [ref=e295]
+              - generic [ref=e296] [cursor=pointer]:
+                - generic [ref=e298]: axle_hw_Rend_brg_front_o
+                - checkbox "axle_hw_Rend_brg_front_o" [checked] [ref=e299]
+              - generic [ref=e300] [cursor=pointer]:
+                - generic [ref=e302]: axle_hw_Rend_brg_front_i
+                - checkbox "axle_hw_Rend_brg_front_i" [checked] [ref=e303]
+              - generic [ref=e304] [cursor=pointer]:
+                - generic [ref=e306]: axle_hw_Rend_bolt_rear
+                - checkbox "axle_hw_Rend_bolt_rear" [checked] [ref=e307]
+              - generic [ref=e308] [cursor=pointer]:
+                - generic [ref=e310]: axle_hw_Rend_brg_rear_o
+                - checkbox "axle_hw_Rend_brg_rear_o" [checked] [ref=e311]
+              - generic [ref=e312] [cursor=pointer]:
+                - generic [ref=e314]: axle_hw_Rend_brg_rear_i
+                - checkbox "axle_hw_Rend_brg_rear_i" [checked] [ref=e315]
+          - generic [ref=e316]:
+            - generic [ref=e317] [cursor=pointer]:
+              - generic [ref=e318]: ▾
+              - generic [ref=e319]: Running gear
+              - checkbox [checked] [ref=e320]
+            - generic [ref=e321]:
+              - generic [ref=e322] [cursor=pointer]:
+                - generic [ref=e324]: drivewheels_Lsprocket_rear
+                - checkbox "drivewheels_Lsprocket_rear" [checked] [ref=e325]
+              - generic [ref=e326] [cursor=pointer]:
+                - generic [ref=e328]: drivewheels_Lsprocket_front
+                - checkbox "drivewheels_Lsprocket_front" [checked] [ref=e329]
+              - generic [ref=e330] [cursor=pointer]:
+                - generic [ref=e332]: drivewheels_Lend_idler_front
+                - checkbox "drivewheels_Lend_idler_front" [checked] [ref=e333]
+              - generic [ref=e334] [cursor=pointer]:
+                - generic [ref=e336]: drivewheels_Lend_idler_rear
+                - checkbox "drivewheels_Lend_idler_rear" [checked] [ref=e337]
+              - generic [ref=e338] [cursor=pointer]:
+                - generic [ref=e340]: drivewheels_Lroad_wheel_1
+                - checkbox "drivewheels_Lroad_wheel_1" [checked] [ref=e341]
+              - generic [ref=e342] [cursor=pointer]:
+                - generic [ref=e344]: drivewheels_Lroad_wheel_2
+                - checkbox "drivewheels_Lroad_wheel_2" [checked] [ref=e345]
+              - generic [ref=e346] [cursor=pointer]:
+                - generic [ref=e348]: drivewheels_Lroad_wheel_3
+                - checkbox "drivewheels_Lroad_wheel_3" [checked] [ref=e349]
+              - generic [ref=e350] [cursor=pointer]:
+                - generic [ref=e352]: drivewheels_Lroad_wheel_4
+                - checkbox "drivewheels_Lroad_wheel_4" [checked] [ref=e353]
+              - generic [ref=e354] [cursor=pointer]:
+                - generic [ref=e356]: drivewheels_Lroad_wheel_5
+                - checkbox "drivewheels_Lroad_wheel_5" [checked] [ref=e357]
+              - generic [ref=e358] [cursor=pointer]:
+                - generic [ref=e360]: drivewheels_Rsprocket_rear
+                - checkbox "drivewheels_Rsprocket_rear" [checked] [ref=e361]
+              - generic [ref=e362] [cursor=pointer]:
+                - generic [ref=e364]: drivewheels_Rsprocket_front
+                - checkbox "drivewheels_Rsprocket_front" [checked] [ref=e365]
+              - generic [ref=e366] [cursor=pointer]:
+                - generic [ref=e368]: drivewheels_Rend_idler_front
+                - checkbox "drivewheels_Rend_idler_front" [checked] [ref=e369]
+              - generic [ref=e370] [cursor=pointer]:
+                - generic [ref=e372]: drivewheels_Rend_idler_rear
+                - checkbox "drivewheels_Rend_idler_rear" [checked] [ref=e373]
+              - generic [ref=e374] [cursor=pointer]:
+                - generic [ref=e376]: drivewheels_Rroad_wheel_1
+                - checkbox "drivewheels_Rroad_wheel_1" [checked] [ref=e377]
+              - generic [ref=e378] [cursor=pointer]:
+                - generic [ref=e380]: drivewheels_Rroad_wheel_2
+                - checkbox "drivewheels_Rroad_wheel_2" [checked] [ref=e381]
+              - generic [ref=e382] [cursor=pointer]:
+                - generic [ref=e384]: drivewheels_Rroad_wheel_3
+                - checkbox "drivewheels_Rroad_wheel_3" [checked] [ref=e385]
+              - generic [ref=e386] [cursor=pointer]:
+                - generic [ref=e388]: drivewheels_Rroad_wheel_4
+                - checkbox "drivewheels_Rroad_wheel_4" [checked] [ref=e389]
+              - generic [ref=e390] [cursor=pointer]:
+                - generic [ref=e392]: drivewheels_Rroad_wheel_5
+                - checkbox "drivewheels_Rroad_wheel_5" [checked] [ref=e393]
+          - generic [ref=e394]:
+            - generic [ref=e395] [cursor=pointer]:
+              - generic [ref=e396]: ▾
+              - generic [ref=e397]: Track L
+              - checkbox [checked] [ref=e398]
+            - generic [ref=e399]:
+              - generic [ref=e400] [cursor=pointer]:
+                - generic [ref=e402]: track_keeper_Lbar_1
+                - checkbox "track_keeper_Lbar_1" [checked] [ref=e403]
+              - generic [ref=e404] [cursor=pointer]:
+                - generic [ref=e406]: track_keeper_Lbar_2
+                - checkbox "track_keeper_Lbar_2" [checked] [ref=e407]
+          - generic [ref=e408]:
+            - generic [ref=e409] [cursor=pointer]:
+              - generic [ref=e410]: ▾
+              - generic [ref=e411]: Track R
+              - checkbox [checked] [ref=e412]
+            - generic [ref=e413]:
+              - generic [ref=e414] [cursor=pointer]:
+                - generic [ref=e416]: track_keeper_Rbar_1
+                - checkbox "track_keeper_Rbar_1" [checked] [ref=e417]
+              - generic [ref=e418] [cursor=pointer]:
+                - generic [ref=e420]: track_keeper_Rbar_2
+                - checkbox "track_keeper_Rbar_2" [checked] [ref=e421]
+          - generic [ref=e422]:
+            - generic [ref=e423] [cursor=pointer]:
+              - generic [ref=e424]: ▾
+              - generic [ref=e425]: Motors
+              - checkbox [checked] [ref=e426]
+            - generic [ref=e427]:
+              - generic [ref=e428] [cursor=pointer]:
+                - generic [ref=e430]: drive_L
+                - checkbox "drive_L" [checked] [ref=e431]
+              - generic [ref=e432] [cursor=pointer]:
+                - generic [ref=e434]: drive2_L
+                - checkbox "drive2_L" [checked] [ref=e435]
+              - generic [ref=e436] [cursor=pointer]:
+                - generic [ref=e438]: drive_R
+                - checkbox "drive_R" [checked] [ref=e439]
+              - generic [ref=e440] [cursor=pointer]:
+                - generic [ref=e442]: drive2_R
+                - checkbox "drive2_R" [checked] [ref=e443]
+      - generic [ref=e444]:
+        - generic [ref=e445] [cursor=pointer]:
+          - generic [ref=e446]: ▾
+          - generic [ref=e447]: Other
+          - checkbox [checked] [ref=e448]
+        - generic [ref=e450]:
+          - generic [ref=e451] [cursor=pointer]:
+            - generic [ref=e452]: ▾
+            - generic [ref=e453]: Uncategorized
+            - checkbox [checked] [ref=e454]
+          - generic [ref=e455]:
+            - generic [ref=e456] [cursor=pointer]:
+              - generic [ref=e458]: track_Llink_00_master
+              - checkbox "track_Llink_00_master" [checked] [ref=e459]
+            - generic [ref=e460] [cursor=pointer]:
+              - generic [ref=e462]: track_Llink_01
+              - checkbox "track_Llink_01" [checked] [ref=e463]
+            - generic [ref=e464] [cursor=pointer]:
+              - generic [ref=e466]: track_Llink_02
+              - checkbox "track_Llink_02" [checked] [ref=e467]
+            - generic [ref=e468] [cursor=pointer]:
+              - generic [ref=e470]: track_Llink_03
+              - checkbox "track_Llink_03" [checked] [ref=e471]
+            - generic [ref=e472] [cursor=pointer]:
+              - generic [ref=e474]: track_Llink_04
+              - checkbox "track_Llink_04" [checked] [ref=e475]
+            - generic [ref=e476] [cursor=pointer]:
+              - generic [ref=e478]: track_Llink_05
+              - checkbox "track_Llink_05" [checked] [ref=e479]
+            - generic [ref=e480] [cursor=pointer]:
+              - generic [ref=e482]: track_Llink_06
+              - checkbox "track_Llink_06" [checked] [ref=e483]
+            - generic [ref=e484] [cursor=pointer]:
+              - generic [ref=e486]: track_Llink_07
+              - checkbox "track_Llink_07" [checked] [ref=e487]
+            - generic [ref=e488] [cursor=pointer]:
+              - generic [ref=e490]: track_Llink_08
+              - checkbox "track_Llink_08" [checked] [ref=e491]
+            - generic [ref=e492] [cursor=pointer]:
+              - generic [ref=e494]: track_Llink_09
+              - checkbox "track_Llink_09" [checked] [ref=e495]
+            - generic [ref=e496] [cursor=pointer]:
+              - generic [ref=e498]: track_Llink_10
+              - checkbox "track_Llink_10" [checked] [ref=e499]
+            - generic [ref=e500] [cursor=pointer]:
+              - generic [ref=e502]: track_Llink_11
+              - checkbox "track_Llink_11" [checked] [ref=e503]
+            - generic [ref=e504] [cursor=pointer]:
+              - generic [ref=e506]: track_Llink_12
+              - checkbox "track_Llink_12" [checked] [ref=e507]
+            - generic [ref=e508] [cursor=pointer]:
+              - generic [ref=e510]: track_Llink_13
+              - checkbox "track_Llink_13" [checked] [ref=e511]
+            - generic [ref=e512] [cursor=pointer]:
+              - generic [ref=e514]: track_Llink_14
+              - checkbox "track_Llink_14" [checked] [ref=e515]
+            - generic [ref=e516] [cursor=pointer]:
+              - generic [ref=e518]: track_Llink_15
+              - checkbox "track_Llink_15" [checked] [ref=e519]
+            - generic [ref=e520] [cursor=pointer]:
+              - generic [ref=e522]: track_Llink_16
+              - checkbox "track_Llink_16" [checked] [ref=e523]
+            - generic [ref=e524] [cursor=pointer]:
+              - generic [ref=e526]: track_Llink_17
+              - checkbox "track_Llink_17" [checked] [ref=e527]
+            - generic [ref=e528] [cursor=pointer]:
+              - generic [ref=e530]: track_Llink_18
+              - checkbox "track_Llink_18" [checked] [ref=e531]
+            - generic [ref=e532] [cursor=pointer]:
+              - generic [ref=e534]: track_Llink_19
+              - checkbox "track_Llink_19" [checked] [ref=e535]
+            - generic [ref=e536] [cursor=pointer]:
+              - generic [ref=e538]: track_Llink_20
+              - checkbox "track_Llink_20" [checked] [ref=e539]
+            - generic [ref=e540] [cursor=pointer]:
+              - generic [ref=e542]: track_Llink_21
+              - checkbox "track_Llink_21" [checked] [ref=e543]
+            - generic [ref=e544] [cursor=pointer]:
+              - generic [ref=e546]: track_Llink_22
+              - checkbox "track_Llink_22" [checked] [ref=e547]
+            - generic [ref=e548] [cursor=pointer]:
+              - generic [ref=e550]: track_Llink_23
+              - checkbox "track_Llink_23" [checked] [ref=e551]
+            - generic [ref=e552] [cursor=pointer]:
+              - generic [ref=e554]: track_Llink_24
+              - checkbox "track_Llink_24" [checked] [ref=e555]
+            - generic [ref=e556] [cursor=pointer]:
+              - generic [ref=e558]: track_Llink_25
+              - checkbox "track_Llink_25" [checked] [ref=e559]
+            - generic [ref=e560] [cursor=pointer]:
+              - generic [ref=e562]: track_Llink_26
+              - checkbox "track_Llink_26" [checked] [ref=e563]
+            - generic [ref=e564] [cursor=pointer]:
+              - generic [ref=e566]: track_Llink_27
+              - checkbox "track_Llink_27" [checked] [ref=e567]
+            - generic [ref=e568] [cursor=pointer]:
+              - generic [ref=e570]: track_Llink_28
+              - checkbox "track_Llink_28" [checked] [ref=e571]
+            - generic [ref=e572] [cursor=pointer]:
+              - generic [ref=e574]: track_Llink_29
+              - checkbox "track_Llink_29" [checked] [ref=e575]
+            - generic [ref=e576] [cursor=pointer]:
+              - generic [ref=e578]: track_Llink_30
+              - checkbox "track_Llink_30" [checked] [ref=e579]
+            - generic [ref=e580] [cursor=pointer]:
+              - generic [ref=e582]: track_Llink_31
+              - checkbox "track_Llink_31" [checked] [ref=e583]
+            - generic [ref=e584] [cursor=pointer]:
+              - generic [ref=e586]: track_Llink_32
+              - checkbox "track_Llink_32" [checked] [ref=e587]
+            - generic [ref=e588] [cursor=pointer]:
+              - generic [ref=e590]: track_Llink_33
+              - checkbox "track_Llink_33" [checked] [ref=e591]
+            - generic [ref=e592] [cursor=pointer]:
+              - generic [ref=e594]: track_Llink_34
+              - checkbox "track_Llink_34" [checked] [ref=e595]
+            - generic [ref=e596] [cursor=pointer]:
+              - generic [ref=e598]: track_Llink_35
+              - checkbox "track_Llink_35" [checked] [ref=e599]
+            - generic [ref=e600] [cursor=pointer]:
+              - generic [ref=e602]: track_Llink_36
+              - checkbox "track_Llink_36" [checked] [ref=e603]
+            - generic [ref=e604] [cursor=pointer]:
+              - generic [ref=e606]: track_Llink_37
+              - checkbox "track_Llink_37" [checked] [ref=e607]
+            - generic [ref=e608] [cursor=pointer]:
+              - generic [ref=e610]: track_Llink_38
+              - checkbox "track_Llink_38" [checked] [ref=e611]
+            - generic [ref=e612] [cursor=pointer]:
+              - generic [ref=e614]: track_Llink_39
+              - checkbox "track_Llink_39" [checked] [ref=e615]
+            - generic [ref=e616] [cursor=pointer]:
+              - generic [ref=e618]: track_Llink_40
+              - checkbox "track_Llink_40" [checked] [ref=e619]
+            - generic [ref=e620] [cursor=pointer]:
+              - generic [ref=e622]: track_Llink_41
+              - checkbox "track_Llink_41" [checked] [ref=e623]
+            - generic [ref=e624] [cursor=pointer]:
+              - generic [ref=e626]: track_Llink_42
+              - checkbox "track_Llink_42" [checked] [ref=e627]
+            - generic [ref=e628] [cursor=pointer]:
+              - generic [ref=e630]: track_Llink_43
+              - checkbox "track_Llink_43" [checked] [ref=e631]
+            - generic [ref=e632] [cursor=pointer]:
+              - generic [ref=e634]: track_Llink_44
+              - checkbox "track_Llink_44" [checked] [ref=e635]
+            - generic [ref=e636] [cursor=pointer]:
+              - generic [ref=e638]: track_Llink_45
+              - checkbox "track_Llink_45" [checked] [ref=e639]
+            - generic [ref=e640] [cursor=pointer]:
+              - generic [ref=e642]: track_Llink_46
+              - checkbox "track_Llink_46" [checked] [ref=e643]
+            - generic [ref=e644] [cursor=pointer]:
+              - generic [ref=e646]: track_Llink_47
+              - checkbox "track_Llink_47" [checked] [ref=e647]
+            - generic [ref=e648] [cursor=pointer]:
+              - generic [ref=e650]: track_Llink_48
+              - checkbox "track_Llink_48" [checked] [ref=e651]
+            - generic [ref=e652] [cursor=pointer]:
+              - generic [ref=e654]: track_Llink_49
+              - checkbox "track_Llink_49" [checked] [ref=e655]
+            - generic [ref=e656] [cursor=pointer]:
+              - generic [ref=e658]: track_Llink_50
+              - checkbox "track_Llink_50" [checked] [ref=e659]
+            - generic [ref=e660] [cursor=pointer]:
+              - generic [ref=e662]: track_Llink_51
+              - checkbox "track_Llink_51" [checked] [ref=e663]
+            - generic [ref=e664] [cursor=pointer]:
+              - generic [ref=e666]: track_Llink_52
+              - checkbox "track_Llink_52" [checked] [ref=e667]
+            - generic [ref=e668] [cursor=pointer]:
+              - generic [ref=e670]: track_Llink_53
+              - checkbox "track_Llink_53" [checked] [ref=e671]
+            - generic [ref=e672] [cursor=pointer]:
+              - generic [ref=e674]: track_Llink_54
+              - checkbox "track_Llink_54" [checked] [ref=e675]
+            - generic [ref=e676] [cursor=pointer]:
+              - generic [ref=e678]: track_Llink_55
+              - checkbox "track_Llink_55" [checked] [ref=e679]
+            - generic [ref=e680] [cursor=pointer]:
+              - generic [ref=e682]: track_Llink_56
+              - checkbox "track_Llink_56" [checked] [ref=e683]
+            - generic [ref=e684] [cursor=pointer]:
+              - generic [ref=e686]: track_Llink_57
+              - checkbox "track_Llink_57" [checked] [ref=e687]
+            - generic [ref=e688] [cursor=pointer]:
+              - generic [ref=e690]: track_Llink_58
+              - checkbox "track_Llink_58" [checked] [ref=e691]
+            - generic [ref=e692] [cursor=pointer]:
+              - generic [ref=e694]: track_Llink_59
+              - checkbox "track_Llink_59" [checked] [ref=e695]
+            - generic [ref=e696] [cursor=pointer]:
+              - generic [ref=e698]: track_Llink_60
+              - checkbox "track_Llink_60" [checked] [ref=e699]
+            - generic [ref=e700] [cursor=pointer]:
+              - generic [ref=e702]: track_Llink_61
+              - checkbox "track_Llink_61" [checked] [ref=e703]
+            - generic [ref=e704] [cursor=pointer]:
+              - generic [ref=e706]: track_Llink_62
+              - checkbox "track_Llink_62" [checked] [ref=e707]
+            - generic [ref=e708] [cursor=pointer]:
+              - generic [ref=e710]: track_Llink_63
+              - checkbox "track_Llink_63" [checked] [ref=e711]
+            - generic [ref=e712] [cursor=pointer]:
+              - generic [ref=e714]: track_Rlink_00_master
+              - checkbox "track_Rlink_00_master" [checked] [ref=e715]
+            - generic [ref=e716] [cursor=pointer]:
+              - generic [ref=e718]: track_Rlink_01
+              - checkbox "track_Rlink_01" [checked] [ref=e719]
+            - generic [ref=e720] [cursor=pointer]:
+              - generic [ref=e722]: track_Rlink_02
+              - checkbox "track_Rlink_02" [checked] [ref=e723]
+            - generic [ref=e724] [cursor=pointer]:
+              - generic [ref=e726]: track_Rlink_03
+              - checkbox "track_Rlink_03" [checked] [ref=e727]
+            - generic [ref=e728] [cursor=pointer]:
+              - generic [ref=e730]: track_Rlink_04
+              - checkbox "track_Rlink_04" [checked] [ref=e731]
+            - generic [ref=e732] [cursor=pointer]:
+              - generic [ref=e734]: track_Rlink_05
+              - checkbox "track_Rlink_05" [checked] [ref=e735]
+            - generic [ref=e736] [cursor=pointer]:
+              - generic [ref=e738]: track_Rlink_06
+              - checkbox "track_Rlink_06" [checked] [ref=e739]
+            - generic [ref=e740] [cursor=pointer]:
+              - generic [ref=e742]: track_Rlink_07
+              - checkbox "track_Rlink_07" [checked] [ref=e743]
+            - generic [ref=e744] [cursor=pointer]:
+              - generic [ref=e746]: track_Rlink_08
+              - checkbox "track_Rlink_08" [checked] [ref=e747]
+            - generic [ref=e748] [cursor=pointer]:
+              - generic [ref=e750]: track_Rlink_09
+              - checkbox "track_Rlink_09" [checked] [ref=e751]
+            - generic [ref=e752] [cursor=pointer]:
+              - generic [ref=e754]: track_Rlink_10
+              - checkbox "track_Rlink_10" [checked] [ref=e755]
+            - generic [ref=e756] [cursor=pointer]:
+              - generic [ref=e758]: track_Rlink_11
+              - checkbox "track_Rlink_11" [checked] [ref=e759]
+            - generic [ref=e760] [cursor=pointer]:
+              - generic [ref=e762]: track_Rlink_12
+              - checkbox "track_Rlink_12" [checked] [ref=e763]
+            - generic [ref=e764] [cursor=pointer]:
+              - generic [ref=e766]: track_Rlink_13
+              - checkbox "track_Rlink_13" [checked] [ref=e767]
+            - generic [ref=e768] [cursor=pointer]:
+              - generic [ref=e770]: track_Rlink_14
+              - checkbox "track_Rlink_14" [checked] [ref=e771]
+            - generic [ref=e772] [cursor=pointer]:
+              - generic [ref=e774]: track_Rlink_15
+              - checkbox "track_Rlink_15" [checked] [ref=e775]
+            - generic [ref=e776] [cursor=pointer]:
+              - generic [ref=e778]: track_Rlink_16
+              - checkbox "track_Rlink_16" [checked] [ref=e779]
+            - generic [ref=e780] [cursor=pointer]:
+              - generic [ref=e782]: track_Rlink_17
+              - checkbox "track_Rlink_17" [checked] [ref=e783]
+            - generic [ref=e784] [cursor=pointer]:
+              - generic [ref=e786]: track_Rlink_18
+              - checkbox "track_Rlink_18" [checked] [ref=e787]
+            - generic [ref=e788] [cursor=pointer]:
+              - generic [ref=e790]: track_Rlink_19
+              - checkbox "track_Rlink_19" [checked] [ref=e791]
+            - generic [ref=e792] [cursor=pointer]:
+              - generic [ref=e794]: track_Rlink_20
+              - checkbox "track_Rlink_20" [checked] [ref=e795]
+            - generic [ref=e796] [cursor=pointer]:
+              - generic [ref=e798]: track_Rlink_21
+              - checkbox "track_Rlink_21" [checked] [ref=e799]
+            - generic [ref=e800] [cursor=pointer]:
+              - generic [ref=e802]: track_Rlink_22
+              - checkbox "track_Rlink_22" [checked] [ref=e803]
+            - generic [ref=e804] [cursor=pointer]:
+              - generic [ref=e806]: track_Rlink_23
+              - checkbox "track_Rlink_23" [checked] [ref=e807]
+            - generic [ref=e808] [cursor=pointer]:
+              - generic [ref=e810]: track_Rlink_24
+              - checkbox "track_Rlink_24" [checked] [ref=e811]
+            - generic [ref=e812] [cursor=pointer]:
+              - generic [ref=e814]: track_Rlink_25
+              - checkbox "track_Rlink_25" [checked] [ref=e815]
+            - generic [ref=e816] [cursor=pointer]:
+              - generic [ref=e818]: track_Rlink_26
+              - checkbox "track_Rlink_26" [checked] [ref=e819]
+            - generic [ref=e820] [cursor=pointer]:
+              - generic [ref=e822]: track_Rlink_27
+              - checkbox "track_Rlink_27" [checked] [ref=e823]
+            - generic [ref=e824] [cursor=pointer]:
+              - generic [ref=e826]: track_Rlink_28
+              - checkbox "track_Rlink_28" [checked] [ref=e827]
+            - generic [ref=e828] [cursor=pointer]:
+              - generic [ref=e830]: track_Rlink_29
+              - checkbox "track_Rlink_29" [checked] [ref=e831]
+            - generic [ref=e832] [cursor=pointer]:
+              - generic [ref=e834]: track_Rlink_30
+              - checkbox "track_Rlink_30" [checked] [ref=e835]
+            - generic [ref=e836] [cursor=pointer]:
+              - generic [ref=e838]: track_Rlink_31
+              - checkbox "track_Rlink_31" [checked] [ref=e839]
+            - generic [ref=e840] [cursor=pointer]:
+              - generic [ref=e842]: track_Rlink_32
+              - checkbox "track_Rlink_32" [checked] [ref=e843]
+            - generic [ref=e844] [cursor=pointer]:
+              - generic [ref=e846]: track_Rlink_33
+              - checkbox "track_Rlink_33" [checked] [ref=e847]
+            - generic [ref=e848] [cursor=pointer]:
+              - generic [ref=e850]: track_Rlink_34
+              - checkbox "track_Rlink_34" [checked] [ref=e851]
+            - generic [ref=e852] [cursor=pointer]:
+              - generic [ref=e854]: track_Rlink_35
+              - checkbox "track_Rlink_35" [checked] [ref=e855]
+            - generic [ref=e856] [cursor=pointer]:
+              - generic [ref=e858]: track_Rlink_36
+              - checkbox "track_Rlink_36" [checked] [ref=e859]
+            - generic [ref=e860] [cursor=pointer]:
+              - generic [ref=e862]: track_Rlink_37
+              - checkbox "track_Rlink_37" [checked] [ref=e863]
+            - generic [ref=e864] [cursor=pointer]:
+              - generic [ref=e866]: track_Rlink_38
+              - checkbox "track_Rlink_38" [checked] [ref=e867]
+            - generic [ref=e868] [cursor=pointer]:
+              - generic [ref=e870]: track_Rlink_39
+              - checkbox "track_Rlink_39" [checked] [ref=e871]
+            - generic [ref=e872] [cursor=pointer]:
+              - generic [ref=e874]: track_Rlink_40
+              - checkbox "track_Rlink_40" [checked] [ref=e875]
+            - generic [ref=e876] [cursor=pointer]:
+              - generic [ref=e878]: track_Rlink_41
+              - checkbox "track_Rlink_41" [checked] [ref=e879]
+            - generic [ref=e880] [cursor=pointer]:
+              - generic [ref=e882]: track_Rlink_42
+              - checkbox "track_Rlink_42" [checked] [ref=e883]
+            - generic [ref=e884] [cursor=pointer]:
+              - generic [ref=e886]: track_Rlink_43
+              - checkbox "track_Rlink_43" [checked] [ref=e887]
+            - generic [ref=e888] [cursor=pointer]:
+              - generic [ref=e890]: track_Rlink_44
+              - checkbox "track_Rlink_44" [checked] [ref=e891]
+            - generic [ref=e892] [cursor=pointer]:
+              - generic [ref=e894]: track_Rlink_45
+              - checkbox "track_Rlink_45" [checked] [ref=e895]
+            - generic [ref=e896] [cursor=pointer]:
+              - generic [ref=e898]: track_Rlink_46
+              - checkbox "track_Rlink_46" [checked] [ref=e899]
+            - generic [ref=e900] [cursor=pointer]:
+              - generic [ref=e902]: track_Rlink_47
+              - checkbox "track_Rlink_47" [checked] [ref=e903]
+            - generic [ref=e904] [cursor=pointer]:
+              - generic [ref=e906]: track_Rlink_48
+              - checkbox "track_Rlink_48" [checked] [ref=e907]
+            - generic [ref=e908] [cursor=pointer]:
+              - generic [ref=e910]: track_Rlink_49
+              - checkbox "track_Rlink_49" [checked] [ref=e911]
+            - generic [ref=e912] [cursor=pointer]:
+              - generic [ref=e914]: track_Rlink_50
+              - checkbox "track_Rlink_50" [checked] [ref=e915]
+            - generic [ref=e916] [cursor=pointer]:
+              - generic [ref=e918]: track_Rlink_51
+              - checkbox "track_Rlink_51" [checked] [ref=e919]
+            - generic [ref=e920] [cursor=pointer]:
+              - generic [ref=e922]: track_Rlink_52
+              - checkbox "track_Rlink_52" [checked] [ref=e923]
+            - generic [ref=e924] [cursor=pointer]:
+              - generic [ref=e926]: track_Rlink_53
+              - checkbox "track_Rlink_53" [checked] [ref=e927]
+            - generic [ref=e928] [cursor=pointer]:
+              - generic [ref=e930]: track_Rlink_54
+              - checkbox "track_Rlink_54" [checked] [ref=e931]
+            - generic [ref=e932] [cursor=pointer]:
+              - generic [ref=e934]: track_Rlink_55
+              - checkbox "track_Rlink_55" [checked] [ref=e935]
+            - generic [ref=e936] [cursor=pointer]:
+              - generic [ref=e938]: track_Rlink_56
+              - checkbox "track_Rlink_56" [checked] [ref=e939]
+            - generic [ref=e940] [cursor=pointer]:
+              - generic [ref=e942]: track_Rlink_57
+              - checkbox "track_Rlink_57" [checked] [ref=e943]
+            - generic [ref=e944] [cursor=pointer]:
+              - generic [ref=e946]: track_Rlink_58
+              - checkbox "track_Rlink_58" [checked] [ref=e947]
+            - generic [ref=e948] [cursor=pointer]:
+              - generic [ref=e950]: track_Rlink_59
+              - checkbox "track_Rlink_59" [checked] [ref=e951]
+            - generic [ref=e952] [cursor=pointer]:
+              - generic [ref=e954]: track_Rlink_60
+              - checkbox "track_Rlink_60" [checked] [ref=e955]
+            - generic [ref=e956] [cursor=pointer]:
+              - generic [ref=e958]: track_Rlink_61
+              - checkbox "track_Rlink_61" [checked] [ref=e959]
+            - generic [ref=e960] [cursor=pointer]:
+              - generic [ref=e962]: track_Rlink_62
+              - checkbox "track_Rlink_62" [checked] [ref=e963]
+            - generic [ref=e964] [cursor=pointer]:
+              - generic [ref=e966]: track_Rlink_63
+              - checkbox "track_Rlink_63" [checked] [ref=e967]
+      - generic [ref=e968]:
+        - generic [ref=e969] [cursor=pointer]:
+          - generic [ref=e970]: ▾
+          - generic [ref=e971]: Pan & neck
+          - checkbox [checked] [ref=e972]
+        - generic [ref=e973]:
+          - generic [ref=e974]:
+            - generic [ref=e975] [cursor=pointer]:
+              - generic [ref=e976]: ▾
+              - generic [ref=e977]: Pan stage
+              - checkbox [checked] [ref=e978]
+            - generic [ref=e979]:
+              - generic [ref=e980] [cursor=pointer]:
+                - generic [ref=e982]: pan_platform
+                - checkbox "pan_platform" [checked] [ref=e983]
+              - generic [ref=e984] [cursor=pointer]:
+                - generic [ref=e986]: trim_neckfoot
+                - checkbox "trim_neckfoot" [checked] [ref=e987]
+              - generic [ref=e988] [cursor=pointer]:
+                - generic [ref=e990]: motor_pan
+                - checkbox "motor_pan" [checked] [ref=e991]
+              - generic [ref=e992] [cursor=pointer]:
+                - generic [ref=e994]: pan_gears
+                - checkbox "pan_gears" [checked] [ref=e995]
+              - generic [ref=e996] [cursor=pointer]:
+                - generic [ref=e998]: pan_race
+                - checkbox "pan_race" [checked] [ref=e999]
+              - generic [ref=e1000] [cursor=pointer]:
+                - generic [ref=e1002]: pan_balls
+                - checkbox "pan_balls" [checked] [ref=e1003]
+              - generic [ref=e1004] [cursor=pointer]:
+                - generic [ref=e1006]: pan_cage
+                - checkbox "pan_cage" [checked] [ref=e1007]
+              - generic [ref=e1008] [cursor=pointer]:
+                - generic [ref=e1010]: pan_clips
+                - checkbox "pan_clips" [checked] [ref=e1011]
+          - generic [ref=e1012]:
+            - generic [ref=e1013] [cursor=pointer]:
+              - generic [ref=e1014]: ▾
+              - generic [ref=e1015]: Neck & tilt
+              - checkbox [checked] [ref=e1016]
+            - generic [ref=e1017]:
+              - generic [ref=e1018] [cursor=pointer]:
+                - generic [ref=e1020]: neck_clevis
+                - checkbox "neck_clevis" [checked] [ref=e1021]
+              - generic [ref=e1022] [cursor=pointer]:
+                - generic [ref=e1024]: worm_wheel
+                - checkbox "worm_wheel" [checked] [ref=e1025]
+              - generic [ref=e1026] [cursor=pointer]:
+                - generic [ref=e1028]: tilt_worm
+                - checkbox "tilt_worm" [checked] [ref=e1029]
+              - generic [ref=e1030] [cursor=pointer]:
+                - generic [ref=e1032]: motor_tilt
+                - checkbox "motor_tilt" [checked] [ref=e1033]
+              - generic [ref=e1034] [cursor=pointer]:
+                - generic [ref=e1036]: tilt_carrier
+                - checkbox "tilt_carrier" [checked] [ref=e1037]
+              - generic [ref=e1038] [cursor=pointer]:
+                - generic [ref=e1040]: tilt_axle
+                - checkbox "tilt_axle" [checked] [ref=e1041]
+      - generic [ref=e1042]:
+        - generic [ref=e1043] [cursor=pointer]:
+          - generic [ref=e1044]: ▾
+          - generic [ref=e1045]: Head
+          - checkbox [checked] [ref=e1046]
+        - generic [ref=e1047]:
+          - generic [ref=e1048]:
+            - generic [ref=e1049] [cursor=pointer]:
+              - generic [ref=e1050]: ▾
+              - generic [ref=e1051]: Shell
+              - checkbox [checked] [ref=e1052]
+            - generic [ref=e1053]:
+              - generic [ref=e1054] [cursor=pointer]:
+                - generic [ref=e1056]: head_bezel_L
+                - checkbox "head_bezel_L" [checked] [ref=e1057]
+              - generic [ref=e1058] [cursor=pointer]:
+                - generic [ref=e1060]: head_bezel_R
+                - checkbox "head_bezel_R" [checked] [ref=e1061]
+              - generic [ref=e1062] [cursor=pointer]:
+                - generic [ref=e1064]: head_back_frame_L
+                - checkbox "head_back_frame_L" [checked] [ref=e1065]
+              - generic [ref=e1066] [cursor=pointer]:
+                - generic [ref=e1068]: head_back_frame_R
+                - checkbox "head_back_frame_R" [checked] [ref=e1069]
+              - generic [ref=e1070] [cursor=pointer]:
+                - generic [ref=e1072]: head_back_panel_L
+                - checkbox "head_back_panel_L" [checked] [ref=e1073]
+              - generic [ref=e1074] [cursor=pointer]:
+                - generic [ref=e1076]: head_back_panel_R
+                - checkbox "head_back_panel_R" [checked] [ref=e1077]
+              - generic [ref=e1078] [cursor=pointer]:
+                - generic [ref=e1080]: head_door
+                - checkbox "head_door" [checked] [ref=e1081]
+              - generic [ref=e1082] [cursor=pointer]:
+                - generic [ref=e1084]: trim_rail_L
+                - checkbox "trim_rail_L" [checked] [ref=e1085]
+              - generic [ref=e1086] [cursor=pointer]:
+                - generic [ref=e1088]: trim_rail_R
+                - checkbox "trim_rail_R" [checked] [ref=e1089]
+              - generic [ref=e1090] [cursor=pointer]:
+                - generic [ref=e1092]: sd_plug
+                - checkbox "sd_plug" [checked] [ref=e1093]
+              - generic [ref=e1094] [cursor=pointer]:
+                - generic [ref=e1096]: trim_hatch_frame
+                - checkbox "trim_hatch_frame" [checked] [ref=e1097]
+          - generic [ref=e1098]:
+            - generic [ref=e1099] [cursor=pointer]:
+              - generic [ref=e1100]: ▾
+              - generic [ref=e1101]: Screen & camera
+              - checkbox [checked] [ref=e1102]
+            - generic [ref=e1103]:
+              - generic [ref=e1104] [cursor=pointer]:
+                - generic [ref=e1106]: screen_tray
+                - checkbox "screen_tray" [checked] [ref=e1107]
+              - generic [ref=e1108] [cursor=pointer]:
+                - generic [ref=e1110]: camera_pod
+                - checkbox "camera_pod" [checked] [ref=e1111]
+              - generic [ref=e1112] [cursor=pointer]:
+                - generic [ref=e1114]: screen_ref
+                - checkbox "screen_ref" [checked] [ref=e1115]
+              - generic [ref=e1116] [cursor=pointer]:
+                - generic [ref=e1118]: camera_ref
+                - checkbox "camera_ref" [checked] [ref=e1119]
+              - generic [ref=e1120] [cursor=pointer]:
+                - generic [ref=e1122]: cam_cover
+                - checkbox "cam_cover" [checked] [ref=e1123]
+          - generic [ref=e1124]:
+            - generic [ref=e1125] [cursor=pointer]:
+              - generic [ref=e1126]: ▾
+              - generic [ref=e1127]: Lights & ears
+              - checkbox [checked] [ref=e1128]
+            - generic [ref=e1129]:
+              - generic [ref=e1130] [cursor=pointer]:
+                - generic [ref=e1132]: ear_mic_L
+                - checkbox "ear_mic_L" [checked] [ref=e1133]
+              - generic [ref=e1134] [cursor=pointer]:
+                - generic [ref=e1136]: ear_mic_R
+                - checkbox "ear_mic_R" [checked] [ref=e1137]
+              - generic [ref=e1138] [cursor=pointer]:
+                - generic [ref=e1140]: led_strip
+                - checkbox "led_strip" [checked] [ref=e1141]
+          - generic [ref=e1142]:
+            - generic [ref=e1143] [cursor=pointer]:
+              - generic [ref=e1144]: ▾
+              - generic [ref=e1145]: Antennas
+              - checkbox [checked] [ref=e1146]
+            - generic [ref=e1147]:
+              - generic [ref=e1148] [cursor=pointer]:
+                - generic [ref=e1150]: antenna_L
+                - checkbox "antenna_L" [checked] [ref=e1151]
+              - generic [ref=e1152] [cursor=pointer]:
+                - generic [ref=e1154]: antenna_R
+                - checkbox "antenna_R" [checked] [ref=e1155]
+              - generic [ref=e1156] [cursor=pointer]:
+                - generic [ref=e1158]: ant_gears_L
+                - checkbox "ant_gears_L" [checked] [ref=e1159]
+              - generic [ref=e1160] [cursor=pointer]:
+                - generic [ref=e1162]: ant_gears_R
+                - checkbox "ant_gears_R" [checked] [ref=e1163]
+              - generic [ref=e1164] [cursor=pointer]:
+                - generic [ref=e1166]: ant_bracket
+                - checkbox "ant_bracket" [checked] [ref=e1167]
+              - generic [ref=e1168] [cursor=pointer]:
+                - generic [ref=e1170]: motor_ant_L
+                - checkbox "motor_ant_L" [checked] [ref=e1171]
+              - generic [ref=e1172] [cursor=pointer]:
+                - generic [ref=e1174]: motor_ant_R
+                - checkbox "motor_ant_R" [checked] [ref=e1175]
+    - generic [ref=e1176]: Pose
+    - generic [ref=e1177]:
+      - text: Pan
+      - generic [ref=e1178]: 22°
+      - slider "Pan 22°" [ref=e1179] [cursor=pointer]: "22"
+    - generic [ref=e1180]:
+      - text: Tilt
+      - generic [ref=e1181]: "-12°"
+      - slider "Tilt -12°" [ref=e1182] [cursor=pointer]: "-12"
+    - generic [ref=e1183]:
+      - text: Antenna L
+      - generic [ref=e1184]: 15mm
+      - slider "Antenna L 15mm" [ref=e1185] [cursor=pointer]: "15"
+    - generic [ref=e1186]:
+      - text: Antenna R
+      - generic [ref=e1187]: 15mm
+      - slider "Antenna R 15mm" [ref=e1188] [cursor=pointer]: "15"
+    - generic [ref=e1189] [cursor=pointer]:
+      - checkbox "Sweep (animate head)" [ref=e1190]
+      - text: Sweep (animate head)
+    - generic [ref=e1191]: Appearance
+    - generic [ref=e1192]:
+      - text: Transparency
+      - generic [ref=e1193]: 0%
+      - slider "Transparency 0%" [ref=e1194] [cursor=pointer]: "0"
+    - generic [ref=e1195]:
+      - text: Explode
+      - generic [ref=e1196]: 0%
+      - slider "Explode 0%" [ref=e1197] [cursor=pointer]: "0"
+    - generic [ref=e1198]: Measure
+    - generic [ref=e1199] [cursor=pointer]:
+      - checkbox "Overall size" [ref=e1200]
+      - text: Overall size
+    - generic [ref=e1201] [cursor=pointer]:
+      - checkbox "Per-part size" [ref=e1202]
+      - text: Per-part size
+    - generic [ref=e1203]: Fits
+    - generic [ref=e1204] [cursor=pointer]:
+      - checkbox "Fit map" [ref=e1205]
+      - text: Fit map
+    - generic [ref=e1206]: View
+    - generic [ref=e1207] [cursor=pointer]:
+      - checkbox "Section cut X" [ref=e1208]
+      - text: Section cut
+      - combobox [ref=e1209]:
+        - option "X" [selected]
+        - option "Y"
+        - option "Z"
+    - generic [ref=e1210]:
+      - text: Cut plane
+      - generic [ref=e1211]: 50%
+      - slider "Cut plane 50%" [ref=e1212] [cursor=pointer]: "0.5"
+    - generic [ref=e1213] [cursor=pointer]:
+      - checkbox "Auto-spin 35" [ref=e1214]
+      - text: Auto-spin
+      - slider [ref=e1215]: "35"
+    - generic [ref=e1216]: drag orbit · scroll zoom · right-drag panright-click a part or list row · H hide · I isolate · F focus · A all⌘Z undo · ⇧⌘Z redo · live-reloads on rebuild

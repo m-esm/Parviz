@@ -129,6 +129,56 @@ def main():
     # on a removable chassis_base so the in-flux components iterate without the hull.
     check("chassis_base present (equipment base)", "chassis_base" in nodes)
 
+    # user 2026-07-14 round 2 (separate by stability, side walls): the wall bands the
+    # pod RAILS + TT MOTORS mount to are bolt-in panels; the hull tub is OPEN there.
+    check("4 chassis_side panels present",
+          {"chassis_side_L_front", "chassis_side_L_rear",
+           "chassis_side_R_front", "chassis_side_R_rear"} <= nodes)
+    # shaft pass Ø8 open through each panel at both stations, and the HULL wall
+    # absent in the band (the tub must not grow the wall back).
+    check("TT shaft bore open through chassis_side_R_rear",
+          bore_pierces(M("chassis_side_R_rear"), (64.0, P["spr_y"], 25.32), (1, 0, 0), 7.0))
+    check("TT shaft bore open through chassis_side_R_front",
+          bore_pierces(M("chassis_side_R_front"), (64.0, P["spr_y2"], 25.32), (1, 0, 0), 7.0))
+    check("hull wall OPEN in the panel band (lower_rear)",
+          clear(M("chassis_lower_rear"), [(67.5, P["spr_y"], 30.0), (-67.5, P["spr_y"], 30.0)]))
+    check("panels span the hull seams (front: y26, rear: y-88)",
+          M("chassis_side_R_front").bounds[0][1] < 20.0
+          and M("chassis_side_R_front").bounds[1][1] > 32.0
+          and M("chassis_side_R_rear").bounds[0][1] < -94.0
+          and M("chassis_side_R_rear").bounds[1][1] > -82.0)
+    # user 2026-07-14 round 3 (pod_rail_L/R deleted): the wheel beam is INTEGRAL to
+    # the side panels -- beam material present at the proven section, M4 axle bore
+    # open at the y 57.5 station, and no pod_rail nodes left in the scene.
+    check("wheel beam integral to the R front panel (x 74..80.4 / z 14..26)",
+          inside(M("chassis_side_R_front"), [(77.2, 70.0, 20.0), (77.2, 20.0, 20.0)]))
+    check("M4 bolt-axle bore open through the panel beam (y 57.5 station)",
+          bore_pierces(M("chassis_side_R_front"),
+                       (73.0, P["roadwheel_ys"][0],
+                        (25.32 - P["track_wheel_r"]) + 3.5 + P["roadwheel_d"] / 2 + 0.1),
+                       (1, 0, 0), 8.0))
+    check("pod_rail nodes deleted", not {"pod_rail_L", "pod_rail_R"} & nodes)
+    # user 2026-07-14 round 4 (standalone track module): the panels run to the end
+    # axles -- END TOWERS replace the deck pylons (front tension slot open across
+    # the travel, rear Ø8.4 open, tower material present) and the deck is pylon-free.
+    ey_ax = P["track_wheelbase"] / 2
+    check("front END TOWER on the panel carries the tension slot",
+          inside(M("chassis_side_R_front"), [(67.4, 140.0, 44.0), (67.4, 122.0, 44.0)])
+          and all(bore_pierces(M("chassis_side_R_front"), (60.0, ey_ax + dy, 34.32),
+                               (1, 0, 0), 12.0)
+                  for dy in (-P["idler_slot_in"], 0.0, P["idler_slot_out"])))
+    check("rear END TOWER on the panel carries the Ø8.4 end-axle bore",
+          inside(M("chassis_side_R_rear"), [(67.4, -136.0, 44.0), (67.4, -122.0, 44.0)])
+          and bore_pierces(M("chassis_side_R_rear"), (60.0, -ey_ax, 34.32), (1, 0, 0), 12.0))
+    check("deck pylons deleted (overhang open at the axle line)",
+          clear(M("chassis_deck_front"), [(66.0, ey_ax, 34.32), (-66.0, ey_ax, 34.32)])
+          and clear(M("chassis_deck_rear"), [(66.0, -ey_ax, 34.32), (-66.0, -ey_ax, 34.32)]))
+    # splice: the two pieces half-lap in the L-return and screw together, so a side
+    # assembles rigid without any chassis_lower_* piece.
+    check("panel splice lap present (front upper tongue over rear lower tongue)",
+          inside(M("chassis_side_R_front"), [(72.0, -20.0, 22.5)])
+          and inside(M("chassis_side_R_rear"), [(72.0, -20.0, 15.0)]))
+
     # user 2026-07-08 (master link + keepers): loop closes tool-openable.
     check("master links in both loops",
           {"track_L.link_00_master", "track_R.link_00_master"} <= geoms)

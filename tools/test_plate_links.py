@@ -15,11 +15,9 @@ the 72-link production run. One plate, one spool (PETG), settings baked in:
   * pin gauge coupon 15x10x8: three HORIZONTAL through-bores Ø1.9/2.0/2.1 (same bore
     attitude as the links' printed pin bores, so the fit transfers), labeled 1/2/3 by
     notch grooves in the top face, to dial the Ø1.75 filament hinge-pin fit.
-  * pod-rail joint coupon 20x26 footprint x 12 tall, printed like build_pod_rails
-    (outer face down): one M3 captive-nut slot (3.4 x 6.0, floor 3.3 below the screw
-    axis so the nut corner seats at the axis -- exact copy), one Ø3.6 vertical screw
-    bore, one Ø3.85 x 7.0-deep blind dowel press socket (rail values; only the web
-    behind the socket grows 1.0 -> 5.0 because the coupon is 12 thick vs the rail's 8).
+  (The pod-rail joint coupon was RETIRED 2026-07-14 round 3: pod_rail_L/R deleted,
+  the wheel beam is integral to the chassis_side panels and the M3/dowel joint no
+  longer exists.)
 
 Writes per-part STLs (scratchpad or STL_DIR env) + exports/test_plate_links.3mf.
 No edits to src/build.py -- geometry is imported. Regenerate after any track change.
@@ -79,29 +77,6 @@ def pin_gauge():
     return g
 
 
-def rail_coupon():
-    """Pod-rail joint coupon in PRINT frame (outer face = bed). Mapping from
-    build_pod_rails local coords: rail Z (band 14..40) -> coupon X (-13..+13),
-    rail Y -> coupon Y, rail X depth-from-outer-face (78) -> coupon Z (0..12).
-    Screw axis rail z=34 -> x=+7; dowel rail z=20 -> x=-7; nut slot open at the
-    rail-top (z=40) end face x=+13."""
-    c = box(26, 20, 12)
-    c.apply_translation((0, 0, 6))
-    mb = cyl(1.8, 16, axis="z")                          # M3 clearance Ø3.6, vertical through
-    mb.apply_translation((7, 0, 6))
-    c = sub(c, mb)
-    # captive-nut slot: 3.4 across the nut axis (coupon Z, rail X 74.6..78 -> z 0..3.4),
-    # 6.0 across flats (Y), floor at x = 34-30.7 = 3.3 below the screw axis -> x=3.7,
-    # open through the +x end face. Nut slides in until its 6.58/2 corner centers on the bore.
-    ns = box(11.3, 6.0, 3.4)
-    ns.apply_translation((3.7 + 11.3 / 2, 0, 1.7))
-    c = sub(c, ns)
-    ds = cyl((P["pod_join_dowel_d"] - 0.15) / 2, 14, axis="z")   # Ø3.85 blind, 7.0 deep
-    ds.apply_translation((-7, 0, 12 - 7.0 + 7))                  # from the top (inner) face
-    c = sub(c, ds)
-    return c
-
-
 # ---------------------------------------------------------------- checks
 def overhang_report(name, m, bed_anchor_z=1.25):
     """Area of downward faces steeper than 45deg above the bed-anchored zone."""
@@ -119,15 +94,14 @@ def main():
     link = track_link_print()
     parts = [(f"track_link_{i+1}", link.copy()) for i in range(5)]
     parts += [("sprocket_test", sprocket_print()),
-              ("pin_gauge_190_200_210", pin_gauge()),
-              ("pod_rail_coupon", rail_coupon())]
+              ("pin_gauge_190_200_210", pin_gauge())]
 
     # bed-relative positions (origin = plate centre), brim 5 -> footprint + 10 per axis;
     # links go portrait (17 wide) so five fit one row with >= 8 mm brim-to-brim air.
     ROTZ = tf.rotation_matrix(np.pi / 2, [0, 0, 1])
     POS = {"track_link_1": (-72, -60), "track_link_2": (-36, -60), "track_link_3": (0, -60),
            "track_link_4": (36, -60), "track_link_5": (72, -60),
-           "sprocket_test": (-70, 40), "pod_rail_coupon": (-10, 40),
+           "sprocket_test": (-70, 40),
            "pin_gauge_190_200_210": (44, 40)}
 
     print("part                     footprint (w x d mm)  height  watertight  overhang>45deg")

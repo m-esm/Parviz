@@ -365,24 +365,11 @@ P = {
     "tt_motor_d": 20.0,     # can Ø20.00, 14.99 across flats, 13.5 exposed
     "tt_shaft_d": 5.4,      # double-D output shaft, 3.70 flats, 8.8 proud, flat len 8.0
 
-    # --- Chassis mechanical detailing: body<->pod join, pan-motor seat, ballast bay ---
-    # Join stations (2x per side): each carries one M3 + one Ø4 dowel. y=+-40 = centers of
-    # the 11-wide wall windows between the +-32 / +-48 vent slots (spread with the 200
-    # chassis 2026-07-10), clear of the TT wall zone (y -92..-55) and the idler tension
-    # arm (y 73..89). Screws drive from INSIDE the
-    # chassis cavity through the wall into captive nuts in the pod rail: the 4 mm pod gap
-    # holds a nut but no screwdriver, and loose nuts can't be held in a 4 mm slot -- so the
-    # nut is trapped pod-side and the head sits on the cavity wall (same convention as the
-    # TT gearbox screws, "nut in the gap").
-    "pod_join_y": (-40.0, 40.0),
-    "pod_join_screw_z": 34.0,   # M3 axis: mid of the loop's free band, max spread above dowel
-    "pod_join_dowel_z": 20.0,   # Ø4 dowel axis: 14 below the screw -> shear + pitch location
-    "pod_join_dowel_d": 4.0,    # Ø4x12 pin: +0.1 slip in the wall, -0.15 press in the rail
-    "pod_rail_x1": 78.0,        # rail outer face: 4 fills the pod gap (links never enter
-                                # x 70..74) + 4 into the loop interior's link-free mid band
-    "pod_rail_z": (14.0, 40.0), # rail z band: 4.5 above the bottom-run knuckle tops (9.5),
-                                # 1.14 below the top-run knuckle sweep (41.14)
-    "pod_rail_block_w": 9.0,    # per-station block width (Y): 1.0 clear of each vent slot
+    # --- Chassis mechanical detailing: pan-motor seat, ballast bay ---
+    # (The body<->pod join stations + pod_rail_* params were RETIRED 2026-07-14
+    # round 3: pod_rail_L/R deleted, the chassis_side panels grow the wheel beam
+    # directly -- x 69.5..74 web + 74..80.4 beam, z 12/14..26 -- and there is no
+    # separate rail to join. The beam numbers live in build_chassis_parts.)
     # Chassis print split: the old one-piece tub+deck trapped deep pockets, side-wall holes,
     # pan-seat features, and internal posts in one support-heavy print. Split at z=46,
     # right under the solid deck, so the lower tub prints open-top and the pan deck prints

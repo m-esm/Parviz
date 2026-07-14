@@ -1,0 +1,24 @@
+[   24168ms] NotFoundError: Failed to execute 'setPointerCapture' on 'Element': No active pointer with the given id is found.
+    at OrbitControls.onPointerDown (https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/controls/OrbitControls.js:1122:19)
+    at click (eval at <anonymous> (eval at evaluate (:303:30)), <anonymous>:9:8)
+    at eval (eval at <anonymous> (eval at evaluate (:303:30)), <anonymous>:15:3)
+    at async eval (eval at evaluate (:303:30), <anonymous>:4:30)
+    at async <anonymous>:329:30
+[   24283ms] NotFoundError: Failed to execute 'setPointerCapture' on 'Element': No active pointer with the given id is found.
+    at OrbitControls.onPointerDown (https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/controls/OrbitControls.js:1122:19)
+    at click (eval at <anonymous> (eval at evaluate (:303:30)), <anonymous>:9:8)
+    at eval (eval at <anonymous> (eval at evaluate (:303:30)), <anonymous>:27:3)
+    at async eval (eval at evaluate (:303:30), <anonymous>:4:30)
+    at async <anonymous>:329:30
+[   24388ms] NotFoundError: Failed to execute 'setPointerCapture' on 'Element': No active pointer with the given id is found.
+    at OrbitControls.onPointerDown (https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/controls/OrbitControls.js:1122:19)
+    at click (eval at <anonymous> (eval at evaluate (:303:30)), <anonymous>:9:8)
+    at eval (eval at <anonymous> (eval at evaluate (:303:30)), <anonymous>:31:3)
+    at async eval (eval at evaluate (:303:30), <anonymous>:4:30)
+    at async <anonymous>:329:30
+[   24441ms] NotFoundError: Failed to execute 'setPointerCapture' on 'Element': No active pointer with the given id is found.
+    at OrbitControls.onPointerDown (https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/controls/OrbitControls.js:1122:19)
+    at click (eval at <anonymous> (eval at evaluate (:303:30)), <anonymous>:9:8)
+    at eval (eval at <anonymous> (eval at evaluate (:303:30)), <anonymous>:35:3)
+    at async eval (eval at evaluate (:303:30), <anonymous>:4:30)
+    at async <anonymous>:329:30

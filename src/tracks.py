@@ -355,7 +355,8 @@ def build_tracks():
     joints on Ø1.75 filament pins) wrapping two ground-run conjugate sprockets (TT
     double-D hub, phase-clocked to the pin grid) + end idlers on TWO F688ZZ flanged
     bearings each (front pair tensions in the deck pylons) + road wheels riding the
-    knuckle crowns on M4 bolt-axles off the pod-rail wheel beam (build_pod_rails).
+    knuckle crowns on M4 bolt-axles off the side panels' integral wheel beams
+    (chassis_side_* in build_chassis_parts; pod_rail_L/R deleted 2026-07-14).
     Bottom-run grouser face = ground (z=0). Each pod is a concatenation of separate
     printed pieces, not one solid."""
     R, tw, wb = P["track_wheel_r"], P["track_width"], P["track_wheelbase"]

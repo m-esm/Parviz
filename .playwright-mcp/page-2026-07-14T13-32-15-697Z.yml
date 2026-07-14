@@ -1,0 +1,333 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - banner [ref=e5]:
+      - generic [ref=e6]:
+        - link [ref=e8] [cursor=pointer]:
+          - /url: /
+          - img "Craftcloud®" [ref=e10]
+        - generic [ref=e11]:
+          - generic:
+            - button "Our Services" [ref=e12] [cursor=pointer]
+            - button "Why Craftcloud?" [ref=e13] [cursor=pointer]
+            - link "Materials" [ref=e14] [cursor=pointer]:
+              - /url: /en/material-guide
+            - link "Help & Support" [ref=e15] [cursor=pointer]:
+              - /url: /en/p/help
+        - generic [ref=e16]:
+          - link "Upload 3D Models" [ref=e232] [cursor=pointer]:
+            - /url: /en/upload
+          - generic [ref=e17]:
+            - link "Ask AI" [ref=e19] [cursor=pointer]:
+              - /url: "#"
+            - generic [ref=e22]:
+              - link "FI, EUR" [ref=e235] [cursor=pointer]:
+                - /url: "#"
+              - link "My Models" [ref=e26] [cursor=pointer]:
+                - /url: /en/account/models
+              - link "My Cart" [ref=e29] [cursor=pointer]:
+                - /url: /en/cart
+              - link "Sign In" [ref=e32] [cursor=pointer]:
+                - /url: "#"
+    - generic [ref=e236]:
+      - complementary [ref=e237]:
+        - generic [ref=e238]:
+          - generic [ref=e240]:
+            - generic [ref=e241]:
+              - generic [ref=e242]: "1."
+              - generic [ref=e243]: Material
+              - generic [ref=e244]: •
+            - generic [ref=e245]:
+              - generic [ref=e246]: "2."
+              - generic [ref=e247]: Finish
+            - generic [ref=e249]:
+              - generic [ref=e250]: "3."
+              - generic [ref=e251]: Color
+          - generic [ref=e253]:
+            - heading "Your model" [level=1] [ref=e256]
+            - generic [ref=e257]:
+              - paragraph [ref=e258]:
+                - strong [ref=e259]: Did you know?
+                - text: You can choose different materials, finishes, or colors for each model by toggling off the models you don’t want to configure.
+              - generic [ref=e260]:
+                - generic [ref=e261]:
+                  - generic [ref=e263] [cursor=pointer]:
+                    - checkbox [checked]
+                  - generic [ref=e266]:
+                    - generic [ref=e267]: bambu
+                    - generic [ref=e268]: .3mf
+                  - button [ref=e271] [cursor=pointer]:
+                    - img "Delete" [ref=e273]
+                - generic [ref=e274]:
+                  - button [ref=e276] [cursor=pointer]:
+                    - img "Preview image of bambu.3mf" [ref=e278]
+                  - generic [ref=e279]:
+                    - generic "1,383.8 × 1,454.76 × 88.48 mm" [ref=e280]:
+                      - generic [ref=e281]: 1,383.8 × 1,454.76 × 88.48
+                      - generic [ref=e282]:
+                        - text: mm
+                        - button "scale" [ref=e283] [cursor=pointer]
+                    - paragraph [ref=e285]: 2,249,738.65 mm³
+                    - button "Add attachments & notes" [ref=e286] [cursor=pointer]
+                - generic [ref=e290]:
+                  - generic [ref=e291]:
+                    - button [disabled] [ref=e292]
+                    - textbox [ref=e293]: "1"
+                    - button [ref=e294] [cursor=pointer]
+                  - button "All options More" [ref=e295] [cursor=pointer]:
+                    - generic [ref=e296]: All options
+                    - img "More" [ref=e298]
+          - link "Upload more" [ref=e300] [cursor=pointer]:
+            - /url: /en/upload
+      - main [ref=e303]:
+        - generic [ref=e310]:
+          - generic [ref=e313]:
+            - heading [level=1] [ref=e314]:
+              - text: Select material for your
+              - generic [ref=e315]: 1 model
+            - generic [ref=e318]:
+              - img "search" [ref=e320]
+              - textbox "Search…" [ref=e321]
+          - generic [ref=e322]:
+            - generic [ref=e323]:
+              - generic [ref=e324]:
+                - generic [ref=e326]:
+                  - generic [ref=e327] [cursor=pointer]:
+                    - radio "3D Printing" [checked]
+                    - generic [ref=e329]: 3D Printing
+                  - generic [ref=e330] [cursor=pointer]:
+                    - radio "CNC Machining"
+                    - generic [ref=e332]: CNC Machining
+                - button "Help me choose a material" [ref=e333] [cursor=pointer]
+              - generic [ref=e337]:
+                - button "Material groups" [ref=e338] [cursor=pointer]
+                - button "Production technology" [ref=e341] [cursor=pointer]
+                - button "Material properties" [ref=e344] [cursor=pointer]
+                - button "Production location" [ref=e347] [cursor=pointer]
+                - button "Show all filters" [ref=e350] [cursor=pointer]
+              - button "Relevance" [ref=e354] [cursor=pointer]
+            - generic [ref=e358]:
+              - generic [ref=e359]: 148 materials available
+              - generic [ref=e360]: Properties
+              - generic [ref=e361]: Technical Details
+          - generic [ref=e364]:
+            - generic [ref=e366]:
+              - generic [ref=e367]:
+                - button [ref=e368] [cursor=pointer]
+                - generic [ref=e369]:
+                  - generic [ref=e370]: Standard Resin
+                  - paragraph [ref=e372]: Standard resin is a low-cost material, best used for visual models, figurines, and prototypes.
+                  - generic [ref=e374]:
+                    - generic [ref=e375]: SLA
+                    - generic [ref=e376]: DLP
+                    - generic [ref=e377]: MSLA
+                    - generic [ref=e378]: LCD
+                    - generic [ref=e379]: LFS
+                    - generic [ref=e380]: "+1"
+                  - generic [ref=e381]:
+                    - strong [ref=e382]: "Finishes:"
+                    - text: Standard, Matte, Glossy, Electroplated, Electroplated Colored
+                  - generic [ref=e383]: "+58"
+              - list [ref=e396]:
+                - listitem [ref=e397]: High detail
+                - listitem [ref=e398]: Visual
+                - listitem [ref=e399]: Smooth
+              - generic [ref=e401]:
+                - generic [ref=e402]:
+                  - generic [ref=e403]: "Accuracy:"
+                  - text: ±0.2% (lower limit of ±0.2 mm)
+                - generic [ref=e404]:
+                  - generic [ref=e405]: "Min. wall thickness:"
+                  - text: 0.6 - 1 mm • • • • • •
+                - button "Download datasheet" [ref=e406] [cursor=pointer]
+              - generic [ref=e409]:
+                - generic [ref=e410]:
+                  - generic [ref=e411]: 2.457,83 €
+                  - button "+ 23,92 € shipping" [ref=e421] [cursor=pointer]
+                  - generic [ref=e423]:
+                    - button "Select material" [ref=e424] [cursor=pointer]
+                    - button "Material details" [ref=e426] [cursor=pointer]
+                - generic [ref=e428]: 3 offers available
+            - generic [ref=e430]:
+              - generic [ref=e431]:
+                - button [ref=e432] [cursor=pointer]
+                - generic [ref=e433]:
+                  - generic [ref=e434]: SLS Nylon PA12
+                  - paragraph [ref=e436]: Nylon PA12 (Polyamide) is a strong and heat-resistant material commonly used to print strong and functional parts.
+                  - generic [ref=e437]: SLS
+                  - generic [ref=e441]:
+                    - strong [ref=e442]: "Finishes:"
+                    - text: Standard, Polished, Satin, Vapor Smoothed, Shot Peened, Waterproof, Sandblasted, Dyed Velvet, Electroplated, Cerakote Ceramic Coating
+                  - generic [ref=e443]: "+56"
+              - list [ref=e456]:
+                - listitem [ref=e457]: Strong
+                - listitem [ref=e458]: Heat resistant
+                - listitem [ref=e459]: Functional
+                - listitem [ref=e460]: Visual
+                - listitem [ref=e461]: Wear resistant
+                - listitem [ref=e462]:
+                  - link "+ 1 more" [ref=e463] [cursor=pointer]:
+                    - /url: "#"
+              - generic [ref=e465]:
+                - generic [ref=e466]:
+                  - generic [ref=e467]: "Accuracy:"
+                  - text: ±0.3% (lower limit of ±0.3 mm)
+                - generic [ref=e468]:
+                  - generic [ref=e469]: "Min. wall thickness:"
+                  - text: 0.8 mm
+                - button "Download datasheet" [ref=e470] [cursor=pointer]
+              - generic [ref=e474]:
+                - generic [ref=e475]: Not available
+                - generic [ref=e478]:
+                  - button "Contact us" [ref=e479] [cursor=pointer]
+                  - button "Material details" [ref=e481] [cursor=pointer]
+            - generic [ref=e484]:
+              - generic [ref=e485]:
+                - button [ref=e486] [cursor=pointer]
+                - generic [ref=e487]:
+                  - generic [ref=e488]: PLA
+                  - paragraph [ref=e490]: PLA is a low-cost plastic, perfect for prototypes and functional parts that do not require strength or heat resistance.
+                  - generic [ref=e491]: FDM
+                  - generic [ref=e495]:
+                    - strong [ref=e496]: "Finishes:"
+                    - text: Standard, Sanded
+                  - generic [ref=e497]: "+128"
+              - list [ref=e510]:
+                - listitem [ref=e511]: Visual
+              - generic [ref=e513]:
+                - generic [ref=e514]:
+                  - generic [ref=e515]: "Accuracy:"
+                  - text: ±0.3% (lower limit of ±0.2 mm)
+                - generic [ref=e516]:
+                  - generic [ref=e517]: "Min. wall thickness:"
+                  - text: 1 mm
+                - button "Download datasheet" [ref=e518] [cursor=pointer]
+              - generic [ref=e522]:
+                - generic [ref=e523]: Not available
+                - generic [ref=e526]:
+                  - button "Contact us" [ref=e527] [cursor=pointer]
+                  - button "Material details" [ref=e529] [cursor=pointer]
+            - generic [ref=e532]:
+              - generic [ref=e533]:
+                - button [ref=e534] [cursor=pointer]
+                - generic [ref=e535]:
+                  - generic [ref=e536]: HP® MJF Nylon PA12
+                  - paragraph [ref=e538]: Developed by HP, MJF Nylon is a widely used material for strong and detailed end-use parts and prototypes.
+                  - generic [ref=e539]: MJF
+                  - generic [ref=e543]:
+                    - strong [ref=e544]: "Finishes:"
+                    - text: Standard, Polished, Vapor Smoothed, Shot Peened, Electroplated, UV Powder Coating
+                  - generic [ref=e545]: "+25"
+              - list [ref=e558]:
+                - listitem [ref=e559]: Strong
+                - listitem [ref=e560]: Impact resistant
+                - listitem [ref=e561]: Functional
+                - listitem [ref=e562]: Visual
+                - listitem [ref=e563]: Water resistant
+                - listitem [ref=e564]:
+                  - link "+ 1 more" [ref=e565] [cursor=pointer]:
+                    - /url: "#"
+              - generic [ref=e567]:
+                - generic [ref=e568]:
+                  - generic [ref=e569]: "Accuracy:"
+                  - text: ±0.3% (lower limit of ±0.3 mm)
+                - generic [ref=e570]:
+                  - generic [ref=e571]: "Min. wall thickness:"
+                  - text: 0.8 mm
+                - button "Download datasheet" [ref=e572] [cursor=pointer]
+              - generic [ref=e576]:
+                - generic [ref=e577]: Not available
+                - generic [ref=e580]:
+                  - button "Contact us" [ref=e581] [cursor=pointer]
+                  - button "Material details" [ref=e583] [cursor=pointer]
+            - generic [ref=e586]:
+              - generic [ref=e587]:
+                - button [ref=e588] [cursor=pointer]
+                - generic [ref=e589]:
+                  - generic [ref=e590]: 316L Stainless Steel
+                  - paragraph [ref=e592]: 316L Stainless Steel is a highly durable alloy known for its corrosion resistance and versatility in both industrial and aesthetic applications.
+                  - generic [ref=e594]:
+                    - generic [ref=e595]: SLM / DMLS
+                    - generic [ref=e596]: LMM
+                    - generic [ref=e597]: DMP
+                  - generic [ref=e599]:
+                    - strong [ref=e600]: "Finishes:"
+                    - text: Sandblasted Matte, Polished & Sandblasted, Satin Glossy, Mirror Polished, Standard, Glass Blasted
+              - list [ref=e608]:
+                - listitem [ref=e609]: Chemical resistant
+                - listitem [ref=e610]: Strong
+                - listitem [ref=e611]: Heat resistant
+                - listitem [ref=e612]: Corrosion resistant
+                - listitem [ref=e613]: Water resistant
+                - listitem [ref=e614]:
+                  - link "+ 1 more" [ref=e615] [cursor=pointer]:
+                    - /url: "#"
+              - generic [ref=e617]:
+                - generic [ref=e618]:
+                  - generic [ref=e619]: "Accuracy:"
+                  - text: ±0.3% (lower limit of ±0.3 mm)
+                - generic [ref=e620]:
+                  - generic [ref=e621]: "Min. wall thickness:"
+                  - text: 1 mm
+                - button "Download datasheet" [ref=e622] [cursor=pointer]
+              - generic [ref=e626]:
+                - generic [ref=e627]: Not available
+                - generic [ref=e630]:
+                  - button "Contact us" [ref=e631] [cursor=pointer]
+                  - button "Material details" [ref=e633] [cursor=pointer]
+            - generic [ref=e636]:
+              - generic [ref=e637]:
+                - button [ref=e638] [cursor=pointer]
+                - generic [ref=e639]:
+                  - generic [ref=e640]: Aluminum (AlSi10Mg)
+                  - paragraph [ref=e642]: This strong and lightweight material features good thermal properties and is widely used for functional metal parts.
+                  - generic [ref=e643]: SLM / DMLS
+                  - generic [ref=e647]:
+                    - strong [ref=e648]: "Finishes:"
+                    - text: Standard Matte, Deburred, Sandblasted, Glass Blasted
+              - list [ref=e654]:
+                - listitem [ref=e655]: Strong
+                - listitem [ref=e656]: Heat resistant
+                - listitem [ref=e657]: Functional
+              - generic [ref=e659]:
+                - generic [ref=e660]:
+                  - generic [ref=e661]: "Accuracy:"
+                  - text: ±0.2% (lower limit of ±0.2 mm)
+                - generic [ref=e662]:
+                  - generic [ref=e663]: "Min. wall thickness:"
+                  - text: 1 mm
+                - button "Download datasheet" [ref=e664] [cursor=pointer]
+              - generic [ref=e668]:
+                - generic [ref=e669]: Not available
+                - generic [ref=e672]:
+                  - button "Contact us" [ref=e673] [cursor=pointer]
+                  - button "Material details" [ref=e675] [cursor=pointer]
+            - generic [ref=e678]:
+              - generic [ref=e679]:
+                - button [ref=e680] [cursor=pointer]
+                - generic [ref=e681]:
+                  - generic [ref=e682]: PETG
+                  - paragraph [ref=e684]: PETG, widely used for durable and functional parts, combines strength, chemical resistance, and low cost.
+                  - generic [ref=e685]: FDM
+                  - generic [ref=e689]:
+                    - strong [ref=e690]: "Finishes:"
+                    - text: Standard, Sanded
+                  - generic [ref=e691]: "+51"
+              - list [ref=e704]:
+                - listitem [ref=e705]: Chemical resistant
+                - listitem [ref=e706]: Functional
+                - listitem [ref=e707]: Strong
+                - listitem [ref=e708]: Water resistant
+              - generic [ref=e710]:
+                - generic [ref=e711]:
+                  - generic [ref=e712]: "Accuracy:"
+                  - text: ±0.3% (lower limit of ±0.2 mm)
+                - generic [ref=e713]:
+                  - generic [ref=e714]: "Min. wall thickness:"
+                  - text: 1 mm
+                - button "Download datasheet" [ref=e715] [cursor=pointer]
+              - generic [ref=e719]:
+                - generic [ref=e720]: Not available
+                - generic [ref=e723]:
+                  - button "Contact us" [ref=e724] [cursor=pointer]
+                  - button "Material details" [ref=e726] [cursor=pointer]
+  - alert [ref=e213]: 3D Printing Service Marketplace | Craftcloud®

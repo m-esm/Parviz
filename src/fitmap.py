@@ -37,6 +37,11 @@ def _fit_report(geo):
         "head_bezel_L": "head_bezel", "head_bezel_R": "head_bezel",
         "chassis_lower_front": "chassis_lower", "chassis_lower_rear": "chassis_lower",
         "chassis_lower_tail": "chassis_lower",
+        # bolt-in side panels (2026-07-14 round 2): alias like the tail cap --
+        # floor-rest/deck-edge contact = (chassis_lower,) / (chassis_deck,
+        # chassis_lower); rail/TT/BME pairs inherit.
+        "chassis_side_L_front": "chassis_lower", "chassis_side_L_rear": "chassis_lower",
+        "chassis_side_R_front": "chassis_lower", "chassis_side_R_rear": "chassis_lower",
         "chassis_deck_front": "chassis_deck", "chassis_deck_center": "chassis_deck",
         "chassis_deck_rear": "chassis_deck",
     }
@@ -79,10 +84,12 @@ def _fit_report(geo):
         frozenset(("sensor_us", "chassis_lower")), frozenset(("sensor_us", "chassis_deck")),
         frozenset(("axle_hw_L", "drivewheels_L")),        # M4 heads seat on the wheel
         frozenset(("axle_hw_R", "drivewheels_R")),        # hub faces (bolt-axles)
-        frozenset(("axle_hw_L", "chassis_deck")),         # Ø8 end stubs pressed into
-        frozenset(("axle_hw_R", "chassis_deck")),         # the deck-pylon sockets
-        frozenset(("axle_hw_L", "pod_rail_L")),           # M4 nuts seat in the beam's
-        frozenset(("axle_hw_R", "pod_rail_R")),           # slide-up slots (top-corner park)
+        frozenset(("axle_hw_L", "chassis_lower")),        # M4 nuts in the panel beam
+        frozenset(("axle_hw_R", "chassis_lower")),        # slots + M8 washers on the
+                                                          # panel END TOWERS (pylons
+                                                          # deleted 2026-07-14; the
+                                                          # rail merged into the side
+                                                          # panels 2026-07-14 round 3)
         frozenset(("sensor_us_rear", "chassis_lower")),   # rear twin: board on the inner
         frozenset(("sensor_us_rear", "chassis_deck")),    # wall face, barrels in the bores
         frozenset(("sensor_rear", "chassis_lower")),
@@ -98,8 +105,6 @@ def _fit_report(geo):
         frozenset(("sensor_vib", "chassis_base")),       # SW-420 seat on the base
         frozenset(("sensor_bme", "chassis_lower")),      # wall bosses at the y-96 vent
         frozenset(("sensor_mmwave", "chassis_deck")),    # tab in the deck pocket
-        frozenset(("pod_rail_L", "chassis_lower")),  # rail sits flush on the wall outer face
-        frozenset(("pod_rail_R", "chassis_lower")),
         frozenset(("chassis_deck", "chassis_lower")),
         frozenset(("head_back", "head_bezel")),      # bolted seam at the split plane (y=2)
         frozenset(("screen_tray", "head_back")),     # pillar ends bolted to the back wall

@@ -1,0 +1,287 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - banner [ref=e5]:
+      - generic [ref=e6]:
+        - link [ref=e8] [cursor=pointer]:
+          - /url: /
+          - img "Craftcloud®" [ref=e10]
+        - generic [ref=e11]:
+          - generic:
+            - button "Our Services" [ref=e12] [cursor=pointer]
+            - button "Why Craftcloud?" [ref=e13] [cursor=pointer]
+            - link "Materials" [ref=e14] [cursor=pointer]:
+              - /url: /en/material-guide
+            - link "Help & Support" [ref=e15] [cursor=pointer]:
+              - /url: /en/p/help
+        - generic [ref=e16]:
+          - link "Upload 3D Models" [ref=e498] [cursor=pointer]:
+            - /url: /en/upload
+          - generic [ref=e17]:
+            - link "Ask AI" [ref=e19] [cursor=pointer]:
+              - /url: "#"
+            - generic [ref=e22]:
+              - link "FI, EUR" [ref=e23] [cursor=pointer]:
+                - /url: "#"
+              - link "My Models" [ref=e26] [cursor=pointer]:
+                - /url: /en/account/models
+              - link "My Cart" [ref=e29] [cursor=pointer]:
+                - /url: /en/cart
+              - link "Sign In" [ref=e32] [cursor=pointer]:
+                - /url: "#"
+    - generic [ref=e501]:
+      - complementary [ref=e502]:
+        - generic [ref=e503]:
+          - generic [ref=e505]:
+            - link "1. Material — PETG" [ref=e1995] [cursor=pointer]:
+              - /url: /en/material
+              - generic [ref=e1996]: "1."
+              - generic [ref=e1997]:
+                - text: Material
+                - generic [ref=e1998]: —
+                - text: PETG
+            - link "2. Finish — Standard" [ref=e2184] [cursor=pointer]:
+              - /url: /en/material/finish?materialId=0e379ece-53b6-5aa3-8cdf-7afce73c9873
+              - generic [ref=e2185]: "2."
+              - generic [ref=e2186]:
+                - text: Finish
+                - generic [ref=e2187]: —
+                - text: Standard
+            - generic [ref=e514]:
+              - generic [ref=e515]: "3."
+              - generic [ref=e516]: Color
+              - generic [ref=e517]: •
+          - generic [ref=e518]:
+            - heading "Your models (2)" [level=1] [ref=e521]
+            - generic [ref=e522]:
+              - paragraph [ref=e523]:
+                - strong [ref=e524]: Did you know?
+                - text: You can choose different materials, finishes, or colors for each model by toggling off the models you don’t want to configure.
+              - generic [ref=e525]:
+                - generic [ref=e526]:
+                  - generic [ref=e528] [cursor=pointer]:
+                    - checkbox [checked]
+                  - generic [ref=e531]:
+                    - generic [ref=e532]: avg_part_46cm3
+                    - generic [ref=e533]: .stl
+                  - button [ref=e536] [cursor=pointer]:
+                    - img "Delete" [ref=e538]
+                - generic [ref=e539]:
+                  - button [ref=e541] [cursor=pointer]:
+                    - img "Preview image of avg_part_46cm3.stl" [ref=e543]
+                  - generic [ref=e544]:
+                    - generic "58 × 40 × 20 mm" [ref=e545]:
+                      - generic [ref=e546]: 58 × 40 × 20
+                      - generic [ref=e547]:
+                        - text: mm
+                        - button "scale" [ref=e548] [cursor=pointer]
+                    - paragraph [ref=e550]: 46,400 mm³
+                    - button "Add attachments & notes" [ref=e551] [cursor=pointer]
+                - generic [ref=e555]:
+                  - generic [ref=e556]:
+                    - button [disabled] [ref=e557]
+                    - textbox [ref=e558]: "1"
+                    - button [ref=e559] [cursor=pointer]
+                  - button "All options More" [ref=e560] [cursor=pointer]:
+                    - generic [ref=e561]: All options
+                    - img "More" [ref=e563]
+              - generic [ref=e564]:
+                - generic [ref=e565]:
+                  - generic [ref=e567] [cursor=pointer]:
+                    - checkbox [checked]
+                  - generic [ref=e570]:
+                    - generic [ref=e571]: small_part_4cm3
+                    - generic [ref=e572]: .stl
+                  - button [ref=e575] [cursor=pointer]:
+                    - img "Delete" [ref=e577]
+                - generic [ref=e578]:
+                  - button [ref=e580] [cursor=pointer]:
+                    - img "Preview image of small_part_4cm3.stl" [ref=e582]
+                  - generic [ref=e583]:
+                    - generic "20 × 20 × 10 mm" [ref=e584]:
+                      - generic [ref=e585]: 20 × 20 × 10
+                      - generic [ref=e586]:
+                        - text: mm
+                        - button "scale" [ref=e587] [cursor=pointer]
+                    - paragraph [ref=e589]: 4,000 mm³
+                    - button "Add attachments & notes" [ref=e590] [cursor=pointer]
+                - generic [ref=e594]:
+                  - generic [ref=e595]:
+                    - button [disabled] [ref=e596]
+                    - textbox [ref=e597]: "1"
+                    - button [ref=e598] [cursor=pointer]
+                  - button "All options More" [ref=e599] [cursor=pointer]:
+                    - generic [ref=e600]: All options
+                    - img "More" [ref=e602]
+          - link "Upload more" [ref=e604] [cursor=pointer]:
+            - /url: /en/upload
+      - main [ref=e607]:
+        - generic [ref=e2189]:
+          - generic [ref=e2192]:
+            - heading [level=1] [ref=e2193]:
+              - text: Select color for your
+              - generic [ref=e2194]: 2 models
+            - generic [ref=e2197]:
+              - img "search" [ref=e2199]
+              - textbox "Search…" [ref=e2200]
+          - generic [ref=e2201]:
+            - generic [ref=e2203]:
+              - button "Material groups" [ref=e2204] [cursor=pointer]
+              - button "Production technology" [ref=e2207] [cursor=pointer]
+              - button "Material properties" [ref=e2210] [cursor=pointer]
+              - button "Production location" [ref=e2213] [cursor=pointer]
+              - button "Show all filters" [ref=e2216] [cursor=pointer]
+            - generic [ref=e2219]:
+              - generic [ref=e2220]: 60 colors available
+              - generic [ref=e2221]: Price
+          - generic [ref=e2224]:
+            - generic [ref=e2226]:
+              - generic [ref=e2227]:
+                - button [ref=e2228] [cursor=pointer]
+                - generic [ref=e2230]:
+                  - generic [ref=e2231]: White
+                  - generic [ref=e2232]: 86 offers available
+              - generic [ref=e2233]:
+                - generic [ref=e2234]: + 0,00 €
+                - button "28,92 € total price" [ref=e2244] [cursor=pointer]
+              - button "See offers" [ref=e2247] [cursor=pointer]
+            - generic [ref=e2250]:
+              - generic [ref=e2251]:
+                - button [ref=e2252] [cursor=pointer]
+                - generic [ref=e2254]:
+                  - generic [ref=e2255]: Black
+                  - generic [ref=e2256]: 84 offers available
+              - generic [ref=e2257]:
+                - generic [ref=e2258]: + 0,00 €
+                - button "28,92 € total price" [ref=e2268] [cursor=pointer]
+              - button "See offers" [ref=e2271] [cursor=pointer]
+            - generic [ref=e2274]:
+              - generic [ref=e2275]:
+                - button [ref=e2276] [cursor=pointer]
+                - generic [ref=e2278]:
+                  - generic [ref=e2279]: Surprise Me!
+                  - generic [ref=e2280]: 44 offers available
+              - generic [ref=e2281]:
+                - generic [ref=e2282]: + 0,00 €
+                - button "28,92 € total price" [ref=e2292] [cursor=pointer]
+              - button "See offers" [ref=e2295] [cursor=pointer]
+            - generic [ref=e2298]:
+              - generic [ref=e2299]:
+                - button [ref=e2300] [cursor=pointer]
+                - generic [ref=e2302]:
+                  - generic [ref=e2303]: Gray
+                  - generic [ref=e2579]: 70 offers available
+              - generic [ref=e2304]:
+                - generic [ref=e2305]: + 0,00 €
+                - button "28,92 € total price" [ref=e2587] [cursor=pointer]
+              - button "See offers" [ref=e2311] [cursor=pointer]
+            - generic [ref=e2589]:
+              - generic [ref=e2590]:
+                - button [ref=e2591] [cursor=pointer]
+                - generic [ref=e2593]:
+                  - generic [ref=e2594]: Translucent
+                  - generic [ref=e2595]: 52 offers available
+              - generic [ref=e2596]:
+                - generic [ref=e2597]: + 0,00 €
+                - button "28,92 € total price" [ref=e2607] [cursor=pointer]
+              - button "See offers" [ref=e2610] [cursor=pointer]
+            - generic [ref=e2612]:
+              - generic [ref=e2613]:
+                - button [ref=e2614] [cursor=pointer]
+                - generic [ref=e2616]:
+                  - generic [ref=e2617]: Blue
+                  - generic [ref=e2618]: 61 offers available
+              - generic [ref=e2619]:
+                - generic [ref=e2620]: + 12,01 €
+                - button "40,93 € total price" [ref=e2630] [cursor=pointer]
+              - button "See offers" [ref=e2633] [cursor=pointer]
+            - generic [ref=e2635]:
+              - generic [ref=e2636]:
+                - button [ref=e2637] [cursor=pointer]
+                - generic [ref=e2639]:
+                  - generic [ref=e2640]: Red
+                  - generic [ref=e2641]: 64 offers available
+              - generic [ref=e2642]:
+                - generic [ref=e2643]: + 12,01 €
+                - button "40,93 € total price" [ref=e2653] [cursor=pointer]
+              - button "See offers" [ref=e2656] [cursor=pointer]
+            - generic [ref=e2658]:
+              - generic [ref=e2659]:
+                - button [ref=e2660] [cursor=pointer]
+                - generic [ref=e2662]:
+                  - generic [ref=e2663]: Green
+                  - generic [ref=e2664]: 51 offers available
+              - generic [ref=e2665]:
+                - generic [ref=e2666]: + 12,01 €
+                - button "40,93 € total price" [ref=e2676] [cursor=pointer]
+              - button "See offers" [ref=e2679] [cursor=pointer]
+            - generic [ref=e2681]:
+              - generic [ref=e2682]:
+                - button [ref=e2683] [cursor=pointer]
+                - generic [ref=e2685]:
+                  - generic [ref=e2686]: Yellow
+                  - generic [ref=e2687]: 44 offers available
+              - generic [ref=e2688]:
+                - generic [ref=e2689]: + 12,01 €
+                - button "40,93 € total price" [ref=e2699] [cursor=pointer]
+              - button "See offers" [ref=e2702] [cursor=pointer]
+            - generic [ref=e2394]:
+              - generic [ref=e2395]:
+                - button [ref=e2396] [cursor=pointer]
+                - generic [ref=e2398]:
+                  - generic [ref=e2399]: Pink
+                  - generic [ref=e2704]: 25 offers available
+              - generic [ref=e2400]:
+                - generic [ref=e2401]: + 12,01 €
+                - button "40,93 € total price" [ref=e2712] [cursor=pointer]
+              - button "See offers" [ref=e2407] [cursor=pointer]
+            - generic [ref=e2410]:
+              - generic [ref=e2411]:
+                - button [ref=e2412] [cursor=pointer]
+                - generic [ref=e2414]:
+                  - generic [ref=e2415]: Purple
+                  - generic [ref=e2714]: 24 offers available
+              - generic [ref=e2416]:
+                - generic [ref=e2417]: + 12,01 €
+                - button "40,93 € total price" [ref=e2722] [cursor=pointer]
+              - button "See offers" [ref=e2423] [cursor=pointer]
+            - generic [ref=e2426]:
+              - generic [ref=e2427]:
+                - button [ref=e2428] [cursor=pointer]
+                - generic [ref=e2430]:
+                  - generic [ref=e2431]: Orange
+                  - generic [ref=e2724]: 45 offers available
+              - generic [ref=e2432]:
+                - generic [ref=e2433]: + 12,01 €
+                - button "40,93 € total price" [ref=e2732] [cursor=pointer]
+              - button "See offers" [ref=e2439] [cursor=pointer]
+            - generic [ref=e2734]:
+              - generic [ref=e2735]:
+                - button [ref=e2736] [cursor=pointer]
+                - generic [ref=e2738]:
+                  - generic [ref=e2739]: Gold
+                  - generic [ref=e2740]: 19 offers available
+              - generic [ref=e2741]:
+                - generic [ref=e2742]: + 12,01 €
+                - button "40,93 € total price" [ref=e2752] [cursor=pointer]
+              - button "See offers" [ref=e2755] [cursor=pointer]
+            - generic [ref=e2757]:
+              - generic [ref=e2758]:
+                - button [ref=e2759] [cursor=pointer]
+                - generic [ref=e2761]:
+                  - generic [ref=e2762]: Natural
+                  - generic [ref=e2763]: 30 offers available
+              - generic [ref=e2764]:
+                - generic [ref=e2765]: + 12,01 €
+                - button "40,93 € total price" [ref=e2775] [cursor=pointer]
+              - button "See offers" [ref=e2778] [cursor=pointer]
+            - generic [ref=e2780]:
+              - generic [ref=e2781]:
+                - button [ref=e2782] [cursor=pointer]
+                - generic [ref=e2784]:
+                  - generic [ref=e2785]: Translucent Blue
+                  - generic [ref=e2786]: 24 offers available
+              - generic [ref=e2787]:
+                - generic [ref=e2788]: + 12,01 €
+                - button "40,93 € total price" [ref=e2798] [cursor=pointer]
+              - button "See offers" [ref=e2801] [cursor=pointer]
+  - alert [ref=e258]: Your models (2)

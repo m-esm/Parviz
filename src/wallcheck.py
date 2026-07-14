@@ -49,14 +49,15 @@ SEED = 0
 # ---------------------------------------------------------------------------
 PRINTED = [
     # chassis / base
-    "chassis_lower_front.stl", "chassis_lower_rear.stl",
+    "chassis_lower_front.stl", "chassis_lower_rear.stl", "chassis_lower_tail.stl",
+    "chassis_side_L_front.stl", "chassis_side_L_rear.stl",
+    "chassis_side_R_front.stl", "chassis_side_R_rear.stl",
     "chassis_deck_front.stl", "chassis_deck_center.stl", "chassis_deck_rear.stl",
-    "belly_plate.stl",
+    "belly_plate.stl", "chassis_base.stl",
     "track_strip_L1.stl", "track_strip_L2.stl", "track_strip_L3.stl", "track_strip_L4.stl",
     "track_strip_R1.stl", "track_strip_R2.stl", "track_strip_R3.stl", "track_strip_R4.stl",
     "track_wheels_L.stl", "track_wheels_R.stl",
     "track_keeper_L.stl", "track_keeper_R.stl",
-    "track_pod_rail_L.stl", "track_pod_rail_R.stl",
     # neck / pan
     "neck_clevis.stl", "tilt_carrier.stl",
     "pan_platform.stl", "pan_race.stl", "pan_clips.stl", "pan_cage.stl", "pan_gears.stl",
@@ -75,6 +76,20 @@ PRINTED = [
 # regression under the known-thin feature must not hide behind the whitelist).
 # ---------------------------------------------------------------------------
 WHITELIST = {
+    # Rear glacis / floor-top tangent: the 33 deg hull bevel (2026-07-10 toy-tank
+    # glacis) exits through the floor top plane at y -110.8, leaving a designed
+    # full-width knife wedge that tapers to zero (spot (22.7, -110.7, 12.0)). Same
+    # family as the deck-tip acute edge the user had truncated -- surfaced only
+    # 2026-07-14 when the tail entered this gate (it was missing from PRINTED).
+    # Prints seam-up so the wedge lies flat on the floor slab; cosmetic.
+    "chassis_lower_tail.stl": (0.2, "rear glacis/floor-top tangent knife wedge "
+                                    "(designed 33deg hull bevel; tail first gated 2026-07-14)"),
+    # Equipment base: the boolean hull-relief (sub(base, hull shells)) thins the
+    # plate edge to ~0.75 where the belly-opening lip pocket crosses it at
+    # (44.4, -62.3, 12.3). Local skin over a clearance pocket, not a load wall;
+    # base first gated 2026-07-14 (was missing from PRINTED).
+    "chassis_base.stl": (0.6, "hull-relief clearance pocket skins at the belly-lip "
+                              "edge (base first gated 2026-07-14)"),
     # REAL generated 3-start worm (docs/WORM.md; the old 0.60 floor was set against
     # the placeholder). Thin population censused 2026-07-13 (20k samples): ~2.4% read
     # < 0.6, median 0.04 mm from a trim face = the thread RUN-OUT WEDGES where the

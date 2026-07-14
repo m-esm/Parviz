@@ -416,9 +416,9 @@ the beam's outer face; support the two block bands above z 26.
   One MX1588 (own ×5) drives both. Skid/differential steer.
 - Params: `chassis_w/l`, `track_wheel_r`, `track_wheelbase`, `track_width`, `track_pitch`,
   `track_links`, `sprocket_teeth`, `idler_bore_d`, `roadwheel_*`, `track_gap`, `chassis_clear`.
-- **Body-to-pod join (modeled):** 2× M3×12 thread-forming into the rail's blind Ø2.5 pilots
-  (2026-07-08: was captive nuts in top slots that got buried by the links) + 2× Ø4 dowel per
-  side (shear). **Master link:** link 0 of each loop is a drop-on C-jaw link; two printed
+- **Body-to-pod join: RETIRED 2026-07-14 (rounds 2-4)** -- the side walls ARE removable
+  panels now and the wheel beam is integral to them (see SIDE PANELS = STANDALONE TRACK
+  MODULES above); no separate rail, no through-wall join hardware. **Master link:** link 0 of each loop is a drop-on C-jaw link; two printed
   keeper bars slide in from the side faces, 1× M2 each (`track_keeper_L/R`) -- the loop closes
   without flexing and opens with 2 screws.
 - **Still TODO:** links as real TPU/PLA print vs the rigid model. Pi rides the head (high CoM)
@@ -456,9 +456,10 @@ whitelists alias split pieces to their parent (SPLIT_ALIAS in assembly_check/fit
 sibling seam contact is designed. The viewer parts panel is grouped BY OBJECT with
 collapsible per-group toggle-alls.
 
-- Printed set (exports via `EXPORT=1`): `chassis_lower` (`_front/_rear/_tail`), `chassis_deck`, `belly_plate`, `track_L/R`,
-  `drivewheels_L/R` (as track_wheels_*), `track_keeper_L/R`, `pod_rail_L/R` (as
-  track_pod_rail_*), `neck_clevis`, `tilt_carrier`, `pan_platform`, `pan_race`,
+- Printed set (exports via `EXPORT=1`): `chassis_lower` (`_front/_rear/_tail`), `chassis_side_{L,R}_{front,rear}`,
+  `chassis_base`, `chassis_deck`, `belly_plate`, `track_L/R`,
+  `drivewheels_L/R` (as track_wheels_*), `track_keeper_L/R` (pod_rail_L/R DELETED
+  2026-07-14, beam integral to the side panels), `neck_clevis`, `tilt_carrier`, `pan_platform`, `pan_race`,
   `pan_clips`, `pan_cage`, `head_bezel`, `head_back`, `head_door`, `screen_tray`,
   `cam_cover`, `sd_plug`, plus the real generated `worm_wheel`/`tilt_worm` (docs/WORM.md).
   `pan_balls`/`motor_*`/`drive_*` are bought-part placeholders. track_L/R (links +
@@ -513,7 +514,7 @@ src/screen.py    combined touchscreen+Pi reference mesh loading + screen_pose().
 src/head.py      head shell/bezel/back/door(pod), screen tray, camera pod, styling parts, arms.
 src/neck.py      neck clevis + tilt-motor cartridge carrier.
 src/pan.py       pan platform, BB race, clips, _pan_stack.
-src/chassis.py   chassis core/lower/deck split, belly plate, fascia, pod rails.
+src/chassis.py   chassis core/lower/deck/side-panel split, belly plate, fascia.
 src/tracks.py    raised tank loop, links, master link, sprocket, road wheels.
 src/motors.py    TT gearmotor + 28BYJ placeholder meshes.
 src/refparts.py  downloaded REAL bought meshes (reference/electronics/) posed onto the
@@ -875,6 +876,49 @@ RE-LAYING-OUT the components onto them and RELIEVING against the shell union
 (sub + _despeck), never by notching a tray around an existing packed layout — the
 2026-07-14 retrofit attempt collided with the belly rebate until the layout moved
 onto the base. Same rule applies when the head electronics ever need seats.
+
+**SIDE PANELS = STANDALONE TRACK MODULES (2026-07-14 rounds 2-4, user: separate the
+wall bands the rails/motors mount to; delete pod_rail_L/R; extend the sides to the
+end bolt-axles so the track system assembles WITHOUT any chassis_lower_* piece).**
+The lower tub's side walls are now four bolt-in panels `chassis_side_{L,R}_{front,
+rear}` (~33-42 cm3 each), CARVED from the tub in build_chassis_parts (band x 64.85..
+70 / y -139.2..142.5 / z 12..46 + full-depth captures for the TT tab ribs, the 6 deck
+hold-down bosses at x +-64, the BME688 bosses, and the cavity-corner crescents -- an
+x-only cut would slice the corner rounds lengthwise into feather fins, wallcheck
+catches it). Each panel carries EVERYTHING in-flux on that wall: TT stations (shaft
+Ø8 + Ø17 hub recess + M3s + nub pockets + tab ribs), side vents, BME bosses (L), and
+an INTEGRAL L-RETURN replacing the deleted pod rails -- web x 69.5..74 / z 12..26
+(links never enter x < 74) + the proven wheel-beam section x 74..80.4 / z 14..26 with
+a 45 deg underside chamfer, carrying teardropped Ø4.4 M4 bolt-axle bores (through the
+web: the M4x40 shank tip reaches x 71.4), nut slide-up slots (open to z 11.5), and
+Ø13.5 sprocket-hub notches + re-cut hub recesses. At the tips, END TOWERS replace the
+DELETED deck pylons (same geometry: outer slab x 64.85..70 fused over the captured
+cheek skin + chamfered inboard thickening to x 62, 1.0 off the notch wall, hub boss,
+FRONT true-stadium tension slot / REAR Ø8.4, axle line z 34.32) -- the M8 nut ducts
+STAY in the cheeks (wrench-free with the hull on; wrench-open on the bench), the
+x 60..62 washer corridor survives under the chamfer, and the towers now PROP the deck
+overhang tips at z 46. The two pieces per side SPLICE at a half-lap in the L-return
+(y -21.5..-15.55, front upper / rear lower, tongues start x 70.0 NOT the web root
+69.5 -- a 69.5 tongue presses 0.5 into the other piece's wall, fits caught it; 1x
+M3x10 at (75.4, -18.5), staggered off the -18.5 wall butt seam): panels + splice +
+TT motors + wheels + M8 axles + track = a rigid standalone track pod per side.
+Retention on the hull: the deck's 6 existing hold-down screws clamp the panels' boss
+tops (chassis_split front pair + deck_center pairs all land in panels now), one L-FOOT
+per piece bolts M3x6 into blind floor pilots (feet y 4 / -95.25), the panel bottom
+rests on the floor sill (z 12) and the deck rests on its top edge -- load path is
+edge bearing, not screws. The y=26 seam pad shrank inboard (x 50..64.7, screw 60.3 /
+dowel 54) clear of the panel plane; the pod-join M3/dowel wall fittings and PARAMS
+pod_join_*/pod_rail_* are RETIRED; the pod-rail coupon left test_plate_links. Panels
+alias to chassis_lower in BOTH gate SPLIT_ALIAS maps + wallcheck PRINTED (which also
+gained the missing chassis_lower_tail + chassis_base entries -- their pre-existing
+thin spots are whitelisted: tail = the designed 33 deg glacis/floor knife wedge, base
+= hull-relief pocket skins). Print UPRIGHT as built (z12 edge + rib feet + foot pads
+coplanar on the bed, all TT/axle bores horizontal -- teardropped where new), STRUCT
++ tree for the boss undersides; all four share one Chassis plate. Service: master
+link open -> deck off -> 2 foot screws + splice -> the whole side lifts out as a
+drive module. Hull knock-ons: chassis_lower_rear is now a floor tray (top z 32),
+the tub keeps floor + end walls + cheeks (minus their outer skins) + corner stubs
+past |y| 142.8/139.5.
 
 **Electronics seats (2026-07-13 -> moved to the base 2026-07-14):** the Uno R3 seat (4
 posts to z 21 + a rear-wall shelf for the glacis-side hole;
