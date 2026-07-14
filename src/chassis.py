@@ -356,7 +356,11 @@ def build_chassis_core():
         usr = cyl(P["us_d"] / 2 + 0.3, 12, axis="y")  # rear obstacle HC-SR04 barrel
         usr.apply_translation((sx * P["us_dx"], -(fw - 2.5), P["us_cz"]))
         body = sub(body, usr)                         # passes (2026-07-11, twin ring)
-    for vy in (-112.0, -96.0, 16.0, 32.0, 48.0, 64.0, 96.0):   # y80 -> the 2nd nub
+    # (-112 vent DELETED, fittings audit 2026-07-14: with the round-4 panel band
+    # running to the end walls, that vent's rear rim became a 0.5 web against the
+    # end-wall notch face inside the panel. The round-6 end redesign owns any
+    # replacement rear-side venting.)
+    for vy in (-96.0, 16.0, 32.0, 48.0, 64.0, 96.0):   # y80 -> the 2nd nub
         # side ventilation slots, RE-CLOCKED 2026-07-11 (mid-drive): the TT feature
         # zone moved to y ~ -87..-15 (motor at spr_y -68), so the old row shifted
         # out of it into the now feature-free bands of the 240 tub
@@ -805,6 +809,14 @@ def build_chassis_parts():
         lo, hi = min(s * xa, s * xb_), max(s * xa, s * xb_)
         return sg.box(lo, ya, hi, yb)
 
+    def _boss_fp(s, by_):
+        # deck-boss capture: disc + a bridge rect to the band plane. A bare disc
+        # crossed x 64.85 at ~11 deg and left a full-height feather wedge at its
+        # tangent (wallcheck: p1 0.79 at (64.9, -20.7, 12)); the rect corners
+        # meet the plane square instead.
+        return sg.Point(s * 64.0, by_).buffer(4.35, 32).union(
+            _xb(s, 62.0, 66.0, by_ - 4.35, by_ + 4.35))
+
     # rib/corner captures run FULL DEPTH (x to 51.3) so the r12 cavity-corner
     # rounds aren't sliced lengthwise into feather crescents (wallcheck, round 2).
     # Ends restored to the round-4 extents 2026-07-14 evening: the round-5 "whole
@@ -818,15 +830,15 @@ def build_chassis_parts():
     for s in (-1, 1):
         side = "L" if s < 0 else "R"
         caps_front = [_xb(s, 51.3, 69.5, 101.2, 108.7),
-                      sg.Point(s * 64.0, 60.0).buffer(4.35, 32),
-                      sg.Point(s * 64.0, 8.0).buffer(4.35, 32)]
+                      _boss_fp(s, 60.0),
+                      _boss_fp(s, 8.0)]
         caps_front_cut = [_xb(s, 51.3, 69.5, 101.2, 109.0)] + caps_front[1:]
         caps_rear = [_xb(s, 51.3, 69.5, -87.0, -79.2),
                      _xb(s, 62.0, 71.0, -107.7, -102.5),
-                     sg.Point(s * 64.0, -26.0).buffer(4.35, 32)]
+                     _boss_fp(s, -26.0)]
         caps_rear_cut = [_xb(s, 51.3, 69.5, -87.0, -79.2),
                          _xb(s, 62.0, 71.0, -108.0, -102.5),
-                         sg.Point(s * 64.0, -26.0).buffer(4.35, 32)]
+                         _boss_fp(s, -26.0)]
         if s < 0:
             bmefp = sg.box(-71.0, -106.6, -62.4, -87.8)
             caps_rear.append(bmefp)
@@ -931,7 +943,7 @@ def build_chassis_parts():
                 slot.apply_translation((s * 75.7, ry,      # through the web to 11.5
                                         (11.5 + 23.65) / 2))
                 pnl = sub(sub(pnl, ab), slot)
-            for sy_ in (P["spr_y"], P["spr_y2"]):          # sprocket hub crossings
+            for sy_, o_ in ((P["spr_y"], 1.0), (P["spr_y2"], -1.0)):   # TT stations
                 if not (ky0 < sy_ < ky1):
                     continue
                 hn = cyl(6.75, 12.0, axis="x")             # Ø13.5 notch (open-top:
@@ -939,9 +951,27 @@ def build_chassis_parts():
                 rec2 = cyl(8.5, 2.2, axis="x")             # re-cut the Ø17 hub recess
                 rec2.apply_translation((s * (70.0 - 0.9), sy_, zc_tt))   # the web
                 pnl = sub(sub(pnl, hn), rec2)              # extrusion refilled
-            fcl = cyl(1.65, 5.0); fcl.apply_translation((s * foot_x, fy, 13.5))
-            fcb = cyl(3.3, 2.7); fcb.apply_translation((s * foot_x, fy, 13.8 + 2.7 / 2))
-            pnl = sub(sub(pnl, fcl), fcb)
+                # LOWER TT M3 "nut in the gap" (fittings audit 2026-07-14): the
+                # web filled the pod gap where the z 16.57 gearbox screw's nut
+                # lived (the z 34.07 one clears the web top 26; the shaft
+                # crossing survives via the hub notch). Re-open the bore through
+                # the web (teardrop -- horizontal in this print) and give the
+                # nut an M4-slot-style slide-up pocket from below, top stop at
+                # the bore axis + AF/2 so screwing pulls it centred.
+                my_ = sy_ + o_ * 20.3
+                mzl = zc_tt - 8.75
+                mb_ = teardrop(1.6, 6.5, axis="x")
+                mb_.apply_translation((s * 71.4, my_, mzl))
+                ns_ = box(2.8, 5.7, (mzl + 2.85) - 11.5)
+                ns_.apply_translation((s * 72.0, my_, (11.5 + mzl + 2.85) / 2))
+                pnl = sub(sub(pnl, mb_), ns_)
+            # NO counterbore (fittings audit 2026-07-14): a O6.6 cb broke out of
+            # the 4.8-wide foot's side walls (0.1-0.5 remnants in wallcheck) --
+            # the M3 socket head seats PROUD on the foot top instead (O5.5 on a
+            # 4.8 face = 0.35/side overhang, torque-fine; z 16..19 is clear air,
+            # the BME board starts z 21 and x inboard).
+            fcl = cyl(1.65, 9.0); fcl.apply_translation((s * foot_x, fy, 13.5))
+            pnl = sub(pnl, fcl)
             # DEGENERATE-SHEET SCRUB: the capture volumes bottom out exactly on the
             # OPEN floor top (z 12), and inter() leaves a zero-thickness skin fused
             # to the panel there (it broke contains() parity, read as a 0.2 p1 in

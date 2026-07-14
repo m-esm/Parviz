@@ -142,6 +142,17 @@ def main():
           bore_pierces(M("chassis_side_R_front"), (64.0, P["spr_y2"], 25.32), (1, 0, 0), 7.0))
     check("hull wall OPEN in the panel band (lower_rear)",
           clear(M("chassis_lower_rear"), [(67.5, P["spr_y"], 30.0), (-67.5, P["spr_y"], 30.0)]))
+    # fittings audit 2026-07-14: the integral web buried the LOWER TT gearbox M3
+    # (z 16.57) + its gap nut -- the bore must pierce wall AND web, with the nut
+    # slot open from below.
+    check("lower TT M3 open through wall + web (rear station, R panel)",
+          bore_pierces(M("chassis_side_R_rear"), (64.0, P["spr_y"] + 20.3, 25.32 - 8.75),
+                       (1, 0, 0), 10.0)
+          and clear(M("chassis_side_R_rear"), [(72.0, P["spr_y"] + 20.3, 12.5)]))
+    check("lower TT M3 open through wall + web (front station, R panel)",
+          bore_pierces(M("chassis_side_R_front"), (64.0, P["spr_y2"] - 20.3, 25.32 - 8.75),
+                       (1, 0, 0), 10.0)
+          and clear(M("chassis_side_R_front"), [(72.0, P["spr_y2"] - 20.3, 12.5)]))
     check("panels span the hull seams (front: y26, rear: y-88)",
           M("chassis_side_R_front").bounds[0][1] < 20.0
           and M("chassis_side_R_front").bounds[1][1] > 32.0
