@@ -557,6 +557,17 @@ docs/ASSEMBLY.md BOM + assembly order
 - Screen STL axes already match ours (X=W, Y=D, Z=H); no swap needed, just recenter + `screen_pose()`.
 - `EXPORT=1 python3 src/build.py` writes the per-part STLs; the plain run only refreshes the GLB.
 - Reference `.123dx` files are Autodesk 123D (not usable); use the `.stl`/`.step` siblings.
+- **three.js STRIPS `.` from GLB node names at load** (PropertyBinding sanitization: `. : / [ ]`),
+  so `o.name` gives `track_Llink_01`, not `track_L.link_01`. The viewer recovers the exact GLB
+  names via `gltf.parser.associations` + `parser.json.nodes` (GLTFLoader callback) -- without
+  that, every dotted granular child misses its nav category, its 3rd-level nesting AND the
+  fit-map prefix resolution (this silently dumped 128 parts into "Misc" until 2026-07-14).
+- **Viewer nav coverage is GATED (2026-07-14, user: nothing may land uncategorized):** checks.py
+  parses the TREE regexes straight out of viewer_glb.html and fails `make invariants` if any GLB
+  node matches none -- a new part needs its TREE entry the same turn it enters the scene. The
+  viewer also has UNDO/REDO (floating top-right ↶↷ toolbar with an n/N depth counter,
+  ⌘Z / ⇧⌘Z / Ctrl+Y) over one debounced history of part visibility + sliders + toggles
+  (camera orbit and tree collapse deliberately untracked).
 
 **Trim + rear-sensor pass (2026-07-11, user rounds 4-5):** the REAR wall is now a TWIN
 of the front: the same grille ring (grille_* params) frames a rear obstacle HC-SR04

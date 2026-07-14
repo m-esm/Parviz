@@ -54,8 +54,9 @@ with sync_playwright() as p:
     except Exception:
         pass
     pg.wait_for_timeout(1500)                              # let render settle
-    # CAD renders stay chrome-free: the docs top-nav isn't part of the geometry
-    pg.evaluate("const n=document.getElementById('topnav'); if(n) n.style.display='none'")
+    # CAD renders stay chrome-free: the docs top-nav + undo/redo toolbar aren't geometry
+    pg.evaluate("""for(const id of ['topnav','histbar']){
+        const n=document.getElementById(id); if(n) n.style.display='none'; }""")
 
     # TRANS=0 -> solid render (styling review); default keeps the viewer's 50% ghost.
     # Only viewer_glb.html has the slider; guard for the STL viewer.

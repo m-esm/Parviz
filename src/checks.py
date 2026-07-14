@@ -133,6 +133,30 @@ def main():
     check("master links in both loops",
           {"track_L.link_00_master", "track_R.link_00_master"} <= geoms)
 
+    # user 2026-07-14 (viewer nav: NOTHING may land in the Uncategorized bucket):
+    # every GLB scene node must match a category regex in the viewer's TREE. The
+    # regexes are parsed straight out of web/viewer_glb.html so viewer and gate
+    # cannot drift; a new part therefore needs its TREE entry the same turn.
+    import json
+    import re
+    import struct
+    with open(webpath("viewer_glb.html")) as f:
+        _tree_src = f.read().split("const TREE = [", 1)[1].split("];", 1)[0]
+    cat_res = [re.compile(p) for p in re.findall(r",\s*/(\^.+?)/\]", _tree_src)]
+    check("viewer TREE regexes parsed from viewer_glb.html", len(cat_res) >= 10,
+          "%d regexes" % len(cat_res))
+    with open(webpath("assembly.glb"), "rb") as f:
+        _glb = f.read()
+    _jlen = struct.unpack("<I", _glb[12:16])[0]
+    node_names = {n.get("name", "part")
+                  for n in json.loads(_glb[20:20 + _jlen]).get("nodes", [])
+                  if "mesh" in n}
+    uncat = sorted(n for n in node_names if not any(r.match(n) for r in cat_res))
+    check("every scene node categorized in the viewer nav",
+          not uncat,
+          (", ".join(uncat[:6]) + ("..." if len(uncat) > 6 else "")) if uncat
+          else "%d nodes covered" % len(node_names))
+
     # user 2026-07-13 (integrate downloaded electronics into the assembly): the
     # real bought meshes (docs/ELECTRONICS.md) must be on disk so refparts poses
     # them instead of silently falling back to the placeholder boxes.

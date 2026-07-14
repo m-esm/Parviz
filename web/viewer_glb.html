@@ -132,6 +132,26 @@
     padding:3px 7px;cursor:pointer;transition:color .12s,border-color .12s}
   .sec button:hover{color:var(--ink);border-color:var(--ink-dim)}
 
+  /* ---- undo/redo history toolbar, floating top-right over the 3D view ---- */
+  #histbar{position:fixed;top:58px;right:16px;z-index:10;display:flex;align-items:center;gap:7px;
+    padding:6px 8px;background:var(--panel);border:1px solid var(--hair);border-radius:12px;
+    backdrop-filter:blur(20px) saturate(1.25);-webkit-backdrop-filter:blur(20px) saturate(1.25);
+    box-shadow:0 12px 32px rgba(0,0,0,.45)}
+  #histbar button{display:flex;align-items:center;gap:6px;font:600 13px/1 var(--mono);
+    color:var(--ink);background:transparent;border:1px solid var(--hair);border-radius:8px;
+    padding:6px 9px;cursor:pointer;transition:color .12s,border-color .12s,background .12s}
+  #histbar button:hover{border-color:var(--ink-dim);background:rgba(255,255,255,.06)}
+  #histbar button:disabled{opacity:.35;cursor:default;pointer-events:none}
+  #histbar button .k{font:600 9px/1 var(--mono);letter-spacing:.05em;color:var(--ink-faint)}
+  #histbar #hist_pos{min-width:30px;text-align:center;font:600 10px/1 var(--mono);
+    letter-spacing:.06em;color:var(--ink-faint)}
+  @media (max-width:700px){#histbar{top:calc(50px + env(safe-area-inset-top));right:12px}
+    #histbar button .k{display:none}}
+
+  /* fallback bucket for parts no TREE regex matches -- gated by make invariants,
+     so if this ever shows the build is already failing; make it unmissable */
+  .cgrp.uncat .chead .cname{color:#ff6b6b}
+
   /* right-click context menu on the 3D view */
   #ctx{position:fixed;z-index:20;display:none;min-width:132px;padding:4px;
     background:var(--panel);border:1px solid var(--hair);border-radius:10px;
@@ -216,6 +236,11 @@
   <a class="gh" href="https://github.com/m-esm/parviz" title="source">GitHub</a>
 </nav>
 <button id="hudtoggle" aria-label="toggle controls">☰</button>
+<div id="histbar" title="view history: visibility, sliders, toggles">
+  <button id="undo" title="undo view change (⌘Z / Ctrl+Z)" disabled>↶<span class="k">⌘Z</span></button>
+  <span id="hist_pos"></span>
+  <button id="redo" title="redo (⇧⌘Z / Ctrl+Y)" disabled>↷<span class="k">⇧⌘Z</span></button>
+</div>
 <div id="hud">
   <div class="eyebrow">desk-pi · pan/tilt head</div>
   <div class="title" id="title">assembly.glb</div>
@@ -387,9 +412,17 @@ const dimsRoot = new THREE.Group(); scene.add(dimsRoot);
 let bbox = new THREE.Box3(), center = new THREE.Vector3(), diag = 1;
 
 new GLTFLoader().load(MODEL, (gltf)=>{
+  // three.js SANITIZES node names on load (PropertyBinding strips . : / [ ]), which
+  // mangled every dotted granular child (track_L.link_01 -> track_Llink_01) out of
+  // its TREE category, its 3rd-level nesting AND the fit-map prefix resolution.
+  // Recover the exact GLB names from the parser's raw JSON via associations.
+  const rawNodes = (gltf.parser && gltf.parser.json && gltf.parser.json.nodes) || [];
+  const assoc = gltf.parser && gltf.parser.associations;
+  const glbName = obj => { if(!obj || !assoc) return null; const a = assoc.get(obj);
+    return (a && a.nodes !== undefined && rawNodes[a.nodes]) ? rawNodes[a.nodes].name : null; };
   gltf.scene.traverse(o=>{
     if(!o.isMesh) return;
-    const name = o.name || (o.parent && o.parent.name) || 'part';
+    const name = glbName(o) || glbName(o.parent) || o.name || (o.parent && o.parent.name) || 'part';
     o.geometry.computeVertexNormals();                 // GLB normals often come through inverted
     const s = matSpec(name);
     o.material = new THREE.MeshStandardMaterial({
@@ -424,20 +457,24 @@ new GLTFLoader().load(MODEL, (gltf)=>{
   // parts panel: TWO-LEVEL category tree (2026-07-11, user: granular viewing with
   // multi-level sub-categories). Top groups hold sub-groups hold parts; every level
   // gets a collapse arrow + a tri-state toggle-all that propagates both ways.
+  // COVERAGE IS GATED: src/checks.py parses these regexes and FAILS `make
+  // invariants` if any GLB node matches none of them -- new parts must be
+  // added here the same turn they enter the scene (no Uncategorized bucket).
   const TREE = [
     ['Chassis', [
       ['Hull',          /^(chassis_lower_|belly_plate)/],
+      ['Side panels',   /^chassis_side_/],
       ['Deck',          /^chassis_deck_/],
       ['Fascia & trim', /^(trim_fascia|trim_rear|lamp_|led_front)/],
       ['Sensors',       /^sensor_/],
-      ['Electronics',   /^board_/],
+      ['Electronics',   /^(board_|chassis_base)/],
     ]],
     ['Drive', [
       ['Motors',        /^drive2?_[LR]$/],
       ['Track L',       /^(track_L(\.|$)|track_keeper_L)/],
       ['Track R',       /^(track_R(\.|$)|track_keeper_R)/],
       ['Running gear',  /^drivewheels_/],
-      ['Rails & axles', /^(pod_rail_|axle_hw_)/],
+      ['Axle hardware', /^(pod_rail_|axle_hw_)/],   // pod_rail_ kept for older GLBs
     ]],
     ['Pan & neck', [
       ['Pan stage',   /^(pan_|motor_pan|trim_neckfoot)/],
@@ -456,10 +493,12 @@ new GLTFLoader().load(MODEL, (gltf)=>{
     for(const [top, subs] of TREE)
       for(const [sub, re] of subs)
         if(re.test(n)) return [top, sub];
-    return ['Other', 'Misc'];
+    console.warn('uncategorized part (add a TREE regex + it fails make invariants):', n);
+    return ['Other', 'Uncategorized'];
   }
   function mkGroup(title, parentBody, cls, key, parentKey){
     const grp=document.createElement('div'); grp.className=cls; grp.dataset.vskey=key;
+    if(key.startsWith('Other')) grp.classList.add('uncat');   // loud red: should never appear
     const head=document.createElement('div'); head.className='chead';
     head.innerHTML=`<span class="carrow">▾</span><span class="cname">${title}</span>`;
     const cb=document.createElement('input'); cb.type='checkbox'; cb.checked=true;
@@ -968,10 +1007,15 @@ ctx.addEventListener('click',e=>{
 addEventListener('pointerdown',e=>{ if(!ctx.contains(e.target)) closeCtx(); });
 addEventListener('keydown',e=>{
   if(e.key==='Escape'){ closeCtx(); if(selName) selectPart(selName); return; }
+  const k=e.key.toLowerCase();
+  if((e.metaKey||e.ctrlKey) && !e.altKey && (k==='z'||k==='y')){    // undo/redo, even
+    e.preventDefault();                                             // with a slider focused
+    (k==='y'||e.shiftKey) ? redoView() : undoView();
+    closeCtx(); return;
+  }
   const t=e.target;
   if(t && (t.tagName==='INPUT'||t.tagName==='SELECT'||t.tagName==='TEXTAREA'||t.isContentEditable)) return;
   if(e.metaKey||e.ctrlKey||e.altKey) return;
-  const k=e.key.toLowerCase();
   if(k==='a'){ showAllParts(); closeCtx(); return; }
   if(k!=='h' && k!=='i' && k!=='f') return;
   const name=selName || (hoverIn ? rayPart(hoverNdc) : null);   // selected beats hovered
@@ -1024,12 +1068,82 @@ function restoreVS(){
     }
   }
   vsReady=true;
+  commitHist();                              // seed the undo baseline (restored state)
 }
 $('hud').addEventListener('input',()=>saveVS());
 $('hud').addEventListener('change',()=>saveVS());
 $('ui_reset').addEventListener('click',()=>{
   localStorage.removeItem(VSKEY); localStorage.removeItem('hudw'); location.reload();
 });
+
+// ---- undo/redo: view-state history (part visibility incl. hide/isolate/show-all,
+// pose + appearance sliders, panel toggles). Every user change to the HUD lands one
+// debounced snapshot; ⌘Z / ⇧⌘Z (or the ↶ ↷ header buttons) walk the stack. Camera
+// orbit and tree collapse are deliberately NOT tracked. All mutations already funnel
+// through bubbling input/change events on #hud (the same path saveVS listens on), so
+// one listener pair sees everything; histApply re-dispatches the same events, with
+// hist.quiet blocking re-capture (dispatchEvent is synchronous, so the guard holds).
+const HIST_MAX=120;
+const hist={stack:[], idx:-1, quiet:false, timer:null};
+function histSnap(){
+  const s={hidden:Object.entries(groups)
+                 .filter(([,g])=>g.row && !g.row.querySelector('input').checked)
+                 .map(([n])=>n).sort(),
+           sliders:{}, checks:{}, secAxis:$('sec_axis').value};
+  VS_SLIDERS.forEach(id=>s.sliders[id]=$(id).value);
+  VS_CHECKS.forEach(id=>s.checks[id]=$(id).checked);
+  return s;
+}
+function histApply(s){
+  hist.quiet=true;
+  try{
+    if($('sec_axis').value!==s.secAxis){
+      $('sec_axis').value=s.secAxis;
+      $('sec_axis').dispatchEvent(new Event('change',{bubbles:true}));
+    }
+    for(const id of VS_SLIDERS)
+      if(s.sliders[id]!==undefined && !$(id).disabled && $(id).value!==s.sliders[id]){
+        $(id).value=s.sliders[id]; $(id).dispatchEvent(new Event('input',{bubbles:true}));
+      }
+    for(const id of VS_CHECKS)
+      if(s.checks[id]!==undefined && $(id).checked!==s.checks[id]){
+        $(id).checked=s.checks[id]; $(id).dispatchEvent(new Event('change',{bubbles:true}));
+      }
+    const hid=new Set(s.hidden);
+    for(const n of Object.keys(groups)) setPartVisible(n, !hid.has(n));
+  } finally { hist.quiet=false; }
+  updateHistUI();
+}
+function commitHist(){                       // push the current state if it changed
+  clearTimeout(hist.timer); hist.timer=null;
+  if(window.__ready){
+    const s=histSnap();
+    if(hist.idx<0 || JSON.stringify(hist.stack[hist.idx])!==JSON.stringify(s)){
+      hist.stack.length=hist.idx+1;          // a fresh change kills the redo tail
+      hist.stack.push(s);
+      if(hist.stack.length>HIST_MAX) hist.stack.shift();
+      hist.idx=hist.stack.length-1;
+    }
+  }
+  updateHistUI();
+}
+function scheduleHist(){                     // debounced: a slider drag = one entry
+  if(hist.quiet||!vsReady) return;
+  clearTimeout(hist.timer);
+  hist.timer=setTimeout(commitHist,250);
+  updateHistUI();                            // pending change already makes undo live
+}
+function undoView(){ commitHist(); if(hist.idx>0){ hist.idx--; histApply(hist.stack[hist.idx]); } updateHistUI(); }
+function redoView(){ commitHist(); if(hist.idx<hist.stack.length-1){ hist.idx++; histApply(hist.stack[hist.idx]); } updateHistUI(); }
+function updateHistUI(){
+  $('undo').disabled = hist.idx<=0 && !hist.timer;
+  $('redo').disabled = hist.idx>=hist.stack.length-1;
+  $('hist_pos').textContent = hist.stack.length>1 ? (hist.idx+1)+'/'+hist.stack.length : '–';
+}
+$('hud').addEventListener('input',scheduleHist);
+$('hud').addEventListener('change',scheduleHist);
+$('undo').addEventListener('click',undoView);
+$('redo').addEventListener('click',redoView);
 
 // mobile bottom sheet: ☰ toggles the HUD; starting an orbit gesture tucks it away
 const mobile = matchMedia('(max-width: 700px)');
