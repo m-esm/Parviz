@@ -326,11 +326,18 @@ settled below). "Need" is per robot.</p>
 <td><strong>1</strong></td>
 </tr>
 <tr>
-<td>M8x60 bolts + NYLOC nuts</td>
-<td>END BOLT-AXLES (2026-07-11: plain stubs had no retention): head = outboard hubcap, shank through the F688 pair + pylon, nut inboard; front nuts CLAMP the tension slots (no set screws). NYLOC required: the nut lives in the prow-cheek clearance pocket with no wrench access after the deck drops on -- torque on the bench, retension from the outboard head only. +4 washers</td>
+<td>M8x<strong>70</strong> bolts + NYLOC nuts</td>
+<td>END BOLT-AXLES (2026-07-11: plain stubs had no retention): head = outboard hubcap, shank through the F688 pair + pylon, nut inboard; front nuts CLAMP the tension slots (no set screws). <strong>LENGTH CORRECTED 2026-07-16 (was M8x60): the modeled stack gives ~57.9 of grip, so a 60 shank engages the nut over only ~2.1-2.5 mm = ~2 turns, and an 8.0 NYLOC's nylon insert sits PAST the end of the bolt -- i.e. "NYLOC required" bought a lock the geometry could not reach.</strong> Bad practice in steel; a creep concentrator in PLA. +4 washers</td>
 <td>4+4</td>
 <td>0 -- <strong>SETTLED 2026-07-13: the Bag 13 "Machine Bolts" bag label reads 30PCS M3-30</strong> (plain M3x30 pan heads), no M8 anywhere in inventory</td>
-<td><strong>4x M8x60 + 4 NYLOC + 4 washers</strong></td>
+<td><strong>4x M8x70 + 4 NYLOC + 4 washers</strong></td>
+</tr>
+<tr>
+<td>M8 JAM NUTS (<strong>pending a decision, see below</strong>)</td>
+<td><strong>OPEN DEFECT, affects the METAL build identically (2026-07-16):</strong> the end-axle clamp stack has <strong>17.4 mm of AIR</strong> in it -- the tower's outboard face ends at x 70.0, the idler's inner bushing starts at x 87.4, and nothing sits between the nut face and the head face to squeeze. Tightening the nut closes that air first: the idler slides inboard, <strong>jams on the tower and seizes</strong>. So the front axles cannot tension the track <em>at all</em>, in plastic or steel -- the printed thread is not the limitation. Fix (probed to clear at Ø13 through Ø22 across the full -2..+6.5 travel, both ends): a <strong>jam nut on the tower's OUTBOARD face</strong>, clamping the bolt to the tower and leaving the idler free on its journal. Needs the thread run extended to reach x 78 (one constant in <code>src/standins/m8_bolt.py</code>) and the same on the metal bolt. NOT APPLIED: it changes the tensioner architecture.</td>
+<td>4</td>
+<td>0</td>
+<td><strong>4x M8 jam nut</strong> if adopted</td>
 </tr>
 <tr>
 <td>608zz</td>
@@ -480,9 +487,19 @@ tracks, bezel, neck, pan parts, cosmetics -- can stay PLA. The black CR-PETG spo
 </ul>
 <h3 id="plastic-hardware-stand-ins-interim-plate-hardware-stand-ins">Plastic hardware stand-ins (interim, plate "Hardware stand-ins")</h3>
 <p>Until the metal order lands, every buy-list hardware row above has a PRINTED
-stand-in (2026-07-15, <code>src/standins.py</code> -&gt; <code>stl/hardware/</code>), so the whole robot
-dry-assembles in plastic. The BOM is unchanged; swap each stand-in 1:1 for metal
-on arrival. All are threadless push/press fits:</p>
+stand-in (<code>src/standins/</code> -&gt; <code>stl/hardware/</code>), so the whole robot dry-assembles in
+plastic. The BOM is unchanged; swap each stand-in 1:1 for metal on arrival.</p>
+<p><strong>REWORKED 2026-07-16</strong> ("as functional and as close to reality as possible"). The
+M4 and M8 pairs now carry <strong>real ISO threads</strong> (<code>src/threads.py</code>) and screw together
+for real. More importantly, the rework caught <strong>three v1 parts that were physically
+unbuildable</strong> -- each had inherited nominal metal dimensions with no print
+compensation, which looks perfect in CAD:</p>
+<blockquote>
+<p><strong>RULE: a stand-in mates PRINTED-TO-PRINTED or PRINTED-TO-STEEL, never
+nominal-to-nominal.</strong> Budget 0.1-0.2 mm per printed surface, put the compliance on
+the printed part (crush ribs beat a tight window), and probe the real mating
+geometry -- never copy the metal part's numbers or the CAD placeholder's.</p>
+</blockquote>
 <div class="tbl"><table>
 <thead>
 <tr>
@@ -497,67 +514,80 @@ on arrival. All are threadless push/press fits:</p>
 <td><code>hw_m4_bolt</code></td>
 <td>10</td>
 <td>M4x40 bolt-axles</td>
-<td>Ø3.9 shank; wheels slip over it</td>
+<td>real SHOULDER bolt: plain Ø3.9 journal + M4x1.0 threaded tail. The shoulder is the axial stop, so the wheel stays free however hard it is done up. Ø10.4 thumb head. <strong>A stock DIN 931 M4x40 would start thread INSIDE the wheel (~18 shoulder vs the ~35 the stack wants) -- the printed part is better than the metal it replaces</strong></td>
 </tr>
 <tr>
 <td><code>hw_m4_nut</code></td>
 <td>10</td>
 <td>(owned steel M4 nuts)</td>
-<td>steel nuts can't thread a smooth shank: printed AF7 hex, Ø3.7 press bore</td>
+<td>AF7 hex, real M4x1.0 internal thread + lead-in per face. AF and 3.2 thickness are the SLOT's (it is cut for an AF7 hex ACROSS CORNERS -- that is what centres it on the bore)</td>
 </tr>
 <tr>
 <td><code>hw_m8_bolt</code></td>
 <td>4</td>
-<td>M8x60 end bolt-axles</td>
-<td>Ø8.0 shank, head = hubcap</td>
+<td>M8x70 end bolt-axles</td>
+<td>knurled Ø22 thumb head, smooth Ø8.0 journal under the bushings AND through the tension slot, M8x1.25 thread only where the nut runs</td>
 </tr>
 <tr>
 <td><code>hw_m8_nut</code></td>
 <td>4</td>
 <td>M8 NYLOC</td>
-<td>AF13 (nut cages grip it), Ø7.8 press bore; CA drop on the front tensioners -- a push nut holds no real preload</td>
+<td>AF13, real M8x1.25 thread, 6.0 tall (cage max = 4.2 turns) + countersinks. No NYLOC analogue exists in PLA and none is modeled -- moot, the cage grips the flats</td>
 </tr>
 <tr>
 <td><code>hw_m8_washer</code></td>
 <td>4</td>
 <td>Ø14.4 washers</td>
-<td></td>
+<td><strong>flatted to AF13</strong>: a round Ø14.4 disc overlaps the tower nut cage by 5.2 mm³ (its old seat was deleted by running-gear v2). A printed wave washer was rejected -- it creeps by the mechanism it would compensate</td>
 </tr>
 <tr>
 <td><code>hw_f688_bushing</code></td>
 <td>8</td>
 <td>F688ZZ bearings</td>
-<td>flanged plain bushing; idlers become greased plain bearings</td>
+<td><strong>v1 could not spin</strong> (all three fits closed nominal-to-nominal). Now bore Ø8.6, body Ø15.2 + its own crush ribs at Ø16.0, flange Ø17.9, 3 axial grease grooves. <strong>Grease is required -- it is the service life, not a nicety</strong></td>
 </tr>
 <tr>
 <td><code>hw_pan_ring</code></td>
-<td>1</td>
+<td>20</td>
 <td>18x Ø6 BBs</td>
-<td>torus slip ring in both race grooves (printed spheres don't print clean); pan_cage unused till real BBs</td>
+<td><strong>v1 could not move</strong> -- the torus slid at ~96 mNm vs the pan's ~15-17 mNm. Now 18 barrel rollers + 2 spares: Ø5.9 sphere, flats on the SPIN POLES, printed axis-up / installed axis-radial. <strong>pan_cage is used again.</strong> Print at 0.1 mm layers</td>
 </tr>
 <tr>
 <td><code>hw_tilt_axle</code></td>
 <td>1</td>
 <td>Ø5 silver-steel rod</td>
-<td>D-flat modeled; PLA flexes, expect soft tilt homing</td>
+<td><strong>v1 could not be assembled</strong> (Ø5.000 into a Ø5.000 STEEL 695 bore = +0.000). Now Ø4.8 print-compensated, D-key ledge referenced to the AXIS so key clearance is unchanged</td>
 </tr>
 <tr>
 <td><code>hw_seam_dowel</code></td>
-<td>4</td>
+<td>5</td>
 <td>Ø4x12 dowels</td>
-<td></td>
+<td>Ø3.9 (not Ø4.0 -- a printed dowel is the other half of the tolerance stack) + lead-in chamfers</td>
 </tr>
 <tr>
 <td><code>hw_foot_pin</code></td>
 <td>2</td>
-<td>Ø3x6 trim_neckfoot pins</td>
-<td></td>
+<td>Ø3x8 trim_neckfoot pins</td>
+<td><strong>Ø3x8, not x6</strong> -- the 2026-07-15 socket deepening (5.0 socket + 3.0 collar = flush)</td>
 </tr>
 </tbody>
 </table></div>
-<p>Limits to respect on plastic: don't hold long stall-torque tilt moves (the worm
-loads the plastic axle flat), tension the tracks only to mesh (push nuts creep),
-and expect the pan to feel draggier than the BB race (sliding, not rolling).</p>
+<p>Limits to respect on plastic (full rationale in <code>src/standins/__init__.py</code>):</p>
+<ul>
+<li><strong>The track still cannot be tensioned -- but that is a GEOMETRY defect that hits
+  the metal build identically, not a plastic one.</strong> See the M8 jam-nut row above.</li>
+<li><strong>M4 is a real fastener now</strong>: it screws, tightens and re-uses. Snug it; don't lean
+  on it (~400 N strip vs a metal M4's ~2 kN).</li>
+<li>PLA creeps, so preload decays over hours -- but with real threads that decay is
+  bounded and recoverable: re-snug, nothing degrades permanently.</li>
+<li>Tilt homing is <strong>usable</strong> (~1.3-1.5 deg wind-up, the same order as the design's own
+  D-key backlash, and stall homing calibrates it out). Park at the balance point --
+  the real cost is 1-3 deg of creep droop over hours.</li>
+<li>The dry pan <strong>slews, but slowly and near the limit</strong>, and may need a nudge from
+  rest. Grease both grooves. Don't time the dry pan and call it a gear-ratio verdict.</li>
+<li>Idlers are greased plain bearings: ~50x a ball bearing's rolling resistance, but
+  only 0.17-0.70 N to roll, which the track's own weight exceeds.</li>
+</ul>
 <h2 id="verify-on-arrival-caliper-before-printing">Verify on arrival (caliper before printing)</h2>
 <p>The CAD models several bought parts from datasheet/typical dims, not measurements. The
 rule for every row: <strong>caliper the real part -&gt; update the named param(s) -&gt; <code>make build</code>
