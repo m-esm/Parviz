@@ -803,11 +803,21 @@ def build_chassis_parts():
 
     def _despeck(mesh, min_cm3=0.5):
         """Drop tiny disconnected fragments a seam cut can shear off a wire-pass /
-        pad edge (they'd print as loose specks). Keeps every real body."""
+        pad edge (they'd print as loose specks). Keeps every real body.
+
+        NEVER size-filter a NEGATIVE-volume component. A fully-enclosed void (a
+        blind/internal bore) is its own connected component whose shell has inward
+        normals, so it splits out with negative volume -- the old `abs(p.volume)`
+        made a Ø4x16 dowel bore look like a 0.21 cm3 speck and DELETED THE HOLE.
+        That silently un-drilled all four y=26 seam dowel bores: the fastening
+        campaign's own locators were never in the printed parts (2026-07-16).
+        A cavity is a hole, not a speck; only positive bodies can be loose.
+        """
         parts = mesh.split(only_watertight=False)
         if len(parts) <= 1:
             return mesh
-        keep = [p for p in parts if abs(p.volume) / 1000.0 >= min_cm3]
+        keep = [p for p in parts
+                if p.volume < 0.0 or p.volume / 1000.0 >= min_cm3]
         return trimesh.util.concatenate(keep) if keep else mesh
 
     # seam fasteners re-clocked with the 14.7-wide pad (screw 57 -> 60.3 clears the

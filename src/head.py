@@ -774,8 +774,17 @@ def build_head_parts():
     frame_raw = slice_mesh_plane(back, plane_normal=(0, 1, 0),
                                  plane_origin=(0, wall_if, 0), cap=True)
     bodies = sorted(frame_raw.split(only_watertight=False), key=lambda b: -b.volume)
-    frame = bodies[0]
-    floaters = [b for b in bodies[1:] if b.volume > 1.0]
+    # A fully-enclosed void (the flange dowel bore) splits out as its own component
+    # with INWARD normals = NEGATIVE volume. It is neither the frame nor a floater,
+    # so the old `bodies[0]` + `volume > 1.0` sort dropped it on the floor and the
+    # hole closed. Carry cavities back onto the frame by CONCATENATION -- uni()
+    # would fill them straight back in. (2026-07-16; same class as chassis
+    # _despeck's abs(volume), which un-drilled the y=26 seam dowels.)
+    cavities = [b for b in bodies if b.volume < 0.0]
+    solids = [b for b in bodies if b.volume >= 0.0]
+    frame = (trimesh.util.concatenate([solids[0]] + cavities) if cavities
+             else solids[0])
+    floaters = [b for b in solids[1:] if b.volume > 1.0]
     assert len(floaters) <= 6, "unexpected floating bodies in head_back frame"
     if floaters:
         panel = uni([panel] + floaters)

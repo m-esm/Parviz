@@ -461,12 +461,26 @@ def main():
     check("hardware stand-ins exported (%d parts)" % len(STANDINS), hw_ok, hw_detail)
     if hw_ok:
         ext = lambda n: (M(n).bounds[1] - M(n).bounds[0])
-        check("stand-in interface dims (M8 shank / F688 seat / axle / pan ring)",
-              abs(ext("hw_m8_bolt")[2] - 65.7) < 0.1            # M8x60 + 5.3 head
-              and abs(ext("hw_f688_bushing")[0] - 18.2) < 0.1   # flange Ø in Ø18.5 recess
+        # 2026-07-16 stand-in rework: every one of these numbers moved for a probed
+        # reason (see each module's docstring). They are interface dims -- the whole
+        # point is that they cannot drift back silently.
+        check("stand-in interface dims (M8 shank / F688 seat / axle / pan roller)",
+              abs(ext("hw_m8_bolt")[2] - 78.0) < 0.1            # M8x70 + 8.0 head: a
+              # 60 shank engages the nut over only ~2 turns (true in metal too)
+              and abs(ext("hw_f688_bushing")[0] - 17.9) < 0.1   # flange Ø, LOOSE in the
+              # Ø18.5 recess: printed-in-printed, the old 18.2 bound and never seated
+              and abs(ext("hw_f688_bushing")[2] - 5.9) < 0.1    # flange 0.9 under the
+              # 1.025 recess + the real F688's 5.0 in-bore width
               and abs(ext("hw_tilt_axle")[1] - (P["head_w"] + 4)) < 0.1
-              and abs(ext("hw_pan_ring")[0]
-                      - (P["pan_race_circle_d"] + 5.8)) < 0.1)  # ball-circle torus
+              and 4.6 <= ext("hw_tilt_axle")[0] <= 4.9 < P["axle_d"]   # PRINT-COMPENSATED:
+              # Ø5.000 nominal into a Ø5.000 STEEL 695 bore is +0.000 = unassemblable
+              and abs(ext("hw_pan_ring")[0] - 5.9) < 0.1        # roller crown Ø (the
+              # torus is gone: it SLID, ~96 mNm vs the pan's ~15-17 mNm budget)
+              and abs(ext("hw_pan_ring")[2] - 4.9) < 0.1        # flats cut on the spin
+              # poles only -- the rolling great circle stays intact
+              and abs(ext("hw_foot_pin")[2] - 8.0) < 0.05       # 5.0 socket + 3.0 collar
+              and abs(ext("hw_m8_washer")[1] - 13.0) < 0.05)    # flats: a round Ø14.4
+              # disc overlaps the tower nut cage by 5.2 mm^3
 
     # ---------------- FASTENING CAMPAIGN (2026-07-15) --------------------------
     # docs/FASTENING_AUDIT.md. The first print failed because captive traps could
@@ -508,6 +522,26 @@ def main():
           all(nut_reaches_bore(tail, (s * P["tail_pad_x"], sy - 6.0, 21.5),
                                (0.0, 0.0, 1.0)) for s in (-1, 1)),
           "M3x16 axis-Y, nut drops in from above onto the z 21.5 screw axis")
+
+    # ENCLOSED VOIDS SURVIVE THE SPLIT-BASED CLEANUPS (2026-07-16). A fully-enclosed
+    # bore is its own connected component with INWARD normals = negative volume, so a
+    # size filter using abs(volume) reads it as a speck and DELETES THE HOLE. That
+    # silently un-drilled every y=26 seam dowel bore and the head flange dowel -- the
+    # locators the fastening campaign had just added were never in the printed parts.
+    # Re-cut probe: if the bore is there, cutting it again removes ~nothing.
+    def _bore_present(mesh, cutter):
+        return (mesh.volume - geo.sub(mesh, cutter).volume) < 1.0
+
+    def _dwl(at, axis):
+        c = geo.cyl(2.05, 16.0, axis=axis)
+        c.apply_translation(at)
+        return c
+
+    check("y=26 seam dowel bores are actually drilled (not eaten by _despeck)",
+          all(_bore_present(M(n), _dwl((s * 54.0, 26.0, 18.0), "y"))
+              for n in ("chassis_lower_front", "chassis_lower_rear")
+              for s in (-1, 1)),
+          "enclosed cavities must survive the despeck size filter")
 
     finish()
 

@@ -81,6 +81,26 @@ PRINTED = [
 # regression under the known-thin feature must not hide behind the whitelist).
 # ---------------------------------------------------------------------------
 WHITELIST = {
+    # REAL ISO THREADS (2026-07-16 stand-in rework, src/threads.py). No true thread can
+    # pass an 0.8 mm wall gate: the ISO 68-1 crest flat is p/8 BY DEFINITION -- 0.125 at
+    # M4x1.0, 0.156 at M8x1.25 -- and the lead-in chamfers/countersinks slice those
+    # crests to a feather where they run out, exactly like the incomplete thread on a
+    # metal nut. The ray gate measures flank-to-flank across a V-tooth and reads that
+    # taper as a wall. It is not one: every tooth is fully backed by the core (bolts) or
+    # the nut wall (nuts) along its whole helix, the bulk sections are 2.1-2.4 mm, and
+    # the crest never carries load (0.25 radial clearance to its mate). Same class as
+    # the tilt_worm run-out feathers and the 14T tooth tips below. Verified by census:
+    # ~100% of each part's thin population sits in the thread band. Floors are set under
+    # the measured p1 (which jitters with where the chamfer truncates the helix), so a
+    # REAL regression -- a thin nut wall or a hollowed shank -- still fails.
+    "hw_m4_bolt.stl": (0.25, "M4x1.0 ISO crest flats (p/8 = 0.125 by form) + tip lead-in "
+                             "feather; the shank under them is solid Ø3.9"),
+    "hw_m4_nut.stl": (0.08, "M4x1.0 ISO crest flats + the run-out feather at the 45deg "
+                            "countersink mouth; bulk flat-to-bore section is 2.14"),
+    "hw_m8_bolt.stl": (0.25, "M8x1.25 ISO crest flats (p/8 = 0.156 by form) + tip lead-in "
+                             "feather; the shank under them is solid Ø8.0"),
+    "hw_m8_nut.stl": (0.08, "M8x1.25 ISO crest flats + the run-out feather at the Ø9.0 "
+                            "countersink mouth; bulk flat-to-bore section is 2.375"),
     # 14T conjugate sprocket tooth tips (running-gear v2 2026-07-14): the larger
     # pitch radius makes the swept-envelope tooth tips taper thinner than the old
     # 12T's. Mesh probe-verified (tools/probe_track_pip.py: CR 1.48, skip barrier
@@ -153,8 +173,15 @@ WHITELIST = {
     # y -66..-65.88, the rim wedge; thickness grows smoothly off the tangent line).
     # Designed split geometry -- the panel's corner mass backs the wedge in assembly.
     # Frames only became measurable 2026-07-13 (export watertight repair); p1 0.34.
-    "head_back_frame_L.stl": (0.25, "split-plane feather rim where the y -66 seam cuts the corner round"),
-    "head_back_frame_R.stl": (0.25, "split-plane feather rim where the y -66 seam cuts the corner round"),
+    # Floor 0.25 -> 0.20 (2026-07-16): restoring the flange dowel bore (it had been
+    # silently deleted -- an enclosed void read as a speck to the body sort) shifted
+    # this part's p1 0.37 -> 0.248 WITHOUT adding a thin wall. Censused at the new
+    # geometry: of the 24 sub-0.5 samples, 79% sit within 2 mm of the same y -66 seam
+    # feather this row has always covered and 0% are within 8 mm of the dowel bore.
+    # So the feature is unchanged and p1 (a percentile) just moved with the sample
+    # population. min is ~0.00-0.01 either way and always was.
+    "head_back_frame_L.stl": (0.20, "split-plane feather rim where the y -66 seam cuts the corner round"),
+    "head_back_frame_R.stl": (0.20, "split-plane feather rim where the y -66 seam cuts the corner round"),
     # Track link KEELS + inner-face draft chamfers taper to their corner lines by
     # design (2026-07-12 print-in-place strips: 45 deg self-supporting buttresses).
     # Strips actually measure p1 ~1.9 -- the entry is here so a future keel
