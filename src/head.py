@@ -35,6 +35,27 @@ def _nut_trap(nut_c, screw_axis, open_dir, size="M3", length=14.0):
                     length=length + geo.nut_ac(size) / 2.0)
 
 
+def _teardrop(r, length, axis="x", up=(0, -1, 0)):
+    """Self-supporting horizontal-bore cutter for the HEAD's print orientations.
+
+    geo.teardrop() hard-codes `up="z"` -- it only covers parts printed with world +Z as
+    the print-up direction (the seam-up chassis tub). Every head piece prints on another
+    face: head_bezel goes FACE-DOWN and the head_back frames go FRONT-DOWN, so for both
+    of them print-up is world -Y and their bed-plane bores run along world X or Z. Same
+    construction as geo.teardrop (cyl + a 45deg square cap rotated about the bore axis,
+    lifted r*sqrt(0.5) so its lower vertex sits on the bore centre and the roof never
+    exceeds 45deg); `up` just has to be perpendicular to `axis`.
+    """
+    a = {"x": (1.0, 0, 0), "y": (0, 1.0, 0), "z": (0, 0, 1.0)}[axis]
+    u = np.asarray(up, float); u /= np.linalg.norm(u)
+    if abs(float(np.dot(np.asarray(a, float), u))) > 1e-6:
+        raise ValueError("_teardrop(): up must be perpendicular to axis")
+    cap = box(*{"x": (length, r, r), "y": (r, length, r), "z": (r, r, length)}[axis])
+    cap.apply_transform(R(TAU / 8, a))               # 45deg about the bore axis
+    cap.apply_translation(u * (r * np.sqrt(0.5)))
+    return uni([cyl(r, length, axis=axis), cap])
+
+
 def _yz_post(center_xz, y0, y1, wx, wz, r=2.0):
     """A rounded-box POST spanning y0..y1, footprint wx (X) x wz (Z) about center_xz.
 
@@ -292,9 +313,21 @@ def build_head_shell():
             bo.apply_translation((sx * P["cam_hole_dx"] / 2, py0 - P["cam_boss_len"] / 2,
                                   bz + dz))
             shell = uni([shell, bo])
-            pil = cyl(P["cam_boss_pilot_r"], 3.8, axis="y")
+            # 2026-07-15 FASTENING AUDIT (item 9): M2-in-PLA is fine here (the CM3 board
+            # is ~4 g and the cover carries the ribbon pinch), but the pilot had only
+            # 4.0 mm of material to bite -- boss 1.0 + pier 3.0 -- and used 3.8 of it.
+            # Engagement can only grow by adding material, and NOT off the boss: the boss
+            # TIPS define the board's front plane, so lengthening them walks the board
+            # forward and the barrel out of its wall bore. So the material goes on the
+            # pier's FRONT face instead, where it runs into the face wall and fuses.
+            fb = cyl(P["cam_boss_od"] / 2, P["cam_boss_front_len"], axis="y")
+            fb.apply_translation((sx * P["cam_hole_dx"] / 2,
+                                  py1 + P["cam_boss_front_len"] / 2, bz + dz))
+            shell = uni([shell, fb])
+            pl_ = P["cam_pilot_len"]
+            pil = cyl(P["cam_boss_pilot_r"], pl_, axis="y")
             pil.apply_translation((sx * P["cam_hole_dx"] / 2,
-                                   py0 - P["cam_boss_len"] + 1.9, bz + dz))
+                                   py0 - P["cam_boss_len"] + pl_ / 2, bz + dz))
             shell = sub(shell, pil)
 
     # LED-strip recess in the forehead, left of the camera (design ref): shallow slot cut
@@ -478,12 +511,23 @@ def build_head_parts():
         # (head 58.0..65.2: 1.5 off the door outline, 1.8 off the frame)
         px_ = bx_ + 1.5 if bx_ < 0 else bx_
         for bz_ in (134.0, 174.0):
-            hole = cyl(1.75, 6.0, axis="y")
+            hole = cyl(P["m3_clear_r"], 6.0, axis="y")
             hole.apply_translation((px_, P["body_back_y"] + 2.0, bz_))
             back = sub(back, hole)
             cb = cyl(3.6, 1.4, axis="y")                 # Ø7.2 head counterbore, outer face
             cb.apply_translation((px_, P["body_back_y"] + 0.6, bz_))
             back = sub(back, cb)
+            # PILLAR LOCATING SEAT (2026-07-15 fastening audit P1 + "assembly-holding
+            # gaps" #5): the loaded tray used to drop in located by NOTHING and get
+            # screwed blind from outside while someone held the heaviest module in the
+            # robot. Each pillar end now keys into this recess. It is a recess and not a
+            # boss because the tray bay has zero frame material anywhere near the pillars
+            # -- see PARAMS "scr_seat_deep". Cut in `back` (y < -66 -> it lands in the
+            # panel) and printed as a shallow bed-face pocket that bridges at 1.0.
+            sd_, sf_ = P["scr_seat_deep"], P["scr_seat_fit"]
+            seat = box(P["scr_pillar"] + 2 * sf_, sd_ + 1.0, P["scr_pillar"] + 2 * sf_)
+            seat.apply_translation((bx_, wall_in - sd_ + (sd_ + 1.0) / 2, bz_))
+            back = sub(back, seat)
 
     # ant_bracket MOUNTING holes (2026-07-15 fastening audit P0-4): 4x M3x12 from OUTSIDE
     # the back wall into captive nuts in the bracket's spine bosses. The bracket carried
@@ -583,9 +627,23 @@ def build_head_parts():
     for sx in (-1, 1):
         root = box(hw, 2.45, 2.0)
         root.apply_translation((sx * hx, -65.775, 187.0))    # y -67..-64.55, z 186..188
-        plate = box(hw, 1.3, 3.2 + P["door_hook_lip"])       # z 187..193.2 (1 into the
-        plate.apply_translation((sx * hx, -65.2, 187.0 + (3.2 + P["door_hook_lip"]) / 2))
+        # 2026-07-15 FASTENING AUDIT P2-9: plate 1.3 -> 2.0. These two hooks are the door's
+        # entire top retention and they load in PEEL across the print layers. Growth is
+        # FORWARD (-65.85 -> -63.85): the back face must hold its 0.15 clearance off the
+        # fixed wall's inner face (-66), which is what lets the door swing shut at all.
+        ht_ = P["door_hook_t"]
+        plate = box(hw, ht_, 3.2 + P["door_hook_lip"])       # z 187..193.2 (1 into the
+        plate.apply_translation((sx * hx, -65.85 + ht_ / 2,  # fixed wall above the seam)
+                                 187.0 + (3.2 + P["door_hook_lip"]) / 2))
         door = uni([door, root, plate])                      # root so the union fuses)
+        # 45deg ROOT GUSSET (audit P2-9 asks for a root fillet; no fillet primitive on the
+        # trimesh path, so this is the same trick geo.teardrop uses -- a square rotated
+        # 45deg about the hook axis, centred on the plate/root junction, so the exposed
+        # faces leave a 45deg ramp instead of a square re-entrant corner).
+        gus = box(hw, 2.2, 2.2)
+        gus.apply_transform(R(TAU / 8, (1, 0, 0)))
+        gus.apply_translation((sx * hx, -65.85 + ht_, 188.0))
+        door = uni([door, gus])
     # louvres live in the door: same cuts build_head_shell made in the wall
     for i in range(3):
         louvre = box(76, 30.0, 3.0)
@@ -610,10 +668,18 @@ def build_head_parts():
         notch = box(13.1, 36.4, 34.0)                        # y -106..-69.8: past the
         notch.apply_translation((sxd * 56.45, -87.9, 130.0)) # deepest tier that reaches
         door = sub(door, notch)                              # the tongue x-zone
+        slit_x = sxd * (vo - P["door_snap_w"] - P["door_snap_slot_w"] / 2)
         slit = box(P["door_snap_slot_w"], 16.0, P["door_snap_root_z"] - 113.0)
-        slit.apply_translation((sxd * (vo - P["door_snap_w"] - P["door_snap_slot_w"] / 2),
-                                wall_out, (113.0 + P["door_snap_root_z"]) / 2))
+        slit.apply_translation((slit_x, wall_out, (113.0 + P["door_snap_root_z"]) / 2))
         door = sub(door, slit)
+        # CRACK-STOP (2026-07-15 fastening audit P2-10): the slit's top end WAS a square
+        # corner at the tongue's root -- i.e. a stress raiser sitting exactly where the
+        # cantilever's bending moment peaks, on the one feature the user opens by hand
+        # every service. Terminating it in a hole wider than the slit is the standard
+        # fix; it also lengthens the tongue's effective root slightly, lowering strain.
+        stop = cyl(P["door_snap_stop_r"], 16.0, axis="y")
+        stop.apply_translation((slit_x, wall_out, P["door_snap_root_z"]))
+        door = sub(door, stop)
         # barb: (x, y) profile extruded over the z band. Root slab dips to y -66.8 so it
         # fuses into the plug strip; everything proud of the void wall (x > 54.35) stays
         # y >= -65.85 (0.15 behind the wall inner face -66 = the catch, nothing to add
@@ -644,22 +710,33 @@ def build_head_parts():
     # frame rim tabs + the panel screw drills (cut before slicing: each piece keeps
     # its share -- clearance + counterbore land in the wall slab, pilots in the tabs)
     wall_if = P["body_back_y"] + P["head_wall"]      # -66
-    tab_pts = [(-91.0, 120.0), (91.0, 120.0), (-91.0, 190.0), (91.0, 190.0)]
+    # 2026-07-15 FASTENING AUDIT (P1 + P2-8): these 6 screws are the panel's SOLE
+    # retention and they were Ø2.5 self-tap pilots through 9-wide tabs that the corner
+    # curve clips to ~3.2 ligaments. Now M3 through into a CAPTIVE NUT in a 12-wide tab
+    # centred on the screw axis (the old +-2 offset would leave 1.15 of inboard web once
+    # the slot is cut). Tabs still clip into the corner mass via inter(): at y -66 the
+    # side walls are all corner curve, so the tabs bite the thick corner itself.
+    tab_pts = [(-91.0, 120.0), (91.0, 120.0), (-91.0, 190.0), (91.0, 190.0),
+               (-45.0, 96.0), (45.0, 96.0)]
+    tbx, tby, tbz = P["rim_tab"]
     for tx, tz in tab_pts:
-        tab = box(9.0, 10.0, 13.0)
-        tab.apply_translation((tx + (2.0 if tx > 0 else -2.0), wall_if + 5.0, tz))
-        back = uni([back, inter(tab, _head_solid())])    # clipped: at y -66 the side
-    for tx, tz in [(-45.0, 96.0), (45.0, 96.0)]:         # walls are corner curve, so
-        tab = box(12.0, 10.0, 10.0)                      # the pilots bite the thick
-        tab.apply_translation((tx, wall_if + 5.0, tz))   # corner mass itself
+        tab = box(tbx, tby, tbz)
+        tab.apply_translation((tx, wall_if + tby / 2, tz))
         back = uni([back, inter(tab, _head_solid())])
-    for tx, tz in tab_pts + [(-45.0, 96.0), (45.0, 96.0)]:
-        clr = cyl(1.6, 5.0, axis="y")
-        clr.apply_translation((tx, -68.0, tz)); back = sub(back, clr)
-        cbp = cyl(3.2, 1.8, axis="y")
-        cbp.apply_translation((tx, P["body_back_y"] + 0.8, tz)); back = sub(back, cbp)
-        pil = cyl(1.25, 8.0, axis="y")
-        pil.apply_translation((tx, wall_if + 4.0, tz)); back = sub(back, pil)
+    for tx, tz in tab_pts:
+        # ONE M3 clearance line, panel outer face THROUGH the tab (no self-tap left, and a
+        # through-bore means an over-long screw runs out into the head instead of jamming
+        # on undrilled tab -- probed: M3x12 into a blind bore fouled by 10.4 mm^3). Spec
+        # M3x10: head bears on the panel cb floor (y -68.3), tip lands 1.3 past the nut.
+        clr = cyl(P["m3_clear_r"], 15.0, axis="y")
+        clr.apply_translation((tx, -63.0, tz)); back = sub(back, clr)
+        cbp = cyl(3.2, 1.8, axis="y")            # Ø6.4 head cb; leaves a 2.3 panel
+        cbp.apply_translation((tx, P["body_back_y"] + 0.8, tz))   # ligament under the head
+        back = sub(back, cbp)
+        # nut trap runs +Z so the nut is gravity-seated with the head upright; the mouth
+        # exits the tab's top face into the open head. Nuts go in BEFORE the panel closes.
+        back = sub(back, _nut_trap((tx, P["rim_tab_nut_y"], tz), "y", (0, 0, 1),
+                                   length=9.0))
 
     # head_back halves join (frame side): under-the-top-wall flange, 2x M3 axis X.
     # Center tracks the ceiling (body_z_top - 7.5: 7-tall box fusing 1 into the top
@@ -669,13 +746,26 @@ def build_head_parts():
     fl1 = box(28.0, 21.0, 7.0)
     fl1.apply_translation((0, -2.5, zfl))            # y -13..8
     back = uni([back, fl1])
-    for fy_ in (-9.0, 4.5):
-        scr = cyl(P["m3_clear_r"], 15.0, axis="x")
+    # 2026-07-15 FASTENING AUDIT: Ø2.5 self-tap -> M3 into a captive nut, + a Ø4 dowel at
+    # the seam (audit "assembly-holding gaps" #3: the two frames had NOTHING registering
+    # them to each other -- only the panels' tongue). Screws moved (-9, 4.5) -> (-8, 3.5)
+    # so the 5.7 nut slot keeps >= 1.65 of flange either side of it.
+    # The trap runs -Z, out of the flange's underside: that is FORCED, because the seat has
+    # to be the CEILING. The flange's own top (z 238) is fused into the z 238..242 top wall,
+    # giving 4.325 above the seat; running the slot up instead would hole the head's crown.
+    # Nut in, then screw, with the frames laid on their backs (audit P3: the nut can drop
+    # out of a downward mouth before the screw starts).
+    for fy_ in P["flange_screw_y"]:
+        scr = _teardrop(P["m3_clear_r"], 15.0, axis="x", up=(0, -1, 0))
         scr.apply_translation((7.0, fy_, zfl)); back = sub(back, scr)
-        cbx = cyl(3.4, 4.0, axis="x")
+        cbx = _teardrop(3.4, 4.0, axis="x", up=(0, -1, 0))
         cbx.apply_translation((12.5, fy_, zfl)); back = sub(back, cbx)
-        pil = cyl(1.25, 9.0, axis="x")
-        pil.apply_translation((-4.5, fy_, zfl)); back = sub(back, pil)
+        thr = _teardrop(P["m3_clear_r"], 11.0, axis="x", up=(0, -1, 0))
+        thr.apply_translation((-5.5, fy_, zfl)); back = sub(back, thr)   # x -11..0
+        back = sub(back, _nut_trap((P["flange_nut_x"], fy_, zfl), "x", (0, 0, -1),
+                                   length=6.0))
+    dwl = cyl(P["bez_dowel_socket_r"], 14.0, axis="x")   # Ø4 dowel across the frame seam
+    dwl.apply_translation((0, P["flange_dowel_y"], zfl)); back = sub(back, dwl)
 
     # panel / frame split at the wall inner face; recover wall-hung floaters (the
     # gusset webs) into the panel so nothing is left floating in the frame
@@ -689,6 +779,21 @@ def build_head_parts():
     assert len(floaters) <= 6, "unexpected floating bodies in head_back frame"
     if floaters:
         panel = uni([panel] + floaters)
+
+    # PANEL<->FRAME REBATE (audit "assembly-holding gaps" #2: the panel was a flat slab on
+    # a flat rim, located by nothing while 6 blind M3 went in). Per tab: a shoulder standing
+    # proud of the rim face that the panel drops onto. Added AFTER the y=-66 split because
+    # the shoulder straddles it -- the pad belongs to the frame, the pocket to the panel.
+    # See PARAMS "rim_pad" for why this is per-tab and not a perimeter tongue.
+    pdx, pdy, pdz = P["rim_pad"]
+    pf = P["rim_pad_fit"]
+    for tx, tz in tab_pts:
+        pad = box(pdx, pdy, pdz)
+        pad.apply_translation((tx, wall_if - pdy / 2, tz + P["rim_pad_dz"]))
+        frame = uni([frame, pad])
+        pkt = box(pdx + 2 * pf, pdy + pf, pdz + 2 * pf)
+        pkt.apply_translation((tx, wall_if - (pdy + pf) / 2, tz + P["rim_pad_dz"]))
+        panel = sub(panel, pkt)
 
     frame_l = slice_mesh_plane(frame, plane_normal=(-1, 0, 0), plane_origin=(0, 0, 0), cap=True)
     frame_r = slice_mesh_plane(frame, plane_normal=(1, 0, 0), plane_origin=(0, 0, 0), cap=True)
@@ -705,9 +810,20 @@ def build_head_parts():
     # posts, and the led_slot starting at x 24): flange pads behind the forehead and
     # chin face strips, 1x M3 (axis X) + 1x Ø4 dowel each.
     for pz_, pdz in ((215.0, 8.0), (92.0, 5.0)):
-        pad = box(21.0, 8.0, 2 * pdz)
-        pad.apply_translation((25.0, 22.0, pz_))     # x 14.5..35.5 (0.5 off the camera
-        bezel = uni([bezel, pad])                    # bosses), y 18..26 behind the face
+        # 2026-07-15 FASTENING AUDIT: the CHIN pad grows y 18..26 -> 18..30 so it buries
+        # 1.0 into the face wall (29..33) and becomes a gusset off the face instead of a
+        # block on a stub -- the same "floating pad" class of defect the 2026-07-14 pass
+        # found on the forehead side. It also buys the depth the seam needs: an 8x10 pad
+        # CANNOT hold both a Ø4.1 dowel and an M3 with 1.2 ligaments and a 1.2 wall
+        # between them (that needs 11.2 mm in some direction; it had 8 and 10). With
+        # y 18..30 the two features separate in Y at 22 / 27 instead of fighting in Z.
+        # The FOREHEAD pad cannot do the same: the glass slab void (y 28.3..31.1) runs up
+        # to z 208.9, straight through where its +Y growth would go -- it keeps the pad +
+        # ext, with the ext thickened 3.2 -> 4.0 (audit P2-11).
+        pdy = P["bez_seam_pad_dy"] if pz_ < 100 else 8.0
+        pad = box(21.0, pdy, 2 * pdz)
+        pad.apply_translation((25.0, 18.0 + pdy / 2, pz_))    # x 14.5..35.5 (0.5 off the
+        bezel = uni([bezel, pad])                             # camera bosses)
         if pz_ > 100:
             # FUSE the forehead pad to the face (user 2026-07-14: "long hanging
             # thread in the LCD frame" = this pad FLOATING loose in bezel_R). The
@@ -718,17 +834,30 @@ def build_head_parts():
             # bridges pad -> face, z-clipped 209.4..223: above the glass band
             # (pocket top 208.9, so it can never press the LCD) and 0.5 under
             # the led_slot floor (223.5). The chin pad (z 92) is still fused.
-            ext = box(21.0, 3.2, 223.0 - 209.4)
-            ext.apply_translation((25.0, 27.6, (209.4 + 223.0) / 2))
-            bezel = uni([bezel, ext])
-        scr = cyl(P["m3_clear_r"], 14.0, axis="x")
+            ext = box(21.0, P["bez_ext_t"], 223.0 - 209.4)     # 3.2 -> 4.0 (audit P2-11):
+            ext.apply_translation((25.0, 26.0 + P["bez_ext_t"] / 2,   # y 26..30, so it
+                                   (209.4 + 223.0) / 2))             # buries 1.0 into the
+            bezel = uni([bezel, ext])                                # face wall (29..33)
+        # M3 + captive nut (was a Ø2.5 self-tap into the same 1.2-class plastic). The trap
+        # opens -Y = INTO the head interior, which is also print-UP for the face-down bezel:
+        # the nut drops in and rests on its seat while the two halves lie on the bench.
+        scr = _teardrop(P["m3_clear_r"], 14.0, axis="x", up=(0, -1, 0))
         scr.apply_translation((28.0, 22.0, pz_)); bezel = sub(bezel, scr)
-        cbx = cyl(3.4, 4.0, axis="x")
+        cbx = _teardrop(3.4, 4.0, axis="x", up=(0, -1, 0))
         cbx.apply_translation((33.6, 22.0, pz_)); bezel = sub(bezel, cbx)
-        pil = cyl(1.25, 7.0, axis="x")
-        pil.apply_translation((18.5, 22.0, pz_)); bezel = sub(bezel, pil)
-        dwl = cyl(2.05, 15.0, axis="x")              # Ø4 dowel across the seam
-        dwl.apply_translation((22.0, 22.0, pz_ + (pdz - 2.6) * (1 if pz_ > 100 else -1)))
+        thr = _teardrop(P["m3_clear_r"], 9.0, axis="x", up=(0, -1, 0))
+        thr.apply_translation((16.5, 22.0, pz_)); bezel = sub(bezel, thr)   # x 12..21
+        bezel = sub(bezel, _nut_trap((P["bez_seam_nut_x"], 22.0, pz_), "x", (0, -1, 0),
+                                     length=8.0))
+        # Ø4 dowels KEPT (audit). The CHIN one moves off its 0.55 ligament: it used to sit
+        # 2.6 from the pad's z edge, i.e. 0.55 of plastic beyond the bore. On the deepened
+        # chin pad it separates from the screw in Y instead (22 -> 27, a 1.2 wall between
+        # them) and now has the whole face wall behind it.
+        dwl = cyl(P["bez_dowel_socket_r"], 15.0, axis="x")
+        if pz_ > 100:
+            dwl.apply_translation((22.0, 22.0, pz_ + pdz - 2.6))
+        else:
+            dwl.apply_translation((22.0, P["bez_chin_dowel_y"], pz_))
         bezel = sub(bezel, dwl)
     bez_l = slice_mesh_plane(bezel, plane_normal=(-1, 0, 0), plane_origin=(22.0, 0, 0), cap=True)
     bez_r = slice_mesh_plane(bezel, plane_normal=(1, 0, 0), plane_origin=(22.0, 0, 0), cap=True)
@@ -776,13 +905,25 @@ def build_screen_tray():
             c = cyl(P["scr_m3_clear_r"], 8.0, axis="y")
             c.apply_translation((bx_, face - 2.0, bz_))
             cuts.append(c)
-        for bz_ in (134.0, 174.0):                       # pillars to the wall, z-clear of
-            pl = box(8.0, (face - 3.5) - wall_in + 0.05, 8.0)    # the clamp tubes
-            pl.apply_translation((bx_, (face - 3.5 + wall_in + 0.05) / 2, bz_))
+        # 2026-07-15 FASTENING AUDIT P1: the pillars are 8 -> 10 sq and their Ø2.5
+        # self-tap pilots become M3 + CAPTIVE NUT. An 8 sq pillar leaves only 1.15 of web
+        # beside a 5.7 nut slot; 10 gives 2.15 and z 134/174 +-5 still clears the Ø14
+        # clamp tubes (146..160). Each pillar end now runs `scr_seat_deep` INTO a locating
+        # recess in the back panel, so the loaded module self-holds instead of being held
+        # by hand while 4 screws go in blind from outside.
+        pw_ = P["scr_pillar"]
+        p_end = wall_in - P["scr_seat_deep"] + 0.05      # 0.05 seat clearance in Y
+        for bz_ in (134.0, 174.0):
+            pl = box(pw_, (face - 3.5) - p_end, pw_)
+            pl.apply_translation((bx_, (face - 3.5 + p_end) / 2, bz_))
             parts.append(pl)
-            pil = cyl(1.25, 8.0, axis="y")               # wall-screw pilot
-            pil.apply_translation((px_, wall_in + 0.05 + 3.9, bz_))
-            cuts.append(pil)
+            thr = cyl(P["scr_m3_clear_r"], 11.0, axis="y")    # M3 through, y -67..-56
+            thr.apply_translation((px_, -61.5, bz_))
+            cuts.append(thr)
+            # nut slot opens INBOARD (its mouth clears the pillar into the open bay); the
+            # seat is the outboard side, which keeps >= 1.825 beyond the hex corner.
+            cuts.append(_nut_trap((px_, P["scr_pillar_nut_y"], bz_), "y",
+                                  (-np.sign(bx_), 0, 0), length=8.0))
     # SPINE tying the two rails into one part (bench handling): z 190.7..195.7, the
     # 6-mm window between the display's mid back-pan face (y 22.5 plane, tops at z 190
     # -- the spine face at 22.48 would only have 0.02 air inside its z-range) and the

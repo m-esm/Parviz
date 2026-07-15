@@ -178,6 +178,76 @@ P = {
     "ant_ear_pad_off": 1.15,          # radial push away from the can
     "ant_ear_nut_x": 41.0,            # nut mid-plane (trap x 39.6..42.4)
 
+    # --- head_back PANEL <-> FRAME joint (2026-07-15 FASTENING AUDIT P1 + P2-8) ---
+    # Was: 6x M3 into Ø2.5 self-tap pilots through 9-wide tabs that the corner curve clips
+    # to ~3.2 mm ligaments -- and those tabs are the panel's SOLE retention (audit P2-8),
+    # on a flat-on-flat interface with zero registration (audit "assembly-holding gaps" #2).
+    # Now: M3 through into a captive nut, on a 12-wide tab, plus a rebate shoulder.
+    "rim_tab": (12.0, 10.0, 13.0),   # (X, Y, Z). 12 wide gives 3.15 webs beside the 5.7 nut
+                                     # slot; 13 tall gives 3.325 under the seat. Tabs are now
+                                     # CENTRED on the screw axis (the old +-2 offset left only
+                                     # 1.15 of inboard web once the slot is cut).
+    "rim_tab_nut_y": -61.0,          # mid-tab: 3.6 of tab either side of the trap
+    # REBATE: the frame's rim CANNOT carry a perimeter tongue -- at y -66 the back walls are
+    # all r16 corner curve, so the rim is a knife wedge (at x 92 the frame is 1.34 thick and
+    # by x 97 the shell's own outer surface has already reached y -66, leaving no panel
+    # behind it at all). That is exactly why the tabs exist. So the rebate is per-tab: a
+    # shoulder on each tab's rim face that the panel drops onto, 5 BELOW the screw so it
+    # never eats the screw-head ligament (which stays 2.3).
+    "rim_pad": (7.0, 1.2, 3.0),      # (X, Y-proud, Z). 7 wide stays 1.04 inside the shell
+                                     # surface at the side tabs, so nothing gets clipped and
+                                     # the fit clearance survives all the way round.
+    "rim_pad_dz": -5.0,              # pad centre below the screw (cb r3.2 -> 1.8 clear)
+    "rim_pad_fit": 0.15,
+
+    # --- head_back FRAME<->FRAME top flange (2026-07-15 FASTENING AUDIT P1) ---
+    # Ø2.5 self-tap -> M3 + captive nut, and a Ø4 dowel: the two frames had NOTHING
+    # registering them to each other (audit "assembly-holding gaps" #3 -- only the panels
+    # carry a tongue). Screws moved off (-9, 4.5) so the 5.7 slot keeps >= 1.65 of the
+    # 21-deep flange either side. The trap runs -Z out of the flange underside because the
+    # SEAT must be the ceiling: the flange's top (238) is fused into the 238..242 top wall,
+    # giving 4.325 above the seat, whereas running it up would hole the head's crown.
+    "flange_screw_y": (-8.0, 3.5),
+    "flange_nut_x": -5.0,        # nut mid-plane in the L frame (screw enters from +X)
+    "flange_dowel_y": -2.25,     # between the two screws: 5.75 from each (>= 3.8 + wall)
+
+    # --- head_bezel L<->R seam pads (2026-07-15 FASTENING AUDIT P1 + P2-11) ---
+    "bez_seam_nut_x": 18.0,      # M3 captive nut in bezel_L (was a Ø2.5 self-tap)
+    "bez_ext_t": 4.0,            # forehead pad->face bridge 3.2 -> 4.0 (audit P2-11); it
+                                 # spans y 26..30, burying 1.0 into the face wall (29..33)
+    "bez_seam_pad_dy": 12.0,     # CHIN pad y 18..30 (was 18..26, depth 8). It now buries
+                                 # into the face and becomes a gusset rather than a block
+                                 # on a stub. It also buys the depth the seam needs: an
+                                 # 8x10 pad cannot hold a Ø4.1 dowel AND an M3 with 1.2
+                                 # ligaments plus a 1.2 wall between them -- that wants
+                                 # 11.2 mm along some axis and it had 8 and 10, which is
+                                 # exactly why the dowel ended up 0.55 from the pad edge.
+                                 # The FOREHEAD pad cannot copy this: the glass slab void
+                                 # (y 28.3..31.1) runs to z 208.9, right through its +Y
+                                 # growth path -- it keeps pad + thickened ext instead.
+    "bez_chin_dowel_y": 27.0,    # 5.0 off the screw (22.0) = 1.2 wall between the bores;
+                                 # the face wall now backs it instead of a 0.55 ligament
+
+    # --- SCREEN TRAY pillars -> head_back (2026-07-15 FASTENING AUDIT P1) ---
+    # The heaviest module in the robot (screen + Pi) was held by hand while 4 M3 were
+    # driven BLIND from outside the back wall into Ø2.5 self-tap pilots (audit P1 +
+    # "assembly-holding gaps" #5). Now M3 into captive nuts, and each pillar end keys into
+    # a locating recess so the loaded tray sits where it belongs by itself.
+    "scr_pillar": 10.0,      # pillar section, 8 -> 10: an 8 sq pillar leaves only 1.15 of
+                             # web beside the 5.7 nut slot. 10 gives 2.15, and z 134/174
+                             # +-5 still clears the Ø14 clamp tubes (146..160).
+    "scr_pillar_nut_y": -61.0,
+    "scr_seat_deep": 1.0,    # locating recess in the PANEL's inner face. It is a RECESS
+                             # and not a boss because the tray bay has ZERO frame material
+                             # anywhere near the pillars (probed: the whole bay is open
+                             # interior, the back panel is the only possible root) -- and a
+                             # boss on the panel's inner face would have to print
+                             # downwards, against that panel's documented "prints flat,
+                             # outer face up". 1.0 deep keeps 1.6 of ligament under the
+                             # screw-head counterbore, which still has to be flush: the
+                             # heads sit in the fixed strip the hatch frame reads across.
+    "scr_seat_fit": 0.15,
+
     # --- Screen factory mount: 4x M3 into the display's OWN outer case-mount holes ---
     # Measured from Raspberry_Pi_Touch_Screen_Assembly_v12.stl (outer 126.2 x 65.65 pattern),
     # confirmed vs the reference case STL + RPi mechanical drawing. Screen-LOCAL frame (post-flip);
@@ -904,6 +974,16 @@ P = {
                             # constraint (25.03) is gone; +2 keeps the barrel poking 0.48 into
                             # the wall bore and the pupil ~3 mm behind the outer face, as before
     "cam_boss_pilot_r": 0.85,  # M2 self-tap pilot Ø1.7
+    # 2026-07-15 FASTENING AUDIT (item 9): M2-in-PLA stays here (the CM3 board is ~4 g),
+    # but the pilot had only 4.0 of material to bite (boss 1.0 + pier 3.0) and used 3.8.
+    # Engagement cannot grow off the BOSS -- its tip IS the board's front plane, so a
+    # longer boss walks the board forward and the barrel out of its wall bore. Instead a
+    # short boss on the pier's FRONT face runs the last 2.5 into the face wall (interior
+    # y 29.0 in the camera bay; the glass slab void tops out at z 208.9, well below it)
+    # and fuses, which also ties the ceiling-hung pier to the face. Pilot 3.8 -> 5.8
+    # (+53% engagement), still 0.7 blind of the front boss tip.
+    "cam_boss_front_len": 2.5,
+    "cam_pilot_len": 5.8,
     "cam_m2_clear_r": 1.15, # M2 clearance (cover)
     "cam_ribbon_w": 17.0, "cam_ribbon_t": 2.5,   # CSI ribbon exit slot (pod bottom -> Pi bay)
     "cam_cover_t": 2.0,     # rear board-retaining cover
@@ -1030,12 +1110,24 @@ P = {
     # inboard -- no tools. NOT magnets (they walk and chatter under stepper vibration);
     # the snap preloads the flange into its rebate like the screws did.
     "door_hook_x": 47.0, "door_hook_w": 14.0, "door_hook_lip": 3.0,
+    # 2026-07-15 FASTENING AUDIT P2-9: hook plate 1.3 -> 2.0 + a 45deg root gusset. These
+    # two hooks are the door's ENTIRE top retention and they load in PEEL across the print
+    # layers. The plate grows FORWARD only -- its back face must keep the 0.15 clearance
+    # off the fixed wall's inner face (-66) that lets the door swing shut at all.
+    "door_hook_t": 2.0,
     "door_snap_w": 2.75,        # tongue strip width in X at plug level
     "door_snap_slot_w": 1.5,    # freeing slit width (prints as a clean gap)
     "door_snap_root_z": 146.0,  # slit top = tongue root (L~29 to the barb -> ~1% strain
                                 # at 1.2 engagement, in-plane of the face-down layers)
     "door_snap_barb": 1.2,      # barb proudness past the void wall (engagement depth)
-    "door_snap_barb_z": (116.0, 119.5),  # barb z band (just above the plug bottom edge)
+    "door_snap_barb_z": (116.0, 123.0),  # barb z band (just above the plug bottom edge).
+                                # 3.5 -> 7.0 tall (audit P2-10): the catch band was the
+                                # shortest engagement in a tool-free joint the user cycles
+                                # by hand. Grown UPWARD -- 115.5 is the through-void's own
+                                # bottom edge, so there is nothing to catch below 116.
+    "door_snap_stop_r": 1.25,   # Ø2.5 crack-stop terminating the freeing slit (audit
+                                # P2-10: its top end was a square corner at the tongue
+                                # root, exactly where the bending moment peaks)
     # EXTRUDED REAR POD (2026-07-10, replaced the raised panel + latch/hinge cosmetics +
     # through-relief): the stepped "backpack" bump from the design ref, hollow so the
     # tilt drivetrain's swept intrusion lives INSIDE it (no relief hole). See the pod
