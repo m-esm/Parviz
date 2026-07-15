@@ -632,9 +632,23 @@ def build_head_parts():
     for sx in (-1, 1):
         root = box(hw, 2.45, 2.0)
         root.apply_translation((sx * hx, -65.775, 187.0))    # y -67..-64.55, z 186..188
-        plate = box(hw, 1.3, 3.2 + P["door_hook_lip"])       # z 187..193.2 (1 into the
-        plate.apply_translation((sx * hx, -65.2, 187.0 + (3.2 + P["door_hook_lip"]) / 2))
+        # 2026-07-15 FASTENING AUDIT P2-9: plate 1.3 -> 2.0. These two hooks are the door's
+        # entire top retention and they load in PEEL across the print layers. Growth is
+        # FORWARD (-65.85 -> -63.85): the back face must hold its 0.15 clearance off the
+        # fixed wall's inner face (-66), which is what lets the door swing shut at all.
+        ht_ = P["door_hook_t"]
+        plate = box(hw, ht_, 3.2 + P["door_hook_lip"])       # z 187..193.2 (1 into the
+        plate.apply_translation((sx * hx, -65.85 + ht_ / 2,  # fixed wall above the seam)
+                                 187.0 + (3.2 + P["door_hook_lip"]) / 2))
         door = uni([door, root, plate])                      # root so the union fuses)
+        # 45deg ROOT GUSSET (audit P2-9 asks for a root fillet; no fillet primitive on the
+        # trimesh path, so this is the same trick geo.teardrop uses -- a square rotated
+        # 45deg about the hook axis, centred on the plate/root junction, so the exposed
+        # faces leave a 45deg ramp instead of a square re-entrant corner).
+        gus = box(hw, 2.2, 2.2)
+        gus.apply_transform(R(TAU / 8, (1, 0, 0)))
+        gus.apply_translation((sx * hx, -65.85 + ht_, 188.0))
+        door = uni([door, gus])
     # louvres live in the door: same cuts build_head_shell made in the wall
     for i in range(3):
         louvre = box(76, 30.0, 3.0)
@@ -659,10 +673,18 @@ def build_head_parts():
         notch = box(13.1, 36.4, 34.0)                        # y -106..-69.8: past the
         notch.apply_translation((sxd * 56.45, -87.9, 130.0)) # deepest tier that reaches
         door = sub(door, notch)                              # the tongue x-zone
+        slit_x = sxd * (vo - P["door_snap_w"] - P["door_snap_slot_w"] / 2)
         slit = box(P["door_snap_slot_w"], 16.0, P["door_snap_root_z"] - 113.0)
-        slit.apply_translation((sxd * (vo - P["door_snap_w"] - P["door_snap_slot_w"] / 2),
-                                wall_out, (113.0 + P["door_snap_root_z"]) / 2))
+        slit.apply_translation((slit_x, wall_out, (113.0 + P["door_snap_root_z"]) / 2))
         door = sub(door, slit)
+        # CRACK-STOP (2026-07-15 fastening audit P2-10): the slit's top end WAS a square
+        # corner at the tongue's root -- i.e. a stress raiser sitting exactly where the
+        # cantilever's bending moment peaks, on the one feature the user opens by hand
+        # every service. Terminating it in a hole wider than the slit is the standard
+        # fix; it also lengthens the tongue's effective root slightly, lowering strain.
+        stop = cyl(P["door_snap_stop_r"], 16.0, axis="y")
+        stop.apply_translation((slit_x, wall_out, P["door_snap_root_z"]))
+        door = sub(door, stop)
         # barb: (x, y) profile extruded over the z band. Root slab dips to y -66.8 so it
         # fuses into the plug strip; everything proud of the void wall (x > 54.35) stays
         # y >= -65.85 (0.15 behind the wall inner face -66 = the catch, nothing to add

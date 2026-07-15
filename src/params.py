@@ -1000,12 +1000,24 @@ P = {
     # inboard -- no tools. NOT magnets (they walk and chatter under stepper vibration);
     # the snap preloads the flange into its rebate like the screws did.
     "door_hook_x": 47.0, "door_hook_w": 14.0, "door_hook_lip": 3.0,
+    # 2026-07-15 FASTENING AUDIT P2-9: hook plate 1.3 -> 2.0 + a 45deg root gusset. These
+    # two hooks are the door's ENTIRE top retention and they load in PEEL across the print
+    # layers. The plate grows FORWARD only -- its back face must keep the 0.15 clearance
+    # off the fixed wall's inner face (-66) that lets the door swing shut at all.
+    "door_hook_t": 2.0,
     "door_snap_w": 2.75,        # tongue strip width in X at plug level
     "door_snap_slot_w": 1.5,    # freeing slit width (prints as a clean gap)
     "door_snap_root_z": 146.0,  # slit top = tongue root (L~29 to the barb -> ~1% strain
                                 # at 1.2 engagement, in-plane of the face-down layers)
     "door_snap_barb": 1.2,      # barb proudness past the void wall (engagement depth)
-    "door_snap_barb_z": (116.0, 119.5),  # barb z band (just above the plug bottom edge)
+    "door_snap_barb_z": (116.0, 123.0),  # barb z band (just above the plug bottom edge).
+                                # 3.5 -> 7.0 tall (audit P2-10): the catch band was the
+                                # shortest engagement in a tool-free joint the user cycles
+                                # by hand. Grown UPWARD -- 115.5 is the through-void's own
+                                # bottom edge, so there is nothing to catch below 116.
+    "door_snap_stop_r": 1.25,   # Ø2.5 crack-stop terminating the freeing slit (audit
+                                # P2-10: its top end was a square corner at the tongue
+                                # root, exactly where the bending moment peaks)
     # EXTRUDED REAR POD (2026-07-10, replaced the raised panel + latch/hinge cosmetics +
     # through-relief): the stepped "backpack" bump from the design ref, hollow so the
     # tilt drivetrain's swept intrusion lives INSIDE it (no relief hole). See the pod
