@@ -179,6 +179,28 @@ def build_neck_clevis():
     # shaft-boss clearance -- now the WORM (OD 10.55) extracts rearward through the plate
     # with the motor as one cartridge; sliding the worm axially out of mesh only spins the
     # free wheel, worm-as-rack, so the head gently tilts as the cartridge pulls out).
+    # WORM THRUST LIP (fastening campaign 2026-07-15, audit P3 "tilt_worm on D-shaft: no
+    # axial retention vs ~10 N worm thrust -> front washer trapped by the carrier plate
+    # bore lip"). The worm's rear face sat 2.0 mm clear of the plate, so rearward thrust
+    # let it hammer 2.0 mm along the D-shaft before anything stopped it -- and 2.0 of worm
+    # axial float is ~3 deg of tilt slop at the wheel, on top of hammering PLA.
+    # The lip can NOT touch the worm directly: any shoulder with an ID under the Ø10.55
+    # crest would block the cartridge's rearward extraction through this bore, which is the
+    # whole service path. Hence the washer -- it bridges inward over the bore (ID 5.3 on the
+    # Ø4.93 shaft) but lifts straight out with the cartridge. This raised annulus is its
+    # SEAT: r 6.1..8.0, standing 0.9 proud of the plate front (y -32.5 -> -31.6), so a
+    # single M5 PENNY washer (OD 15 > the Ø12.2 bore, so it cannot drop in; t 1.0) seats at
+    # -31.6 and fronts at -30.6 = 0.1 running clearance to the worm. Thrust path is then
+    # worm crest -> steel washer -> a r 6.1..8.0 annulus of plate, not a point on a bore
+    # edge. The `sh` bore below opens its ID; the boss is buried 1.0 into the plate to fuse.
+    # NOTE (report): this closes the REARWARD direction only. FORWARD (+Y) retention has no
+    # geometric home -- probed, the cooler's stall keep-out reaches y -17.26 at the groove
+    # bottom vs the worm's front face at -17.5, i.e. 0.24 mm, and the wheel owns the space
+    # above -- so the worm walking off the shaft must be answered on the HUB (retaining
+    # compound on the D-bore, or a grub boss in tools/gears), not here.
+    tboss = cyl(8.0, 1.9, axis="y")
+    tboss.apply_translation((wx, -32.55, wz))            # y -33.5..-31.6
+    neck = uni([neck, tboss])
     sh = cyl(6.1, 20, axis="y"); sh.apply_translation((wx, face_y, wz)); neck = sub(neck, sh)
     # (the old in-plate M4 ear holes are GONE: the motor's ears now bolt to the removable
     # tilt_carrier on the bench -- see build_tilt_carrier.)
