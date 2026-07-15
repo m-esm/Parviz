@@ -296,17 +296,47 @@ def build_chassis_core():
 
     # pan-clip pockets: 3 at 120deg around the seat rim, floors 7 below the deck top so the
     # clips finish FLUSH (see build_pan_clips for why nothing may stand proud of the deck).
-    # M3 pilot Ø2.5 x 8 into the remaining deck under each pocket floor.
+    #
+    # M3 THROUGH-BOLT + CAPTIVE HEX NUT (2026-07-15, FASTENING_AUDIT P1). These three
+    # screws were Ø2.5 thread-form pilots, and they are the ONLY thing resisting the
+    # top-heavy head lifting the pan platform off its balls -- the single worst
+    # self-tap in the chassis. The nut sits at pan_clip_nut_z, its slot running
+    # RADIALLY INWARD to a mouth in the seat wall (r 49): that is the only open face
+    # anywhere near this station, and it is a good one -- the annulus r 44.5..49 /
+    # z 51..56 outside the race ring is free air, so the nuts slide in with tweezers
+    # through the Ø98 seat opening. ORDER: nuts in BEFORE the race ring + balls.
+    # Uplift pulls each nut UP onto its slot roof, so the 3.6 mm of deck between the
+    # nut top and the pocket floor works in pure COMPRESSION against the clip's seat.
+    # Screw stays M3x10: build_pan_clips' head cbore puts the head bottom at z 62.6,
+    # so the tip lands at 52.6 = the nut's bottom face. pan.py needs no change.
     for a in (90, 210, 330):
         # pocket inner edge at r48 -- INSIDE the round seat wall (circle is at y 48.5 when
         # x = +-7), else slivers of deck survive between the straight edge and the circle
         # exactly where the clip tab corners land
-        pk = box(14.4, 10.2, 8.0); pk.apply_translation((0, 53.1, z1 - 3.0))    # z 45..53
+        pk = box(14.4, 10.2, 8.0); pk.apply_translation((0, 53.1, z1 - 3.0))    # z 59..67
         pk.apply_transform(R((a - 90) * DEG, (0, 0, 1)))
         body = sub(body, pk)
-        pil = cyl(1.25, 8.0); pil.apply_translation((0, 53.5, z1 - 11.0))       # z 37..45
-        pil.apply_transform(R((a - 90) * DEG, (0, 0, 1)))
-        body = sub(body, pil)
+        thr = cyl(P["m3_clear_r"], 8.0)                                         # z 51.5..59.5
+        thr.apply_translation((0, 53.5, z1 - 10.5))
+        thr.apply_transform(R((a - 90) * DEG, (0, 0, 1)))
+        body = sub(body, thr)
+        nsl = geo.nut_slot((0, 53.5, P["pan_clip_nut_z"]), screw_axis="z",
+                           open_dir=(0, -1, 0), size="M3",
+                           length=P["pan_clip_nut_run"])
+        # SEAT RELIEF (2026-07-15): geo.nut_slot() backstops at EXACTLY ac/2 behind the
+        # axis, so only a max-material nut (ac 6.35) reaches the bore dead-centre -- a
+        # real DIN 934 M3 runs 6.14..6.35 across corners, i.e. up to 0.21 short. Back
+        # the seat off pan_clip_nut_seat_clear: the nut self-centres on the screw as it
+        # draws in, so the seat only has to stop it near enough to be hands-free. This
+        # also clears the checks.nut_reaches_bore probe, whose axis-aligned 0.5 cube
+        # over-reaches a ROTATED seat plane by up to 0.104 (az 210/330 here).
+        # NOTE for a central fix: this belongs in geo.nut_slot() as a `seat_clear` arg.
+        sc = P["pan_clip_nut_seat_clear"]
+        rel = box(geo.NUT["M3"][0] + 0.2, sc, geo.NUT["M3"][1] + 0.2)
+        rel.apply_translation((0, 53.5 + M3_AC / 2 + sc / 2, P["pan_clip_nut_z"]))
+        nsl = uni([nsl, rel])
+        nsl.apply_transform(R((a - 90) * DEG, (0, 0, 1)))
+        body = sub(body, nsl)
     usb = box(14, 12, 8)                              # USB-C power entry in the rear wall
     # moved x 0 -> -38 (2026-07-11): the rear obstacle HC-SR04 + its twin ring own the
     # wall center now; -38 keeps the slot 1.0 off the ring band (ends -30), below the
@@ -318,9 +348,21 @@ def build_chassis_core():
     # floor rim behind the belly opening: the incoming wall cable zip-ties down before
     # the jack, so a yanked cable loads the tie, not the board (the robot WILL drag its
     # own tether eventually).
+    # PD-TRIGGER -> M2 BRASS HEAT-SET INSERTS (2026-07-15, FASTENING_AUDIT P1: "M2
+    # edge-on into wall layers (weakest orientation)"). The pilots' axis is Y and the
+    # tub prints floor-down, so a cut thread there runs straight across the layer
+    # stack -- it peels the wall apart rather than stripping. An insert is the exact
+    # answer: its knurl grips plastic melted around a smooth bore, so no thread is cut
+    # across layers at all. (The audit's other option, a printed slide-in carrier,
+    # needs board dimensions this project does not have -- see PARAMS pd_hole_cc.)
+    # Spacing 9.0 -> pd_hole_cc/2: a Ø2.8 insert bore at the old ±9 left only 0.60 mm
+    # of wall to the USB-C corridor (x -45..-31); ±10.4 restores 2.00.
+    pdx_, pdz_ = P["pd_c"]
     for sxp in (-1, 1):
-        pd = cyl(0.85, 4.0, axis="y")
-        pd.apply_translation((-38.0 + sxp * 9.0, -P["chassis_l"] / 2 + 5 - 1.9, z0 + 24))
+        pd = cyl(P["pd_insert_d"] / 2, P["pd_insert_l"] + 1.0, axis="y")
+        pd.apply_translation((pdx_ + sxp * P["pd_hole_cc"] / 2,
+                              -P["chassis_l"] / 2 + 5 - (P["pd_insert_l"] + 1.0) / 2 + 0.5,
+                              pdz_))                     # blind: 2.0 of wall behind
         body = sub(body, pd)
     for sxp in (-1, 1):
         zh = cyl(1.6, 7.0)
@@ -406,7 +448,7 @@ def build_chassis_core():
     # chassis sides") -- only the y -96 slot survives: it is FUNCTIONAL, the
     # BME688's air window (its bosses flank it; sensor placement keys off it).
     # (-112 died in the fittings audit; 16/32/48/64/96 were the cosmetic row.)
-    for vy in (-96.0,):
+    for vy in (P["bme_vent_y"],):
         # side ventilation slots, RE-CLOCKED 2026-07-11 (mid-drive): the TT feature
         # zone moved to y ~ -87..-15 (motor at spr_y -68), so the old row shifted
         # out of it into the now feature-free bands of the 240 tub
@@ -581,19 +623,38 @@ def build_chassis_core():
     reb_cut = extrude_polygon(reb_poly, P["belly_lip_t"] + 2.0)
     reb_cut.apply_translation((0, 0, z0 + P["belly_lip_t"] - (P["belly_lip_t"] + 2.0)))
     body = sub(body, reb_cut)                                # z 4.5..8.5
+    # 2026-07-15 (FASTENING_AUDIT P1, the TODO the previous pass left): the 6 rim
+    # screws were Ø2.5 thread-form pilots -- the failing class. They are now M3
+    # THROUGH-BOLTS into CAPTIVE HEX NUTS, and the 1.5 rebate lip stays the locator
+    # (the plate drops into it and self-holds while the 6 csk screws go in).
+    # Insertion order: nuts into the bosses with the deck off (they are free-standing
+    # posts in the open tub, every flank is a mouth), then the base, then the plate.
+    # Ø9 CLIPPED TO THE RIM: at the Ø7 radius every boss cleared the opening edge, but
+    # Ø9 crosses it at 3 of the 6 stations -- and the opening cut runs to z 16, so the
+    # crescent past the edge would hang in AIR over the void, feathering to nothing at
+    # its tips. Clip each boss on the opening outline: the chord face lands COPLANAR
+    # with the rim's own edge face (z 11.5..15), i.e. continuous material, no overhang.
+    rim_clip = extrude_polygon(op_poly, 10.0)
+    rim_clip.apply_translation((0, 0, z0 + floor - 1.0))         # z 14..24
     for bx_, by_ in P["belly_screws"]:
         b = cyl(P["belly_boss_r"], P["belly_boss_h"])
-        b.apply_translation((bx_, by_, z0 + floor + P["belly_boss_h"] / 2))   # z 12..18
-        body = uni([body, b])
+        b.apply_translation((bx_, by_, z0 + floor + P["belly_boss_h"] / 2))   # z 15..21
+        body = uni([body, sub(b, rim_clip)])
         body = sub(body, _belly_csk_neg(bx_, by_))
-        # TODO (FASTENING_AUDIT P1, NOT DONE 2026-07-15): Ø2.5 self-tap -> captive
-        # M3 nut. It needs belly_boss_r 3.5 -> 4.5 (a 5.7 slot in an Ø7 boss leaves
-        # 0.65 walls; the audit's own "bosses must grow to >= Ø9"), and the nut has
-        # to sit high (z ~17) because the rim floor is REBATED to z 11.5 under these
-        # stations -- a lower trap eats the rim. Left for a pass with budget to
-        # re-verify the plate/rebate/csk stack.
-        pil = cyl(1.25, 8.3); pil.apply_translation((bx_, by_, z0 + 2.2 + 8.3 / 2))
-        body = sub(body, pil)                                # pilot z 9.2..17.5
+        # M3 CLEARANCE all the way up (the old Ø2.5 pilot also left 0.6 of un-drilled
+        # solid between the csk cone's small end and its own start -- the screw had to
+        # cut that too).
+        thr = cyl(P["m3_clear_r"], 10.0)
+        thr.apply_translation((bx_, by_, z0 + floor - 3.5 + 10.0 / 2))   # z 11.5..21.5
+        body = sub(body, thr)
+        # nut slot opens toward the belly OPENING (i.e. the tub interior): +y for the
+        # rear pair, -y for the front pair, inboard-x for the flank pair. Every one of
+        # those mouths faces open cavity air at the nut band (z 15.6..18.4).
+        odir = ((-np.sign(bx_), 0.0, 0.0) if abs(bx_) > 50.0
+                else (0.0, -np.sign(by_), 0.0))
+        body = sub(body, geo.nut_slot((bx_, by_, P["belly_nut_z"]), screw_axis="z",
+                                      open_dir=odir, size="M3",
+                                      length=P["belly_nut_run"]))
     # (REAR TIE deleted 2026-07-14 round 5: it re-anchored the belly-strap pedestal
     # island, and both the strap and the pedestal left the hull -- the floor is a
     # plain opening rim now.)
@@ -603,20 +664,44 @@ def build_chassis_core():
     # belly cut on purpose.
     # ARDUINO + IMU + SW-420 seats MOVED to the removable chassis_base (2026-07-14,
     # user: split the shell so the in-flux electronics iterate on a swappable base,
-    # not the finalized hull). The hull keeps only 4x blind Ø2.5 thread-form pilots
-    # in the floor for the base's hold-down M3s (build_chassis_base). BME stays here
-    # (its bosses are air-coupled to the left wall vent, shell-integral like the sonars).
+    # not the finalized hull). The hull keeps the base's 4 hold-down stations + 2
+    # locating pins. BME stays here (its bosses are air-coupled to the left wall vent,
+    # shell-integral like the sonars).
+    #
+    # 2026-07-15 (FASTENING_AUDIT P1 + a defect the audit MISSED): these were 4 blind
+    # Ø2.5 thread-form pilots -- and probing the built hull showed ALL FOUR were dead.
+    # Two sat where the glacis has eaten the floor entirely (no material at any z: the
+    # sub() was a no-op and the screws threaded air); the other two sat in the belly
+    # rebate on 3.5 mm of floor with their bores tangent to the belly bosses'. The
+    # stations moved into the valid band (see PARAMS base_mount_pts) and every one is
+    # now an M3 THROUGH-BOLT into a CAPTIVE HEX NUT recessed at the belly face.
     for tmx, tmy in P["base_mount_pts"]:
-        tpil = cyl(1.25, 5.0)                        # blind pilot up from the floor bottom
-        tpil.apply_translation((tmx, tmy, z0 + floor - 2.5 + 0.2))
-        body = sub(body, tpil)
+        thr = cyl(P["m3_clear_r"], (z0 + floor) - P["base_nut_ztop"] + 2.0)
+        thr.apply_translation((tmx, tmy, (P["base_nut_ztop"] + z0 + floor + 2.0) / 2))
+        body = sub(body, thr)                        # bore: nut ceiling -> floor top
+        # hex recess opening DOWN at the belly face -- a first-layer pocket in the
+        # floor-down tub print, and the nut's flats take the driving torque.
+        rec = hex_prism(geo.NUT["M3"][0] + 0.2, (P["base_nut_ztop"] - z0) + 0.2)
+        rec.apply_translation((tmx, tmy, (z0 - 0.2 + P["base_nut_ztop"]) / 2))
+        body = sub(body, rec)
+    # 2 printed Ø4 locating pins (chassis_pedestal pattern): the base drops over them
+    # and self-holds square while the 4 screws go in. The base's own Ø4.3 holes are cut
+    # in build_chassis_base, so the hull-relief sub() there is a no-op -- which is also
+    # the standing proof that the pins can never jam.
+    for tpx, tpy in P["base_pin_pts"]:
+        pin = cyl(P["base_pin_d"] / 2, P["base_pin_h"])
+        pin.apply_translation((tpx, tpy, z0 + floor + P["base_pin_h"] / 2))
+        body = uni([body, pin])
     # BME688: 2x O5 x 2 standoff bosses on the LEFT wall inner face flanking the
     # y=-96 vent + O1.7 M2 pilots 3.0 into the 5-wall (2.0 web outside).
     wallx = -(P["chassis_w"] / 2 - 5.0)              # inner face -65
     bh_ = P["bme_boss_h"]
     for sy_ in (-1, 1):
         by_ = P["bme_cy"] + sy_ * P["bme_hole_cc"] / 2
-        boss = cyl(2.5, bh_ + 1.0, axis="x")         # 1.0 buried in the wall to
+        # r 2.5 -> bme_boss_r 3.5 (Ø5 -> Ø7), FASTENING_AUDIT P1 "snap under driver
+        # torque": Ø7 around the Ø1.7 pilot leaves 2.65 walls, was 1.65. The vent had
+        # to be recentred on bme_cy to make room -- see PARAMS bme_vent_y.
+        boss = cyl(P["bme_boss_r"], bh_ + 1.0, axis="x")   # 1.0 buried in the wall to
         boss.apply_translation((wallx + (bh_ - 1.0) / 2, by_, P["bme_cz"]))  # fuse
         body = uni([body, boss])
         bpil = cyl(0.85, bh_ + 3.5, axis="x")        # boss face -> 3.0 into the
@@ -959,7 +1044,10 @@ def build_chassis_parts():
                          _xb(s, 62.0, 71.0, -108.0, -102.5),
                          _boss_fp(s, -26.0)]
         if s < 0:
-            bmefp = sg.box(-71.0, -106.6, -62.4, -87.8)
+            # -106.6 -> -108.5: the Ø7 BME bosses (2026-07-15) reach y -107.65, and a
+            # capture that stops short would shear a 1.05 sliver of boss off into the
+            # hull instead of the panel.
+            bmefp = sg.box(-71.0, -108.5, -62.4, -87.8)
             caps_rear.append(bmefp)
             caps_rear_cut.append(bmefp)
         cut_prism = _prism([_xb(s, px0, px1, -139.5, 142.8)]
@@ -1419,12 +1507,35 @@ def build_chassis_parts():
             bb.apply_transform(R(np.pi + sgn * sa_, (1, 0, 0)))
             bb.apply_translation(pb_ + np.array([bx_ * P["us_dx"], 0.0, 0.0]) - 2.5 * nnf)
             d_ = sub(d_, bb)
-        for px_ in (-20.5, 20.5):                     # HC-SR04 corner holes 41 x 16.7:
-            for py_ in (-8.35, 8.35):                 # Ø1.6 self-tap pilots through-ish
-                pil = cyl(0.8, 4.0)                   # the 3.8 remaining skin
-                pil.apply_transform(R(np.pi + sgn * sa_, (1, 0, 0)))
-                pil.apply_translation(pb_ + np.array([px_, 0.0, 0.0]) + py_ * sn_ - 5.5 * nnf)
-                d_ = sub(d_, pil)
+        # HC-SR04 corner holes 41 x 16.7 -> M2 BRASS HEAT-SET INSERTS (2026-07-15,
+        # FASTENING_AUDIT P1 "cliff M2 pilots strip on the 2nd service" -- plus a
+        # defect the audit MISSED: these pilots were DEAD. `cyl(0.8, 4.0)` centred
+        # 5.5 inward spans 3.5..7.5, but the skin is 0..3.8 and the board recess
+        # 3.8..5.2 is already void -- so the pilot only overlapped real skin over
+        # 3.5..3.8 = 0.30 mm. The screw met 3.5 mm of UNDRILLED PLA and could never
+        # go in. Probed on the built deck.
+        #
+        # The audit's "M2 nut + washer behind the skin" was MEASURED and rejected:
+        # profiling all 8 corners along the slope normal shows the two LOWER corners
+        # (py -8.35) have ZERO material behind the board -- open pocket straight down
+        # to the tub -- while only the upper pair has 4.4 mm at 7.8 in. A captive nut
+        # is impossible at 4-of-4, so per the campaign rule this is an insert joint.
+        #
+        # BLIND pocket from the recess floor (3.8 in) FORWARD to cliff_skin_keep: the
+        # insert never breaks the slope's outer face, so the cliff eyes stay clean and
+        # the screw cannot push through. Screw is M2x4 from the POCKET side (the
+        # serviceable side, no heads on the cosmetic slope) through the board into the
+        # insert, clamping the board onto the recess floor. In-plane the insert holes
+        # clear the Ø16.6 barrel bores by 1.53 (centres 11.23 apart).
+        d0_ = P["cliff_skin_keep"]
+        d1_ = 4.8                                     # 1.0 past the recess floor (3.8)
+        for px_ in (-20.5, 20.5):
+            for py_ in (-8.35, 8.35):
+                ins = cyl(P["cliff_insert_d"] / 2, d1_ - d0_)
+                ins.apply_transform(R(np.pi + sgn * sa_, (1, 0, 0)))
+                ins.apply_translation(pb_ + np.array([px_, 0.0, 0.0]) + py_ * sn_
+                                      - ((d0_ + d1_) / 2) * nnf)
+                d_ = sub(d_, ins)
         decks[sgn] = d_
     deck_f, deck_r = decks[1], decks[-1]
 
@@ -1458,11 +1569,30 @@ def build_chassis_parts():
     tab.apply_translation(((mx0 + mx1) / 2, (mty0 + mty1) / 2,  # pocket walls +
                            (mz0 + mz1 + 1.0) / 2))              # the ceiling
     deck_f = uni([deck_f, tab])
-    for sx_ in (-1, 1):                                    # M2 pilots (through the
-        mp_ = cyl(0.85, (mty1 - mty0) + 2.0, axis="y")     # 3.5 tab is fine for a
-        mp_.apply_translation(((mx0 + mx1) / 2 + sx_ * P["mmw_hole_cc"] / 2,
-                               (mty0 + mty1) / 2, 54.0))   # self-tap M2)
+    # M2 THROUGH-BOLT + CAPTIVE NUT on the tab's back (2026-07-15, FASTENING_AUDIT P1
+    # "mmWave tab M2 pilots" -> "M2 through + nut behind"; the back boss also answers
+    # P2-5, which flags the bare 3.5 mm ceiling-hung tab as a break candidate).
+    # The screw comes from +Y through the board and the tab into a nut whose +Y face
+    # IS the tab's back plane, so the board clamps to the tab front and the nut needs
+    # no backing wall at all -- only rotation restraint. Nut slides UP from below into
+    # the boss (mouth at its underside), which is also the self-supporting direction:
+    # the deck prints top-face-down, so a world-downward mouth opens UP in the print.
+    # NOTE the module is VERIFY_ON_ARRIVAL and most LD2410 boards are HOLELESS -- the
+    # documented primary mount stays VHB tape onto the tab face (PARAMS mmw_hole_cc).
+    # This makes the screwed option REAL if the delivered board does have holes.
+    mnz = 54.0
+    for sx_ in (-1, 1):
+        hx_ = (mx0 + mx1) / 2 + sx_ * P["mmw_hole_cc"] / 2
+        boss = box(6.6, 3.0, 9.0)                          # y 103..106, z 49..58
+        boss.apply_translation((hx_, mty0 - 1.5, mnz - 0.5))
+        deck_f = uni([deck_f, boss])
+        mp_ = cyl(1.2, (mty1 - mty0) + 6.0, axis="y")      # M2 clearance, board -> nut
+        mp_.apply_translation((hx_, (mty0 + mty1) / 2, mnz))
         deck_f = sub(deck_f, mp_)
+        deck_f = sub(deck_f, geo.nut_slot((hx_, mty0 - 0.9, mnz),   # nut +Y face on the
+                                          screw_axis="y",           # tab back (y 106)
+                                          open_dir=(0, 0, -1), size="M2",
+                                          length=P["mmw_nut_run"]))
 
     out = []
     for m_, nm in ((lower_f, "chassis_lower_front"), (lower_r, "chassis_lower_rear"),
@@ -1507,21 +1637,32 @@ def build_chassis_base():
     base = uni([base, shelf])
     for lx_, ly_ in P["ard_holes"]:
         hx_, hy_ = sx0 - lx_, sy0 - ly_
-        post = cyl(3.5, seat_z - btop)
+        post = cyl(P["elec_post_r"], seat_z - btop)       # already O7
         post.apply_translation((hx_, hy_, (btop + seat_z) / 2))
         base = uni([base, post])
-        pil = cyl(1.25, 5.5)
-        pil.apply_translation((hx_, hy_, seat_z + 0.5 - 2.75))
+        # pilot DEEPENED 2026-07-15 (FASTENING_AUDIT P1): it ran seat_z-2.25..seat_z+3.25,
+        # i.e. 3.0 mm of thread in the post and 3.25 wasted in mid-air above it. Run it
+        # from just over the seat down 1.0 into the plate: 4.0 of thread, no waste.
+        pil = cyl(1.25, (seat_z + 0.5) - (btop - 1.0))
+        pil.apply_translation((hx_, hy_, ((seat_z + 0.5) + (btop - 1.0)) / 2))
         base = sub(base, pil)
-    # IMU: 2 posts to imu_seat_z (right side strip)
+    # IMU: a hard PAD (2026-07-15, FASTENING_AUDIT P1). This was "2 posts to
+    # imu_seat_z" -- but imu_seat_z EQUALLED btop, so `cyl(3.0, imu_seat_z - btop)`
+    # built cylinders of height ZERO: the posts did not exist and the pilot drilled the
+    # bare 3 mm plate for 2.25 of thread. (Broken by the 2026-07-14 move onto
+    # chassis_base: the plate top rose, imu_seat_z did not.) Rebuilt as a pad, the
+    # SW-420 pattern already used below: stiffer than two pillars -- which is what an
+    # IMU wants -- and it gives 4.5 mm of thread (2.0 pad + 2.5 plate).
     ix_, iy_ = P["imu_c"]
+    ibw_, ibl_ = P["imu_board_wl"][1], P["imu_board_wl"][0]     # board x, y
+    ipad = box(ibw_ + 1.0, ibl_ + 1.0, P["imu_pad_h"])          # +1.0: the plate ends
+    ipad.apply_translation((ix_, iy_, btop + P["imu_pad_h"] / 2))   # at x 49
+    base = uni([base, ipad])
     for sy_ in (-1, 1):
         py_ = iy_ + sy_ * P["imu_hole_cc"] / 2
-        post = cyl(3.0, P["imu_seat_z"] - btop)
-        post.apply_translation((ix_, py_, (btop + P["imu_seat_z"]) / 2))
-        base = uni([base, post])
-        pil = cyl(1.25, 5.5)
-        pil.apply_translation((ix_, py_, P["imu_seat_z"] + 0.5 - 2.75))
+        pil = cyl(1.25, (P["imu_seat_z"] + 0.5) - (btop - 2.0))
+        pil.apply_translation((ix_, py_,
+                               ((P["imu_seat_z"] + 0.5) + (btop - 2.0)) / 2))
         base = sub(base, pil)
     # SW-420: hard pad + pilot + 2 anti-rotation fence nubs (left side strip)
     vx_, vy_ = P["vib_c"]; vw_, vl_ = P["vib_board_wl"]
@@ -1537,12 +1678,21 @@ def build_chassis_base():
         nub.apply_translation((vx_ + vw_ / 2 + 0.3 + 1.0, vy_ + sy_ * (vl_ / 2 - 1.0),
                                btop + (P["vib_pad_h"] + 3.0) / 2))
         base = uni([base, nub])
-    # 4x M3 hold-down: clearance + top counterbore (opens up -> self-supporting)
+    # 4x M3x6 hold-down into the hull's captive belly-face nuts (2026-07-15): clearance
+    # + top counterbore (opens up -> self-supporting). cb 2.4 -> 1.8 deep: with the head
+    # bottom at z 16.2 an M3x6 tips out at z 10.2, i.e. dead through the nut (10.0..12.8)
+    # and 0.2 shy of the belly face. The head then stands 1.2 proud (z 19.2), which still
+    # clears the Arduino board's 21.05 underside by 1.85 -- the rear pair sits under it.
     for mx_, my_ in P["base_mount_pts"]:
         clr = cyl(P["m3_clear_r"], 8.0); clr.apply_translation((mx_, my_, btop - 3.0))
         base = sub(base, clr)
-        cb = cyl(3.4, 2.4); cb.apply_translation((mx_, my_, btop - 1.2))
+        cb = cyl(3.4, 1.8); cb.apply_translation((mx_, my_, btop - 0.9))
         base = sub(base, cb)
+    # 2 locating-pin holes over the hull's printed Ø4 pins, +0.15/side slip
+    for px_, py_ in P["base_pin_pts"]:
+        ph = cyl(P["base_pin_d"] / 2 + 0.15, 8.0)
+        ph.apply_translation((px_, py_, btop - 1.0))
+        base = sub(base, ph)
     _color(base, "pi"); base.metadata["name"] = "chassis_base"
     return base
 
@@ -1594,14 +1744,23 @@ def build_belly_plate():
     # --- ULN2003 standoffs x2 (round 5: BOTH driver boards ride the plate now --
     # they were hull-floor posts rooted on the deleted keep strap / at (0,80)).
     # Same Ø6 posts, tops at z 16 like before, Ø2.5 pilots stopping in the post.
+    # posts O6 -> O7 (PARAMS elec_post_r, FASTENING_AUDIT P1 "posts split on tapping").
+    # PILOT Z FIXED 2026-07-15: it was a hardcoded `16.0 - 2.5` while the post derives
+    # from z0. The v2 chassis_clear 7 -> 10 change lifted the post to z 13..19 and left
+    # the pilot at z 11..16, so the screw met 3.0 mm of UNDRILLED solid before finding
+    # any pilot at all -- another dead joint. Derived from the post top now, so it
+    # cannot drift again. (The power-tray posts below already derived theirs and were
+    # fine, which is exactly why they diverged.)
     for cx_, cy_ in (P["uln1_c"], P["uln2_c"]):
         for sx in (-1, 1):
             for sy in (-1, 1):
                 px_ = cx_ + sx * P["uln_w"] / 2
                 py_ = cy_ + sy * P["uln_h"] / 2
-                post = cyl(3.0, 6.0); post.apply_translation((px_, py_, z0 + 3.0 + 3.0))
+                post = cyl(P["elec_post_r"], 6.0)
+                post.apply_translation((px_, py_, z0 + 3.0 + 3.0))       # z 13..19
                 plate = uni([plate, post])
-                pil = cyl(1.25, 5.0); pil.apply_translation((px_, py_, 16.0 - 2.5))
+                pil = cyl(1.25, 5.0)
+                pil.apply_translation((px_, py_, (z0 + 9.0) - 2.5))      # z 14..19
                 plate = sub(plate, pil)
     # POWER TRAY (wiring pass 2026-07-08, see firmware/WIRING.md): the main 5.1 V buck
     # mounts on the plug's rear bay, so dropping the belly plate drops the power stage
@@ -1613,7 +1772,8 @@ def build_belly_plate():
     # standoffs -- no dedicated pad until that decision lands.
     tray = [(-35.75, -53.0), (-35.75, -33.0), (4.25, -53.0), (4.25, -33.0)]
     for px_, py_ in tray:
-        post = cyl(3.0, 6.0); post.apply_translation((px_, py_, z0 + 3.0 + 3.0))
+        post = cyl(P["elec_post_r"], 6.0)                 # O6 -> O7, see the ULN note
+        post.apply_translation((px_, py_, z0 + 3.0 + 3.0))
         plate = uni([plate, post])
         pil = cyl(1.25, 5.0); pil.apply_translation((px_, py_, z0 + 9.0 - 2.5))
         plate = sub(plate, pil)
@@ -1656,9 +1816,31 @@ def build_pan_pedestal():
     wrel = box(P["motor_wbox_w"] + 3, 22, ear_z + 2 - zb + 2)   # wbox leads exit +Y
     wrel.apply_translation((mx, my + 16, (zb + ear_z + 2) / 2))
     ped = sub(ped, wrel)
+    # PAN-MOTOR EAR SCREWS: M3 THROUGH-BOLT + CAPTIVE HEX NUT (2026-07-15,
+    # FASTENING_AUDIT P1, which had assumed "no reachable nut face -> heat-set from the
+    # top face"). Probing says otherwise, so no insert is needed here.
+    #
+    # The ear axis is 17.5 from the can axis and the can bore wall is at r 14.5, so
+    # there is only 3.0 mm between them -- LESS than the 3.175 a nut needs behind the
+    # axis. A seat on the can side is geometrically impossible. So the seat goes
+    # OUTBOARD (3.325 mm of body beyond it) and the slot opens INTO the Ø29 can bore:
+    # the nut drops through the bore, slides outboard onto its seat, and the motor can
+    # then goes in behind it and blocks the only escape. Wrench-free, hands-free.
+    # The screw pulls the nut UP onto the slot roof, so the 3.95 mm between the nut top
+    # and the ear pad is in pure compression under the motor's ear bar.
+    znut = P["ped_ear_nut_z"]
     for dxe in (-P["motor_ear_cc"] / 2, P["motor_ear_cc"] / 2):
-        e = cyl(1.25, 16); e.apply_translation((mx + dxe, my, ear_z - 4))
+        ex_ = mx + dxe
+        e = cyl(P["m3_clear_r"], 9.0)          # M3 clearance + tip relief under the nut
+        e.apply_translation((ex_, my, znut + 1.6))            # z 22.5..31.5
         ped = sub(ped, e)
+        odir = (-np.sign(dxe), 0.0, 0.0)       # mouth toward the can axis
+        nsl = geo.nut_slot((ex_, my, znut), screw_axis="z", open_dir=odir,
+                           size="M3", length=P["ped_ear_nut_run"])
+        sc = P["ped_ear_nut_seat_clear"]       # see the pan-clip note: nut_slot seats at
+        rel = box(sc, geo.NUT["M3"][0] + 0.2, geo.NUT["M3"][1] + 0.2)   # exactly ac/2,
+        rel.apply_translation((ex_ - odir[0] * (M3_AC / 2 + sc / 2), my, znut))  # which
+        ped = sub(ped, uni([nsl, rel]))        # only a max-material nut can reach
     pw, pd = P["ped_pad_wxy"]
     relief = rounded_box(50, 50, P["ped_relief"], 6.0)
     relief.apply_translation((mx, my, ear_z - P["ped_relief"]))

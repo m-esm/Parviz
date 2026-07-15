@@ -645,6 +645,20 @@ P = {
                             # TT gearboxes (track_raise, top z 45.5) now own that zone;
                             # bosses ride the rear wall instead (sensor hole z16, trim
                             # pins outer-face only, motor tabs x +-55.6 -- all clear)
+    # PAN-CLIP captive nuts (2026-07-15, FASTENING_AUDIT P1): the 3 clip screws were
+    # Ø2.5 thread-form pilots and they are the ONLY thing resisting head uplift on the
+    # pan platform. Nut centre 54.0 -> nut 52.6..55.4: bottom clears the seat floor (51)
+    # so the slot's mouth lands in the OPEN seat wall (r 49), top leaves 3.6 mm of deck
+    # to the clip pocket floor (59) working in compression. The M3x10's tip lands at
+    # 52.6 = the nut's bottom face (build_pan_clips seats the head at z 62.6).
+    "pan_clip_nut_z": 54.0,
+    # run: seat at r 56.675 (= 53.5 + M3 ac/2) out to r 47.675 -- 1.3 past the seat
+    # wall at r 49, so the mouth is fully open into the r 44.5..49 annulus.
+    "pan_clip_nut_run": 9.0,
+    # seat relief: nut_slot() backstops at exactly ac/2, which only a MAX-material nut
+    # (ac 6.35) can reach; a real DIN 934 M3 is 6.14..6.35 across corners. 0.4 lets any
+    # nut reach the bore (it self-centres on the screw as it draws in).
+    "pan_clip_nut_seat_clear": 0.4,
     "chassis_split_boss_r": 4.0,
     "deck_nut_z": 43.0,          # captive M3 nut centre in each deck hold-down boss
                                  # (2026-07-15, FASTENING_AUDIT P1: all 8 were thread-
@@ -737,6 +751,17 @@ P = {
                                  # was a 33.7 deg acute PLA knife edge (user 2026-07-11:
                                  # "the chassis angle is too sharp"). Slope angle -- and
                                  # with it the cliff-sensor geometry -- is unchanged.
+    # Cliff HC-SR04 retention (2026-07-15 fastening campaign): M2 BRASS HEAT-SET
+    # INSERTS, not self-tap pilots and not captive nuts. Probing the built deck killed
+    # both alternatives: the old O1.6 pilots engaged 0.30 mm of skin (dead as modelled),
+    # and profiling all 8 corners shows the two LOWER corners have ZERO material behind
+    # the board (open pocket), so a nut cannot be trapped at 4-of-4.
+    # Standard M2 insert: OD 3.2, L 3.0, recommended hole O2.8.
+    "cliff_insert_d": 2.8,
+    # skin kept in FRONT of the insert -> the pocket is BLIND: nothing breaks the
+    # slope's cosmetic outer face and the screw cannot push through. 3.8 skin - 0.8
+    # kept = 3.0 of insert, exactly its length. Screw M2x4 from the pocket side.
+    "cliff_skin_keep": 0.8,
     "cliff_v": 9.6,              # barrel-pair center, mm up the slope from its bottom
                                  # edge (slant length 36.06): bore rim keeps 1.3 to
                                  # the wall-top corner, board top keeps 0.7 under the
@@ -746,6 +771,17 @@ P = {
     # 1-thick ear bar clamps on two DEFINED pads instead of the whole 48x48 top, and the
     # can's top band registers in a collar ring right under the Ø27.25 gear stack.
     "ped_pad_wxy": (9.0, 10.0),   # ear seat pads (X x Y) centered on the +-17.5 ear holes
+    # PAN-MOTOR EAR captive nuts (2026-07-15, FASTENING_AUDIT P1 -- they were Ø2.5x16
+    # thread-form pilots; the audit assumed no nut face was reachable and specced a
+    # heat-set insert, but probing disproved that, same as the tilt_carrier).
+    # Nut centre 25.4 -> nut 24.0..26.8: 3.95 mm of pad above it in compression under
+    # the motor's ear bar (top at ear_z 30.75), and an M3x8 driven from the ear bar
+    # tips out at 23.75, i.e. dead through the nut into the bore's tip relief.
+    "ped_ear_nut_z": 25.4,
+    # run 7.0: seat at ear +-3.175 OUTBOARD (3.3 mm of the 48x48 body beyond it), mouth
+    # 3.8 the other way -- past the can bore wall, so the nut loads through the bore.
+    "ped_ear_nut_run": 7.0,
+    "ped_ear_nut_seat_clear": 0.4,      # see pan_clip_nut_seat_clear
     "ped_relief": 0.8,            # pedestal top dropped 0.8 outside pads + collar footing
     "ped_collar_od": 32.0,        # collar OD; ID = the Ø29 can bore (can Ø28.25 registers)
     "ped_collar_h": 1.5,          # collar top 45.75: wraps the can's last 1.0 + gear root
@@ -830,7 +866,15 @@ P = {
                                  # deck boss (y-113). 2026-07-14: moved off the hull strap
     "imu_hole_cc": 15.5,    # 2-hole pattern along Y (GY-521-class). VERIFY_ON_ARRIVAL
     "imu_board_wl": (21.0, 16.5),   # breakout envelope. VERIFY_ON_ARRIVAL
-    "imu_seat_z": 18.0,     # post tops (O6 posts, M2.5/M3 self-tap into O2.5 pilots)
+    # 18.0 -> 20.0 (2026-07-15). At 18.0 this EQUALLED the base plate top, so
+    # `cyl(3.0, imu_seat_z - btop)` built posts of height ZERO -- the IMU posts did not
+    # exist, and their pilot drilled the bare 3 mm plate for 2.25 mm of thread. Broken
+    # by the 2026-07-14 move onto chassis_base (the plate top rose, imu_seat_z did not).
+    # Fixed as a PAD, not posts (the SW-420 pattern already in build_chassis_base): a
+    # solid pad is stiffer than two O7 pillars, which is what an IMU actually wants,
+    # and it gives the screws 4.5 mm of thread (2.0 pad + 2.5 plate) instead of 2.25.
+    "imu_seat_z": 20.0,     # pad top (imu_pad_h above the z18 plate)
+    "imu_pad_h": 2.0,
     # BME688 breakout (NOT owned): hangs on the LEFT wall's INNER face over the
     # y=-96 side vent so it samples ROOM air through the slot, 43+ behind the
     # belly buck tray (y -53..-33) and 16 behind the rear TT gearbox (wall zone
@@ -843,7 +887,13 @@ P = {
     # keep a sniff gap off the wall; O1.7 M2 pilots go 3.0 into the 5-wall
     # (2.0 web to the outside face). Wiring: the SW-420 pad (-48,-95) and the
     # Uno are right there -- the rear-left corner is the sensor cluster.
-    "bme_vent_y": -96.0,
+    # RECENTRED on the board 2026-07-15 (was -96.0, a bare number that never matched
+    # bme_cy): the boss PAIR midpoint is bme_cy, so a vent centred anywhere else eats
+    # into one boss. At -96.0 even the old O5 boss clipped the slot by 0.15; the O7
+    # boss the fastening campaign needs would have eaten 1.15 of the BME's own air
+    # window. Centred, the 5-wide slot drops into the O7 pair gap (13 - 7 = 6.0) with
+    # 0.5 clear each side.
+    "bme_vent_y": -97.65,
     "bme_cy": -97.65,       # board/hole-pair center: board edge -87.15 keeps 0.6
                             # to the TT rib face -86.55 (was 0.15 at -97.2 --
                             # too tight for a VERIFY_ON_ARRIVAL envelope, and
@@ -856,6 +906,14 @@ P = {
     "bme_board_yz": (21.0, 18.0),   # board envelope. VERIFY_ON_ARRIVAL
     "bme_cz": 30.0,         # on the vent slot's z center (slot z 22..38)
     "bme_boss_h": 2.0,
+    # boss r 2.5 -> 3.5 (O5 -> O7): FASTENING_AUDIT P1 "BME688 O5x2 wall bosses snap
+    # under driver torque". O7 around the O1.7 M2 pilot leaves 2.65 walls (was 1.65).
+    # Self-tap KEPT here on purpose: 5.0 mm of thread (2.0 boss + 3.0 into the 5-wall),
+    # a ~2 g board, and the mount lives on the REMOVABLE chassis_side_L_rear panel --
+    # low load, cheap to reprint, and the audit's real complaint was the boss snapping,
+    # which O7 fixes. There is no backside to nut (exterior wall). If it ever strips,
+    # the boss is now big enough to take an M2 heat-set insert (O2.8 -> 2.1 walls).
+    "bme_boss_r": 3.5,
     # SW-420 vibration module (NOT owned): senses CHASSIS vibration, so it bolts
     # HARD to the floor via a 2-tall pad (no standoffs, no compliant mount; the
     # rigid path IS the sensor's input): rear-left full-thickness floor, clear of
@@ -867,7 +925,34 @@ P = {
     # iterate on a swappable base, not the finalized hull). The base carries the
     # Arduino + IMU + SW-420 seats in the rear bay; the hull keeps only these 4 M3
     # hold-down pilots in the floor. BME stays wall-mounted (air-coupled to the vent).
-    "base_mount_pts": ((-44.0, -64.0), (44.0, -64.0), (-44.0, -114.0), (44.0, -114.0)),
+    # RE-STATIONED 2026-07-15 (fastening campaign). The original four were all DEAD,
+    # probe-verified on the built hull -- a defect the audit missed because it assumed
+    # the pilots existed:
+    #   (+-44, -114): NO HULL MATERIAL AT ANY z. The glacis cut eats the floor slab
+    #     past |y| 108.94, so `sub(pilot)` was a no-op and both screws threaded air.
+    #   (+-44, -64): inside the belly REBATE, so the floor is only z 11.5..15 and the
+    #     "blind" pilot vented straight out of it -- and the bore sits 2.50 mm from the
+    #     belly boss bore at (+-42, -65.5), i.e. tangent at O2.5 and overlapping once
+    #     that boss got its M3 clearance.
+    # The valid hull band is y -103..-74.7 (flat 5 mm floor, clear of the rebate and
+    # the O9 belly bosses). The free base strips are |x| 37..49 only (the Arduino
+    # board owns x -34.3..34.3), and the IMU/SW-420 already occupy the rear of both,
+    # so the rear pair goes INBOARD instead: the Arduino board floats at z 21.05 on
+    # its posts and the plate top is z 18, leaving 3.05 mm of head room under it.
+    # Trapezoid: 88 wide at the front, 36 at the rear, 24 deep.
+    "base_mount_pts": ((-44.0, -76.0), (44.0, -76.0), (-18.0, -100.0), (18.0, -100.0)),
+    # Captive M3 nut in a hex recess opening at the BELLY FACE (z 10 = the bed in the
+    # floor-down tub print, so it is just a first-layer pocket). Nut 10.0..12.8; the
+    # screw comes from ABOVE and pulls it UP, so the 2.2 mm ceiling (12.8..15) works in
+    # pure COMPRESSION. Replaces the O2.5 thread-form pilots (FASTENING_AUDIT P1).
+    "base_nut_ztop": 12.8,
+    # 2 printed O4 locating pins (the chassis_pedestal pattern): the base used to be
+    # located only by its loose hull-relief pockets and screwed down blind. Pins rise
+    # from the hull floor; the base's matching holes are cut at +0.15/side (the audit's
+    # P3 "O4.0-in-O4.0 is jam-or-rattle"). Printed, so zero BOM and nothing to lose.
+    "base_pin_pts": ((-44.0, -84.0), (44.0, -84.0)),
+    "base_pin_d": 4.0,
+    "base_pin_h": 2.8,          # z 15..17.8: proud into the 3 mm plate, never past it
     "vib_board_wl": (21.5, 10.5),   # module envelope, long axis X. VERIFY_ON_ARRIVAL
     "vib_hole_off": -5.5,   # single O3 hole, offset from board center along X
                             # (toward the wall end). VERIFY_ON_ARRIVAL
@@ -897,6 +982,11 @@ P = {
                             # tab face (the factory-intended mount for a 2 g radar
                             # module; the pocket walls shelter it). VERIFY_ON_ARRIVAL
     "mmw_board_wz": (22.0, 16.0),   # LD2410 board envelope. VERIFY_ON_ARRIVAL
+    # M2 captive-nut run on the tab's back boss (2026-07-15): seat 2.31 (M2 across-
+    # corners/2) above the z 54 screw axis, mouth 0.69 below the boss underside so the
+    # nut slides up from below. The nut's +Y face is the tab's back plane, so it needs
+    # no backing wall -- the tab itself takes the clamp.
+    "mmw_nut_run": 8.0,
     # TTP223 touch pads (x2-4): NO chassis geometry -- pads want shell surfaces the
     # user actually touches, i.e. the HEAD TOP (a head.py pass, out of scope here).
     # Chassis fallback candidates, documented only: both deck-overhang top skins
@@ -913,6 +1003,23 @@ P = {
     # USB) + two front channels (ULN wiring). Plate = 1.45 flange in a 1.5 rebate
     # (belly face stays flush at z=7: ground clearance is only 7) + a 3-thick plug
     # filling the opening; the two inboard ballast ribs move ONTO the plug.
+    # PD TRIGGER (12V, on the buy list -- NOT owned, NOT measured). The board hangs on
+    # the rear wall's inner face with its USB-C jack aligned to the wall slot. Mount is
+    # 2x M2 BRASS HEAT-SET INSERTS (2026-07-15, FASTENING_AUDIT P1 "M2 edge-on into
+    # wall layers = the weakest thread orientation"): the bore axis is Y and the tub
+    # prints floor-down, so a CUT thread runs across the layer stack and peels the wall
+    # apart. An insert grips melted plastic around a smooth bore -- no thread across
+    # layers. The audit's alternative (a printed slide-in carrier) needs board
+    # dimensions we do not have.
+    # !! VERIFY_ON_ARRIVAL: pd_hole_cc is a GUESS. The old code hardcoded a +-9 (18.0)
+    # pitch with no param and no source. 20.8 is the value that keeps a 2.00 mm wall
+    # between the O2.8 insert bores and the USB-C corridor (x -45..-31) -- at 18.0 it
+    # was 0.60. Re-derive from the real board on arrival; only chassis_lower_tail
+    # (32 cm3) reprints.
+    "pd_c": (-38.0, 34.0),          # centre: on the USB slot's axis (x), z0+24
+    "pd_hole_cc": 20.8,
+    "pd_insert_d": 2.8,             # M2 insert: OD 3.2, L 3.0, recommended hole O2.8
+    "pd_insert_l": 3.0,             # blind in the 5-wall -> 2.0 of wall behind it
     "belly_open_wl": (100.0, 110.0),        # opening W(X) x L(Y), corners r8
     "belly_open_c": (0.0, -6.0),            # centre (rear-biased toward the ballast bay)
     # ("belly_keep" strap RETIRED 2026-07-14 round 5: the pedestal it rooted is the
@@ -920,12 +1027,24 @@ P = {
     "belly_rebate_grow": 8.0,               # rebate ledge past the opening, per side
     "belly_lip_t": 1.5,                     # rebate depth (up from the belly face z=7)
     "belly_fit": 0.15,                      # plate<->rebate/opening clearance per side
-    # 6x M3 countersunk from below (heads flush at z=7) into Ø7 self-tap bosses
-    # standing on the interior rim/strap (Ø2.5 pilots). Stations dodge the TT gearboxes
+    # 6x M3x10 countersunk from below (heads flush at the belly face) into CAPTIVE M3
+    # HEX NUTS in the rim bosses (2026-07-15 fastening campaign, FASTENING_AUDIT P1 --
+    # they were Ø2.5 thread-form pilots). Stations dodge the TT gearboxes
     # (|x|>=46.26 at y<-40), the ballast ribs (|x|<=40) and both ULN board envelopes.
     "belly_screws": ((-42.0, -65.5), (42.0, -65.5), (-54.0, -5.0), (54.0, -5.0),
                      (-30.0, 53.0), (30.0, 53.0)),
-    "belly_boss_r": 3.5, "belly_boss_h": 6.0,
+    # boss r 3.5 -> 4.5 (Ø9): a 5.7-wide nut slot in an Ø7 boss leaves 0.65 mm walls;
+    # Ø9 leaves 1.65 (the audit's own ">= Ø9" figure). The bosses stand FREE in the
+    # open tub (rim floor top 15 -> boss top 21), so every flank is a valid slot mouth.
+    "belly_boss_r": 4.5, "belly_boss_h": 6.0,
+    # Captive-nut centre z. The screw enters from BELOW, so tightening pulls the nut
+    # DOWN onto the slot floor: the load path is the 4.1 mm of solid boss+rim under
+    # it (z 11.5..15.6), not the 2.6 mm bridge cap over it. An M3x10 csk with its head
+    # flush at the belly face (z 10) puts the tip at z 20 -- 1.6 past the nut top
+    # (18.4), 1.0 under the boss top. The rim floor is REBATED to z 11.5 here, which
+    # is why the nut cannot sit lower.
+    "belly_nut_z": 17.0,
+    "belly_nut_run": 8.0,        # seat (centre - 3.175) out past the Ø9 boss flank
 
     # --- 28BYJ-48 5V geared stepper (owned x6, + ULN2003 x9). Dims from the beckdac SCARA
     #     SCAD model, cross-checked vs the Mouser datasheet (real, not eyeballed). ---
@@ -1309,6 +1428,13 @@ P = {
     "m3_nut_h": 2.8,        # nut pocket depth
     "boss_r": 4.3,          # screw boss outer radius
     "m25_clear_r": 1.45,    # M2.5 clearance (Pi standoffs)
+    # Electronics standoff radius, 3.0 -> 3.5 (O6 -> O7): FASTENING_AUDIT P1
+    # "ULN2003 / power-tray / Arduino / IMU posts (O6 posts split on tapping)".
+    # O6 around a O2.5 pilot leaves 1.75 walls; O7 leaves 2.25. Self-tap is KEPT on
+    # these -- they carry gram-scale driver/buck boards, and the audit's complaint is
+    # the post splitting while you drive, not the thread failing. The Arduino posts
+    # were already O7.
+    "elec_post_r": 3.5,
     "uln_w": 35.0, "uln_h": 32.0,   # ULN2003 driver board footprint
 
     # --- Preview pose (view only; does NOT change printed geometry) ---
