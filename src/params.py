@@ -178,6 +178,28 @@ P = {
     "ant_ear_pad_off": 1.15,          # radial push away from the can
     "ant_ear_nut_x": 41.0,            # nut mid-plane (trap x 39.6..42.4)
 
+    # --- head_back PANEL <-> FRAME joint (2026-07-15 FASTENING AUDIT P1 + P2-8) ---
+    # Was: 6x M3 into Ø2.5 self-tap pilots through 9-wide tabs that the corner curve clips
+    # to ~3.2 mm ligaments -- and those tabs are the panel's SOLE retention (audit P2-8),
+    # on a flat-on-flat interface with zero registration (audit "assembly-holding gaps" #2).
+    # Now: M3 through into a captive nut, on a 12-wide tab, plus a rebate shoulder.
+    "rim_tab": (12.0, 10.0, 13.0),   # (X, Y, Z). 12 wide gives 3.15 webs beside the 5.7 nut
+                                     # slot; 13 tall gives 3.325 under the seat. Tabs are now
+                                     # CENTRED on the screw axis (the old +-2 offset left only
+                                     # 1.15 of inboard web once the slot is cut).
+    "rim_tab_nut_y": -61.0,          # mid-tab: 3.6 of tab either side of the trap
+    # REBATE: the frame's rim CANNOT carry a perimeter tongue -- at y -66 the back walls are
+    # all r16 corner curve, so the rim is a knife wedge (at x 92 the frame is 1.34 thick and
+    # by x 97 the shell's own outer surface has already reached y -66, leaving no panel
+    # behind it at all). That is exactly why the tabs exist. So the rebate is per-tab: a
+    # shoulder on each tab's rim face that the panel drops onto, 5 BELOW the screw so it
+    # never eats the screw-head ligament (which stays 2.3).
+    "rim_pad": (7.0, 1.2, 3.0),      # (X, Y-proud, Z). 7 wide stays 1.04 inside the shell
+                                     # surface at the side tabs, so nothing gets clipped and
+                                     # the fit clearance survives all the way round.
+    "rim_pad_dz": -5.0,              # pad centre below the screw (cb r3.2 -> 1.8 clear)
+    "rim_pad_fit": 0.15,
+
     # --- Screen factory mount: 4x M3 into the display's OWN outer case-mount holes ---
     # Measured from Raspberry_Pi_Touch_Screen_Assembly_v12.stl (outer 126.2 x 65.65 pattern),
     # confirmed vs the reference case STL + RPi mechanical drawing. Screen-LOCAL frame (post-flip);

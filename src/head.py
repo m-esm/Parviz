@@ -649,22 +649,33 @@ def build_head_parts():
     # frame rim tabs + the panel screw drills (cut before slicing: each piece keeps
     # its share -- clearance + counterbore land in the wall slab, pilots in the tabs)
     wall_if = P["body_back_y"] + P["head_wall"]      # -66
-    tab_pts = [(-91.0, 120.0), (91.0, 120.0), (-91.0, 190.0), (91.0, 190.0)]
+    # 2026-07-15 FASTENING AUDIT (P1 + P2-8): these 6 screws are the panel's SOLE
+    # retention and they were Ø2.5 self-tap pilots through 9-wide tabs that the corner
+    # curve clips to ~3.2 ligaments. Now M3 through into a CAPTIVE NUT in a 12-wide tab
+    # centred on the screw axis (the old +-2 offset would leave 1.15 of inboard web once
+    # the slot is cut). Tabs still clip into the corner mass via inter(): at y -66 the
+    # side walls are all corner curve, so the tabs bite the thick corner itself.
+    tab_pts = [(-91.0, 120.0), (91.0, 120.0), (-91.0, 190.0), (91.0, 190.0),
+               (-45.0, 96.0), (45.0, 96.0)]
+    tbx, tby, tbz = P["rim_tab"]
     for tx, tz in tab_pts:
-        tab = box(9.0, 10.0, 13.0)
-        tab.apply_translation((tx + (2.0 if tx > 0 else -2.0), wall_if + 5.0, tz))
-        back = uni([back, inter(tab, _head_solid())])    # clipped: at y -66 the side
-    for tx, tz in [(-45.0, 96.0), (45.0, 96.0)]:         # walls are corner curve, so
-        tab = box(12.0, 10.0, 10.0)                      # the pilots bite the thick
-        tab.apply_translation((tx, wall_if + 5.0, tz))   # corner mass itself
+        tab = box(tbx, tby, tbz)
+        tab.apply_translation((tx, wall_if + tby / 2, tz))
         back = uni([back, inter(tab, _head_solid())])
-    for tx, tz in tab_pts + [(-45.0, 96.0), (45.0, 96.0)]:
-        clr = cyl(1.6, 5.0, axis="y")
-        clr.apply_translation((tx, -68.0, tz)); back = sub(back, clr)
-        cbp = cyl(3.2, 1.8, axis="y")
-        cbp.apply_translation((tx, P["body_back_y"] + 0.8, tz)); back = sub(back, cbp)
-        pil = cyl(1.25, 8.0, axis="y")
-        pil.apply_translation((tx, wall_if + 4.0, tz)); back = sub(back, pil)
+    for tx, tz in tab_pts:
+        # ONE M3 clearance line, panel outer face THROUGH the tab (no self-tap left, and a
+        # through-bore means an over-long screw runs out into the head instead of jamming
+        # on undrilled tab -- probed: M3x12 into a blind bore fouled by 10.4 mm^3). Spec
+        # M3x10: head bears on the panel cb floor (y -68.3), tip lands 1.3 past the nut.
+        clr = cyl(P["m3_clear_r"], 15.0, axis="y")
+        clr.apply_translation((tx, -63.0, tz)); back = sub(back, clr)
+        cbp = cyl(3.2, 1.8, axis="y")            # Ø6.4 head cb; leaves a 2.3 panel
+        cbp.apply_translation((tx, P["body_back_y"] + 0.8, tz))   # ligament under the head
+        back = sub(back, cbp)
+        # nut trap runs +Z so the nut is gravity-seated with the head upright; the mouth
+        # exits the tab's top face into the open head. Nuts go in BEFORE the panel closes.
+        back = sub(back, _nut_trap((tx, P["rim_tab_nut_y"], tz), "y", (0, 0, 1),
+                                   length=9.0))
 
     # head_back halves join (frame side): under-the-top-wall flange, 2x M3 axis X.
     # Center tracks the ceiling (body_z_top - 7.5: 7-tall box fusing 1 into the top
@@ -694,6 +705,21 @@ def build_head_parts():
     assert len(floaters) <= 6, "unexpected floating bodies in head_back frame"
     if floaters:
         panel = uni([panel] + floaters)
+
+    # PANEL<->FRAME REBATE (audit "assembly-holding gaps" #2: the panel was a flat slab on
+    # a flat rim, located by nothing while 6 blind M3 went in). Per tab: a shoulder standing
+    # proud of the rim face that the panel drops onto. Added AFTER the y=-66 split because
+    # the shoulder straddles it -- the pad belongs to the frame, the pocket to the panel.
+    # See PARAMS "rim_pad" for why this is per-tab and not a perimeter tongue.
+    pdx, pdy, pdz = P["rim_pad"]
+    pf = P["rim_pad_fit"]
+    for tx, tz in tab_pts:
+        pad = box(pdx, pdy, pdz)
+        pad.apply_translation((tx, wall_if - pdy / 2, tz + P["rim_pad_dz"]))
+        frame = uni([frame, pad])
+        pkt = box(pdx + 2 * pf, pdy + pf, pdz + 2 * pf)
+        pkt.apply_translation((tx, wall_if - (pdy + pf) / 2, tz + P["rim_pad_dz"]))
+        panel = sub(panel, pkt)
 
     frame_l = slice_mesh_plane(frame, plane_normal=(-1, 0, 0), plane_origin=(0, 0, 0), cap=True)
     frame_r = slice_mesh_plane(frame, plane_normal=(1, 0, 0), plane_origin=(0, 0, 0), cap=True)
