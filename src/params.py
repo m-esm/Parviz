@@ -143,6 +143,41 @@ P = {
                               # 3.1 clear of the Pi/display stack front (y -7.0)
     "clamp_head_cb_r": 3.2, "clamp_head_cb_deep": 3.4,   # M3 socket-head recess
 
+    # --- ant_bracket MOUNTING + motor ears (2026-07-15 FASTENING AUDIT P0-4) ---
+    # The bracket carries BOTH antenna 28BYJs and their gear trains and was attached to
+    # the head by NOTHING: its wall spine simply rested against the back wall's inner face
+    # (audit P0-4). Now 4x M3x12 from OUTSIDE the back panel into captive nuts in spine
+    # bosses. Screw heads land at z 212, which is 2.5 ABOVE the trim_hatch_frame's top
+    # (203.5) and well above the door outline (188.2) and louvres (187) -- so they stay on
+    # fixed, visible wall and are not buried under the glued-on orange frame.
+    "ant_mount_x": (26.0, 62.0),   # 4 points/head. x 26 threads the gap between the
+                                   # gearbox (x 25.7..34.7) and the G1 gear plane (x 22);
+                                   # x 62 sits between the motor can (to 53.5) and the
+                                   # outer arm (76.75). Both clear the y -48.1..-44.1
+                                   # half-shaft (the bosses live at y <= -54).
+    "ant_mount_z": 212.0,
+    "ant_mount_boss": (10.0, 12.0),   # boss (X, Z): 2.15 webs beside the 5.7 nut slot,
+                                      # 2.825 under the seat
+    "ant_mount_y": (-64.0, -54.0),    # boss runs forward off the spine's front face
+    "ant_mount_nut_y": -60.0,         # M3x12: head at the panel's outer counterbore,
+                                      # tip 2.0 past the nut
+    # Motor FACE PLATE: 1.2 -> 2.5 (audit P0-4; these plates already printed SEVERED once,
+    # see the 2026-07-10 connectivity audit). It grows OUTBOARD only: its inboard face is
+    # the datum the 28BYJ's 1.0-thick ear flange (x 34.7..35.7) bolts to, and 36.0 also
+    # lifts that placeholder gap 0.2 -> 0.3 (the CSG-robustness floor).
+    "ant_plate_x": 36.0,      # face-plate inboard face (was 35.9)
+    "ant_plate_t": 2.5,       # ... thickness (was 1.2)
+    # EAR BOLTS: 2x M3x10 per motor through the ear + plate into a captive nut on the
+    # OPEN OUTBOARD face (replaces two vestigial Ø2.5 self-tap pilots in a 1.2 plate).
+    # The nut pad geometry is FORCED by the can: the ear holes sit at r 17.5 from the
+    # motor axis and the Ø28.25 can at r 14.1, leaving 3.4 of radial room, so a pad
+    # centred on the hole would bury itself in the can. Each pad is therefore pushed
+    # RADIALLY OUTWARD by 1.15 and its nut slot runs INWARD (seat outboard), which keeps
+    # 0.8 to the can and 1.725 of pad beyond the hex corner.
+    "ant_ear_pad": (9.0, 7.5, 6.0),   # (Y, Z, X-depth off the plate's outboard face)
+    "ant_ear_pad_off": 1.15,          # radial push away from the can
+    "ant_ear_nut_x": 41.0,            # nut mid-plane (trap x 39.6..42.4)
+
     # --- Screen factory mount: 4x M3 into the display's OWN outer case-mount holes ---
     # Measured from Raspberry_Pi_Touch_Screen_Assembly_v12.stl (outer 126.2 x 65.65 pattern),
     # confirmed vs the reference case STL + RPi mechanical drawing. Screen-LOCAL frame (post-flip);

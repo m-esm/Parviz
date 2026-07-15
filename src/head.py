@@ -490,6 +490,20 @@ def build_head_parts():
             cb.apply_translation((px_, P["body_back_y"] + 0.6, bz_))
             back = sub(back, cb)
 
+    # ant_bracket MOUNTING holes (2026-07-15 fastening audit P0-4): 4x M3x12 from OUTSIDE
+    # the back wall into captive nuts in the bracket's spine bosses. The bracket carried
+    # both antenna 28BYJs on a spine that was attached to the head by nothing at all.
+    # z 212 is fixed wall: 2.5 above the trim_hatch_frame top (203.5), 24 above the door
+    # outline (188.2) -- heads stay visible and are not buried under the glued-on frame.
+    for sxa_ in (-1, 1):
+        for mx_ in P["ant_mount_x"]:
+            hole = cyl(P["m3_clear_r"], 6.0, axis="y")
+            hole.apply_translation((sxa_ * mx_, P["body_back_y"] + 2.0, P["ant_mount_z"]))
+            back = sub(back, hole)
+            cbm = cyl(3.6, 1.4, axis="y")            # Ø7.2 head counterbore, outer face
+            cbm.apply_translation((sxa_ * mx_, P["body_back_y"] + 0.6, P["ant_mount_z"]))
+            back = sub(back, cbm)
+
     # --- REAR SERVICE DOOR (task #26): the 4-thick wall (y -70..-66) inside the orange
     # frame becomes a removable U-shaped panel. Through-void = outline inset door_lip
     # (2 mm fixed-wall lip all around, incl. a 2 mm ring left standing around the x +-33
@@ -942,15 +956,37 @@ def build_ant_drive():
         # (plate stops 1.5 off the wall plane: the REMOVABLE door's plug face is y -66
         #  below z 190.2 there -- the plate hangs from the spine, which roots on the
         #  fixed wall above the door outline)
-        ep = box(1.2, 36.0, 52.0)                    # motor face plate |x| 35.9..37.1;
-        ep.apply_translation((sxa * 36.5, -31.0, 189.6)); br.append(ep)
+        pt_, px_ = P["ant_plate_t"], P["ant_plate_x"] + P["ant_plate_t"] / 2
+        ep = box(pt_, 36.0, 52.0)                    # motor face plate, 1.2 -> 2.5 thick
+        ep.apply_translation((sxa * px_, -31.0, 189.6)); br.append(ep)
         # 36 deep (was 24, connectivity audit 2026-07-10): the Ø28.7 can-pass bore
         # spans y -44.4..-15.7, WIDER than the old y -43..-19 plate, so the bore
         # severed the plate and its bottom half (with the lower ear pilot) printed
         # as a LOOSE body; y -49..-13 keeps 4.6/2.7 ligaments either side of the
         # bore (front edge still 6 clear of the screen+Pi stack rear at y -7)
-        rib = box(1.2, 38.0, 6.0)                    # face-plate root rib to the spine
-        rib.apply_translation((sxa * 36.5, wall_in + 19.0, 212.0)); br.append(rib)
+        rib = box(pt_, 38.0, 6.0)                    # face-plate root rib to the spine
+        rib.apply_translation((sxa * px_, wall_in + 19.0, 212.0)); br.append(rib)
+        # EAR NUT PADS (P0-4): pushed radially outward off the ear holes so they miss the
+        # Ø28.25 can -- see PARAMS "ant_ear_pad*". Cut for the nut + bolt further down.
+        epw, eph, epd = P["ant_ear_pad"]
+        for sz_ in (-1, 1):
+            # R(TAU/4, X) maps (x,y,z)->(x,-z,y): the EXTRUDE height becomes the Y span
+            # and the footprint's d becomes Z. So build (w=X, d=Z-extent, h=Y-extent).
+            pad = rounded_box(epd, eph, epw, 2.0)
+            pad.apply_transform(R(TAU / 4, (1, 0, 0)))
+            pad.apply_translation((sxa * (P["ant_plate_x"] + pt_ + epd / 2), my_
+                                   + P["motor_shaft_off"] + epw / 2,
+                                   mz_ + sz_ * (17.5 + P["ant_ear_pad_off"])))
+            br.append(pad)
+        # SPINE MOUNT BOSSES (P0-4): the bracket had NO attachment to the head at all --
+        # this spine just rested on the wall. 4x M3x12 from outside the back panel.
+        my0, my1 = P["ant_mount_y"]
+        mbx, mbz = P["ant_mount_boss"]
+        for mx_ in P["ant_mount_x"]:
+            bs = rounded_box(mbx, mbz, my1 - my0, 2.0)
+            bs.apply_transform(R(TAU / 4, (1, 0, 0)))     # extrude -> -Y
+            bs.apply_translation((sxa * mx_, my1, P["ant_mount_z"]))
+            br.append(bs)
         oa = box(3.5, 35.0, 22.0)                    # outer arm: half-shaft bushing
         oa.apply_translation((sxa * 78.5, wall_in + 17.5, 203.0)); br.append(oa)
         web = box(3.5, 14.0, 18.0)                   # web forward to the shoe
@@ -962,22 +998,42 @@ def build_ant_drive():
         rel = cyl(P["ant_mast_d"] / 2 + 0.3, 44.0)   # shoe face rides the mast front
         rel.apply_translation((sxa * P["ant_x"], P["ant_y"], 205.0))
         bracket = sub(bracket, rel)
-        epb = cyl(14.35, 3.0, axis="x")              # Ø28.7 motor-nose clearance bore
-        epb.apply_translation((sxa * 36.5, -30.0, 189.6))
+        pt_, px_ = P["ant_plate_t"], P["ant_plate_x"] + P["ant_plate_t"] / 2
+        epb = cyl(14.35, pt_ + 1.0, axis="x")        # Ø28.7 motor-nose clearance bore
+        epb.apply_translation((sxa * px_, -30.0, 189.6))
         bracket = sub(bracket, epb)
-        wbx = box(2.4, 7.4, 16.2)                    # wiring-box notch in the rear
-        wbx.apply_translation((sxa * 36.5, -46.3, 189.7))    # ligament (28BYJ box
+        wbx = box(pt_ + 1.0, 7.4, 16.2)              # wiring-box notch in the rear
+        wbx.apply_translation((sxa * px_, -46.3, 189.7))     # ligament (28BYJ box
         bracket = sub(bracket, wbx)                  # crosses it at z 182..197 only;
         # the ligament stubs above/below + the front ligament keep the plate one body
         bore = cyl(2.1, 200.0, axis="x")             # half-shaft bushings Ø4.2
         bore.apply_translation((0, cy_, cz_)); bracket = sub(bracket, bore)
         bore = cyl(2.1, 44.0, axis="x")              # idler bushings Ø4.2
         bore.apply_translation((sxa * 16.5, iy_, iz_)); bracket = sub(bracket, bore)
-        for sz_ in (-1, 1):                          # motor ear self-tap pilots Ø2.5
-            eh = cyl(1.25, 8.0, axis="x")            # (ears stand VERTICAL, +-Z)
-            eh.apply_translation((sxa * 36.5, my_ + P["motor_shaft_off"],
-                                  mz_ + sz_ * 17.5))
+        # SPINE MOUNT traps (P0-4): M3 clearance along +Y through spine + boss, captive
+        # nut slid down from the boss top (so it is gravity-seated with the head upright).
+        for mx_ in P["ant_mount_x"]:
+            sc = cyl(P["m3_clear_r"], 17.0, axis="y")    # y -73..-56: spine + boss + the
+            sc.apply_translation((sxa * mx_, -64.5, P["ant_mount_z"]))   # M3x12 TIP room
+            bracket = sub(bracket, sc)                   # (2.0 past the nut, 2.0 of boss
+            #                                              left blind ahead of it)
+            bracket = sub(bracket, _nut_trap(
+                (sxa * mx_, P["ant_mount_nut_y"], P["ant_mount_z"]), "y",
+                (0, 0, 1), length=9.0))
+        # MOTOR EARS (P0-4): 2x M3x10 through the ear + plate into a captive nut on the
+        # plate's OPEN OUTBOARD face. Replaces two Ø2.5 self-tap pilots that bit 1.2 mm
+        # of plate -- vestigial hardware on the exact plates that already printed severed.
+        # The nut slot runs INWARD (toward the can) so its SEAT is the outboard side and
+        # the pad's material beyond the hex corner is the 1.725 that exists there; running
+        # it outward would need pad below the hole, which is inside the can.
+        ey_ = my_ + P["motor_shaft_off"]
+        for sz_ in (-1, 1):
+            eh = cyl(P["m3_clear_r"], 14.0, axis="x")     # M3 clearance, ear -> nut
+            eh.apply_translation((sxa * (P["ant_plate_x"] + 3.0), ey_, mz_ + sz_ * 17.5))
             bracket = sub(bracket, eh)
+            bracket = sub(bracket, _nut_trap(
+                (sxa * P["ant_ear_nut_x"], ey_, mz_ + sz_ * 17.5), "x",
+                (0, 0, -sz_), length=6.0))
     _color(bracket, "back"); bracket.metadata["name"] = "ant_bracket"
     out.append(bracket)
     return out
