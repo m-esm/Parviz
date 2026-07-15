@@ -9,6 +9,7 @@ import shapely.geometry as sg
 from trimesh.creation import extrude_polygon
 from trimesh.transformations import rotation_matrix as R
 from params import DEG, P, TAU
+import geo
 from geo import (_color, _orient, blind_socket, box, cyl, fix_pin, frustum, hex_prism, inter, rounded_box, sub, teardrop, uni)
 from tracks import _track_zc, _spr_cz
 from pan import _pan_stack
@@ -445,6 +446,23 @@ def build_chassis_core():
     gfy = gy0w + (P["fled_cz"] - z0) / np.tan(gaw)   # the cavity right behind it
     wf.apply_translation(np.array([10.0, gfy, P["fled_cz"]]) - 3.0 * gnw)
     body = sub(body, wf)
+    # --- END-WALL GUSSET RIBS (2026-07-15, FASTENING_AUDIT P2-1 "the tail + front
+    # counterpart break at thin-ligament connections"): past |y| ~109 the glacis has
+    # eaten the floor slab, so the r12 cavity-corner crescents were the ONLY
+    # floor<->end-wall ligaments and both end walls hung off them. Each end gets two
+    # inboard ribs from the wall inner face onto solid floor -- a direct tie that does
+    # not depend on the corner rounds. Unioned BEFORE the glacis cut, so the wall-end
+    # foot is trimmed to the 33 deg face automatically (and stays inside the shell).
+    # Vertical fins on the floor: zero overhang in the tub's floor-down print.
+    gt, gz, grun = P["end_gusset_t"], P["end_gusset_z"], P["end_gusset_run"]
+    for sgn, gx in ((1, P["end_gusset_x"][0]), (-1, P["end_gusset_x"][1])):
+        wall_in = sgn * (P["chassis_l"] / 2 - 5.0)        # inner face of the end wall
+        for sxg in (-1, 1):
+            g = box(gt, grun, gz - (z0 + floor))
+            g.apply_translation((sxg * gx, wall_in - sgn * grun / 2,
+                                 (z0 + floor + gz) / 2))
+            body = uni([body, g])
+
     # --- GLACIS (2026-07-10, see PARAMS): slice the hull's front/rear lower corners
     # at the track-ramp angle so the side profile follows the tracks. The cut plane
     # runs (|y| glacis_y0, z 7) -> (wall, glacis_z1); a rotated box under that plane
@@ -459,6 +477,18 @@ def build_chassis_core():
         c_ = np.array([0.0, sgn * gy0, z0g]) - 30.0 * n_     # top face ON the plane
         wedge.apply_translation(c_)
         body = sub(body, wedge)
+    # BLUNT THE GLACIS/FLOOR KNIFE (2026-07-15, FASTENING_AUDIT P2-1 "the 33 deg
+    # glacis/floor knife wedge on the tail chips in handling"; it is also the
+    # chassis_lower_tail wallcheck whitelist entry). The glacis plane leaves the floor
+    # top (z0+floor) at |y| = yk, and between the glacis_tip_t station and yk the slab
+    # feathers from glacis_tip_t to ZERO. Cut that feather off at both ends so the slab
+    # ends on a vertical face >= glacis_tip_t tall instead of a knife edge.
+    ftop = z0g + floor                                   # floor top (15)
+    yk_t = gy0 + ((ftop - P["glacis_tip_t"]) - z0g) / np.tan(ga)    # slab == tip_t here
+    for sgn in (1, -1):
+        nib = box(200.0, 60.0, 20.0)                     # full width: the glacis cut is
+        nib.apply_translation((0.0, sgn * (yk_t + 30.0), ftop - 10.0))   # full width too
+        body = sub(body, nib)                            # z ftop-20..ftop, |y| >= yk_t
 
     # (PROW CHEEKS + M8 NUT DUCTS/CHANNELS DELETED 2026-07-14 running-gear v2 +
     # end simplification, user: the tail/front ends got "way more complex than
@@ -585,11 +615,11 @@ def build_chassis_parts():
     ysl = P["lower_seam_y"]
     ysl2 = P["lower_seam2_y"]
     # per-seam fastener x: the y=26 seam uses the vent-free wall band (x 61); the
-    # y=-88 tail seam sits at x 48 -- outboard of the chassis_tray footprint (x <= 30,
-    # 2026-07-14) and merging with the SW-420 pad on the left (both hull).
-    # Only the y=26 (front/rear) seam gets floor-pad screw hardware. The y=-88 tail
-    # seam is under the equipment BASE, which spans it and bolts to both shells -- so
-    # it needs no pads (the base + deck screws + pod rails tie rear<->tail).
+    # TAIL seam (lower_seam2_y, moved -88 -> -95 in the 2026-07-15 fastening campaign)
+    # uses the x 50..60.2 strip between the equipment base and the side-panel plane.
+    # BOTH seams now get real floor-pad hardware: the tail used to be a BARE BUTT PLANE
+    # tied only by the base + panels, and it is the break the user reported
+    # (FASTENING_AUDIT P0-2).
     for sx_ in (-1, 1):
         # pad pulled INBOARD of the side-panel plane (2026-07-14 round 2: the wall
         # band x 64.85..70 is now the removable chassis_side_* panel, so the pad
@@ -599,6 +629,11 @@ def build_chassis_parts():
         pad.apply_translation((sx_ * 57.35, ysl, 18.0))      # x 50..64.7, z 14..22
         # (rooted 1 into the raised floor top 15 -- v2 clear 10)
         core = uni([core, pad])
+        # TAIL-seam pad (2026-07-15, P0-2): same idea, re-clocked to the free strip.
+        ty0, ty1 = P["tail_pad_y"]; tz0, tz1 = P["tail_pad_z"]
+        tpad = box(10.2, ty1 - ty0, tz1 - tz0)
+        tpad.apply_translation((sx_ * P["tail_pad_x"], (ty0 + ty1) / 2, (tz0 + tz1) / 2))
+        core = uni([core, tpad])
 
     lower = slice_mesh_plane(core, plane_normal=(0, 0, -1), plane_origin=(0, 0, seam), cap=True)
     deck = slice_mesh_plane(core, plane_normal=(0, 0, 1), plane_origin=(0, 0, seam), cap=True)
@@ -641,6 +676,57 @@ def build_chassis_parts():
             dwl.apply_translation((sx_ * xd, sy, 18.0))      # (+0.1 slip; press the -y
             mesh = sub(mesh, dwl)                            #  side on assembly with glue)
         return mesh
+
+    # M3 hex geometry for the captive traps (geo.NUT["M3"] = (AF 5.5, t 2.6)). A hex
+    # with its FLATS on the slot walls spans AF*2/sqrt(3) across CORNERS along the
+    # insertion run, so the slot's far wall must sit half of THAT past the screw axis
+    # or the nut can never reach the bore. geo.nut_slot() runs its box from `center`
+    # along open_dir, i.e. `center` IS the far wall -- so every call below passes
+    # (screw axis - open_dir * M3_AC/2), not the axis itself.
+    M3_AC = geo.NUT["M3"][0] * 2.0 / np.sqrt(3.0)        # 6.35 across corners
+
+    def _tail_join(mesh_tail, mesh_rear, sy):
+        """TAIL SEAM JOINT (2026-07-15, FASTENING_AUDIT P0-2 "the tail break"): the
+        y=-95 seam used to be a bare butt plane -- no pads, no screws, no dowel, no
+        registration; the tail hung off the equipment base + the side panels alone.
+
+        Per side, on the pads unioned into `core` above (x 50..60.2, z 14..24):
+          - a TONGUE/SHELF across the seam: the tail grows a 6-wide x 5-tall tongue
+            into a matching pocket in the rear pad, so the two shells self-hold
+            (x + z registration) while the screw is driven -- the audit's third fix
+            pattern, replacing the y=26 seam's Ø4 dowel (there is no room here for a
+            dowel beside the bore in a 10.2-wide pad, and the tongue does the same job
+            with more shear area).
+          - 1x M3x16 axis-Y through the REAR pad's free +y face into a CAPTIVE M3 HEX
+            NUT slide-dropped into the tail pad from ABOVE (the tub is open-top, so
+            the slot is reachable at assembly AND self-supporting in the seam-up
+            print). This replaces the thread-form pilot the y=26 seam still uses --
+            the failing class per the audit's systemic verdict.
+        Driver access: along +y at z 21 inside the open tub, before the side panels
+        (whose TT tab rib crosses that corridor at y -87..-79.2) go on -- and the
+        panels bridge this seam anyway, so they always come off first."""
+        tpx = P["tail_pad_x"]
+        ty0, ty1 = P["tail_pad_y"]; tz0, tz1 = P["tail_pad_z"]
+        ztg = tz0 + 4.0                                  # tongue top (14..18)
+        zs = 21.5                                        # screw axis, over the tongue
+        for sx_ in (-1, 1):
+            # --- tongue: the tail keeps the pad's lower band across the seam
+            lap = box(6.0, 12.0, ztg - tz0)
+            lap.apply_translation((sx_ * tpx, sy + 3.0, (tz0 + ztg) / 2))   # y -101..-89
+            lap_fit = box(6.3, 12.3, (ztg + 0.15) - tz0)
+            lap_fit.apply_translation((sx_ * tpx, sy + 3.0, (tz0 + ztg + 0.15) / 2))
+            mesh_tail = uni([mesh_tail, inter(lap, mesh_rear)])
+            mesh_rear = sub(mesh_rear, lap_fit)
+            # --- M3x16 through the rear pad -> captive nut in the tail pad
+            scr = teardrop(P["m3_clear_r"], 22.0, axis="y")   # horizontal bore -> the
+            scr.apply_translation((sx_ * tpx, sy + 3.0, zs))  # seam-up print wants a
+            mesh_tail = sub(mesh_tail, scr)                   # 45deg self-supporting
+            mesh_rear = sub(mesh_rear, scr)                   # roof (geo.teardrop)
+            seat = (sx_ * tpx, sy - 6.0, zs - M3_AC / 2.0)    # nut center = the axis
+            mesh_tail = sub(mesh_tail, geo.nut_slot(seat, screw_axis="y",
+                                                    open_dir=(0, 0, 1), size="M3",
+                                                    length=(tz1 - zs) + M3_AC / 2 + 2.0))
+        return mesh_tail, mesh_rear
 
     def _despeck(mesh, min_cm3=0.5):
         """Drop tiny disconnected fragments a seam cut can shear off a wire-pass /
@@ -984,12 +1070,14 @@ def build_chassis_parts():
     lower_f = _despeck(slice_mesh_plane(lower, plane_normal=(0, 1, 0),
                                         plane_origin=(0, ysl, 0), cap=True))
     lower_r = slice_mesh_plane(lower, plane_normal=(0, -1, 0), plane_origin=(0, ysl, 0), cap=True)
-    # rear TAIL cap off the main housing (no seam pads here -- the equipment base
-    # spans this seam and ties rear<->tail). chassis_lower_rear stays the larger piece.
+    # rear TAIL cap off the main housing; jointed by _tail_join (2026-07-15, P0-2:
+    # it used to be a bare butt plane leaning on the equipment base + side panels).
+    # chassis_lower_rear stays the larger piece.
     lower_tail = _despeck(slice_mesh_plane(lower_r, plane_normal=(0, -1, 0),
                                            plane_origin=(0, ysl2, 0), cap=True))
     lower_r = _despeck(slice_mesh_plane(lower_r, plane_normal=(0, 1, 0),
                                         plane_origin=(0, ysl2, 0), cap=True))
+    lower_tail, lower_r = _tail_join(lower_tail, lower_r, ysl2)   # P0-2, see above
 
     # ---- deck -> front strip / center / rear strip with half-laps ----
     yf, yr = P["deck_seam_y"]                                # (66.0, -52.0)

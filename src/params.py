@@ -398,14 +398,48 @@ P = {
     # build_chassis_parts' docstring for the joint scheme per seam.
     "lower_seam_y": 26.0,        # lower tub front/rear seam (vent-free wall band
                                  # 18.5..29.5, pan pedestal <=|24|, pod joins +-40)
-    "lower_seam2_y": -88.0,      # 2nd rear seam: peels the feature-dense TAIL cap
-                                 # (rear wall + cheeks + rear sensors/buzzer/USB +
-                                 # M8 nut ducts) off chassis_lower_rear so the main
-                                 # housing is a clean, short, fast print. Clean full-
-                                 # width wall band: behind the Arduino (ends -85.7),
-                                 # in front of the SW-420 seat (-89.75) + side vents
-                                 # (-96..-112). Same floor-pad + M3x12 + Ø4 dowel joint
-                                 # as lower_seam_y; deck screws + pod rails also bridge.
+    "lower_seam2_y": -95.0,      # 2nd rear seam: peels the feature-dense TAIL cap
+                                 # (rear wall + rear sensors/buzzer/USB) off
+                                 # chassis_lower_rear so the main housing is a clean,
+                                 # short, fast print.
+                                 # MOVED -88 -> -95 (2026-07-15 fastening campaign,
+                                 # FASTENING_AUDIT P0-2 "the tail break"): at -88 the
+                                 # seam had NO joint at all and none could be built --
+                                 # the only free hull floor beside the equipment base
+                                 # (x <= 49) and inside the side-panel plane (x 64.85)
+                                 # is the x 50..60.2 strip, and the rear TT tab RIB
+                                 # capture owns y -87..-79.2 of it (that material goes
+                                 # to chassis_side_*_rear). -95 leaves a REAL joint
+                                 # band: tail pad y -106..-95, rear pad -95..-87.2.
+                                 # Floor-pad + M3 + CAPTIVE NUT + tongue, see
+                                 # _tail_join in build_chassis_parts. Still spanned by
+                                 # chassis_base (y -62..-118) and the side panels.
+    "tail_pad_x": 55.1,          # tail-seam floor-pad center |x| (pad 50..60.2): 1.0
+                                 # off the equipment base edge (49), 0.3 off the rear
+                                 # panel's L-foot (60.5), 0.15+ off the panel plane.
+    "tail_pad_y": (-106.0, -87.2),   # pad y span: -106 keeps 2+ mm of floor under the
+                                 # root (the rear glacis eats the slab past ~-110.8);
+                                 # -87.2 is 0.2 off the TT tab-rib panel capture (-87).
+    "tail_pad_z": (14.0, 25.0),  # rooted 1 into the floor top (15); 11 tall so the
+                                 # tongue (14..18) and the screw band (axis 21.5) both
+                                 # fit with >= 1.0 of pad over/under the bore.
+    "end_gusset_x": (40.0, 55.0),    # (FRONT, REAR) |x| of the end-wall gusset ribs
+                                 # (FASTENING_AUDIT P2-1: past |y| ~109 the r12 cavity-
+                                 # corner crescents are the hull's ONLY floor<->end-wall
+                                 # ligaments, so both glacis end walls hang on them).
+                                 # FRONT 40: the front TT tab-rib capture owns x >= 51.3
+                                 # at y 101..109. REAR 55: the equipment base owns
+                                 # x <= 49 and the BME/tower captures x >= 62.
+    "end_gusset_t": 4.0,         # rib thickness (x); vertical fin, zero overhang in the
+                                 # tub's floor-down print
+    "end_gusset_z": 30.0,        # rib top (floor top 15 -> 30); under the TT pocket
+                                 # bands and the deck seam
+    "end_gusset_run": 17.0,      # inboard reach from the end-wall inner face (|y| 115)
+    "glacis_tip_t": 1.2,         # MIN floor thickness kept at the glacis/floor-top
+                                 # tangent: past it the wedge feathers to a 33 deg PLA
+                                 # knife that chips in handling (FASTENING_AUDIT P2-1,
+                                 # and the chassis_lower_tail wallcheck whitelist). The
+                                 # feather is cut back to a vertical face instead.
     "deck_seam_y": (66.0, -52.0),  # deck strip seams (front clip reaches y 58; the
                                  # y-60 corner bosses reach 64 -> strips own them)
     "deck_center_screws": ((-64.0, 8.0), (64.0, 8.0), (-64.0, -26.0), (64.0, -26.0)),
