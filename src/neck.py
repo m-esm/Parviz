@@ -66,8 +66,15 @@ def build_neck_clevis():
         # can top 147.4) and the head's clamp tubes (r7).
         post = box(12.0, 5.0, 5.0)
         post.apply_translation((sx * 26.0, yt - 14.5, zt))
-        leg = box(6.0, 5.0, 22.0)
-        leg.apply_translation((sx * 23.0, yt - 14.5, zt - 9.0))
+        # LEG 6x5 -> 7x8 (fastening campaign 2026-07-15, audit P2 item 16): this leg eats
+        # every stall-homing impact -- the head's fins slam the post at +-33.8 deg on every
+        # boot -- through a 6x5 section 22 mm long, in layer shear. Grown INBOARD (x 19..26:
+        # the head's own +-55 deg stop fins live at x 27..31, so the outer face is pinned at
+        # 26) and BACKWARD (y -38..-30: the bracket plate at y -36.5..-32.5 reaches x 23, so
+        # the extra depth also welds the leg into the plate over x 19..23 instead of merely
+        # touching it, and x 23..26 at y -38..-35 is free air). Section 30 -> 56 mm^2.
+        leg = box(7.0, 8.0, 22.0)
+        leg.apply_translation((sx * 22.5, yt - 16.0, zt - 9.0))
         parts += [post, leg]
 
     # tilt WORM-motor bracket: the motor shaft runs along +Y (perpendicular to the tilt axle) and
@@ -106,9 +113,17 @@ def build_neck_clevis():
     # mesh; extraction just screws the crests through the open groove. Behind it the
     # riser top is still split into side prongs by the r5.9 free-rotation relief
     # (y -34..-21). The support's front face is shaped by the STALL-ENVELOPE trim below.
-    arm = box(18, 16, 6); arm.apply_translation((wx, yt - 10.0, wz - 9.5))        # y -36..-20
-    riser = box(18, 5, 16.5); riser.apply_translation((wx, yt - 4.5, wz - 8.25))  # z 124.6..141.1
-    supp = box(18, 7, 9.5); supp.apply_translation((wx, -17.5, wz - 4.75))        # y -21..-14
+    # WIDENED 18 -> 22 (fastening campaign 2026-07-15, audit P2 item 18): the r5.9
+    # free-rotation relief splits the riser top into two side prongs, and at x +-9 those
+    # prongs were 3.1 mm wide -- the members that hold the worm's radial separation load,
+    # in the layer-shear direction. x +-11 takes them to 5.1. Free: the relief bore, the
+    # groove and the whole stall-envelope trim are all x-independent across this band (the
+    # cooler cutter spans x -38..26.7), the gusset starts at x 14, the cheeks at x 18, and
+    # the riser roots on the column top (x +-24) for its full width. arm/supp follow so the
+    # riser is backed edge-to-edge and the crest groove keeps 5.1 of bearing land per side.
+    arm = box(22, 16, 6); arm.apply_translation((wx, yt - 10.0, wz - 9.5))        # y -36..-20
+    riser = box(22, 5, 16.5); riser.apply_translation((wx, yt - 4.5, wz - 8.25))  # z 124.6..141.1
+    supp = box(22, 7, 9.5); supp.apply_translation((wx, -17.5, wz - 4.75))        # y -21..-14
     parts += [arm, riser, supp]
 
     neck = uni(parts)
@@ -394,7 +409,7 @@ def build_trim_neckfoot():
 
     Print: flat on its base, no support (the step is a flat roof over 1.6 mm -- bridges).
     Fixing: slip over the column from below BEFORE the neck bolts to the platform (the
-    cheeks at x +-26 block a top-down pass), then 2x Ø3x6 pins dropped through the collar
+    cheeks at x +-26 block a top-down pass), then 2x Ø3x8 pins dropped through the collar
     into the platform's blind sockets (build_pan_platform) + glue on the seat. Inner is a
     +0.25/side slip fit on the 48x46 column."""
     z0 = P["base_h"]                                     # platform top (collar seat)
