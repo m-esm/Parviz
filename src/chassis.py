@@ -46,7 +46,7 @@ def build_fascia():
     # (PARAMS fascia_pin_pts; sockets cut in build_base)
     pf = [fascia]
     for px, pz in P["fascia_pin_pts"]:
-        pf.append(fix_pin(P["fix_pin_r"], P["fix_pin_len"], (0, -1, 0), (px, fw, pz)))
+        pf.append(fix_pin(P["fix_pin_r"], P["trim_pin_len"], (0, -1, 0), (px, fw, pz)))
     fascia = uni(pf)
     _color(fascia, "accent"); fascia.metadata["name"] = "trim_fascia"
     parts.append(fascia)
@@ -107,14 +107,18 @@ def build_fascia():
     ga = np.arctan2(gz1 - P["chassis_clear"], fw - gy0)
     gn = np.array([0.0, np.sin(ga), np.cos(ga)])     # outward glacis normal
     gface_y = gy0 + (P["fled_cz"] - P["chassis_clear"]) / np.tan(ga)
-    fl_bar = box(36.0, 1.2, 3.0)
+    # base 1.2 -> 2.0 (2026-07-15, FASTENING_AUDIT P2-5 "led_front 1.2 base"): the
+    # strip is a hand-height glue-on trim part on the glacis nose; 1.2 of PLA behind
+    # 7 emitters snaps in handling. The dots ride +0.8 with the base front so their
+    # 1.2 proud height over it is unchanged.
+    fl_bar = box(36.0, 2.0, 3.0)
     fl_bar.apply_transform(R(TAU / 4 - ga, (1, 0, 0)))   # y-face normal -> glacis normal
-    fl_bar.apply_translation(np.array([0.0, gface_y, P["fled_cz"]]) + 0.6 * gn)
+    fl_bar.apply_translation(np.array([0.0, gface_y, P["fled_cz"]]) + 1.0 * gn)
     fl = [fl_bar]
     for i in range(7):
         d = cyl(1.3, 1.6, axis="y", sections=24)
         d.apply_transform(R(TAU / 4 - ga, (1, 0, 0)))
-        d.apply_translation(np.array([-15.0 + i * 5.0, gface_y, P["fled_cz"]]) + 1.6 * gn)
+        d.apply_translation(np.array([-15.0 + i * 5.0, gface_y, P["fled_cz"]]) + 2.4 * gn)
         fl.append(d)
     led = uni(fl)
     _color(led, "led"); led.metadata["name"] = "led_front"
@@ -130,7 +134,7 @@ def build_fascia():
     # FIXING: glue + 3x Ø3 pins into blind rear-wall sockets (PARAMS rear_pin_pts)
     pr = [rp]
     for px, pz in P["rear_pin_pts"]:
-        pr.append(fix_pin(P["fix_pin_r"], P["fix_pin_len"], (0, 1, 0), (px, -fw, pz)))
+        pr.append(fix_pin(P["fix_pin_r"], P["trim_pin_len"], (0, 1, 0), (px, -fw, pz)))
     rp = uni(pr)
     _color(rp, "accent"); rp.metadata["name"] = "trim_rear"
     parts.append(rp)
@@ -469,11 +473,11 @@ def build_chassis_core():
     # trim_fascia: 4x Ø3.2 x 2.5 blind sockets in the front wall (at z 50 the solid deck
     # is behind; at z 42 the 2.5 skin faces the cavity)
     for px, pz in P["fascia_pin_pts"]:
-        body = sub(body, blind_socket(P["fix_socket_r"], P["fix_socket_deep"],
+        body = sub(body, blind_socket(P["fix_socket_r"], P["trim_socket_deep"],
                                       (0, 1, 0), (px, fw, pz)))
     # trim_rear: 3x Ø3.2 x 2.5 blind sockets in the rear wall
     for px, pz in P["rear_pin_pts"]:
-        body = sub(body, blind_socket(P["fix_socket_r"], P["fix_socket_deep"],
+        body = sub(body, blind_socket(P["fix_socket_r"], P["trim_socket_deep"],
                                       (0, -1, 0), (px, -fw, pz)))
     # lamp_L/R wire passes + sensor_rear bore/sockets moved AFTER the prow-cheek
     # union below (2026-07-11) -- cut here they'd be refilled by the cheeks.
@@ -584,6 +588,12 @@ def build_chassis_core():
         b.apply_translation((bx_, by_, z0 + floor + P["belly_boss_h"] / 2))   # z 12..18
         body = uni([body, b])
         body = sub(body, _belly_csk_neg(bx_, by_))
+        # TODO (FASTENING_AUDIT P1, NOT DONE 2026-07-15): Ø2.5 self-tap -> captive
+        # M3 nut. It needs belly_boss_r 3.5 -> 4.5 (a 5.7 slot in an Ø7 boss leaves
+        # 0.65 walls; the audit's own "bosses must grow to >= Ø9"), and the nut has
+        # to sit high (z ~17) because the rim floor is REBATED to z 11.5 under these
+        # stations -- a lower trap eats the rim. Left for a pass with budget to
+        # re-verify the plate/rebate/csk stack.
         pil = cyl(1.25, 8.3); pil.apply_translation((bx_, by_, z0 + 2.2 + 8.3 / 2))
         body = sub(body, pil)                                # pilot z 9.2..17.5
     # (REAR TIE deleted 2026-07-14 round 5: it re-anchored the belly-strap pedestal
@@ -1090,6 +1100,17 @@ def build_chassis_parts():
                 slot.apply_translation((s * 75.7, ry,      # under the z 15 block base
                                         (14.5 + 23.65) / 2))
                 pnl = sub(sub(pnl, ab), slot)
+                # CRUSH-RIB NIB in the slot mouth (2026-07-15, FASTENING_AUDIT P3:
+                # "M4 nut slide-up slots: nuts drop out when flipping the panel").
+                # The nuts have to go in BEFORE the panel mounts (the slots are blind
+                # after), and the panel gets flipped a dozen times during a track
+                # build. A 0.35 nib per wall, one layer proud, at the mouth: the nut
+                # is pushed past it once and then cannot fall back out.
+                for sn_ in (-1, 1):
+                    nib = box(3.6, 0.35, 1.2)
+                    nib.apply_translation((s * 75.7, ry + sn_ * (7.3 / 2 - 0.175),
+                                           16.4))
+                    pnl = uni([pnl, nib])
             for sy_, o_ in ((P["spr_y"], 1.0), (P["spr_y2"], -1.0)):   # TT stations
                 if not (ky0 < sy_ < ky1):
                     continue

@@ -921,6 +921,15 @@ P = {
     # in a 4-wall leaves 1.5 skin; nothing pierces a visible face or the screen / display /
     # camera voids). Pin protrudes 2.3 into the 2.5 socket (0.2 bottoming + glue room).
     "fix_pin_r": 1.5, "fix_socket_r": 1.6, "fix_socket_deep": 2.5, "fix_pin_len": 2.3,
+    # CHASSIS trim pins only (2026-07-15, FASTENING_AUDIT P3 "fascia/rear trim pins
+    # 2.5 engagement -> deepen to 5"): 2.5 of Ø3 pin in a glued blind socket is a nub,
+    # not a locator, and the trim rings are exactly what a hand grabs. Kept SEPARATE
+    # from fix_socket_deep/fix_pin_len: those are shared with head.py, where deepening
+    # the sockets cuts into the head_back frames' split-plane rim (wallcheck caught
+    # head_back_frame_R p1 0.34 -> 0.24 on the shared bump).
+    # 4.0 checked against both end walls: the sockets are blind in the 5-wall (the
+    # cavity behind is empty) and the z 50 pair backs onto the solid deck.
+    "trim_socket_deep": 4.0, "trim_pin_len": 3.7,
     "fix_pin2_r": 1.0, "fix_socket2_r": 1.1,   # Ø2 pins (camera_pod, sensor_rear cap)
     # trim_rail sockets, (y, z) per side wall (mirrored in x). Keep-outs: the shoulder
     # hardware below (z 125..136), the bezel<->back SIDE POSTS at (x +-97.5, z 119.8 and
