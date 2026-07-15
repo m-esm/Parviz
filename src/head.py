@@ -318,9 +318,21 @@ def build_head_shell():
             bo.apply_translation((sx * P["cam_hole_dx"] / 2, py0 - P["cam_boss_len"] / 2,
                                   bz + dz))
             shell = uni([shell, bo])
-            pil = cyl(P["cam_boss_pilot_r"], 3.8, axis="y")
+            # 2026-07-15 FASTENING AUDIT (item 9): M2-in-PLA is fine here (the CM3 board
+            # is ~4 g and the cover carries the ribbon pinch), but the pilot had only
+            # 4.0 mm of material to bite -- boss 1.0 + pier 3.0 -- and used 3.8 of it.
+            # Engagement can only grow by adding material, and NOT off the boss: the boss
+            # TIPS define the board's front plane, so lengthening them walks the board
+            # forward and the barrel out of its wall bore. So the material goes on the
+            # pier's FRONT face instead, where it runs into the face wall and fuses.
+            fb = cyl(P["cam_boss_od"] / 2, P["cam_boss_front_len"], axis="y")
+            fb.apply_translation((sx * P["cam_hole_dx"] / 2,
+                                  py1 + P["cam_boss_front_len"] / 2, bz + dz))
+            shell = uni([shell, fb])
+            pl_ = P["cam_pilot_len"]
+            pil = cyl(P["cam_boss_pilot_r"], pl_, axis="y")
             pil.apply_translation((sx * P["cam_hole_dx"] / 2,
-                                   py0 - P["cam_boss_len"] + 1.9, bz + dz))
+                                   py0 - P["cam_boss_len"] + pl_ / 2, bz + dz))
             shell = sub(shell, pil)
 
     # LED-strip recess in the forehead, left of the camera (design ref): shallow slot cut
@@ -504,12 +516,23 @@ def build_head_parts():
         # (head 58.0..65.2: 1.5 off the door outline, 1.8 off the frame)
         px_ = bx_ + 1.5 if bx_ < 0 else bx_
         for bz_ in (134.0, 174.0):
-            hole = cyl(1.75, 6.0, axis="y")
+            hole = cyl(P["m3_clear_r"], 6.0, axis="y")
             hole.apply_translation((px_, P["body_back_y"] + 2.0, bz_))
             back = sub(back, hole)
             cb = cyl(3.6, 1.4, axis="y")                 # Ø7.2 head counterbore, outer face
             cb.apply_translation((px_, P["body_back_y"] + 0.6, bz_))
             back = sub(back, cb)
+            # PILLAR LOCATING SEAT (2026-07-15 fastening audit P1 + "assembly-holding
+            # gaps" #5): the loaded tray used to drop in located by NOTHING and get
+            # screwed blind from outside while someone held the heaviest module in the
+            # robot. Each pillar end now keys into this recess. It is a recess and not a
+            # boss because the tray bay has zero frame material anywhere near the pillars
+            # -- see PARAMS "scr_seat_deep". Cut in `back` (y < -66 -> it lands in the
+            # panel) and printed as a shallow bed-face pocket that bridges at 1.0.
+            sd_, sf_ = P["scr_seat_deep"], P["scr_seat_fit"]
+            seat = box(P["scr_pillar"] + 2 * sf_, sd_ + 1.0, P["scr_pillar"] + 2 * sf_)
+            seat.apply_translation((bx_, wall_in - sd_ + (sd_ + 1.0) / 2, bz_))
+            back = sub(back, seat)
 
     # ant_bracket MOUNTING holes (2026-07-15 fastening audit P0-4): 4x M3x12 from OUTSIDE
     # the back wall into captive nuts in the bracket's spine bosses. The bracket carried
@@ -865,13 +888,25 @@ def build_screen_tray():
             c = cyl(P["scr_m3_clear_r"], 8.0, axis="y")
             c.apply_translation((bx_, face - 2.0, bz_))
             cuts.append(c)
-        for bz_ in (134.0, 174.0):                       # pillars to the wall, z-clear of
-            pl = box(8.0, (face - 3.5) - wall_in + 0.05, 8.0)    # the clamp tubes
-            pl.apply_translation((bx_, (face - 3.5 + wall_in + 0.05) / 2, bz_))
+        # 2026-07-15 FASTENING AUDIT P1: the pillars are 8 -> 10 sq and their Ø2.5
+        # self-tap pilots become M3 + CAPTIVE NUT. An 8 sq pillar leaves only 1.15 of web
+        # beside a 5.7 nut slot; 10 gives 2.15 and z 134/174 +-5 still clears the Ø14
+        # clamp tubes (146..160). Each pillar end now runs `scr_seat_deep` INTO a locating
+        # recess in the back panel, so the loaded module self-holds instead of being held
+        # by hand while 4 screws go in blind from outside.
+        pw_ = P["scr_pillar"]
+        p_end = wall_in - P["scr_seat_deep"] + 0.05      # 0.05 seat clearance in Y
+        for bz_ in (134.0, 174.0):
+            pl = box(pw_, (face - 3.5) - p_end, pw_)
+            pl.apply_translation((bx_, (face - 3.5 + p_end) / 2, bz_))
             parts.append(pl)
-            pil = cyl(1.25, 8.0, axis="y")               # wall-screw pilot
-            pil.apply_translation((px_, wall_in + 0.05 + 3.9, bz_))
-            cuts.append(pil)
+            thr = cyl(P["scr_m3_clear_r"], 11.0, axis="y")    # M3 through, y -67..-56
+            thr.apply_translation((px_, -61.5, bz_))
+            cuts.append(thr)
+            # nut slot opens INBOARD (its mouth clears the pillar into the open bay); the
+            # seat is the outboard side, which keeps >= 1.825 beyond the hex corner.
+            cuts.append(_nut_trap((px_, P["scr_pillar_nut_y"], bz_), "y",
+                                  (-np.sign(bx_), 0, 0), length=8.0))
     # SPINE tying the two rails into one part (bench handling): z 190.7..195.7, the
     # 6-mm window between the display's mid back-pan face (y 22.5 plane, tops at z 190
     # -- the spine face at 22.48 would only have 0.02 air inside its z-range) and the
