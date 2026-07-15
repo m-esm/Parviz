@@ -40,11 +40,19 @@ def build_pan_platform():
     plate = cyl(P["pan_plate_d"] / 2, P["pan_plate_t"], sections=96)
     plate.apply_translation((0, 0, z1 - P["pan_plate_t"] / 2))
 
-    # rim REBATE: top band stepped to r45 -> an up-facing shoulder 3 below the top. The deck
+    # rim REBATE: top band stepped to r45 -> an up-facing shoulder below the top. The deck
     # clips reach over this shoulder to resist uplift (top-heavy head). The rebate is a full
     # ring because the platform pans past the 3 fixed clips.
-    reb = sub(cyl(P["pan_plate_d"] / 2 + 2, 4.0, sections=96), cyl(45.0, 6.0, sections=96))
-    reb.apply_translation((0, 0, z1 - 1.0))          # cut spans z1-3 .. z1+1
+    # DEEPENED 3.0 -> 4.4 (fastening campaign 2026-07-15, audit P2 item 15): the clip tabs
+    # that hold the whole top-heavy head down were 2.6 mm of PLA loaded in layer-shear, and
+    # they are capped above by the deck-flush top (z1) -- the only way to thicken them to
+    # 4.0 is to drop the shoulder they reach under. Shoulder 63.0 -> 61.6 (tab underside
+    # 62.0 keeps the same 0.4 running clearance). The trade is the platform's own rim below
+    # the shoulder, 4.6 -> 3.2 -- worth it: that rim is a continuous 3 mm-radial ring, the
+    # tabs are 3 small cantilevers, so the section moves to where the part is weakest
+    # (tab bending strength scales with t^2: 2.6 -> 4.0 is 2.4x).
+    reb = sub(cyl(P["pan_plate_d"] / 2 + 2, 5.4, sections=96), cyl(45.0, 7.4, sections=96))
+    reb.apply_translation((0, 0, z1 - 1.7))          # cut spans z1-4.4 .. z1+1
     plate = sub(plate, reb)
 
     # FAST-PAN 2:1 gear-up (2026-07-12; see PARAMS pan_gear_*): the old on-axis D-bore hub
@@ -95,6 +103,19 @@ def build_pan_platform():
     slot.apply_translation((0, 0, z1 - 20))
     plate = sub(plate, slot)
 
+    # 2 printed REGISTRATION PINS on the top face for the neck column (fastening campaign
+    # 2026-07-15, audit holding gap 1): the root joint of the whole head stack used to be
+    # flat-on-flat -- the column was held by hand while 3 blind M3s were driven up from
+    # underneath. Ø4.0 x 2.45 proud (0.55 fused into the plate) at (+-18, -32), 36 mm
+    # apart so they fix rotation too; blind Ø4.2 sockets in build_neck_clevis take them.
+    # Placement: inside the column footprint (x +-24, y -40..6) and inside the neckfoot
+    # collar's bore (so the collar still drops over the column), 6 mm off the cable slot
+    # wall, far from the 3 bolt counterbores. Mirrors the pedestal pins (chassis.py).
+    for sx in (-1, 1):
+        pin = cyl(2.0, 3.0)
+        pin.apply_translation((sx * 18.0, -32.0, z1 + 0.95))     # z1-0.55 .. z1+2.45
+        plate = uni([plate, pin])
+
     # 3 M3 clearance holes to bolt the neck down (MATCH the neck-base pilots: rad 16.5,
     # clocked 270/30/150 about (0, neck_y) -- see build_neck_clevis, incl. why 16.5) with
     # Ø6.5 head counterbores from the UNDERSIDE, 4 deep. All 3 land on the solid top
@@ -110,13 +131,17 @@ def build_pan_platform():
         cb = cyl(3.25, 8.0); cb.apply_translation((hx, hy, plate_bot))
         plate = sub(plate, cb)
 
-    # 2x blind Ø3.2 x 3.5 pin sockets for the trim_neckfoot collar (neck styling pass
+    # 2x blind Ø3.2 x 5.0 pin sockets for the trim_neckfoot collar (neck styling pass
     # 2026-07-12, see build_trim_neckfoot): at (+-27, neck_y) -- r 31.9 from the pan axis,
     # clear of the cable slot (x -4..16 / y -30..-20), the neck-bolt cbores (|x| <= 17.8),
     # the D-hub (r7) and the ball-groove footprint (in-plate cross-section starts r 37.1).
+    # DEPTH 3.5 -> 5.0 (fastening campaign 2026-07-15, audit P3): 3.5 of blind Ø3 socket is
+    # not a location feature, it is a rattle. The collar is 3.0 tall, so the pin is now
+    # Ø3x8 (3 in the collar + 5 here) and the socket still leaves 2.6 of plate below it
+    # (plate spans z 58.4..66). Keep build_trim_neckfoot's through-bore in sync.
     for sx in (-1, 1):
-        ps = cyl(1.6, 3.5)
-        ps.apply_translation((sx * 27.0, P["neck_y"], z1 - 3.5 / 2))
+        ps = cyl(1.6, 5.0)
+        ps.apply_translation((sx * 27.0, P["neck_y"], z1 - 5.0 / 2))
         plate = sub(plate, ps)
     _color(plate, "pan")
     plate.metadata["name"] = "pan_platform"
@@ -179,14 +204,33 @@ def build_pan_clips():
     deck top: the neck column sweeps r ~15..63 above z=base_h when panning, so a clip
     standing proud there would be sheared off -- that's also why the platform gets a rebate
     (engagement below the top) instead of the clips overhanging the top surface.
-    Separate screwed parts: drop the balls + platform in first, then the clips."""
+    Separate screwed parts: drop the balls + platform in first, then the clips.
+
+    TAB 2.6 -> 4.0 + ROOT FILLET (fastening campaign 2026-07-15, audit P2 item 15: three
+    2.6 x 4.1 x 14 tabs are ALL that stops the top-heavy head lifting the platform off the
+    balls, and they are loaded in the layer-shear direction). The tab top is pinned at the
+    deck-flush z1 (the neck column sweeps r ~15..63 straight over it), so the thickness had
+    to come from below: build_pan_platform's rim rebate dropped its shoulder 63.0 -> 61.6,
+    the tab underside follows 63.4 -> 62.0 and keeps the same 0.4 running clearance and the
+    same 2.6 mm of shoulder engagement (r 45.4..48). t^2 -> 2.4x the bending strength.
+    The ROOT (y ~49, where the bending moment peaks) additionally gets a 45 deg fillet: the
+    platform is r <= 48, so the band r 48.4..49.5 under the tab is free air and takes a
+    wedge down to the body bottom for nothing. Screw positions UNCHANGED; the deck pocket
+    grows to take the 4 mm tab (chassis side)."""
     z1 = P["base_h"]
     clips = None
     for a in (90, 210, 330):
         # built at azimuth 90 (+Y), then rotated into place about the pan axis
         body = box(14, 9, 7); body.apply_translation((0, 53.5, z1 - 3.5))       # r 49..58
-        tab = box(14, 4.1, 2.6); tab.apply_translation((0, 47.45, z1 - 1.3))    # r 45.4..49.5
-        c = uni([body, tab])                     # tab underside z1-2.6 = shoulder + 0.4 clear
+        tab = box(14, 4.1, 4.0); tab.apply_translation((0, 47.45, z1 - 2.0))    # r 45.4..49.5
+        # root fillet, in the (y, z) plane extruded along X: local x -> world y,
+        # local y -> world z, local z -> world x (proper rotation, det +1)
+        fil = extrude_polygon(sg.Polygon([(48.4, z1 - 4.0), (49.5, z1 - 4.0),
+                                          (49.5, z1 - 7.0)]), 14.0)
+        T = np.eye(4); T[:3, :3] = np.array([[0, 0, 1.0], [1.0, 0, 0], [0, 1.0, 0]])
+        T[0, 3] = -7.0
+        fil.apply_transform(T)
+        c = uni([uni([body, tab]), fil])          # tab underside z1-4.0 = shoulder + 0.4
         thr = cyl(P["m3_clear_r"], 20); thr.apply_translation((0, 53.5, z1 - 4))
         c = sub(c, thr)                          # M3 through, into the deck pilot below
         cb = cyl(3.25, 6.8); cb.apply_translation((0, 53.5, z1))
