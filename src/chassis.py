@@ -15,6 +15,17 @@ from tracks import _track_zc, _spr_cz
 from pan import _pan_stack
 
 
+# M3 hex geometry for the 2026-07-15 fastening campaign's captive traps
+# (geo.NUT["M3"] = (AF 5.5, t 2.6)). A hex with its FLATS on the slot walls spans
+# AF*2/sqrt(3) ACROSS CORNERS along the insertion run, so the slot's far wall must
+# sit half of THAT past the screw axis or the nut can never reach the bore.
+# geo.nut_slot() runs its box FROM `center` along open_dir -- i.e. `center` IS the
+# far wall, not the nut's centre -- so every call here passes
+# (screw axis - open_dir * M3_AC/2). Same reason the slide-up slots' top stops use
+# M3_AC/2 (3.175) and not AF/2 (2.75).
+M3_AC = geo.NUT["M3"][0] * 2.0 / np.sqrt(3.0)        # 6.35 across corners
+
+
 def build_fascia():
     """Chassis front-fascia parts (design-ref front.jpg): orange grille surround + side
     fins (one orange print), HC-SR04 ultrasonic placeholder (silver barrels through the
@@ -679,10 +690,36 @@ def build_chassis_parts():
         cb.apply_translation((sx_, sy_, z1 - 1.5))
         deck = sub(deck, cb)
 
-        # Lower tub: blind Ø2.5 thread-form pilot from the seam down into the boss.
-        pil = cyl(1.25, 8.5)
-        pil.apply_translation((sx_, sy_, seam - 8.5 / 2))
+        # Lower tub: Ø3.4 clearance down the boss into a CAPTIVE M3 HEX NUT
+        # (2026-07-15, FASTENING_AUDIT P1: these 8 were thread-form pilots into PLA,
+        # and 6 of them are the side panels' ONLY top retention -- 5.1 mm of thread on
+        # a scarfed boss, the audit's failing class). The nut slides in HORIZONTALLY
+        # toward the tub interior, reachable with the deck off; the boss's 3+ mm over
+        # the nut's top flat carries the clamp into the z 46 deck seat.
+        pil = cyl(P["m3_clear_r"], 8.5)
+        pil.apply_translation((sx_, sy_, seam - 8.5 / 2))       # bore z 37.5..46
         lower = sub(lower, pil)
+        # nut trap: slot runs toward the tub interior -- -x for the six side-wall
+        # bosses (seat sits inside the 5-wall), +y for the two on the rear wall.
+        odir = (0.0, 1.0, 0.0) if abs(sy_) > 100 else (-np.sign(sx_), 0.0, 0.0)
+        oz = P["deck_nut_z"]
+        seat = (np.array([sx_, sy_, oz], float)
+                - np.array(odir, float) * (M3_AC / 2.0))
+        lower = sub(lower, geo.nut_slot(seat, screw_axis="z", open_dir=odir,
+                                        size="M3", length=P["deck_nut_run"]))
+        if abs(sx_) > 50.0:
+            # OPEN THE SLOT'S FLOOR on the six scarfed wall bosses: the pocket's flat
+            # bottom (z 41.6) and the 45 deg print scarf under the boss CONVERGE, so
+            # they left a knife crescent between them (wallcheck: p1 0.77 at
+            # (61.2, 5.1, 40.2)). Drop the void to z 36 over the whole run -- the nut
+            # is held by the roof + the two side walls + the seat and the screw pulls
+            # it UP into the roof, so a floor was never doing anything; you also get
+            # to see and feel the nut going in.
+            run = P["deck_nut_run"]
+            drop = box(run, geo.NUT["M3"][0] + 0.2, (oz - 1.4) - 36.0)
+            drop.apply_translation((sx_ - np.sign(sx_) * (M3_AC / 2 - run / 2), sy_,
+                                    (36.0 + oz - 1.4) / 2))
+            lower = sub(lower, drop)
 
     # ---- lower tub seams: front/rear at ysl, then peel the rear TAIL at ysl2 ----
     # Both seams use the SAME joint: M3x12 axis-Y through the +y piece's floor pad
@@ -694,28 +731,26 @@ def build_chassis_parts():
         # TEARDROPS (45deg self-supporting roof) so they print clean with no support
         # and no sagging ceiling -- the hanging-screw-pocket fix (2026-07-13, DFAM).
         # The Ø4 dowel stays round: it's small (bridges fine) and wants full-round grip.
+        # 2026-07-15 (FASTENING_AUDIT P1 + P2-3): the -y thread-form pilot became a
+        # CAPTIVE M3 HEX NUT dropped in from above (the tub is open-top: reachable at
+        # assembly, self-supporting in the seam-up print), and the Ø6.8 HEAD
+        # COUNTERBORE is GONE -- it left a ~1.0 mm wall to the pad's x-64.7 face and
+        # bought nothing: the M3 socket head (Ø5.5) simply seats PROUD on the pad's
+        # free +y face, the chassis_side foot convention. Dropping it recovers more
+        # section than widening the pad could: the pad is capped at 14.7 either way
+        # (the belly OPENING edge is x 50, the side-panel plane x 64.85).
         for sx_ in (-1, 1):
-            scr = teardrop(P["m3_clear_r"], 14.0, axis="y")  # M3x12 through the +y pad
-            scr.apply_translation((sx_ * xs, sy + 6.0, 18.0))
+            scr = teardrop(P["m3_clear_r"], 21.0, axis="y")  # M3x20 through the +y pad
+            scr.apply_translation((sx_ * xs, sy + 3.5, 18.0))    # -> nut at sy-4
             mesh = sub(mesh, scr)
-            cbf = teardrop(3.4, 4.5, axis="y")               # head counterbore, +y face
-            cbf.apply_translation((sx_ * xs, sy + 11.2, 18.0))
-            mesh = sub(mesh, cbf)
-            pilr = cyl(1.25, 10.0, axis="y")                 # -y thread-form pilot
-            pilr.apply_translation((sx_ * xs, sy - 6.0, 18.0))
-            mesh = sub(mesh, pilr)
+            seat = (sx_ * xs, sy - 4.0, 18.0 - M3_AC / 2.0)      # nut centres on the
+            mesh = sub(mesh, geo.nut_slot(seat, screw_axis="y",  # bore, see M3_AC
+                                          open_dir=(0, 0, 1), size="M3",
+                                          length=(22.0 - 18.0) + M3_AC / 2 + 2.0))
             dwl = cyl(2.05, 16.0, axis="y")                  # Ø4 dowel across the seam
             dwl.apply_translation((sx_ * xd, sy, 18.0))      # (+0.1 slip; press the -y
             mesh = sub(mesh, dwl)                            #  side on assembly with glue)
         return mesh
-
-    # M3 hex geometry for the captive traps (geo.NUT["M3"] = (AF 5.5, t 2.6)). A hex
-    # with its FLATS on the slot walls spans AF*2/sqrt(3) across CORNERS along the
-    # insertion run, so the slot's far wall must sit half of THAT past the screw axis
-    # or the nut can never reach the bore. geo.nut_slot() runs its box from `center`
-    # along open_dir, i.e. `center` IS the far wall -- so every call below passes
-    # (screw axis - open_dir * M3_AC/2), not the axis itself.
-    M3_AC = geo.NUT["M3"][0] * 2.0 / np.sqrt(3.0)        # 6.35 across corners
 
     def _tail_join(mesh_tail, mesh_rear, sy):
         """TAIL SEAM JOINT (2026-07-15, FASTENING_AUDIT P0-2 "the tail break"): the
@@ -1025,6 +1060,11 @@ def build_chassis_parts():
             # pilot keeps z ~40.9..46 = 5.1 of thread (clamp screw, plenty).
             # Removal-only, so the TT-pocket clearances can only improve.
             for by_ in ((60.0, 8.0) if fi == 0 else (-26.0,)):
+                # (scarf HELD at the 2026-07-14 diagonal: dropping it to fit the
+                # P1 captive nut lower made the 45 deg cut graze the bare r4 boss
+                # cylinder tangentially -- wallcheck p1 0.77. The nut sits at
+                # deck_nut_z 43 instead: 1.7 mm of boss over its top flat, in pure
+                # COMPRESSION between the nut and the deck seat, ~1800 N of PLA.)
                 scf = extrude_polygon(sg.Polygon(
                     [(s * 64.85, -39.7), (s * 64.85, -33.0),
                      (s * 58.5, -33.0), (s * 58.5, -46.05)]), 10.0)

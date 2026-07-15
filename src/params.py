@@ -394,6 +394,21 @@ P = {
                             # bosses ride the rear wall instead (sensor hole z16, trim
                             # pins outer-face only, motor tabs x +-55.6 -- all clear)
     "chassis_split_boss_r": 4.0,
+    "deck_nut_z": 43.0,          # captive M3 nut centre in each deck hold-down boss
+                                 # (2026-07-15, FASTENING_AUDIT P1: all 8 were thread-
+                                 # form pilots, and 6 are the side panels' ONLY top
+                                 # retention). The six wall bosses are scarfed 45 deg
+                                 # underneath for the panels' upright print and only
+                                 # exist z 40.55..46 at x 64, so 43 is as low as the
+                                 # nut goes: 1.7 of boss over its top flat -- squeezed
+                                 # in pure COMPRESSION between the nut and the z 46
+                                 # deck seat (~1800 N of PLA), no shear-out path.
+                                 # Screw: M3x25 from the deck's z 63 cbore.
+    "deck_nut_run": 11.0,        # slot run from the seat to past the boss's inboard
+                                 # face: the six wall bosses seat INSIDE the 5-wall
+                                 # (x 67.175, 2.8 left outboard) and open -x into the
+                                 # tub; the two rear-wall bosses seat at y -116.175 and
+                                 # open +y. Both reachable with the deck off.
     # PRINT-SPEED SUB-SPLITS (2026-07-10, user: break the biggest prints apart). See
     # build_chassis_parts' docstring for the joint scheme per seam.
     "lower_seam_y": 26.0,        # lower tub front/rear seam (vent-free wall band
