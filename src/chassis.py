@@ -1590,9 +1590,31 @@ def build_pan_pedestal():
     wrel = box(P["motor_wbox_w"] + 3, 22, ear_z + 2 - zb + 2)   # wbox leads exit +Y
     wrel.apply_translation((mx, my + 16, (zb + ear_z + 2) / 2))
     ped = sub(ped, wrel)
+    # PAN-MOTOR EAR SCREWS: M3 THROUGH-BOLT + CAPTIVE HEX NUT (2026-07-15,
+    # FASTENING_AUDIT P1, which had assumed "no reachable nut face -> heat-set from the
+    # top face"). Probing says otherwise, so no insert is needed here.
+    #
+    # The ear axis is 17.5 from the can axis and the can bore wall is at r 14.5, so
+    # there is only 3.0 mm between them -- LESS than the 3.175 a nut needs behind the
+    # axis. A seat on the can side is geometrically impossible. So the seat goes
+    # OUTBOARD (3.325 mm of body beyond it) and the slot opens INTO the Ø29 can bore:
+    # the nut drops through the bore, slides outboard onto its seat, and the motor can
+    # then goes in behind it and blocks the only escape. Wrench-free, hands-free.
+    # The screw pulls the nut UP onto the slot roof, so the 3.95 mm between the nut top
+    # and the ear pad is in pure compression under the motor's ear bar.
+    znut = P["ped_ear_nut_z"]
     for dxe in (-P["motor_ear_cc"] / 2, P["motor_ear_cc"] / 2):
-        e = cyl(1.25, 16); e.apply_translation((mx + dxe, my, ear_z - 4))
+        ex_ = mx + dxe
+        e = cyl(P["m3_clear_r"], 9.0)          # M3 clearance + tip relief under the nut
+        e.apply_translation((ex_, my, znut + 1.6))            # z 22.5..31.5
         ped = sub(ped, e)
+        odir = (-np.sign(dxe), 0.0, 0.0)       # mouth toward the can axis
+        nsl = geo.nut_slot((ex_, my, znut), screw_axis="z", open_dir=odir,
+                           size="M3", length=P["ped_ear_nut_run"])
+        sc = P["ped_ear_nut_seat_clear"]       # see the pan-clip note: nut_slot seats at
+        rel = box(sc, geo.NUT["M3"][0] + 0.2, geo.NUT["M3"][1] + 0.2)   # exactly ac/2,
+        rel.apply_translation((ex_ - odir[0] * (M3_AC / 2 + sc / 2), my, znut))  # which
+        ped = sub(ped, uni([nsl, rel]))        # only a max-material nut can reach
     pw, pd = P["ped_pad_wxy"]
     relief = rounded_box(50, 50, P["ped_relief"], 6.0)
     relief.apply_translation((mx, my, ear_z - P["ped_relief"]))

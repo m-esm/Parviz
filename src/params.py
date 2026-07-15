@@ -752,6 +752,17 @@ P = {
     # 1-thick ear bar clamps on two DEFINED pads instead of the whole 48x48 top, and the
     # can's top band registers in a collar ring right under the Ø27.25 gear stack.
     "ped_pad_wxy": (9.0, 10.0),   # ear seat pads (X x Y) centered on the +-17.5 ear holes
+    # PAN-MOTOR EAR captive nuts (2026-07-15, FASTENING_AUDIT P1 -- they were Ø2.5x16
+    # thread-form pilots; the audit assumed no nut face was reachable and specced a
+    # heat-set insert, but probing disproved that, same as the tilt_carrier).
+    # Nut centre 25.4 -> nut 24.0..26.8: 3.95 mm of pad above it in compression under
+    # the motor's ear bar (top at ear_z 30.75), and an M3x8 driven from the ear bar
+    # tips out at 23.75, i.e. dead through the nut into the bore's tip relief.
+    "ped_ear_nut_z": 25.4,
+    # run 7.0: seat at ear +-3.175 OUTBOARD (3.3 mm of the 48x48 body beyond it), mouth
+    # 3.8 the other way -- past the can bore wall, so the nut loads through the bore.
+    "ped_ear_nut_run": 7.0,
+    "ped_ear_nut_seat_clear": 0.4,      # see pan_clip_nut_seat_clear
     "ped_relief": 0.8,            # pedestal top dropped 0.8 outside pads + collar footing
     "ped_collar_od": 32.0,        # collar OD; ID = the Ø29 can bore (can Ø28.25 registers)
     "ped_collar_h": 1.5,          # collar top 45.75: wraps the can's last 1.0 + gear root
