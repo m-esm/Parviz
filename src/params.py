@@ -871,7 +871,13 @@ P = {
     # keep a sniff gap off the wall; O1.7 M2 pilots go 3.0 into the 5-wall
     # (2.0 web to the outside face). Wiring: the SW-420 pad (-48,-95) and the
     # Uno are right there -- the rear-left corner is the sensor cluster.
-    "bme_vent_y": -96.0,
+    # RECENTRED on the board 2026-07-15 (was -96.0, a bare number that never matched
+    # bme_cy): the boss PAIR midpoint is bme_cy, so a vent centred anywhere else eats
+    # into one boss. At -96.0 even the old O5 boss clipped the slot by 0.15; the O7
+    # boss the fastening campaign needs would have eaten 1.15 of the BME's own air
+    # window. Centred, the 5-wide slot drops into the O7 pair gap (13 - 7 = 6.0) with
+    # 0.5 clear each side.
+    "bme_vent_y": -97.65,
     "bme_cy": -97.65,       # board/hole-pair center: board edge -87.15 keeps 0.6
                             # to the TT rib face -86.55 (was 0.15 at -97.2 --
                             # too tight for a VERIFY_ON_ARRIVAL envelope, and
@@ -884,6 +890,14 @@ P = {
     "bme_board_yz": (21.0, 18.0),   # board envelope. VERIFY_ON_ARRIVAL
     "bme_cz": 30.0,         # on the vent slot's z center (slot z 22..38)
     "bme_boss_h": 2.0,
+    # boss r 2.5 -> 3.5 (O5 -> O7): FASTENING_AUDIT P1 "BME688 O5x2 wall bosses snap
+    # under driver torque". O7 around the O1.7 M2 pilot leaves 2.65 walls (was 1.65).
+    # Self-tap KEPT here on purpose: 5.0 mm of thread (2.0 boss + 3.0 into the 5-wall),
+    # a ~2 g board, and the mount lives on the REMOVABLE chassis_side_L_rear panel --
+    # low load, cheap to reprint, and the audit's real complaint was the boss snapping,
+    # which O7 fixes. There is no backside to nut (exterior wall). If it ever strips,
+    # the boss is now big enough to take an M2 heat-set insert (O2.8 -> 2.1 walls).
+    "bme_boss_r": 3.5,
     # SW-420 vibration module (NOT owned): senses CHASSIS vibration, so it bolts
     # HARD to the floor via a 2-tall pad (no standoffs, no compliant mount; the
     # rigid path IS the sensor's input): rear-left full-thickness floor, clear of

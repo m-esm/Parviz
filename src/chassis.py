@@ -436,7 +436,7 @@ def build_chassis_core():
     # chassis sides") -- only the y -96 slot survives: it is FUNCTIONAL, the
     # BME688's air window (its bosses flank it; sensor placement keys off it).
     # (-112 died in the fittings audit; 16/32/48/64/96 were the cosmetic row.)
-    for vy in (-96.0,):
+    for vy in (P["bme_vent_y"],):
         # side ventilation slots, RE-CLOCKED 2026-07-11 (mid-drive): the TT feature
         # zone moved to y ~ -87..-15 (motor at spr_y -68), so the old row shifted
         # out of it into the now feature-free bands of the 240 tub
@@ -686,7 +686,10 @@ def build_chassis_core():
     bh_ = P["bme_boss_h"]
     for sy_ in (-1, 1):
         by_ = P["bme_cy"] + sy_ * P["bme_hole_cc"] / 2
-        boss = cyl(2.5, bh_ + 1.0, axis="x")         # 1.0 buried in the wall to
+        # r 2.5 -> bme_boss_r 3.5 (Ø5 -> Ø7), FASTENING_AUDIT P1 "snap under driver
+        # torque": Ø7 around the Ø1.7 pilot leaves 2.65 walls, was 1.65. The vent had
+        # to be recentred on bme_cy to make room -- see PARAMS bme_vent_y.
+        boss = cyl(P["bme_boss_r"], bh_ + 1.0, axis="x")   # 1.0 buried in the wall to
         boss.apply_translation((wallx + (bh_ - 1.0) / 2, by_, P["bme_cz"]))  # fuse
         body = uni([body, boss])
         bpil = cyl(0.85, bh_ + 3.5, axis="x")        # boss face -> 3.0 into the
@@ -1015,7 +1018,10 @@ def build_chassis_parts():
                          _xb(s, 62.0, 71.0, -108.0, -102.5),
                          _boss_fp(s, -26.0)]
         if s < 0:
-            bmefp = sg.box(-71.0, -106.6, -62.4, -87.8)
+            # -106.6 -> -108.5: the Ø7 BME bosses (2026-07-15) reach y -107.65, and a
+            # capture that stops short would shear a 1.05 sliver of boss off into the
+            # hull instead of the panel.
+            bmefp = sg.box(-71.0, -108.5, -62.4, -87.8)
             caps_rear.append(bmefp)
             caps_rear_cut.append(bmefp)
         cut_prism = _prism([_xb(s, px0, px1, -139.5, 142.8)]
