@@ -690,6 +690,14 @@ P = {
     "tail_pad_z": (14.0, 25.0),  # rooted 1 into the floor top (15); 11 tall so the
                                  # tongue (14..18) and the screw band (axis 21.5) both
                                  # fit with >= 1.0 of pad over/under the bore.
+    "foot_insert_d": 4.2,        # press bore for the REAR side-panel L-foot's M3 brass
+                                 # heat-set insert (OD 4.6 class). The rear foot's z
+                                 # window is 5.70 (floor top 15 -> sensor_bme's board at
+                                 # 21, 0.3 air) against the 6.80 a captive M3 nut needs
+                                 # with 2 mm walls -- MEASURED, so it takes the audit's
+                                 # fix-pattern #2. VERIFY_ON_ARRIVAL: vendor OD/length
+                                 # varies (same caveat as keeper_insert_*).
+    "foot_insert_l": 4.0,        # insert length; blind from the foot top (bench-pressed)
     "end_gusset_x": (40.0, 55.0),    # (FRONT, REAR) |x| of the end-wall gusset ribs
                                  # (FASTENING_AUDIT P2-1: past |y| ~109 the r12 cavity-
                                  # corner crescents are the hull's ONLY floor<->end-wall

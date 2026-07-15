@@ -886,6 +886,19 @@ def build_chassis_parts():
     pz0, pz1 = 15.0, 47.0             # floor top (clear 10 + 5) .. past the z46 cap
     foot_x = 62.9                     # foot band x 60.5..65.3 (fused 0.3 into the wall)
     foot_pts = ((4.0, -3.0, 11.0), (-95.25, -102.0, -88.5))   # (screw y, y0, y1)
+    # per-piece foot fastener: (fastener |x|, foot top z). 2026-07-15, FASTENING_AUDIT
+    # P1 + P2-2. The FRONT foot has free air over it -> 9 tall, real captive M3 nut.
+    # The REAR foot is boxed in on every axis and this was MEASURED, not guessed:
+    # sensor_bme's board caps it at z 21 (x -64.4..-61.75, z 21..39), the tail-seam
+    # pad caps it inboard at x 60.2, the TT gearbox (drive_L, y -85.61..-16.08) caps
+    # it at the +y end and the glacis eats the floor past y -108 -- so its window is
+    # 15..20.7 = 5.70 mm against the 6.80 a nut needs with 2 mm walls. That is the
+    # audit's fix-pattern #2 case exactly: M3 BRASS HEAT-SET INSERT, blind from the
+    # foot top (bench-pressed; the panel is a bench-assembled module). Its bore moves
+    # to |x| 65.0 so it straddles the foot/wall junction and gets 2.4 / 2.9 walls out
+    # of the continuous foot-plus-wall material (x 60.5..70) instead of the 0.75 the
+    # old Ø3.3-in-a-4.8-foot left.
+    foot_fast = ((62.9, 24.0), (65.0, 20.7))
 
     from shapely.ops import unary_union
 
@@ -969,8 +982,18 @@ def build_chassis_parts():
                                          caps_rear, 1)):
             pnl = inter(lower, _prism([_xb(s, px0, px1, ky0, ky1)] + caps))
             fy, fy0, fy1 = foot_pts[fi]
-            foot = box(4.8, fy1 - fy0, 4.0)
-            foot.apply_translation((s * foot_x, (fy0 + fy1) / 2, 17.0))
+            # L-FOOT (2026-07-15, FASTENING_AUDIT P1 + P2-2): was a 4-tall block with
+            # a Ø3.3 bore straight through its 4.8 width (0.75 mm inboard wall) driving
+            # M3x6 into a 4.5 mm BLIND FLOOR PILOT -- self-tapped PLA, the failing
+            # class, on the panels' only bottom retention. Reversed and rebuilt: the
+            # bolt now comes UP from the BELLY UNDERSIDE (head recessed in the floor)
+            # into a CAPTIVE HEX NUT in the foot. See the nut slot + floor bore below.
+            # A real M3 trap costs 9 mm of height (nut at z 19.5, 3.1 of foot floor
+            # under it, 3.1 of roof over it) -- the front foot has it, the rear does
+            # not and takes an insert instead. See foot_fast above.
+            f_sx, f_top = foot_fast[fi]
+            foot = box(4.8, fy1 - fy0, f_top - 15.0)
+            foot.apply_translation((s * foot_x, (fy0 + fy1) / 2, (15.0 + f_top) / 2))
             # L-RETURN web + wheel beam (see the block comment above): the full
             # cross-section (69.5,12)-(74,12)-(76,14)-(80.4,14)-(80.4,26)-(69.5,26)
             # runs the loop's flat band (clipped |y| <= 112 -- the ramps rise from
@@ -1231,13 +1254,32 @@ def build_chassis_parts():
                                             screw_axis="x",         # nut_slot seats the
                                             open_dir=(0, 0, -1), size="M3",   # nut onto
                                             length=(mzu + M3_AC / 2) - 29.0))  # it
-            # NO counterbore (fittings audit 2026-07-14): a O6.6 cb broke out of
-            # the 4.8-wide foot's side walls (0.1-0.5 remnants in wallcheck) --
-            # the M3 socket head seats PROUD on the foot top instead (O5.5 on a
-            # 4.8 face = 0.35/side overhang, torque-fine; z 16..19 is clear air,
-            # the BME board starts z 21 and x inboard).
-            fcl = cyl(1.65, 9.0); fcl.apply_translation((s * foot_x, fy, 16.5))
-            pnl = sub(pnl, fcl)
+            # The screw head left the foot entirely (it recesses in the floor from
+            # the belly side now), so the old "no counterbore, head proud on a 4.8
+            # face" note and the 0.75 mm bore walls are both moot.
+            if fi == 0:
+                # FRONT: the foot carries a real captive NUT -- a slide-in trap
+                # running INBOARD (out the foot's free x-60.5 face) whose seat sits
+                # 3.175 past the bore INSIDE the 5 mm wall, so a nut pushed home
+                # centres itself on the screw axis hands-free. M3x12 from below.
+                fcl = cyl(P["m3_clear_r"], (f_top - 15.0) + 1.0)
+                fcl.apply_translation((s * f_sx, fy, (15.0 + f_top) / 2))
+                pnl = sub(pnl, fcl)
+                pnl = sub(pnl, geo.nut_slot((s * f_sx, fy, 19.5), screw_axis="z",
+                                            open_dir=(-s, 0.0, 0.0), size="M3",
+                                            length=6.5))
+            else:
+                # REAR: blind M3 heat-set insert bore from the foot top (see
+                # foot_fast). Ø3.4 shank clearance under it for the M3x8 coming up
+                # from the belly; the extra 0.6 of bore depth takes the plastic the
+                # insert displaces. VERIFY_ON_ARRIVAL: vendor OD/length varies --
+                # re-key foot_insert_{d,l} before printing panels.
+                idl = P["foot_insert_l"] + 0.6
+                shk = cyl(P["m3_clear_r"], 3.0)
+                shk.apply_translation((s * f_sx, fy, 15.5))            # z 14..17
+                ins = cyl(P["foot_insert_d"] / 2, idl)
+                ins.apply_translation((s * f_sx, fy, f_top - idl / 2))  # z 16.1..20.7
+                pnl = sub(sub(pnl, shk), ins)
             # DEGENERATE-SHEET SCRUB: the capture volumes bottom out exactly on the
             # OPEN floor top (z 12), and inter() leaves a zero-thickness skin fused
             # to the panel there (it broke contains() parity, read as a 0.2 p1 in
@@ -1249,10 +1291,25 @@ def build_chassis_parts():
             pnl = _despeck(pnl, 0.05)
             _color(pnl, "base"); pnl.metadata["name"] = nm_
             panels.append(pnl)
-        for fy, _f0, _f1 in foot_pts:              # blind Ø2.5 floor pilots under the
-            fpil = cyl(1.25, 4.5)                  # feet (stop 0.7 over the belly face)
-            fpil.apply_translation((s * foot_x, fy, 10.7 + 4.5 / 2))
-            lower = sub(lower, fpil)
+        for fi_, (fy, _f0, _f1) in enumerate(foot_pts):
+            f_sx = foot_fast[fi_][0]
+            # FOOT BOLT, floor side (2026-07-15, FASTENING_AUDIT P1): was a blind
+            # Ø2.5 x 4.5 thread-form pilot -- and it already pierced the floor top,
+            # so the "blind" pilot was a 0.7 mm skin over a through hole. Now a plain
+            # M3 through-bore + a Ø6.8 x 3 HEAD RECESS opening at the BELLY FACE:
+            # M3x12 socket head sits z 10..13 (fully inside the 5 mm floor, nothing
+            # proud into the 10 mm ground clearance), 2.0 of floor bears the clamp,
+            # thread runs up into the foot's captive nut (front) / insert (rear).
+            # Access: |x| 62.9..65 is OUTBOARD of the belly-plate rebate (+-58, probed),
+            # so a side panel still comes off WITHOUT dropping the plate -- i.e.
+            # without dropping the pan motor, both ULNs and the power stage.
+            # Print: chassis_lower runs floor-down, so the recess opens ON THE BED
+            # (no overhang) and the Ø6.8 -> Ø3.4 step is a 1.7 annular bridge.
+            fcb = cyl(3.4, 3.0)
+            fcb.apply_translation((s * f_sx, fy, 11.5))            # z 10..13
+            fclr = cyl(P["m3_clear_r"], 7.0)
+            fclr.apply_translation((s * f_sx, fy, 12.5))           # z 9..16, through
+            lower = sub(sub(lower, fcb), fclr)
     for bc_ in band_cuts:                          # sequential subs (see above)
         lower = sub(lower, bc_)
     lower = _despeck(lower)
