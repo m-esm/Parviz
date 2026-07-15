@@ -952,6 +952,11 @@ P = {
                             # tab face (the factory-intended mount for a 2 g radar
                             # module; the pocket walls shelter it). VERIFY_ON_ARRIVAL
     "mmw_board_wz": (22.0, 16.0),   # LD2410 board envelope. VERIFY_ON_ARRIVAL
+    # M2 captive-nut run on the tab's back boss (2026-07-15): seat 2.31 (M2 across-
+    # corners/2) above the z 54 screw axis, mouth 0.69 below the boss underside so the
+    # nut slides up from below. The nut's +Y face is the tab's back plane, so it needs
+    # no backing wall -- the tab itself takes the clamp.
+    "mmw_nut_run": 8.0,
     # TTP223 touch pads (x2-4): NO chassis geometry -- pads want shell surfaces the
     # user actually touches, i.e. the HEAD TOP (a head.py pass, out of scope here).
     # Chassis fallback candidates, documented only: both deck-overhang top skins

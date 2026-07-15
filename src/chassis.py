@@ -1406,11 +1406,30 @@ def build_chassis_parts():
     tab.apply_translation(((mx0 + mx1) / 2, (mty0 + mty1) / 2,  # pocket walls +
                            (mz0 + mz1 + 1.0) / 2))              # the ceiling
     deck_f = uni([deck_f, tab])
-    for sx_ in (-1, 1):                                    # M2 pilots (through the
-        mp_ = cyl(0.85, (mty1 - mty0) + 2.0, axis="y")     # 3.5 tab is fine for a
-        mp_.apply_translation(((mx0 + mx1) / 2 + sx_ * P["mmw_hole_cc"] / 2,
-                               (mty0 + mty1) / 2, 54.0))   # self-tap M2)
+    # M2 THROUGH-BOLT + CAPTIVE NUT on the tab's back (2026-07-15, FASTENING_AUDIT P1
+    # "mmWave tab M2 pilots" -> "M2 through + nut behind"; the back boss also answers
+    # P2-5, which flags the bare 3.5 mm ceiling-hung tab as a break candidate).
+    # The screw comes from +Y through the board and the tab into a nut whose +Y face
+    # IS the tab's back plane, so the board clamps to the tab front and the nut needs
+    # no backing wall at all -- only rotation restraint. Nut slides UP from below into
+    # the boss (mouth at its underside), which is also the self-supporting direction:
+    # the deck prints top-face-down, so a world-downward mouth opens UP in the print.
+    # NOTE the module is VERIFY_ON_ARRIVAL and most LD2410 boards are HOLELESS -- the
+    # documented primary mount stays VHB tape onto the tab face (PARAMS mmw_hole_cc).
+    # This makes the screwed option REAL if the delivered board does have holes.
+    mnz = 54.0
+    for sx_ in (-1, 1):
+        hx_ = (mx0 + mx1) / 2 + sx_ * P["mmw_hole_cc"] / 2
+        boss = box(6.6, 3.0, 9.0)                          # y 103..106, z 49..58
+        boss.apply_translation((hx_, mty0 - 1.5, mnz - 0.5))
+        deck_f = uni([deck_f, boss])
+        mp_ = cyl(1.2, (mty1 - mty0) + 6.0, axis="y")      # M2 clearance, board -> nut
+        mp_.apply_translation((hx_, (mty0 + mty1) / 2, mnz))
         deck_f = sub(deck_f, mp_)
+        deck_f = sub(deck_f, geo.nut_slot((hx_, mty0 - 0.9, mnz),   # nut +Y face on the
+                                          screw_axis="y",           # tab back (y 106)
+                                          open_dir=(0, 0, -1), size="M2",
+                                          length=P["mmw_nut_run"]))
 
     out = []
     for m_, nm in ((lower_f, "chassis_lower_front"), (lower_r, "chassis_lower_rear"),
