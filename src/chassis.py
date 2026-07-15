@@ -1258,12 +1258,21 @@ def build_chassis_parts():
 
     # ---- deck -> front strip / center / rear strip with half-laps ----
     yf, yr = P["deck_seam_y"]                                # (66.0, -52.0)
-    lap_f = box(120.0, 16.0, 6.0)
-    lap_f.apply_translation((0, yf + 4.0, 49.0))             # center shelf under the strip,
-    lap_r = box(120.0, 16.0, 6.0)                            # z 46..52
-    lap_r.apply_translation((0, yr - 4.0, 49.0))
-    lap_f_fit = box(120.6, 16.3, 6.3); lap_f_fit.apply_translation((0, yf + 4.0, 49.05))
-    lap_r_fit = box(120.6, 16.3, 6.3); lap_r_fit.apply_translation((0, yr - 4.0, 49.05))
+    # 2026-07-15 (FASTENING_AUDIT P1): the shelf grew 6 -> 9 tall (z 46..55, strip
+    # tongue 55..66) so it can host a REAL captive M3 nut with 2.1/4.1 walls. At 6
+    # a nut left 1.5/1.7 -- and the joint's whole load path runs through the slot's
+    # ROOF (screw head on the strip top, nut pulled up under the shelf roof), so a
+    # 1.7 mm roof was not an option. The half-lap itself is untouched: it is the
+    # locator, and it works (the audit's one instruction here was "keep the half-lap").
+    lap_t = 9.0
+    lap_f = box(120.0, 16.0, lap_t)
+    lap_f.apply_translation((0, yf + 4.0, 46.0 + lap_t / 2))   # center shelf under the
+    lap_r = box(120.0, 16.0, lap_t)                            # strip, z 46..55
+    lap_r.apply_translation((0, yr - 4.0, 46.0 + lap_t / 2))
+    lap_f_fit = box(120.6, 16.3, lap_t + 0.3)
+    lap_f_fit.apply_translation((0, yf + 4.0, 46.05 + lap_t / 2))
+    lap_r_fit = box(120.6, 16.3, lap_t + 0.3)
+    lap_r_fit.apply_translation((0, yr - 4.0, 46.05 + lap_t / 2))
     deck_c = slice_mesh_plane(slice_mesh_plane(deck, plane_normal=(0, -1, 0),
                               plane_origin=(0, yf, 0), cap=True),
                               plane_normal=(0, 1, 0), plane_origin=(0, yr, 0), cap=True)
@@ -1272,15 +1281,29 @@ def build_chassis_parts():
     deck_c = uni([deck_c, inter(lap_f, deck_f), inter(lap_r, deck_r)])   # shelf = the lap
     deck_f = sub(deck_f, lap_f_fit)                          # 0.15-ish lap fit
     deck_r = sub(deck_r, lap_r_fit)
+    # SEAM SCREWS -> M3x16 THROUGH + CAPTIVE HEX NUT (2026-07-15, FASTENING_AUDIT
+    # P1: "2x M3 per seam into a 6 mm half-lap shelf" -- Ø2.5 thread-form into PLA,
+    # the failing class; 6.5 mm of self-tapped thread holding the deck strips on).
+    # The nut slides in HORIZONTALLY along the tongue (screw axis is vertical, so
+    # nut_slot's run must be perpendicular to it) from the shelf tongue's own TIP
+    # face, out toward |y| -- which is open with the pieces apart and CLOSED by the
+    # strip's groove end wall once they mate, so the nut is trapped for good. Nut
+    # centre z 49.5: 2.1 of shelf floor under it, 4.1 of roof over it, and the screw
+    # pulls it UP into that roof (the clamp lands on the z 55 lap plane).
+    nut_z = 49.5
     for strip_y, shelf_y in ((yf + 4.0, yf), (yr - 4.0, yr)):
+        odir = (0.0, np.sign(strip_y), 0.0)                  # out the tongue tip
         for sx_ in (-1, 1):
-            scr = cyl(P["m3_clear_r"], 16.0)                 # vertical M3 through the strip
-            scr.apply_translation((sx_ * 40.0, strip_y, z1 - 7.0))
+            scr = cyl(P["m3_clear_r"], 14.0)                 # vertical M3 through the
+            scr.apply_translation((sx_ * 40.0, strip_y, z1 - 7.0))   # strip: z 52..66
             cbv = cyl(3.4, 3.0)
             cbv.apply_translation((sx_ * 40.0, strip_y, z1 - 1.5))
-            pilv = cyl(1.25, 6.5)                            # pilot in the center's shelf
-            pilv.apply_translation((sx_ * 40.0, strip_y, 49.0))
-            deck_c = sub(deck_c, pilv)
+            thr = cyl(P["m3_clear_r"], 12.0)                 # bore + tip relief through
+            thr.apply_translation((sx_ * 40.0, strip_y, 50.0))       # the shelf: z 44..56
+            deck_c = sub(deck_c, thr)
+            deck_c = sub(deck_c, geo.nut_slot((sx_ * 40.0, strip_y, nut_z),
+                                              screw_axis="z", open_dir=odir,
+                                              size="M3", length=12.0))
             if strip_y > 0:
                 deck_f = sub(sub(deck_f, scr), cbv)
             else:
