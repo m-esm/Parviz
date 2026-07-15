@@ -99,6 +99,50 @@ P = {
     "bez_dowel_len": 4.5, "bez_dowel_deep": 5.0,   # 0.5 bottoming clearance
     "bez_dowel_boss_r": 4.5,  # 2.4 wall around the socket
 
+    # --- Tilt-axle PINCH CLAMPS (2026-07-15 FASTENING AUDIT P0-3) ---
+    # Was: a Ø2.5 "M2.5 grub pilot" per side, driven up from the neck slot. Ø2.5 is M2.5
+    # CLEARANCE -- the thread had literally nothing to bite (audit P0-3), and even a real
+    # grub strips PLA on re-torque, which is fatal for a joint whose whole job is
+    # CONTINUOUS tilt-zero trim (loosen, rotate the head on the axle, re-tighten).
+    # Now: a proper split clamp per side. A block engulfs the Ø14 torque tube, a slit
+    # through the plane of the axle splits it into front/rear jaws below the bore (they
+    # stay joined over the top = the hinge), and one cross M3x16 pulls them shut.
+    # POSITION x 33..43 is DERIVED, not chosen: inboard is impossible (the neck's tilt-stop
+    # post occupies x 20..32 at r 12..17 about the axle, and a block big enough for an M3
+    # + nut reaches r ~14.4, so it would collide over the +-33.8 sweep), and outboard of 44
+    # the axle bore goes loose (Ø5.3) by design.
+    # DRIVER ACCESS deviates from the old grub's "from below through the neck slot": at
+    # x 38 the head's OWN floor (z 88..92, solid for |x| 33..98.5) blocks a vertical line,
+    # and the bay opening is only |x| <= 33. The bolt axis is +-Y instead and is driven
+    # from the REAR through the tool-free head_door void (|x| <= 54.5, z 115.5..188.2) --
+    # a designed, sighted service path rather than a blind 53 mm reach through the floor.
+    # The NUT is captive, so it only needs bench access. Its slot runs DOWN, mouth at
+    # z 138 under the block, open into the head interior -- and that direction is FORCED,
+    # not preferred. Feeding it along +-X is blocked by the Ø14 torque tube itself (it
+    # runs |x| 27..99 and the nut sits at r 4.9 from its axis: probed 5.0 mm^3 of jam).
+    # Running it UP instead brings the 5.7 channel alongside the Ø5.1 axle bore with only
+    # 0.55 of wall; running it DOWN walks away from the bore and keeps 2.37.
+    # KNOWN LIMIT (audit P3, same as the M4 slide-up slots): with the head upright and the
+    # bolt not yet started, the nut can drop back out of the mouth. Insert it with the
+    # frame in its print pose (front-down = the slot horizontal) and start the bolt before
+    # standing the head up. A crush-rib nib in the mouth is the audit's fix; not modelled
+    # here because a 0.4 mm nib trips the wallcheck ray gate.
+    "clamp_x": (34.0, 44.0),  # block x band, per side. 2.0 off the neck tilt-stop post
+                              # (x 20..32): this gap is PURELY axial, so it cannot close
+                              # over the sweep -- probed 2.18 mm min at the -33.8 stall.
+    "clamp_wy": 16.0,         # block depth  (y -26..-10): 5.45 behind the bore, 7.55 ahead
+    "clamp_wz": 20.0,         # block height (z 141..161): 2.6 under the ant_bracket motor
+                              # face plate (z 163.6), and the bolt sits clear below the bore
+    "clamp_slit_t": 1.0,      # slit gap: closes ~0.1 of Ø5.1-on-Ø5.0 bore long before it
+                              # bottoms out (hinge is the 5.45 of block over the bore)
+    "clamp_bolt_z": 146.0,    # cross-bolt axis: 7 below the axle, and its Ø5.7 nut slot
+                              # tops out 1.6 clear of the Ø5.1 axle bore
+    "clamp_nut_y": -13.5,     # nut mid-plane: leaves a 2.6 bearing plate between the trap
+                              # and the slit (that plate takes the whole clamp load), 2.1
+                              # of block ahead of it, and the M3x16 tip lands at y -10.1 =
+                              # 3.1 clear of the Pi/display stack front (y -7.0)
+    "clamp_head_cb_r": 3.2, "clamp_head_cb_deep": 3.4,   # M3 socket-head recess
+
     # --- Screen factory mount: 4x M3 into the display's OWN outer case-mount holes ---
     # Measured from Raspberry_Pi_Touch_Screen_Assembly_v12.stl (outer 126.2 x 65.65 pattern),
     # confirmed vs the reference case STL + RPi mechanical drawing. Screen-LOCAL frame (post-flip);

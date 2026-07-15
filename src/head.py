@@ -214,6 +214,17 @@ def build_head_shell():
             fin.apply_transform(R(ang * DEG, (1, 0, 0)))
             fin.apply_translation((0, yt, zt))
             bosses.append(fin)
+    # TILT-AXLE PINCH-CLAMP BLOCKS (2026-07-15 fastening audit P0-3; full derivation of
+    # the x band, the +-Y bolt axis and the rear-door driver path is in PARAMS "clamp_*").
+    # One block per side engulfs the Ø14 torque tube; the slit + cross bolt are cut below,
+    # AFTER the union, so nothing refills them.
+    cx0, cx1 = P["clamp_x"]
+    for sx in (-1, 1):
+        blk = rounded_box(P["clamp_wz"], P["clamp_wy"], cx1 - cx0, 3.0)
+        blk.apply_translation((0, 0, -(cx1 - cx0) / 2.0))     # centre the extrusion ...
+        blk.apply_transform(R(TAU / 4, (0, 1, 0)))            # ... (x,y,z)->(z,y,-x): -> X
+        blk.apply_translation((sx * (cx0 + cx1) / 2, yt, zt - 2.0))
+        bosses.append(blk)
     shell = uni([shell] + bosses)
     # axle bore: SNUG Ø5.1 through the clamp bosses; far-wall bores demoted to LOOSE Ø5.3
     # supports (they locate, the x=+-30 grubs grip).
@@ -221,11 +232,33 @@ def build_head_shell():
     axle_bore.apply_translation((0, yt, zt))
     shell = sub(shell, axle_bore)
     for sx in (-1, 1):
-        loose = cyl(2.65, 70, axis="x")
-        loose.apply_translation((sx * 75.0, yt, zt))  # |x| 40..110: everything outboard is loose
-        shell = sub(shell, loose)
-        grub = cyl(1.25, 14); grub.apply_translation((sx * 30.0, yt, zt - 6))  # M2.5-grub pilot,
-        shell = sub(shell, grub)                     # driven from below through the neck slot
+        loose = cyl(2.65, 65, axis="x")              # |x| 45..110: everything outboard is
+        loose.apply_translation((sx * 77.5, yt, zt))  # loose (45, was 40: the clamp blocks
+        shell = sub(shell, loose)                    # run to 44 and need the SNUG bore)
+        # PINCH CLAMP (P0-3) -- replaced the Ø2.5 "M2.5 grub pilot", which was M2.5
+        # CLEARANCE size and had zero thread to bite. Cut AFTER the boss union above so
+        # nothing refills. Per side, in order: the SLIT (splits the block below the bore
+        # into front/rear jaws, hinged over the top), the cross-bolt clearance + head
+        # recess, and the captive nut trap.
+        # PRINT (head_back frames go FRONT-DOWN, i.e. world -Y is print +Z): the bolt axis
+        # is +-Y = print-VERTICAL, so its bore and head recess are self-supporting with no
+        # teardrop (the recess literally opens at the print top). The slit is a vertical
+        # open-topped gap. Only the nut slot has a roof, a plain 5.7 mm bridge.
+        bx_ = sx * (cx0 + cx1) / 2
+        zb0 = zt - P["clamp_wz"] / 2 - 2.0           # block bottom face (141)
+        slit = box(cx1 - cx0, P["clamp_slit_t"], zt - zb0)   # z 141..153, up INTO the bore
+        slit.apply_translation((bx_, yt, (zt + zb0) / 2))    # (the overlap cuts nothing new)
+        shell = sub(shell, slit)
+        yb0 = yt - P["clamp_wy"] / 2                 # block rear face (-26)
+        clr = cyl(P["m3_clear_r"], 21.0, axis="y")   # y -31..-10 (tip room past the nut)
+        clr.apply_translation((bx_, yb0 - 5.0 + 21.0 / 2, P["clamp_bolt_z"]))
+        shell = sub(shell, clr)
+        cb = cyl(P["clamp_head_cb_r"], P["clamp_head_cb_deep"] + 1.0, axis="y")
+        cb.apply_translation((bx_, yb0 + (P["clamp_head_cb_deep"] + 1.0) / 2 - 1.0,
+                              P["clamp_bolt_z"]))    # opens at the rear face, 1.0 overshoot
+        shell = sub(shell, cb)
+        shell = sub(shell, _nut_trap((bx_, P["clamp_nut_y"], P["clamp_bolt_z"]), "y",
+                                     (0, 0, -1), length=8.0))   # mouth z 138, under the block
 
     # camera: CM3 recessed inside the raised forehead behind the plain 4 mm wall (no lens
     # bump: the countersunk aperture clears the full 75 deg diagonal FoV with the pupil
