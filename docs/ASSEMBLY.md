@@ -116,6 +116,30 @@ tracks, bezel, neck, pan parts, cosmetics -- can stay PLA. The black CR-PETG spo
   in Bag 15 if ever wanted), `camera_pod` eye shell, rear `trim_hatch_frame`, chassis
   `trim_fascia` + `trim_rear`, and the placeholder gripper arms (mechanism TBD)
 
+### Plastic hardware stand-ins (interim, plate "Hardware stand-ins")
+
+Until the metal order lands, every buy-list hardware row above has a PRINTED
+stand-in (2026-07-15, `src/standins.py` -> `stl/hardware/`), so the whole robot
+dry-assembles in plastic. The BOM is unchanged; swap each stand-in 1:1 for metal
+on arrival. All are threadless push/press fits:
+
+| Stand-in | Qty | Replaces | Notes |
+|---|---|---|---|
+| `hw_m4_bolt` | 10 | M4x40 bolt-axles | Ø3.9 shank; wheels slip over it |
+| `hw_m4_nut` | 10 | (owned steel M4 nuts) | steel nuts can't thread a smooth shank: printed AF7 hex, Ø3.7 press bore |
+| `hw_m8_bolt` | 4 | M8x60 end bolt-axles | Ø8.0 shank, head = hubcap |
+| `hw_m8_nut` | 4 | M8 NYLOC | AF13 (nut cages grip it), Ø7.8 press bore; CA drop on the front tensioners -- a push nut holds no real preload |
+| `hw_m8_washer` | 4 | Ø14.4 washers | |
+| `hw_f688_bushing` | 8 | F688ZZ bearings | flanged plain bushing; idlers become greased plain bearings |
+| `hw_pan_ring` | 1 | 18x Ø6 BBs | torus slip ring in both race grooves (printed spheres don't print clean); pan_cage unused till real BBs |
+| `hw_tilt_axle` | 1 | Ø5 silver-steel rod | D-flat modeled; PLA flexes, expect soft tilt homing |
+| `hw_seam_dowel` | 4 | Ø4x12 dowels | |
+| `hw_foot_pin` | 2 | Ø3x6 trim_neckfoot pins | |
+
+Limits to respect on plastic: don't hold long stall-torque tilt moves (the worm
+loads the plastic axle flat), tension the tracks only to mesh (push nuts creep),
+and expect the pan to feel draggier than the BB race (sliding, not rolling).
+
 ## Verify on arrival (caliper before printing)
 
 The CAD models several bought parts from datasheet/typical dims, not measurements. The

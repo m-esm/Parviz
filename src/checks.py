@@ -412,6 +412,28 @@ def main():
     check("belly plate + 4 power-tray posts",
           inside(bp, [(px + 2.0, py, 14.5) for px, py in tray]))
 
+    # ---------------- hardware stand-ins ----------------------------------------
+    # user 2026-07-15 ("include all items in the export so I would just assemble
+    # with plastic till I get actual metal parts"): every buy-list metal part has
+    # a print-oriented plastic stand-in in stl/hardware/ (src/standins.py), and
+    # key interface dims match the placeholders they substitute.
+    from standins import STANDINS
+    hw_ok, hw_detail = True, ""
+    for nm in STANDINS:
+        pth = stlp(nm + ".stl")
+        if not os.path.exists(pth):
+            hw_ok, hw_detail = False, nm + " missing"
+            break
+    check("hardware stand-ins exported (%d parts)" % len(STANDINS), hw_ok, hw_detail)
+    if hw_ok:
+        ext = lambda n: (M(n).bounds[1] - M(n).bounds[0])
+        check("stand-in interface dims (M8 shank / F688 seat / axle / pan ring)",
+              abs(ext("hw_m8_bolt")[2] - 65.7) < 0.1            # M8x60 + 5.3 head
+              and abs(ext("hw_f688_bushing")[0] - 18.2) < 0.1   # flange Ø in Ø18.5 recess
+              and abs(ext("hw_tilt_axle")[1] - (P["head_w"] + 4)) < 0.1
+              and abs(ext("hw_pan_ring")[0]
+                      - (P["pan_race_circle_d"] + 5.8)) < 0.1)  # ball-circle torus
+
     finish()
 
 

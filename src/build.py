@@ -450,6 +450,10 @@ def build():
     print(f"wrote {out}  ({len(scene.geometry)} parts)")
     if EXPORT:
         print("exported per-part STLs into stl/")
+        # plastic stand-ins for the buy-list metal hardware (2026-07-15, user:
+        # dry-assemble in plastic until the real bolts/nuts/bearings arrive)
+        from standins import export_standins
+        export_standins()
     if os.environ.get("FITS") == "1":
         if pan_deg or tilt_deg:
             print("NOTE: fit map at pan=%g tilt=%g -- cross-group numbers are pose-"

@@ -129,6 +129,7 @@ CATEGORIES = [
     ("Track gear",   ["@drivegear"]),
     ("Track links",  ["@links"]),
     ("Track coupon", ["@coupon"]),
+    ("Hardware stand-ins", ["@standins"]),   # plastic interim metal (src/standins.py)
 ]
 
 # single shared profile: Generic PLA @ A1, 0.20 mm standard
@@ -271,6 +272,26 @@ def coupon_units():
     return out
 
 
+def standin_units():
+    """PLASTIC HARDWARE STAND-INS (2026-07-15, user: dry-assemble in plastic until
+    the buy-list metal arrives -- src/standins.py has the full part rationale).
+    One canonical STL per unique part in stl/hardware/, replicated here to the
+    assembly counts. All self-supporting (bolts head-down, rings flat, axle lying
+    round-down): NOSUP. The Ø5x209 tilt axle exceeds a 180 bed straight, so it
+    goes on the plate DIAGONAL (same portability rule as the strip plates)."""
+    sys.path.insert(0, os.path.join(ROOT, "src"))
+    from standins import STANDINS
+    out = []
+    for name, (_build, count) in STANDINS.items():
+        m0 = clean(trimesh.load(os.path.join(ROOT, "stl", "hardware", name + ".stl")))
+        if name == "hw_tilt_axle":
+            m0.apply_transform(R(Z, 45))
+        m0.apply_translation((0, 0, -m0.bounds[0][2]))
+        for _ in range(count):
+            out.append((name, m0.copy(), NOSUP))
+    return out
+
+
 def shelf_pack(items, brim_default, gap=6.0):
     """items: (name, mesh, obj). Returns list of plates (each a list of part dicts), brim-aware."""
     sized, seen = [], {}
@@ -303,7 +324,7 @@ def main():
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     brim = float(PROFILE.get("brim_width", 0))
     tokens = {"@drivegear": drivegear_units, "@links": strip_units,
-              "@coupon": coupon_units}
+              "@coupon": coupon_units, "@standins": standin_units}
 
     plates, manifest = [], []
     for cat, members in CATEGORIES:
@@ -333,10 +354,13 @@ def main():
         total += n
         print(f"  {name:18s} {n:5d}  {contents}")
     print(f"  {'':18s} {total:5d}  total printed bodies")
-    print("\n  EXCLUDED (bought): 28BYJ x4 / TT x2 / ULN2003 x4, 695-2RS + F688ZZ bearings,")
-    print("  pan-race 6mm BBs, antenna m0.8 spur set + Ø4 shafts (buy, or print later with")
-    print("  generated teeth like docs/WORM.md; the placeholder discs are NOT printable teeth),")
-    print("  F688ZZ idler bodies (proxy, ride a bought bearing), M2/M3 hardware, PD+bucks.")
+    print("\n  EXCLUDED (bought): 28BYJ x4 / TT x2 / ULN2003 x4, 695-2RS bearings (owned),")
+    print("  antenna m0.8 spur set + Ø4 shafts (buy, or print later with generated teeth")
+    print("  like docs/WORM.md; the placeholder discs are NOT printable teeth),")
+    print("  M2/M3 hardware (owned), PD+bucks. The 'Hardware stand-ins' plate carries")
+    print("  PLASTIC INTERIM copies of the buy-list metal (M4x40/M8x60 bolt-axles, nuts,")
+    print("  washers, F688ZZ->bushings, pan BBs->slip ring, Ø5 tilt axle, dowels) --")
+    print("  dry-assembly only, swap for metal on arrival (src/standins.py).")
     print("  FAST PAN/TILT (real teeth 2026-07-13): pan_gears + the platform's integral")
     print("  16T pinion carry REAL generated involute teeth (tools/gears/gen_pan_spurs.py)")
     print("  and the Worm-drive plate is the 3-START pair (4:1, NOT self-locking -- see")

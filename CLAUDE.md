@@ -361,6 +361,17 @@ NOT yet in inventory (verify the Ø17 windscreen on arrival, docs/ASSEMBLY.md). 
 are covered by the owned kits. The "608zz ×30" SETTLED: bag label reads "10pcs-608ZZ" (real
 bearings under shrink wrap, not plastic rings); still unused in the design.
 
+**PLASTIC HARDWARE STAND-INS (2026-07-15, user: dry-assemble in plastic till the metal
+arrives):** every buy-list metal row has a print-oriented interim part in
+`src/standins.py` -> `stl/hardware/` (EXPORT=1 writes them; export_bambu packs the
+"Hardware stand-ins" plates): M4x40/M8x60 bolt-axles + press-on nuts (threadless),
+washers, F688ZZ->flanged plain bushings, pan BBs->a Ø5.8-section torus SLIP RING
+(printed spheres don't print; pan_cage idles till real BBs), the Ø5 D-flat tilt axle
+(lies diagonal, flat UP), seam dowels + neckfoot pins. Export-only (no scene nodes,
+gates untouched); wallcheck PRINTED + a checks.py invariant cover them; BOM unchanged
+-- swap 1:1 for metal on arrival, limits in docs/ASSEMBLY.md ("Plastic hardware
+stand-ins").
+
 **Buy-list additions (software side, 2026-07-12; 2026-07-14 order batch folded in):**
 - **Pi 5 cooler — BOUGHT 2026-07-14: 2x Joy-IT RPI5-HEATSINK5 (Tray 1, not delivered),
   BUT its 65x45x15 envelope (+30x30x10 fan) EXCEEDS the verified official-cooler

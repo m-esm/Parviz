@@ -35,7 +35,7 @@ SUBSYSTEMS = [
     ("bracket", "head"),
     ("sd", "head"),            # microSD service-slot plug
     ("screen", "head"),        # bench-mounted screen tray
-
+    ("hw_", "hardware"),       # plastic stand-ins for buy-list metal (standins.py)
 ]
 
 

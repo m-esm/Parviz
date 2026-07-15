@@ -457,6 +457,86 @@ tracks, bezel, neck, pan parts, cosmetics -- can stay PLA. The black CR-PETG spo
   in Bag 15 if ever wanted), <code>camera_pod</code> eye shell, rear <code>trim_hatch_frame</code>, chassis
   <code>trim_fascia</code> + <code>trim_rear</code>, and the placeholder gripper arms (mechanism TBD)</li>
 </ul>
+<h3 id="plastic-hardware-stand-ins-interim-plate-hardware-stand-ins">Plastic hardware stand-ins (interim, plate "Hardware stand-ins")</h3>
+<p>Until the metal order lands, every buy-list hardware row above has a PRINTED
+stand-in (2026-07-15, <code>src/standins.py</code> -&gt; <code>stl/hardware/</code>), so the whole robot
+dry-assembles in plastic. The BOM is unchanged; swap each stand-in 1:1 for metal
+on arrival. All are threadless push/press fits:</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Stand-in</th>
+<th>Qty</th>
+<th>Replaces</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>hw_m4_bolt</code></td>
+<td>10</td>
+<td>M4x40 bolt-axles</td>
+<td>Ø3.9 shank; wheels slip over it</td>
+</tr>
+<tr>
+<td><code>hw_m4_nut</code></td>
+<td>10</td>
+<td>(owned steel M4 nuts)</td>
+<td>steel nuts can't thread a smooth shank: printed AF7 hex, Ø3.7 press bore</td>
+</tr>
+<tr>
+<td><code>hw_m8_bolt</code></td>
+<td>4</td>
+<td>M8x60 end bolt-axles</td>
+<td>Ø8.0 shank, head = hubcap</td>
+</tr>
+<tr>
+<td><code>hw_m8_nut</code></td>
+<td>4</td>
+<td>M8 NYLOC</td>
+<td>AF13 (nut cages grip it), Ø7.8 press bore; CA drop on the front tensioners -- a push nut holds no real preload</td>
+</tr>
+<tr>
+<td><code>hw_m8_washer</code></td>
+<td>4</td>
+<td>Ø14.4 washers</td>
+<td></td>
+</tr>
+<tr>
+<td><code>hw_f688_bushing</code></td>
+<td>8</td>
+<td>F688ZZ bearings</td>
+<td>flanged plain bushing; idlers become greased plain bearings</td>
+</tr>
+<tr>
+<td><code>hw_pan_ring</code></td>
+<td>1</td>
+<td>18x Ø6 BBs</td>
+<td>torus slip ring in both race grooves (printed spheres don't print clean); pan_cage unused till real BBs</td>
+</tr>
+<tr>
+<td><code>hw_tilt_axle</code></td>
+<td>1</td>
+<td>Ø5 silver-steel rod</td>
+<td>D-flat modeled; PLA flexes, expect soft tilt homing</td>
+</tr>
+<tr>
+<td><code>hw_seam_dowel</code></td>
+<td>4</td>
+<td>Ø4x12 dowels</td>
+<td></td>
+</tr>
+<tr>
+<td><code>hw_foot_pin</code></td>
+<td>2</td>
+<td>Ø3x6 trim_neckfoot pins</td>
+<td></td>
+</tr>
+</tbody>
+</table></div>
+<p>Limits to respect on plastic: don't hold long stall-torque tilt moves (the worm
+loads the plastic axle flat), tension the tracks only to mesh (push nuts creep),
+and expect the pan to feel draggier than the BB race (sliding, not rolling).</p>
 <h2 id="verify-on-arrival-caliper-before-printing">Verify on arrival (caliper before printing)</h2>
 <p>The CAD models several bought parts from datasheet/typical dims, not measurements. The
 rule for every row: <strong>caliper the real part -&gt; update the named param(s) -&gt; <code>make build</code>

@@ -68,6 +68,11 @@ PRINTED = [
     "head_back_panel_L.stl", "head_back_panel_R.stl",
     "head_door.stl", "screen_tray.stl", "cam_cover.stl", "sd_plug.stl",
     "antenna_L.stl", "antenna_R.stl", "ant_bracket.stl",
+    # plastic hardware stand-ins (2026-07-15, src/standins.py): interim prints
+    # for the buy-list metal -- gate them like any printed part
+    "hw_m4_bolt.stl", "hw_m4_nut.stl", "hw_m8_bolt.stl", "hw_m8_nut.stl",
+    "hw_m8_washer.stl", "hw_f688_bushing.stl", "hw_pan_ring.stl",
+    "hw_tilt_axle.stl", "hw_seam_dowel.stl", "hw_foot_pin.stl",
 ]
 
 # ---------------------------------------------------------------------------
