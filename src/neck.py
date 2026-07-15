@@ -300,17 +300,44 @@ def build_neck_clevis():
     # (y -50.55..-46.55, z 113.2..153.2) -- 162 mm^3 of overlap the gate can't see because
     # the board itself isn't modeled. At 93 the board spans z 77..109, 4.2 under the
     # carrier, still fully on the column back (z 66..125).
-    uln_y = ny - P["neck_d"] / 2                      # column back face
+    # PAD + Ø8 BOSSES + CAPTIVE NUTS (fastening campaign 2026-07-15, audit P1 last row /
+    # P2 item 14: "Ø6 posts split on tapping"). Two defects, not one:
+    #  (a) the bosses were only PRETENDING to be rooted. The column's rear face is flat at
+    #      y -40 solely for |x| <= 14; past that the r10 corner round pulls it forward, so
+    #      at the board's own x +-17.5 the face sits at -39.37 and at the boss's outboard
+    #      edge (x 20.5) at -37.60 -- the Ø6 boss ending at -39.5 FLOATED up to 1.9 mm off
+    #      the column and fused only along a ~0.7 mm inboard sliver. A cantilever on a
+    #      sliver root is exactly what snaps.
+    #  (b) it self-tapped Ø2.5 in PLA, and the tapping torque is the load that breaks it.
+    # Fix: a per-side LANDING PAD (x 13..22.5, y -40.5..-34.0, z 70..115) that gives the
+    # bosses a real flat face -- 6.5 thick so it can host a nut, and its front plane y -34
+    # is inside the column out to x 23.17, so the whole pad is fused, not proud. PER SIDE
+    # (not one slab) so it stays clear of the root joint's centre bolt: the 270-deg M3's
+    # Ø3.5 bore reaches y -35.25 at x ~0 and would have been re-filled by a full-width pad.
+    # Bosses Ø6 -> Ø8 (2.75 walls around the bore), landing on the pad with the usual 0.5
+    # burial, each backed by an 8 x 6.5 x 2.4 root FIN. The Ø2.5 pilots are GONE: an M3
+    # side-slide nut sits in the pad (seat y -37.8, walls 1.3 rear / 2.4 front) and its slot
+    # runs out through the pad's outboard flank into free air -- no thread is formed in PLA,
+    # so the boss never sees driver torque at all. M3x14 (tip -34, in a Ø3.5 relief).
+    uln_y = ny - P["neck_d"] / 2                      # column back face (-40)
+    for sx in (-1, 1):
+        pad = box(9.5, 6.5, 45.0)
+        pad.apply_translation((sx * 17.75, -37.25, 92.5))       # x 13..22.5, z 70..115
+        neck = uni([neck, pad])
     for sx in (-1, 1):
         for sz in (-1, 1):
-            # 8.5 long, buried 0.5 INTO the column: a face-tangent cylinder does not fuse
-            # in uni() and exported as a disjoint floating body (stage-4 defect D4)
-            b = cyl(3.0, 8.5, axis="y")
-            b.apply_translation((sx * P["uln_w"] / 2, uln_y - 3.75, 93 + sz * P["uln_h"] / 2))
+            bz = 93 + sz * P["uln_h"] / 2
+            b = cyl(4.0, 8.0, axis="y")                          # Ø8, y -48..-40 (0.5 into
+            b.apply_translation((sx * P["uln_w"] / 2, -44.0, bz))    # the pad face -40.5)
             neck = uni([neck, b])
-            pil = cyl(1.25, 12, axis="y")
-            pil.apply_translation((sx * P["uln_w"] / 2, uln_y - 3, 93 + sz * P["uln_h"] / 2))
-            neck = sub(neck, pil)
+            fin = box(8.0, 6.5, 2.4)                             # root gusset, y -46.5..-40
+            fin.apply_translation((sx * P["uln_w"] / 2, -43.25, bz))
+            neck = uni([neck, fin])
+            rel = cyl(P["m3_clear_r"], 16.0, axis="y")           # y -48.5..-32.5
+            rel.apply_translation((sx * P["uln_w"] / 2, -40.5, bz))
+            neck = sub(neck, rel)
+            neck = sub(neck, nut_slot((sx * P["uln_w"] / 2, -37.8, bz), screw_axis="y",
+                                      open_dir=(sx, 0, 0), size="M3", length=14.0))
     # cosmetic PANEL-LINE GROOVES (neck styling pass 2026-07-12, design-ref language: the
     # ref neck is stepped/blocky, ours was a smooth extrusion). Two 1.2-deep x 2.6-tall
     # horizontal grooves per SIDE face (x +-24), z 74 / 82 -- the band visible through the
