@@ -932,6 +932,7 @@ def build_chassis_parts():
 
     panels = []
     band_cuts = []
+    deck_cuts = []                 # M8 cage reliefs, subtracted from `deck` below
     for s in (-1, 1):
         side = "L" if s < 0 else "R"
         caps_front = [_xb(s, 51.3, 69.5, 101.2, 108.7),
@@ -1034,6 +1035,34 @@ def build_chassis_parts():
                 sl_.apply_translation((s * 66.0, ey_s, za_ax))
                 pnl = sub(pnl, sl_)
                 cage_y0, cage_y1 = ey_s - 9.8, ey_s + 14.3   # nut travel window
+                # TENSION-SLOT SERRATIONS (2026-07-15, FASTENING_AUDIT P2-23:
+                # "front M8 tension is friction-only on PLA slot faces -- creeps").
+                # The clamp is nut-face-on-x62 vs bolt-head-washer-on-x70; PLA
+                # creeps under that preload and the axle walks back down the slot,
+                # so the chain goes slack after a few hours of running. Cut the
+                # nut's bearing face into a SAWTOOTH ladder (pitch 1.5, 0.5 proud
+                # of x 62, teeth running along z = vertical fins in the upright
+                # print, zero overhang): the steel NYLOC embeds into the teeth on
+                # first torque and the joint becomes a positive FORM lock along y
+                # instead of a friction lock. Re-cut the slot afterwards so the
+                # shank passage is untouched. Front station only -- the rear axle
+                # has no travel to creep along.
+                ty_a = max(cage_y0 + 0.5, tk0 + 0.5)   # teeth only where `thk` backs
+                ty_b = min(cage_y1 - 0.5, tk1 - 0.5)   # them (x 62..64.85)
+                zt0, zt1 = za_ax - 6.4, za_ax + 6.4    # inside the 13.4 nut gap
+                pitch = 1.5
+                n_t = max(int((ty_b - ty_a) / pitch), 1)
+                zig = []
+                for i_ in range(n_t):
+                    y_a = ty_a + i_ * pitch
+                    zig += [(s * 62.2, y_a), (s * 61.5, y_a + pitch / 2)]
+                zig.append((s * 62.2, ty_a + n_t * pitch))
+                serr = extrude_polygon(sg.Polygon(
+                    [(s * 63.0, ty_a)] + zig + [(s * 63.0, ty_a + n_t * pitch)]
+                ).buffer(0), zt1 - zt0)
+                serr.apply_translation((0, 0, zt0))
+                pnl = uni([pnl, serr])
+                pnl = sub(pnl, sl_)                    # re-open the shank stadium
             else:                                  # rear: Ø8.4 through clearance
                 sk_ = teardrop(4.2, 12.0, axis="x")        # 45deg roof: apex 44.3
                 sk_.apply_translation((s * 66.0, ey_s, za_ax))   # stays under the
@@ -1046,8 +1075,18 @@ def build_chassis_parts():
             # the slot, the strips only stop rotation. Nut slides in from
             # inboard, wrench-free -- and the bare track module can tension
             # WITHOUT any hull piece.
+            # ROOF THICKNESS (2026-07-15, FASTENING_AUDIT P2-7): the roof strip used
+            # to run z 45.02..46.00 -- 0.98 mm, two extrusions, the THINNEST
+            # structural member in the running gear, and the member that reacts the
+            # nut's anti-rotation couple over a 24 mm span. The nut gap is pinned by
+            # the axle line (za +- 6.7) so the roof can only grow UP: it now tops out
+            # at cage_roof_z, a local 1.6 bulge past the z 46 tower top, and the deck
+            # gets a matching relief pocket (deck_cuts, applied below). Nothing is
+            # lost: the deck's prop is the tower SLAB at x 64.85..70, and the cage
+            # strips live inboard of it at x 54.5..64.95.
+            cage_roof_z = 47.6                     # roof 45.02..47.6 = 2.58 (was 0.98)
             for z0_, z1_ in ((za_ax - 6.7 - 3.0, za_ax - 6.7),
-                             (za_ax + 6.7, 46.0)):
+                             (za_ax + 6.7, cage_roof_z)):
                 strip = box(64.95 - 54.5, cage_y1 - cage_y0, z1_ - z0_)
                 strip.apply_translation((s * (54.5 + 64.95) / 2,     # rooted through
                                          (cage_y0 + cage_y1) / 2,    # the thickening
@@ -1064,10 +1103,19 @@ def build_chassis_parts():
                 wy0c = max(wy0, ky0 + 0.2); wy1c = min(wy1, ky1 - 0.2)
                 if wy1c - wy0c < 1.0:
                     continue
-                wall = box(64.95 - 54.5, wy1c - wy0c, 46.0 - 26.3)
+                wall = box(64.95 - 54.5, wy1c - wy0c, cage_roof_z - 26.3)
                 wall.apply_translation((s * (54.5 + 64.95) / 2,
-                                        (wy0c + wy1c) / 2, (26.3 + 46.0) / 2))
+                                        (wy0c + wy1c) / 2, (26.3 + cage_roof_z) / 2))
                 pnl = uni([pnl, wall])
+            # deck relief over the raised roof + its end walls (0.2 air). The band
+            # only meets deck material where the end slope has not lifted it yet
+            # (|y| < ~122); past that the cut is in free air and removes nothing.
+            rel = box(65.05 - 54.4, (cage_y1 + 2.6) - (cage_y0 - 2.6),
+                      (cage_roof_z + 0.2) - 46.0)
+            rel.apply_translation((s * (54.4 + 65.05) / 2,
+                                   (cage_y0 + cage_y1) / 2,
+                                   (46.0 + cage_roof_z + 0.2) / 2))
+            deck_cuts.append(rel)
             # DECK-BOSS SCARFS (support pass 2026-07-14): the six deck hold-down
             # bosses' flat undersides (z 37, protruding ~4.9 from the wall) each
             # demanded a support tower in the upright print. Cut a 45deg wedge
@@ -1193,6 +1241,8 @@ def build_chassis_parts():
     for bc_ in band_cuts:                          # sequential subs (see above)
         lower = sub(lower, bc_)
     lower = _despeck(lower)
+    for dc_ in deck_cuts:                          # M8 cage roof reliefs (P2-7)
+        deck = sub(deck, dc_)
 
     lower_f = _despeck(slice_mesh_plane(lower, plane_normal=(0, 1, 0),
                                         plane_origin=(0, ysl, 0), cap=True))
