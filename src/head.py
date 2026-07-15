@@ -9,11 +9,48 @@ import shapely.geometry as sg
 from trimesh.creation import extrude_polygon
 from trimesh.transformations import rotation_matrix as R
 from params import DEG, P, TAU
-from geo import (_T, _color, _orient, blind_socket, box,
-    cyl, fix_pin, frustum, hex_prism, inter,
-    rounded_box, screw_post, sub, uni)
+from geo import (NUT, _T, _color, _orient, blind_socket, box,
+    cyl, fix_pin, frustum, hex_prism, inter, nut_slot,
+    rounded_box, screw_post, sub, teardrop, uni)
 from screen import screen_pose
 from gears import gear_disc
+
+
+# ---------------------------------------------------------------------------
+# Fastening helpers (2026-07-15 FASTENING AUDIT, docs/FASTENING_AUDIT.md)
+# ---------------------------------------------------------------------------
+def _nut_trap(nut_c, screw_axis, open_dir, size="M3", length=14.0):
+    """Slide-in captive hex-nut trap NEGATIVE, positioned by the NUT CENTRE.
+
+    Thin wrapper over geo.nut_slot() with two corrections the raw helper leaves to
+    the caller:
+
+    1. nut_slot() builds its box spanning [center, center + length*open_dir] -- i.e.
+       `center` is the slot's CLOSED END, not the nut's mid-plane. Handing it the nut
+       centre straight leaves the nut's REAR HALF uncut and nothing seats.
+    2. The hex bottoms CORNER-first on a flat trap end (its flats ride the slot walls
+       = the rotation lock), so the seat plane sits af/sqrt(3) behind the nut centre.
+
+    So: pass the true nut centre; `length` is measured from it to the slot MOUTH.
+    Keep >= 1.2 of part beyond seat = nut_c + af/sqrt(3) along -open_dir.
+    """
+    o = np.asarray(open_dir, float); o /= np.linalg.norm(o)
+    back = NUT[size][0] / np.sqrt(3.0)          # nut centre -> rear corner (M3: 3.175)
+    return nut_slot(np.asarray(nut_c, float) - o * back, screw_axis=screw_axis,
+                    open_dir=o, size=size, length=length + back)
+
+
+def _yz_post(center_xz, y0, y1, wx, wz, r=2.0):
+    """A rounded-box POST spanning y0..y1, footprint wx (X) x wz (Z) about center_xz.
+
+    The bezel<->back / rim-tab bosses want PARALLEL walls around their nut slots: a
+    plain cyl() boss leaves crescent webs that feather to zero thickness where the
+    slot walls exit the barrel. Footprint is built in XY then rolled onto XZ.
+    """
+    m = rounded_box(wx, wz, abs(y1 - y0), r)
+    m.apply_transform(R(TAU / 4, (1, 0, 0)))        # (x,y,z) -> (x,-z,y): extrude -> -Y
+    m.apply_translation((center_xz[0], max(y0, y1), center_xz[1]))
+    return m
 
 
 # ---------------------------------------------------------------------------
@@ -340,19 +377,56 @@ def build_head_parts():
     bezel = slice_mesh_plane(full, plane_normal=n, plane_origin=o, cap=True)
     back = slice_mesh_plane(full, plane_normal=-n, plane_origin=o, cap=True)
 
-    # bezel<->back fixing: a boss each side of the split; screw along the face normal; the nut
-    # is captive in the back boss, the bezel boss is just clearance.
+    # bezel<->back fixing: a boss each side of the split; screw along the face normal (+Y);
+    # the nut is captive in the back boss, the bezel boss is just clearance.
+    # 2026-07-15 FASTENING AUDIT P0-1 -- the head's PRIMARY STRUCTURAL JOINT was
+    # UNBUILDABLE: the 8 hex voids were sealed inside solid r4.3 cylinders with no
+    # insertion slot (and only 0.84 of material at the hex corner even if you could get
+    # a nut in). Each back boss is now a rounded-box post carrying a real SLIDE-IN TRAP
+    # that opens INBOARD into the open head, plus a diagonal Ø4 dowel pair on the split
+    # plane so the halves self-register while 8 blind M3x35 are driven.
+    # ASSEMBLY ORDER: nuts in BEFORE the screen module / tray (the module buries every
+    # side-post mouth). Lay head_back on its back, open front UP: the traps are then
+    # horizontal pockets the nuts simply sit in, and every screw drives downward.
+    # PRINT: head_back frames print FRONT-DOWN, so the boss axis is vertical and the M3
+    # bore self-supports; the trap's roof is a 5.7 mm bridge (no teardrop needed, and a
+    # teardrop cannot apply to a flat-walled hex trap anyway).
     sp = screen_pose()
+    run_, web_ = P["bez_nut_boss_run"], P["bez_nut_boss_web"]
     for lp in _bezel_boss_points():
         w = (sp @ np.append(lp, 1.0))[:3]
-        back = uni([back, screw_post(w, -n, 15)])
+        sxb = 1.0 if w[0] > 0 else -1.0
+        if abs(w[0]) > 60.0:                             # SIDE posts ride the side wall
+            o, wx, wz = (-sxb, 0.0, 0.0), run_, web_     # -> trap runs inboard
+        else:                                            # |x|=40 posts ride ceiling/floor
+            szb = 1.0 if w[2] > P["screen_cz"] else -1.0
+            o, wx, wz = (0.0, 0.0, -szb), web_, run_     # -> trap runs into the interior
+        # BACK post: clipped to the shell envelope (inter, the proven rim-tab pattern) --
+        # the side-post footprint would otherwise stand 0.5 proud of the x +-102.5 wall,
+        # and the top post's would stand off the z 242 crown.
+        post = _yz_post((w[0], w[2]), 2.0, -13.0, wx, wz)
+        back = uni([back, inter(post, _head_solid())])
         bezel = uni([bezel, screw_post(w, n, 11)])
         clr = _orient(cyl(P["m3_clear_r"], 70), n); clr.apply_translation(w)
         bezel = sub(bezel, clr.copy()); back = sub(back, clr.copy())
-        nut = hex_prism(P["m3_nut_af"] + 0.3, P["m3_nut_h"])
-        nut.apply_translation((0, 0, -6))                # sunk a little inside the back boss
-        _orient(nut, n); nut.apply_translation(w)
-        back = sub(back, nut)
+        back = sub(back, _nut_trap((w[0], P["bez_nut_y"], w[2]), "y", o,
+                                   length=P["bez_nut_slot_len"]))
+
+    # split-plane REGISTRATION (audit "assembly-holding gaps" #4: bezel on back had NONE).
+    # Pin on the bezel (prints face-down -> the pin grows straight up, self-supporting),
+    # socket in head_back. Both bosses ride a wall, see PARAMS "bez_dowel_pts".
+    for dx_, dz_ in P["bez_dowel_pts"]:
+        fp = (dx_, 2.0, dz_)
+        bp = _orient(cyl(P["bez_dowel_boss_r"], 8.0), -n)
+        bp.apply_translation((dx_, 2.0 - 4.0, dz_))      # y -6..2
+        back = uni([back, inter(bp, _head_solid())])
+        back = sub(back, blind_socket(P["bez_dowel_socket_r"], P["bez_dowel_deep"],
+                                      (0, 1, 0), fp))
+        zp = _orient(cyl(P["bez_dowel_boss_r"], 8.0), n)
+        zp.apply_translation((dx_, 2.0 + 4.0, dz_))      # y 2..10
+        bezel = uni([bezel, inter(zp, _head_solid())])
+        bezel = uni([bezel, fix_pin(P["bez_dowel_r"], P["bez_dowel_len"],
+                                    (0, -1, 0), fp)])
 
     # (Pi 5 standoffs removed: the Pi mounts on the display's OWN back standoffs, so it comes
     # in with the screen module. The back cover only has to CLEAR the combined stack.)

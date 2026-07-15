@@ -57,6 +57,48 @@ P = {
     "screen_clear": 0.5,    # clearance around the module in its pocket
     "bezel_back": 4.0,      # split plane sits this far behind the screen back
 
+    # --- Bezel<->back joint hardware (2026-07-15 FASTENING AUDIT P0-1) ---
+    # The 8 perimeter M3x35 are the head's primary structural joint. Until this pass the
+    # "captive nut" was a hex void SEALED inside the back boss with no insertion slot --
+    # the joint was literally unbuildable as printed (audit P0-1). Each back boss is now a
+    # slide-in trap opening INBOARD (toward the open head interior), and the flat-on-flat
+    # split plane got a diagonal Ø4 dowel pair so the halves self-register while 8 blind
+    # M3x35 are driven (audit "assembly-holding gaps" #4).
+    # ASSEMBLY ORDER: the 8 nuts drop into their slots BEFORE the screen module / tray goes
+    # in -- the module (|x| <= 96.48, y -11.4..28.6) buries every side-post mouth, exactly
+    # like the arm-shoulder nuts.
+    # SLOT DIRECTION -- each trap runs OUT OF THE WALL ITS BOSS RIDES, into the open head:
+    # the |x|=40 pairs slide along -+Z (out of the ceiling / floor), the |x|=97.5 side posts
+    # inboard along -+X. This is not cosmetic. Every boss is fused to a wall along its whole
+    # length (the split plane's interior is all screen-module pocket, so nothing may float
+    # there), and at z 237 the nut's own 5.5 body sits 1.75 INSIDE the ceiling -- run that
+    # trap inboard and the nut jams on the ceiling 12 mm before the mouth (probed: 9.5 mm^3
+    # of interference). Running it out of the wall instead makes THE WALL the trap's closed
+    # end, which is exactly the material the audit wants behind the hex.
+    "bez_nut_boss_run": 11.0,  # back-boss footprint ALONG the slot run: closed end 5.5 off
+                               # the screw axis = 2.3 past the hex corner (>= 1.2 required)
+    "bez_nut_boss_web": 9.0,   # ... and ACROSS it: 1.65 PARALLEL webs beside the 5.7 slot.
+                               # Deliberately a rounded box, not the old r4.3 cylinder: a
+                               # cylindrical boss leaves crescent webs that feather to 0.0
+                               # where the slot walls exit the barrel (wallcheck bait, and
+                               # the old boss gave only 0.84 at the hex corner anyway).
+    "bez_nut_y": -4.0,        # nut mid-plane (unchanged): M3x35 entering the face at
+                              # y~28.6 lands its tip ~2.4 past the nut
+    "bez_nut_slot_len": 14.0, # nut centre -> slot mouth; every mouth opens into the head
+    # Ø4 registration dowels on the split plane (y=2), pin on the BEZEL (it prints
+    # face-down, so the pin grows straight up), socket in head_back. DIAGONAL so the pair
+    # locks X, Z and yaw: (-62, 237) rides the ceiling in bezel_L/frame_L, (62, 92.6) the
+    # bottom wall in bezel_R/frame_R. Both bosses MUST touch a wall -- the split plane's
+    # whole interior (|x| <= 86.6, z 98.35..203.75) is screen-module pocket, so a
+    # free-standing post there would print as a loose body (this is why the 8 screw posts
+    # all sit on the ceiling / floor / side walls too).
+    "bez_dowel_pts": ((-62.0, 237.0), (62.0, 92.6)),
+    "bez_dowel_r": 2.0,       # pin Ø4.0 ...
+    "bez_dowel_socket_r": 2.1,  # ... in a Ø4.2 socket (+0.1/side: the audit's P3 note --
+                              # Ø4.0-in-Ø4.0 is jam-or-rattle, never a slip fit)
+    "bez_dowel_len": 4.5, "bez_dowel_deep": 5.0,   # 0.5 bottoming clearance
+    "bez_dowel_boss_r": 4.5,  # 2.4 wall around the socket
+
     # --- Screen factory mount: 4x M3 into the display's OWN outer case-mount holes ---
     # Measured from Raspberry_Pi_Touch_Screen_Assembly_v12.stl (outer 126.2 x 65.65 pattern),
     # confirmed vs the reference case STL + RPi mechanical drawing. Screen-LOCAL frame (post-flip);
