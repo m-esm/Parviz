@@ -341,6 +341,26 @@ P = {
                             # CLEARANCE that can never jam -- the press is rib-calibrated
                             # (idler_rib_*), which is what actually holds a bearing in a
                             # printed seat. See build_tracks' CRUSH-RIB PRESS note.
+    "keeper_screw_y": 3.7,  # master-link keeper screw axis, link-local y (2026-07-15
+                            # fastening audit; was 2.6). Derived, not chosen: the usable
+                            # pocket is 5.50 wide, boxed by the jaw slot's tension wall
+                            # (y 1.0) and the +y neighbour's A knuckle (r3.5 about the far
+                            # pin -> y 6.50 at z 0). 1.0 + 1.2 wall + 1.5 hole radius =
+                            # 3.7 puts the Ø3.0 insert hole 1.20 off the jaw wall (the
+                            # audit's 0.75 boss-pilot edge margin) with 1.20 the other
+                            # side. This is why an M2 captive nut was rejected here: it
+                            # needs 5.82 (across-corners + backstop) or 6.60 (flats + 2
+                            # walls) in the same 5.50. See _track_master_link().
+    "keeper_insert_d": 3.0, # M2 brass heat-set insert hole (typical M2 insert OD 3.2 ->
+                            # Ø3.0 hole; the melt takes up the rest). VERIFY_ON_ARRIVAL:
+                            # M2 insert geometry varies by vendor -- measure the OD/length
+                            # of the ones actually bought and re-key these two before
+                            # printing the master. Brass replaces the old Ø1.7 self-tap
+                            # pilot, whose PLA threads were good for ~2-3 service cycles
+                            # on the robot's ONLY repeatedly-opened M2 joint.
+    "keeper_insert_l": 4.0, # insert length; the hole is drilled +1.0 deeper, then a Ø2.4
+                            # relief runs on inboard so an M2x8 can bottom out past the
+                            # brass instead of jacking it back out of its melt.
     "spr_socket_rib_bite": 0.10,   # radial interference of the 2 crush ribs standing in
                             # the sprocket's TT double-D socket arcs -> crest r 2.60 on
                             # the Ø5.4 shaft (2026-07-15 fastening audit P0-7). This is

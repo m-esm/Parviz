@@ -217,8 +217,11 @@ def _track_master_link():
     neighbour normally ON THE BENCH; after wrapping, the loop's last pin sits in the other
     neighbour's B knuckles and the master SWINGS down onto it (idler retracted for slack).
     Two printed KEEPER bars then slide into the jaw slot from the side faces -- each locked
-    by one M2 self-tap into a side-face pilot -- and seat the pin: belt tension is carried
-    by the jaw walls (same section as a plain bore), the keepers only block pin drop-out.
+    by one M2 into a BRASS HEAT-SET INSERT in a side-face boss (2026-07-15 fastening audit:
+    was an M2 self-tapping into a Ø1.7 PLA pilot, which is a ~2-3-cycle joint on the one
+    fastener you undo every single time you service the track) -- and seat the pin: belt
+    tension is carried by the jaw walls (same section as a plain bore), the keepers only
+    block pin drop-out. Service story is unchanged: 2 screws out, track opens.
     Returns (body, [keeper_L_local, keeper_R_local]) in link-local coords.
     Strip pass 2026-07-12: the master keeps the FULL old interface (open both ends:
     Ø2.2 A bores under the jaw cut, Ø2.2 far bores, NO integral pin -- a closed far
@@ -228,18 +231,40 @@ def _track_master_link():
     pitch, tw = P["track_pitch"], P["track_width"]
     body = _track_link(open_a=True, open_b=True)
     ka, _ = _KNUCKLES(tw)
-    # keeper-screw BOSSES first, then the jaw slots re-cut THROUGH them, then the pilots.
-    # Printability review: the bare pilot at y 2.2 broke out of the knuckle (edge 3.05 >
-    # chord 2.94) leaving <0.4 walls -- the Ø4.5 boss restores thread stock. Review round
-    # 2: a full-cylinder boss refilled the slot where the keeper bar rides, so the slot
-    # is subtracted AFTER the boss union (boss becomes a C around the slot) and the
-    # pilot moved to y 2.6 so its edge keeps 0.75 to the slot wall. Boss fuses into the
-    # knuckle + web corner, stays above ground (low -4.15 > -6), x-clear of the
-    # neighbour's B knuckles (which end at x 8.9).
+    ky, kz = P["keeper_screw_y"], -1.9              # keeper screw axis (x-directed)
+    # KEEPER SCREW -> M2 BRASS HEAT-SET INSERT (2026-07-15 fastening audit P1/P2-19).
+    # This was the ONLY repeatedly-serviced M2-in-PLA joint on the robot: the M2 used to
+    # self-tap a Ø1.7 pilot straight into the link, and opening the track is exactly the
+    # thing you do over and over (re-tension, swap a strip, clear a jam). Self-tapped PLA
+    # threads are good for ~2-3 cycles before the first thread shears and the keeper is
+    # held by nothing. Brass doesn't care how many times you open it.
+    #
+    # WHY NOT THE PREFERRED CAPTIVE NUT: it does not fit, measured. The pocket is boxed
+    # between the jaw slot's tension wall (y 1.0, must not be thinned -- it carries belt
+    # tension) and the +y NEIGHBOUR's A knuckle (an r3.5 circle about the far pin, in this
+    # same x band, reaching y 6.50 at z 0): 5.50 mm of usable y. An M2 nut needs 4.62
+    # across-corners + a 1.2 backstop = 5.82 running along y, or 4.2 flats + 2x1.2 walls =
+    # 6.60 with the flats along y. Short by 0.32 and 1.10. Rotating the slot into z buys
+    # nothing: whichever way it turns, one of the nut's two spans lands in y. A snap/
+    # bayonet keeper was the other option and was rejected -- every candidate catch had to
+    # live in the same starved pocket, and a PLA cantilever that gets flexed on every
+    # service is trading thread fatigue for hinge fatigue.
+    #
+    # The insert fits with room: Ø3.0 hole + 2x1.2 wall = 5.40 into 5.50. The boss stays a
+    # CYLINDER (r 2.25 -> 2.7, moved y 2.6 -> keeper_screw_y): a circle gives a uniform
+    # 1.20 wall around the insert and rounds itself away from the neighbour's knuckle
+    # (0.38 clear, centres 6.58 vs radii 2.7+3.5) where a box corner would foul it.
+    # Moving the axis out to y 3.7 also fixes the audit's 0.75 boss-pilot edge margin:
+    # the hole edge now keeps 1.20 to the jaw slot wall.
+    #
+    # Bosses go in FIRST, then the jaw slots re-cut THROUGH them (a full-cylinder boss
+    # would otherwise refill the slot the keeper bar rides in -- it ends up a C around the
+    # slot), then the insert holes. Boss fuses into the knuckle + web corner, stays above
+    # ground, and is x-clear of the neighbour's B knuckles (which end at x 8.9).
     for (x0, x1) in ka:
         sxs = 1 if x1 > 0 else -1
-        bs = cyl(2.25, 7.0, axis="x")
-        bs.apply_translation((sxs * (tw / 2 - 3.5), 2.6, -1.9))
+        bs = cyl(2.7, 7.0, axis="x")
+        bs.apply_translation((sxs * (tw / 2 - 3.5), ky, kz))
         body = uni([body, bs])
     # JAW CROWN = 2.40 (bore top z 1.10 -> knuckle crown z 3.50 at y 0), the master's
     # thinnest tension-carrying section (2026-07-15 fastening audit P2-20). LEFT AS IS:
@@ -260,30 +285,41 @@ def _track_master_link():
         s.apply_translation(((x0 + x1) / 2, 0, -4.4))  # z -7.9..-0.9: bore keeps its top arc
         body = sub(body, s)
         sxs = 1 if x1 > 0 else -1
-        pil = cyl(0.85, 7.0, axis="x")
-        pil.apply_translation((sxs * (tw / 2 - 3.5), 2.6, -1.9))
-        body = sub(body, pil)
+        # INSERT HOLE: Ø3.0 x (insert + 1.0) in from the side face, then a Ø2.4 screw-tip
+        # relief the rest of the way, so an M2x8 can bottom out past the brass without
+        # jacking the insert back out. Heat-set from the OUTBOARD side face -- the same
+        # face the keeper lands on, open to a soldering iron with the link in hand.
+        dep = P["keeper_insert_l"] + 1.0
+        ih = cyl(P["keeper_insert_d"] / 2, dep, axis="x")
+        ih.apply_translation((sxs * (tw / 2 - dep / 2), ky, kz))
+        body = sub(body, ih)
+        rel = cyl(1.2, 7.0, axis="x")                  # tip relief, inboard of the insert
+        rel.apply_translation((sxs * (tw / 2 - 3.5), ky, kz))
+        body = sub(body, rel)
     keepers = []
     for sxs in (-1, 1):
         bar = box(13.3, 1.9, 2.2)                      # rides the slot walls, top face -0.95
         bar.apply_translation((sxs * (9.7 + 23.0) / 2, 0, -0.95 - 1.1))    # seats the pin;
-        tab = box(2.6, 5.7, 5.7)                       # outboard end fuses into the tab.
-        tab.apply_translation((sxs * (tw / 2 + 0.05 + 1.3), 2.6, -1.9))    # Tab centered on
-        k = uni([bar, tab])                            # the M2 at y 2.6 (reviews: the old
-        # 1.8x7x4 tab left 0.65-0.85 hole ligaments AND let the M2 head stand 0.55-0.85
-        # off the chassis wall on the top run; 2.6 thick x 5.7 + a head counterbore gives
-        # >=1.5 walls and sinks the head to >=1.1 wall clearance. Wallcheck pass
-        # 2026-07-13: the Ø4.2 cb left a 0.65 rim on the 5.5 tab (p1 0.66 < the 0.8
-        # gate) -- cb shrunk to Ø4.0 (M2 pan head is Ø3.8 max, 0.2 diametral clear)
-        # and the tab grew 5.5 -> 5.7, rim now 0.85. The slot-critical 13.3x1.9 bar
-        # is untouched. Tab y -0.25..5.45 keeps 1.05 to the next link's knuckle side
-        # faces on the straight run; z low -4.75 stays 1.25 above the grouser plane.
+        # TAB: 7.15 (y) x 6.4 (z), asymmetric about the screw so it does two jobs at once
+        # -- the +y side is sized by the Ø4.0 counterbore's RIM, the -y side by the WELD to
+        # the bar. The 2026-07-15 audit wanted that rim >= 1.2 (it was 0.85: a 5.7 tab
+        # around a Ø4.0 cb). Growing the tab to 6.4 about the screw gives exactly 1.2 on
+        # every side of the cb, and holding y_min at -0.25 keeps the full 1.2 x 2.2 weld
+        # to the bar (a square 6.4 tab centred on the new y 3.7 axis would have started at
+        # y 0.5 and left the bar hanging off a 0.45 lip). y -0.25 also keeps the proven
+        # 1.05 to the next link's knuckle side faces on the straight run; z -5.1 stays
+        # 0.9 above the grouser plane (it never touches ground -- the tab lives outboard
+        # of |x| 22.4, i.e. beside the whole chain in free air, with only the chassis as a
+        # clearance partner). The slot-critical 13.3x1.9 bar is untouched.
+        tab = box(2.6, 7.15, 6.4)
+        tab.apply_translation((sxs * (tw / 2 + 0.05 + 1.3), ky - 0.375, kz))
+        k = uni([bar, tab])
         mc = cyl(1.15, 6.0, axis="x")                  # M2 clearance through the tab
-        mc.apply_translation((sxs * (tw / 2 + 1.3), 2.6, -1.9))
+        mc.apply_translation((sxs * (tw / 2 + 1.3), ky, kz))
         k = sub(k, mc)
-        cb = cyl(2.0, 1.5, axis="x")                   # Ø4.0 head counterbore, outer face
-        cb.apply_translation((sxs * (tw / 2 + 0.05 + 2.6 - 0.7), 2.6, -1.9))
-        k = sub(k, cb)
+        cb = cyl(2.0, 1.5, axis="x")                   # Ø4.0 head counterbore (M2 pan head
+        cb.apply_translation((sxs * (tw / 2 + 0.05 + 2.6 - 0.7), ky, kz))  # is Ø3.8 max),
+        k = sub(k, cb)                                 # sinks the head clear of the wall
         keepers.append(k)
     return body, keepers
 
