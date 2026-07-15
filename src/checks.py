@@ -543,6 +543,28 @@ def main():
               for s in (-1, 1)),
           "enclosed cavities must survive the despeck size filter")
 
+    # The M8 tension-cage roof was the thinnest structural member in the running
+    # gear (0.98 mm) and it is what reacts the nut's anti-rotation couple. It could
+    # only grow UP, so it bulges 1.6 past the tower top into a matching deck relief.
+    def _z_run(mesh, x, y, z0, z1):
+        zs = [z for z in np.arange(z0, z1, 0.1)
+              if geo.inter(mesh, _cube(x, y, z, 0.6, 0.6, 0.08)).volume > 1e-12]
+        return (max(zs) - min(zs)) if zs else 0.0
+
+    def _cube(x, y, z, a, b, c):
+        k = geo.box(a, b, c); k.apply_translation((x, y, z)); return k
+
+    roof = _z_run(M("chassis_side_R_front"), 60.0, 130.0, 43.0, 49.5)
+    check("M8 tension cage roof >= 2.0 mm", roof >= 2.0, "%.2f mm (was 0.98)" % roof)
+
+    # Campaign rule on the joints finished this round: real captive nuts that the
+    # screw can actually reach (deck strip seams, panel splice, front L-foot).
+    check("finished-campaign joints: captive nuts reach their bores",
+          nut_reaches_bore(M("chassis_deck_center"), (40.0, 70.0, 49.5), (0, 1, 0))
+          and nut_reaches_bore(M("chassis_deck_center"), (40.0, -56.0, 49.5), (0, -1, 0))
+          and nut_reaches_bore(M("chassis_side_R_rear"), (75.4, -18.5, 19.0), (0, 1, 0)),
+          "deck strip seams x2 + panel splice")
+
     finish()
 
 
