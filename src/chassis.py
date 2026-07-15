@@ -581,19 +581,38 @@ def build_chassis_core():
     reb_cut = extrude_polygon(reb_poly, P["belly_lip_t"] + 2.0)
     reb_cut.apply_translation((0, 0, z0 + P["belly_lip_t"] - (P["belly_lip_t"] + 2.0)))
     body = sub(body, reb_cut)                                # z 4.5..8.5
+    # 2026-07-15 (FASTENING_AUDIT P1, the TODO the previous pass left): the 6 rim
+    # screws were Ø2.5 thread-form pilots -- the failing class. They are now M3
+    # THROUGH-BOLTS into CAPTIVE HEX NUTS, and the 1.5 rebate lip stays the locator
+    # (the plate drops into it and self-holds while the 6 csk screws go in).
+    # Insertion order: nuts into the bosses with the deck off (they are free-standing
+    # posts in the open tub, every flank is a mouth), then the base, then the plate.
+    # Ø9 CLIPPED TO THE RIM: at the Ø7 radius every boss cleared the opening edge, but
+    # Ø9 crosses it at 3 of the 6 stations -- and the opening cut runs to z 16, so the
+    # crescent past the edge would hang in AIR over the void, feathering to nothing at
+    # its tips. Clip each boss on the opening outline: the chord face lands COPLANAR
+    # with the rim's own edge face (z 11.5..15), i.e. continuous material, no overhang.
+    rim_clip = extrude_polygon(op_poly, 10.0)
+    rim_clip.apply_translation((0, 0, z0 + floor - 1.0))         # z 14..24
     for bx_, by_ in P["belly_screws"]:
         b = cyl(P["belly_boss_r"], P["belly_boss_h"])
-        b.apply_translation((bx_, by_, z0 + floor + P["belly_boss_h"] / 2))   # z 12..18
-        body = uni([body, b])
+        b.apply_translation((bx_, by_, z0 + floor + P["belly_boss_h"] / 2))   # z 15..21
+        body = uni([body, sub(b, rim_clip)])
         body = sub(body, _belly_csk_neg(bx_, by_))
-        # TODO (FASTENING_AUDIT P1, NOT DONE 2026-07-15): Ø2.5 self-tap -> captive
-        # M3 nut. It needs belly_boss_r 3.5 -> 4.5 (a 5.7 slot in an Ø7 boss leaves
-        # 0.65 walls; the audit's own "bosses must grow to >= Ø9"), and the nut has
-        # to sit high (z ~17) because the rim floor is REBATED to z 11.5 under these
-        # stations -- a lower trap eats the rim. Left for a pass with budget to
-        # re-verify the plate/rebate/csk stack.
-        pil = cyl(1.25, 8.3); pil.apply_translation((bx_, by_, z0 + 2.2 + 8.3 / 2))
-        body = sub(body, pil)                                # pilot z 9.2..17.5
+        # M3 CLEARANCE all the way up (the old Ø2.5 pilot also left 0.6 of un-drilled
+        # solid between the csk cone's small end and its own start -- the screw had to
+        # cut that too).
+        thr = cyl(P["m3_clear_r"], 10.0)
+        thr.apply_translation((bx_, by_, z0 + floor - 3.5 + 10.0 / 2))   # z 11.5..21.5
+        body = sub(body, thr)
+        # nut slot opens toward the belly OPENING (i.e. the tub interior): +y for the
+        # rear pair, -y for the front pair, inboard-x for the flank pair. Every one of
+        # those mouths faces open cavity air at the nut band (z 15.6..18.4).
+        odir = ((-np.sign(bx_), 0.0, 0.0) if abs(bx_) > 50.0
+                else (0.0, -np.sign(by_), 0.0))
+        body = sub(body, geo.nut_slot((bx_, by_, P["belly_nut_z"]), screw_axis="z",
+                                      open_dir=odir, size="M3",
+                                      length=P["belly_nut_run"]))
     # (REAR TIE deleted 2026-07-14 round 5: it re-anchored the belly-strap pedestal
     # island, and both the strap and the pedestal left the hull -- the floor is a
     # plain opening rim now.)

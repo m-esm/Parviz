@@ -912,12 +912,24 @@ P = {
     "belly_rebate_grow": 8.0,               # rebate ledge past the opening, per side
     "belly_lip_t": 1.5,                     # rebate depth (up from the belly face z=7)
     "belly_fit": 0.15,                      # plate<->rebate/opening clearance per side
-    # 6x M3 countersunk from below (heads flush at z=7) into Ø7 self-tap bosses
-    # standing on the interior rim/strap (Ø2.5 pilots). Stations dodge the TT gearboxes
+    # 6x M3x10 countersunk from below (heads flush at the belly face) into CAPTIVE M3
+    # HEX NUTS in the rim bosses (2026-07-15 fastening campaign, FASTENING_AUDIT P1 --
+    # they were Ø2.5 thread-form pilots). Stations dodge the TT gearboxes
     # (|x|>=46.26 at y<-40), the ballast ribs (|x|<=40) and both ULN board envelopes.
     "belly_screws": ((-42.0, -65.5), (42.0, -65.5), (-54.0, -5.0), (54.0, -5.0),
                      (-30.0, 53.0), (30.0, 53.0)),
-    "belly_boss_r": 3.5, "belly_boss_h": 6.0,
+    # boss r 3.5 -> 4.5 (Ø9): a 5.7-wide nut slot in an Ø7 boss leaves 0.65 mm walls;
+    # Ø9 leaves 1.65 (the audit's own ">= Ø9" figure). The bosses stand FREE in the
+    # open tub (rim floor top 15 -> boss top 21), so every flank is a valid slot mouth.
+    "belly_boss_r": 4.5, "belly_boss_h": 6.0,
+    # Captive-nut centre z. The screw enters from BELOW, so tightening pulls the nut
+    # DOWN onto the slot floor: the load path is the 4.1 mm of solid boss+rim under
+    # it (z 11.5..15.6), not the 2.6 mm bridge cap over it. An M3x10 csk with its head
+    # flush at the belly face (z 10) puts the tip at z 20 -- 1.6 past the nut top
+    # (18.4), 1.0 under the boss top. The rim floor is REBATED to z 11.5 here, which
+    # is why the nut cannot sit lower.
+    "belly_nut_z": 17.0,
+    "belly_nut_run": 8.0,        # seat (centre - 3.175) out past the Ø9 boss flank
 
     # --- 28BYJ-48 5V geared stepper (owned x6, + ULN2003 x9). Dims from the beckdac SCARA
     #     SCAD model, cross-checked vs the Mouser datasheet (real, not eyeballed). ---
