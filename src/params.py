@@ -645,6 +645,20 @@ P = {
                             # TT gearboxes (track_raise, top z 45.5) now own that zone;
                             # bosses ride the rear wall instead (sensor hole z16, trim
                             # pins outer-face only, motor tabs x +-55.6 -- all clear)
+    # PAN-CLIP captive nuts (2026-07-15, FASTENING_AUDIT P1): the 3 clip screws were
+    # Ø2.5 thread-form pilots and they are the ONLY thing resisting head uplift on the
+    # pan platform. Nut centre 54.0 -> nut 52.6..55.4: bottom clears the seat floor (51)
+    # so the slot's mouth lands in the OPEN seat wall (r 49), top leaves 3.6 mm of deck
+    # to the clip pocket floor (59) working in compression. The M3x10's tip lands at
+    # 52.6 = the nut's bottom face (build_pan_clips seats the head at z 62.6).
+    "pan_clip_nut_z": 54.0,
+    # run: seat at r 56.675 (= 53.5 + M3 ac/2) out to r 47.675 -- 1.3 past the seat
+    # wall at r 49, so the mouth is fully open into the r 44.5..49 annulus.
+    "pan_clip_nut_run": 9.0,
+    # seat relief: nut_slot() backstops at exactly ac/2, which only a MAX-material nut
+    # (ac 6.35) can reach; a real DIN 934 M3 is 6.14..6.35 across corners. 0.4 lets any
+    # nut reach the bore (it self-centres on the screw as it draws in).
+    "pan_clip_nut_seat_clear": 0.4,
     "chassis_split_boss_r": 4.0,
     "deck_nut_z": 43.0,          # captive M3 nut centre in each deck hold-down boss
                                  # (2026-07-15, FASTENING_AUDIT P1: all 8 were thread-
