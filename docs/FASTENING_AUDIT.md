@@ -1,5 +1,37 @@
 # Fastening & Assembly Audit — post-print failure report (2026-07-15)
 
+> **STATUS: FIXED, all gates green** (build · check · check-sweep · 58/58 invariants ·
+> wallcheck · fits 64 contacts all expected · export · 20/20 plates slice clean).
+> Fixed in 4 parallel worktrees (chassis / head / neck+pan / tracks), then merged.
+>
+> **THE ROOT CAUSE WAS DEEPER THAN THIS AUDIT ORIGINALLY SAID.** The audit named the
+> Ø2.5 thread-form pilots and told everyone to copy `chassis_pedestal`'s "reference
+> good" hex traps. **Those were broken too.** A hex nut with its flats on the trap
+> walls spans ACROSS CORNERS -- ac = AF*2/sqrt(3) = 6.35 for M3, not the 5.5
+> across-flats -- along the insertion run, but the trap box ran FROM the bore axis
+> AWAY from it. The nut could only ever reach axis+3.175, a miss of 2x the thread
+> radius: **the screw could never catch it.** So the chassis's ONE real nut pocket
+> never worked either. Probed on the built mesh, all 4 feet: nut-reaches-bore False
+> before, True after. `geo.nut_slot()` now owns the correction (pass it the screw
+> axis; it seats the nut on the bore, and the seat is what aligns it hands-free),
+> and `checks.nut_reaches_bore()` gates the whole class -- verified to have teeth by
+> rebuilding the old broken foot and watching it fail.
+>
+> Two more defects the fix pass found that this audit missed entirely:
+> - **The gates were lying.** `make invariants`/`make wallcheck` read `stl/*.stl`,
+>   which only regenerate under `EXPORT=1`, so both silently measured the PREVIOUS
+>   geometry; `make all` ran them before its own export. Same class as the Stage 4
+>   vacuous probe in docs/FIXES.md. Fixed: both now depend on a fresh `stls` target.
+> - **The sprocket's M2 retaining screw was dead as modeled** -- 8.4 mm of solid hub
+>   sat between the Ø6 bore and the socket, so it could never reach the shaft tip.
+>
+> Where geometry beat the plan (each probed, not guessed): the master-link captive
+> M2 nut does not fit (5.50 usable vs 5.82 needed) -> heat-set inserts; the
+> tilt_carrier did NOT need inserts (the audit assumed no nut face was reachable --
+> probing disproved it); the tail seam moved y -88 -> -95 (no joint could exist at
+> -88) and takes a tongue instead of a dowel; the head panel gets tab rebates, not a
+> perimeter lip (at y -66 the wall is all corner curve). Details in each section.
+
 User print feedback: (1) almost none of the screws/pockets work, (2) joints lack real
 bolt+nut capture, (3) nothing holds parts aligned while driving screws, (4) parts
 (tail + front counterpart) break at thin-ligament connections.
