@@ -565,6 +565,35 @@ def main():
           and nut_reaches_bore(M("chassis_side_R_rear"), (75.4, -18.5, 19.0), (0, 1, 0)),
           "deck strip seams x2 + panel splice")
 
+    # EVERY FASTENER STATION MUST LAND ON REAL MATERIAL (2026-07-16). This is the
+    # check that would have caught the worst class in the whole campaign: NINE joints
+    # were DEAD AS MODELLED -- the screw could never engage anything. Two chassis_base
+    # stations had no hull material at ANY z (the glacis had eaten the floor there, so
+    # sub(pilot) was a silent no-op); the IMU posts were height ZERO; the ULN pilots
+    # stopped 3.0 below their post tops. Root cause worth remembering: A DERIVED
+    # FEATURE NEXT TO A HARDCODED PARTNER -- chassis_clear 7->10 moved every z-derived
+    # post while the hardcoded pilot depths stayed put.
+    # Probe a RING at r=3, never the axis: the bore is ~Ø3.5 and swallows an on-axis
+    # cube, so an on-axis probe reports "void" for a healthy joint AND for a hole
+    # drilled through thin air. Only the surrounding material distinguishes them.
+    hull_meshes = [M(n) for n in ("chassis_lower_front", "chassis_lower_rear",
+                                  "chassis_lower_tail")]
+
+    def _ring_hits(meshes, x, y, z, r=3.0, n=8):
+        hits = 0
+        for a in np.linspace(0.0, 2.0 * np.pi, n, endpoint=False):
+            c = geo.box(0.8, 0.8, 0.8)
+            c.apply_translation((x + r * math.cos(a), y + r * math.sin(a), z))
+            if any(geo.inter(m, c).volume > 1e-9 for m in meshes):
+                hits += 1
+        return hits
+
+    stations = [(x, y, _ring_hits(hull_meshes, x, y, 12.5))
+                for (x, y) in P["base_mount_pts"]]
+    check("every chassis_base fastener station lands on hull material",
+          all(h >= 4 for _x, _y, h in stations),
+          ", ".join("(%+.0f,%+.0f):%d/8" % s for s in stations))
+
     finish()
 
 
