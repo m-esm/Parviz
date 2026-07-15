@@ -865,6 +865,14 @@ P = {
     "us_dx": 13.0,          # ultrasonic barrel centers at x=+-13 (HC-SR04 transducer pitch ~26)
     "us_cz": 32.0,          # barrel Ø16 -> z 24..40, centred in the grille opening (the
                             # 28.5 spot collided with the relocated ring's lower band)
+    # OBSTACLE HC-SR04 RETENTION (2026-07-15, FASTENING_AUDIT P0-5: both obstacle
+    # boards floated -- nothing held them against the wall but gravity + the loom).
+    # The board goes in along +-Y (its barrels thread the wall bores), so the seat is
+    # a SHELF + two side ribs + 2 M2 clamps on the board's own top corner holes.
+    "us_board_wl": (45.7, 20.9),    # board envelope (w, h) -- the sensor_us placeholder
+    "us_hole_cc": (41.0, 16.7),     # HC-SR04 corner-hole pattern (same as the cliff pair)
+    "us_seat_d": 3.0,               # shelf/rib reach inboard of the wall face (board 1.6)
+    "us_shelf_t": 2.0,              # shelf thickness
     "us_d": 16.0,
     "lamp_x": 54.0, "lamp_cz": 23.0,   # amber corner lamps 12x7, proud 2, on the PROW
                             # CHEEK noses (2026-07-11; z 26 -> 23 so the wire drill at

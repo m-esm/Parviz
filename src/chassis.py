@@ -357,6 +357,38 @@ def build_chassis_core():
         usr = cyl(P["us_d"] / 2 + 0.3, 12, axis="y")  # rear obstacle HC-SR04 barrel
         usr.apply_translation((sx * P["us_dx"], -(fw - 2.5), P["us_cz"]))
         body = sub(body, usr)                         # passes (2026-07-11, twin ring)
+    # OBSTACLE HC-SR04 RETENTION (2026-07-15, FASTENING_AUDIT P0-5): both obstacle
+    # boards were UNRETAINED -- they just floated against the wall's inner face on
+    # their own barrels, held by gravity and the wire loom. The board has to go in
+    # along +-Y (the barrels thread into the wall bores), so a slide-down channel is
+    # impossible; instead each wall gets
+    #   - a SHELF ledge under the board: it carries the weight, sets z, and its
+    #     0.1 air keeps the placeholder gate-clean, and
+    #   - two SIDE RIBS backing the board's x edges (lateral location), and
+    #   - 2x Ø1.7 M2 pilots on the board's own TOP corner holes (the 41 x 16.7
+    #     HC-SR04 pattern, same as the cliff pair), straight into the 5-wall.
+    # No standoff posts: the board clamps FLAT to the inner face, exactly where the
+    # barrels want it, so the M2s only clamp -- shelf + ribs + barrels take the load
+    # and there is no strip path (this is the audit's "2 M2 posts or a slide-in
+    # board shelf clip", built as both minus the standoff).
+    ubw, ubh = P["us_board_wl"]
+    for sgn in (1, -1):
+        wy = sgn * (fw - 5.0)                         # wall inner face (|y| 115)
+        zsh = P["us_cz"] - ubh / 2 - 0.1              # shelf top: 0.1 under the board
+        shf = box(ubw + 6.0, P["us_seat_d"], P["us_shelf_t"])
+        shf.apply_translation((0.0, wy - sgn * P["us_seat_d"] / 2,
+                               zsh - P["us_shelf_t"] / 2))
+        body = uni([body, shf])
+        for sxb in (-1, 1):
+            rib = box(2.4, P["us_seat_d"], ubh)       # side rib: 0.15 off the board
+            rib.apply_translation((sxb * (ubw / 2 + 0.15 + 1.2),
+                                   wy - sgn * P["us_seat_d"] / 2, P["us_cz"]))
+            body = uni([body, rib])
+            bp = cyl(0.85, 4.5, axis="y")             # M2 pilot, 4.0 into the 5-wall
+            bp.apply_translation((sxb * P["us_hole_cc"][0] / 2,
+                                  wy + sgn * (4.5 / 2 - 4.0),
+                                  P["us_cz"] + P["us_hole_cc"][1] / 2))
+            body = sub(body, bp)
     # SIDE VENT ROW DELETED (2026-07-14, user: "remove the cosmetic holes on the
     # chassis sides") -- only the y -96 slot survives: it is FUNCTIONAL, the
     # BME688's air window (its bosses flank it; sensor placement keys off it).
@@ -1034,13 +1066,41 @@ def build_chassis_parts():
                 # the web (teardrop -- horizontal in this print) and give the
                 # nut an M4-slot-style slide-up pocket from below, top stop at
                 # the bore axis + AF/2 so screwing pulls it centred.
+                # 2026-07-15 (FASTENING_AUDIT P2-6): the slot ran x 70.6..73.4,
+                # leaving a 0.6 mm skin between the wall's x-70 outer face and the
+                # nut pocket. Shifted 0.4 OUTBOARD (71.0..73.8) -> 1.0 mm there, and
+                # the top stop is now the true across-CORNERS half (M3_AC/2 = 3.175,
+                # not AF/2 = 2.75: a hex with its flats on the +-y slot walls spans
+                # across corners along the slide), so the nut really does centre on
+                # the bore instead of seating 0.33 low.
                 my_ = sy_ + o_ * 20.3
                 mzl = zc_tt - 8.75
                 mb_ = teardrop(1.6, 6.5, axis="x")
                 mb_.apply_translation((s * 71.4, my_, mzl))
-                ns_ = box(2.8, 5.7, (mzl + 2.85) - 14.5)
-                ns_.apply_translation((s * 72.0, my_, (14.5 + mzl + 2.85) / 2))
+                ns_ = box(2.8, 5.7, (mzl + M3_AC / 2) - 14.5)
+                ns_.apply_translation((s * 72.4, my_, (14.5 + mzl + M3_AC / 2) / 2))
                 pnl = sub(sub(pnl, mb_), ns_)
+                # UPPER TT M3 = the reported hands-free failure (FASTENING_AUDIT
+                # P0-6): its nut was LOOSE in the ~4 mm pod gap outboard of the
+                # wall -- you had to hold it there by hand with the track on, i.e.
+                # the joint was unbuildable as coded. Grow the lower screw's pocket
+                # pattern up the wall's outer face: a boss standing 6 proud (x
+                # 70..76, INSIDE the loop -- probe: the only running gear in
+                # z 30..42 at these y is the sprocket disc at x >= 92.4, and the
+                # links never enter this band away from the runs), carrying the
+                # same slide-up captive hex slot. Nut inserts from below through
+                # the z 27..30 window over the L-return block, wrench-free.
+                mzu = zc_tt + 8.75
+                ubs = box(6.0, 9.0, 12.0)
+                ubs.apply_translation((s * 73.0, my_, mzu - 1.22))    # z 30.25..42.25
+                pnl = uni([pnl, ubs])
+                ubb = teardrop(1.6, 10.0, axis="x")   # re-open the core's wall bore
+                ubb.apply_translation((s * 73.0, my_, mzu))           # through the boss
+                pnl = sub(pnl, ubb)
+                useat = (s * 72.4, my_, mzu + M3_AC / 2)      # far wall = seat, so the
+                pnl = sub(pnl, geo.nut_slot(useat, screw_axis="x",    # nut centres on
+                                            open_dir=(0, 0, -1), size="M3",  # the bore
+                                            length=(mzu + M3_AC / 2) - 29.0))
             # NO counterbore (fittings audit 2026-07-14): a O6.6 cb broke out of
             # the 4.8-wide foot's side walls (0.1-0.5 remnants in wallcheck) --
             # the M3 socket head seats PROUD on the foot top instead (O5.5 on a
