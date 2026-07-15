@@ -33,6 +33,7 @@ BOUGHT parts excluded on purpose: 28BYJ/TT motors, ULN2003, 695-2RS/F688ZZ beari
 BBs, F688ZZ idler bodies (proxy geometry riding a bought bearing), M2/M3 hardware, PD/buck power set.
 """
 import os
+import re
 import sys
 
 import numpy as np
@@ -326,7 +327,21 @@ def main():
     tokens = {"@drivegear": drivegear_units, "@links": strip_units,
               "@coupon": coupon_units, "@standins": standin_units}
 
-    plates, manifest = [], []
+    # BAMBU PER-CATEGORY ARRANGE (2026-07-15, user: "arrange can be asked from
+    # bambu"): each category is shelf-packed naively, round-tripped through
+    # BambuStudio's own ARRANGE engine in a temp project, and the packed layout is
+    # read back (bambu_autopack.packed_plates) -- so packing density is Bambu's
+    # while plates stay CATEGORY-PURE (a global arrange pass mixed coupon strips
+    # with head shells and made selective printing impossible). --orient stays OFF:
+    # every part's pose here is deliberate (the PARTS table carries the reasons)
+    # and a probe run showed the orient engine flipping 16 of them against those
+    # reasons (deck_center cosmetic face into supports, master links grouser-down
+    # = the 2026-07-12 floating-C-jaw failure, the O5x209 axle stood on end).
+    # arrange + allow-rotations only yaws parts; deliberate="*" hard-fails if
+    # anything gets TILTED. Falls back to the naive layout without BambuStudio.app.
+    from bambu_autopack import packed_plates
+    import tempfile
+    plates, cli_plates, naive_plates = [], 0, 0
     for cat, members in CATEGORIES:
         items = []
         for m in members:
@@ -335,25 +350,48 @@ def main():
         if bad:
             sys.exit(f"FAIL: non-watertight after clean in '{cat}': {bad}")
         packed = shelf_pack(items, brim)
-        for i, parts in enumerate(packed, 1):
-            name = cat if len(packed) == 1 else f"{cat} {i} of {len(packed)}"
+        settings = {p["name"]: p["obj_settings"] for pl in packed for p in pl}
+        with tempfile.TemporaryDirectory() as td:
+            tmp = os.path.join(td, "cat.3mf")
+            write_bambu_3mf(tmp, [{"name": cat, "parts": pl} for pl in packed],
+                            dict(PROFILE))
+            res = packed_plates(tmp, deliberate=("*",), brim=brim)
+        # BEST-OF-BOTH (measured 2026-07-15): Bambu's engine wins on many-small-part
+        # categories (stand-ins 2 -> 1 plate, links 3 -> 2) but loses on few-big-part
+        # ones (its bed margins/spacing put Chassis 6 -> 7, Head 5 -> 7). Keep
+        # whichever layout needs fewer plates; tie goes to the naive nest (known
+        # layout, zero read-back risk).
+        if res is not None and len(res["plates"]) < len(packed):
+            cli_plates += len(res["plates"])
+            cat_plates = [[dict(p, obj_settings=settings[p["name"]]) for p in pl]
+                          for pl in res["plates"]]
+        else:
+            naive_plates += 0 if res is not None else len(packed)
+            cat_plates = packed
+        for i, parts in enumerate(cat_plates, 1):
+            name = cat if len(cat_plates) == 1 else f"{cat} {i} of {len(cat_plates)}"
             plates.append({"name": name, "parts": parts})
-            counts = {}
-            for p in parts:
-                k = p["name"].rsplit("_", 1)[0] if p["name"][-1].isdigit() else p["name"]
-                counts[k] = counts.get(k, 0) + 1
-            manifest.append((name, len(parts),
-                             ", ".join(f"{k}x{v}" if v > 1 else k for k, v in counts.items())))
+    if naive_plates:
+        print("NOTE: BambuStudio.app not found -- naive shelf-pack layout on "
+              "%d plate(s)" % naive_plates)
 
     write_bambu_3mf(OUT, plates, dict(PROFILE))
 
-    print("=" * 78 + f"\n{os.path.relpath(OUT, ROOT)}  --  {len(plates)} plates, PLA 0.20 mm\n" + "=" * 78)
-    print(f"  {'plate':18s} {'parts':>5}  contents")
-    total = 0
+    manifest, total = [], 0
+    for pl in plates:
+        counts = {}
+        for p in pl["parts"]:
+            k = re.sub(r"_\d+$", "", p["name"])
+            counts[k] = counts.get(k, 0) + 1
+        manifest.append((pl["name"], len(pl["parts"]),
+                         ", ".join(f"{k}x{v}" if v > 1 else k for k, v in counts.items())))
+
+    print("=" * 78 + f"\n{os.path.relpath(OUT, ROOT)}  --  {len(manifest)} plates, PLA 0.20 mm\n" + "=" * 78)
+    print(f"  {'plate':28s} {'parts':>5}  contents")
     for name, n, contents in manifest:
         total += n
-        print(f"  {name:18s} {n:5d}  {contents}")
-    print(f"  {'':18s} {total:5d}  total printed bodies")
+        print(f"  {name:28s} {n:5d}  {contents}")
+    print(f"  {'':28s} {total:5d}  total printed bodies")
     print("\n  EXCLUDED (bought): 28BYJ x4 / TT x2 / ULN2003 x4, 695-2RS bearings (owned),")
     print("  antenna m0.8 spur set + Ø4 shafts (buy, or print later with generated teeth")
     print("  like docs/WORM.md; the placeholder discs are NOT printable teeth),")

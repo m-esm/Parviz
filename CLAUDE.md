@@ -372,6 +372,16 @@ gates untouched); wallcheck PRINTED + a checks.py invariant cover them; BOM unch
 -- swap 1:1 for metal on arrival, limits in docs/ASSEMBLY.md ("Plastic hardware
 stand-ins").
 
+**BAMBU PER-CATEGORY AUTO-ARRANGE (2026-07-15, user):** export_bambu.py round-trips each
+category through BambuStudio's own arrange engine (bambu_autopack.packed_plates in the
+bambu-3mf-export skill, brim-pad trick because the CLI is brim-blind) and keeps the
+BETTER of Bambu-vs-naive per category (measured: Bambu wins many-small-part plates,
+stand-ins 2->1 + links 3->2 = 20 plates total; naive wins big-shell plates). --orient
+stays OFF: a probe run showed it flipping 16 deliberately-posed parts (deck_center
+cosmetic face into supports, masters onto the floating C-jaw, the axle stood on end);
+deliberate="*" hard-fails the export if arrange TILTS anything (yaw is free). Full
+gotcha list in the skill's "BambuStudio-CLI auto-arrange" section.
+
 **Buy-list additions (software side, 2026-07-12; 2026-07-14 order batch folded in):**
 - **Pi 5 cooler — BOUGHT 2026-07-14: 2x Joy-IT RPI5-HEATSINK5 (Tray 1, not delivered),
   BUT its 65x45x15 envelope (+30x30x10 fan) EXCEEDS the verified official-cooler
