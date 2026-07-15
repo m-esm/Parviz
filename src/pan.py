@@ -95,6 +95,19 @@ def build_pan_platform():
     slot.apply_translation((0, 0, z1 - 20))
     plate = sub(plate, slot)
 
+    # 2 printed REGISTRATION PINS on the top face for the neck column (fastening campaign
+    # 2026-07-15, audit holding gap 1): the root joint of the whole head stack used to be
+    # flat-on-flat -- the column was held by hand while 3 blind M3s were driven up from
+    # underneath. Ø4.0 x 2.45 proud (0.55 fused into the plate) at (+-18, -32), 36 mm
+    # apart so they fix rotation too; blind Ø4.2 sockets in build_neck_clevis take them.
+    # Placement: inside the column footprint (x +-24, y -40..6) and inside the neckfoot
+    # collar's bore (so the collar still drops over the column), 6 mm off the cable slot
+    # wall, far from the 3 bolt counterbores. Mirrors the pedestal pins (chassis.py).
+    for sx in (-1, 1):
+        pin = cyl(2.0, 3.0)
+        pin.apply_translation((sx * 18.0, -32.0, z1 + 0.95))     # z1-0.55 .. z1+2.45
+        plate = uni([plate, pin])
+
     # 3 M3 clearance holes to bolt the neck down (MATCH the neck-base pilots: rad 16.5,
     # clocked 270/30/150 about (0, neck_y) -- see build_neck_clevis, incl. why 16.5) with
     # Ø6.5 head counterbores from the UNDERSIDE, 4 deep. All 3 land on the solid top

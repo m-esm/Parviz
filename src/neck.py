@@ -8,7 +8,7 @@ import shapely.geometry as sg
 from trimesh.creation import extrude_polygon
 from trimesh.transformations import rotation_matrix as R
 from params import P
-from geo import _color, box, cyl, inter, rounded_box, sub, uni
+from geo import _color, box, cyl, inter, nut_slot, rounded_box, sub, uni
 from gears import worm_cd
 
 
@@ -199,18 +199,45 @@ def build_neck_clevis():
     exitw = box(12.0, 8.0, 10.0)
     exitw.apply_translation((-12.0, -26.0, 122.0))
     neck = sub(neck, exitw)
-    # 3 M3 PILOTS (Ø2.5 x 12 -- the old Ø3.5 was clearance, nothing bit) to bolt the neck down
-    # to the pan platform. Stage 5: circle clocked (270,30,150) -- with the column at
-    # ny=-17 the old (90,210,330)/rad-12 put a hole 2 mm from the PAN AXIS, inside the
-    # platform's D-bore hub. rad 16.5 (was 16.0): the 270-deg bolt's Ø6.5 head counterbore
-    # in the platform grazed the platform cable slot by 0.25 (CABLE-CHECK minor); at 16.5
-    # the cbore edge (y -30.25) clears the slot edge (y -30) by 0.25 and the screw head
-    # keeps its full seat. Keep in sync with build_pan_platform().
-    for a in (270, 30, 150):
+    # ROOT JOINT: neck -> pan_platform, 3x M3x14 + SIDE-SLIDE CAPTIVE HEX NUTS + 2
+    # REGISTRATION PINS (fastening campaign 2026-07-15, audit P1 row 1 + holding gap 1).
+    # Was 3x M3 into Ø2.5 thread-form pilots with ZERO registration: the root of the
+    # entire head stack self-tapped into PLA, and nothing held the column square while
+    # the 3 blind screws were driven up from under the platform. Now the proven pedestal
+    # pattern (chassis.py build_chassis_pedestal): the platform keeps its clearance bores
+    # + underside head counterbores, the column base takes Ø3.5 clearance THROUGH-bores
+    # and a hex trap per bolt, and 2 printed pins on the platform top spigot into blind
+    # sockets here so the column self-locates (and can't rotate) before any screw turns.
+    # Bench joint, fully open: drop the 3 nuts into their slots (they slide in along the
+    # column's own open rear/side faces, flats on the slot walls = the rotation lock),
+    # lower the column onto the pins, drive the screws from underneath.
+    # Circle unchanged, clocked (270,30,150) at rad 16.5 -- stage 5: with the column at
+    # ny=-17 the old (90,210,330)/rad-12 put a hole 2 mm from the PAN AXIS; 16.5 (was 16.0)
+    # keeps the 270-deg bolt's Ø6.5 platform counterbore 0.25 off the cable slot
+    # (CABLE-CHECK minor). Keep in sync with build_pan_platform().
+    # Nut seat z0+6 = 72.0: the platform's cbore seats the head at z 62.4, so an M3x14
+    # tips at 76.4 = 3.1 (>2 threads) past the nut's 73.4 top face, inside the Ø3.5 bore
+    # which runs to 79. Slot exits: the 270 bolt opens -Y through the column rear face
+    # (y -40, 6.5 away, 3.5 clear of the cable channel at y -30); the 30/150 pair opens
+    # +-X through the side faces (9.7 away, and z 70.6..73.4 sits under the z 74/82
+    # panel-line grooves and well under the ULN bosses at z 77+).
+    nut_z = z0 + 6.0
+    for a, odir in ((270, (0, -1, 0)), (30, (1, 0, 0)), (150, (-1, 0, 0))):
         rad = 16.5
         hx = rad * np.cos(np.radians(a)); hy = ny + rad * np.sin(np.radians(a))
-        pilot = cyl(1.25, 14); pilot.apply_translation((hx, hy, z0 + 5))   # bites z0..z0+12
-        neck = sub(neck, pilot)
+        bore = cyl(P["m3_clear_r"], 14.0)
+        bore.apply_translation((hx, hy, z0 + 6.0))          # spans z0-1 .. z0+13
+        neck = sub(neck, bore)
+        neck = sub(neck, nut_slot((hx, hy, nut_z), screw_axis="z", open_dir=odir,
+                                  size="M3", length=14.0))
+    # blind Ø4.2 sockets for the platform's 2 printed Ø4.0 registration pins
+    # (+-18, -32): 36 mm apart (fixes rotation), inside the column footprint (boundary
+    # x 23.8 at this y -> 3.7 wall), clear of the cable channel (x +-8), the 270 nut
+    # slot (x +-2.85) and the platform's cable slot 6 mm away. +0.1/side (seam-dowel rule).
+    for sx in (-1, 1):
+        sock = cyl(2.1, 4.0)
+        sock.apply_translation((sx * 18.0, -32.0, z0 + 1.5))    # z0-0.5 .. z0+3.5
+        neck = sub(neck, sock)
     # tilt ULN2003 driver standoffs on the column BACK face (same pattern as the base's pan
     # driver mount; motor + driver both live on the pan group so their leads cross no joint).
     # Board center DROPPED 110 -> 93 (review 2026-07-08): at 110 the board plane
