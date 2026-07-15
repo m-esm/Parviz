@@ -134,27 +134,54 @@ NUT = {"M2": (4.0, 1.6), "M2.5": (5.0, 2.0), "M3": (5.5, 2.6), "M4": (7.0, 3.2)}
 # hex nut (across-flats, thickness); M3 matches the proven chassis_pedestal traps.
 
 
+def nut_ac(size="M3"):
+    """Hex nut ACROSS-CORNERS span. A nut with its FLATS on the slot walls spans
+    this much along the insertion run -- NOT the across-flats figure. Getting
+    this wrong is what broke every captive trap in the first print (see below)."""
+    return NUT[size][0] * 2.0 / np.sqrt(3.0)
+
+
 def nut_slot(center, screw_axis="z", open_dir=(0, 1, 0), size="M3",
-             length=14.0, c_af=0.2, c_t=0.2):
-    """Slide-in captive hex-nut trap NEGATIVE (the proven chassis_pedestal
-    pattern, standardized for the 2026-07-15 fastening campaign): a rectangular
-    slot, width = nut AF + c_af (the flats ride the walls = the rotation lock),
-    thickness = nut_t + c_t along the screw axis, running `length` from the nut
-    seat toward (and past) the part's open face along `open_dir`. Pair it with
-    a cyl()/teardrop() screw bore; keep >= 1.2 wall beyond the slot, and put
-    the nut seat so the screw tip lands ~2 threads past the nut. `center` =
-    the nut's center ON the screw axis; `screw_axis` is 'x'/'y'/'z' or a
-    vector; `open_dir` must be perpendicular to it."""
+             length=14.0, c_af=0.2, c_t=0.2, seat=True):
+    """Slide-in captive hex-nut trap NEGATIVE (standardized for the 2026-07-15
+    fastening campaign): a rectangular slot, width = nut AF + c_af (the flats
+    ride the walls = the rotation lock), thickness = nut_t + c_t along the screw
+    axis, running from a closed SEAT out through the part's open face along
+    `open_dir`. Pair it with a cyl()/teardrop() screw bore on `screw_axis`
+    through `center`; keep >= 1.2 wall beyond the slot, and place things so the
+    screw tip lands ~2 threads past the nut.
+
+    `center` IS THE SCREW AXIS (and, once the nut is pushed home, the nut's own
+    centre): the slot is cut from `center - open_dir*ac/2` -- half the nut's
+    ACROSS-CORNERS span behind the axis -- out to `center + open_dir*(length -
+    ac/2)`. So a nut slid in and pushed to the seat lands dead on the bore, and
+    the seat is what aligns it: hands-free, no fiddling while you drive.
+
+    WHY THE ac/2 MATTERS (2026-07-15, the whole reason this helper exists): the
+    original hand-built chassis_pedestal trap ran its box FROM the bore axis
+    away from it. A hex spans ac = AF*2/sqrt(3) (6.35 for M3, not 5.5) along the
+    run, so the nut could only ever reach axis + 3.175 -- a 3.175 mm miss on a
+    1.5 mm thread radius. The screw could NEVER catch the nut. That "reference
+    good" joint was broken as printed, which is why even the chassis's one real
+    nut pocket failed. Probe any new trap with a checks.py nut-reach assertion.
+
+    `screw_axis` is 'x'/'y'/'z' or a vector; `open_dir` must be perpendicular to
+    it. `seat=False` omits the backstop (slot runs both ways from `center`) for
+    the rare pass-through case where another feature does the locating."""
     axv = {"x": (1, 0, 0), "y": (0, 1, 0), "z": (0, 0, 1)}.get(screw_axis, screw_axis)
     a = np.asarray(axv, float); a /= np.linalg.norm(a)
     o = np.asarray(open_dir, float); o /= np.linalg.norm(o)
     if abs(np.dot(a, o)) > 1e-6:
         raise ValueError("nut_slot(): open_dir must be perpendicular to screw_axis")
     af, nut_t = NUT[size]
+    back = nut_ac(size) / 2.0 if seat else length / 2.0
+    if length <= back:
+        raise ValueError("nut_slot(): length %.2f must exceed the nut seat %.2f"
+                         % (length, back))
     b = box(af + c_af, length, nut_t + c_t)      # x=flats, y=slot run, z=screw axis
     T = np.eye(4)
     T[:3, 0] = np.cross(o, a); T[:3, 1] = o; T[:3, 2] = a
-    T[:3, 3] = np.asarray(center, float) + o * (length / 2.0)
+    T[:3, 3] = np.asarray(center, float) + o * (length / 2.0 - back)
     b.apply_transform(T)
     return b
 

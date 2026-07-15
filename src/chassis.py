@@ -15,15 +15,13 @@ from tracks import _track_zc, _spr_cz
 from pan import _pan_stack
 
 
-# M3 hex geometry for the 2026-07-15 fastening campaign's captive traps
-# (geo.NUT["M3"] = (AF 5.5, t 2.6)). A hex with its FLATS on the slot walls spans
-# AF*2/sqrt(3) ACROSS CORNERS along the insertion run, so the slot's far wall must
-# sit half of THAT past the screw axis or the nut can never reach the bore.
-# geo.nut_slot() runs its box FROM `center` along open_dir -- i.e. `center` IS the
-# far wall, not the nut's centre -- so every call here passes
-# (screw axis - open_dir * M3_AC/2). Same reason the slide-up slots' top stops use
-# M3_AC/2 (3.175) and not AF/2 (2.75).
-M3_AC = geo.NUT["M3"][0] * 2.0 / np.sqrt(3.0)        # 6.35 across corners
+# M3 hex ACROSS-CORNERS (geo.NUT["M3"] = (AF 5.5, t 2.6)). A hex with its FLATS on
+# the slot walls spans AF*2/sqrt(3) along the insertion run, NOT AF -- which is why
+# the hand-rolled slide-up slots' top stops use M3_AC/2 (3.175) and not AF/2 (2.75).
+# geo.nut_slot() now owns this correction itself: pass it the SCREW AXIS and it cuts
+# the seat ac/2 behind, so a nut pushed home centres on the bore (see its docstring
+# for the pedestal defect that motivated it). Do NOT pre-offset nut_slot centres.
+M3_AC = geo.nut_ac("M3")                             # 6.35 across corners
 
 
 def build_fascia():
@@ -713,9 +711,7 @@ def build_chassis_parts():
         # bosses (seat sits inside the 5-wall), +y for the two on the rear wall.
         odir = (0.0, 1.0, 0.0) if abs(sy_) > 100 else (-np.sign(sx_), 0.0, 0.0)
         oz = P["deck_nut_z"]
-        seat = (np.array([sx_, sy_, oz], float)
-                - np.array(odir, float) * (M3_AC / 2.0))
-        lower = sub(lower, geo.nut_slot(seat, screw_axis="z", open_dir=odir,
+        lower = sub(lower, geo.nut_slot((sx_, sy_, oz), screw_axis="z", open_dir=odir,
                                         size="M3", length=P["deck_nut_run"]))
         if abs(sx_) > 50.0:
             # OPEN THE SLOT'S FLOOR on the six scarfed wall bosses: the pocket's flat
@@ -753,9 +749,9 @@ def build_chassis_parts():
             scr = teardrop(P["m3_clear_r"], 21.0, axis="y")  # M3x20 through the +y pad
             scr.apply_translation((sx_ * xs, sy + 3.5, 18.0))    # -> nut at sy-4
             mesh = sub(mesh, scr)
-            seat = (sx_ * xs, sy - 4.0, 18.0 - M3_AC / 2.0)      # nut centres on the
-            mesh = sub(mesh, geo.nut_slot(seat, screw_axis="y",  # bore, see M3_AC
-                                          open_dir=(0, 0, 1), size="M3",
+            mesh = sub(mesh, geo.nut_slot((sx_ * xs, sy - 4.0, 18.0),   # = the bore
+                                          screw_axis="y",              # axis; nut_slot
+                                          open_dir=(0, 0, 1), size="M3",  # seats it
                                           length=(22.0 - 18.0) + M3_AC / 2 + 2.0))
             dwl = cyl(2.05, 16.0, axis="y")                  # Ø4 dowel across the seam
             dwl.apply_translation((sx_ * xd, sy, 18.0))      # (+0.1 slip; press the -y
@@ -799,8 +795,8 @@ def build_chassis_parts():
             scr.apply_translation((sx_ * tpx, sy + 3.0, zs))  # seam-up print wants a
             mesh_tail = sub(mesh_tail, scr)                   # 45deg self-supporting
             mesh_rear = sub(mesh_rear, scr)                   # roof (geo.teardrop)
-            seat = (sx_ * tpx, sy - 6.0, zs - M3_AC / 2.0)    # nut center = the axis
-            mesh_tail = sub(mesh_tail, geo.nut_slot(seat, screw_axis="y",
+            mesh_tail = sub(mesh_tail, geo.nut_slot((sx_ * tpx, sy - 6.0, zs),
+                                                    screw_axis="y",   # = the bore axis
                                                     open_dir=(0, 0, 1), size="M3",
                                                     length=(tz1 - zs) + M3_AC / 2 + 2.0))
         return mesh_tail, mesh_rear
@@ -1158,10 +1154,10 @@ def build_chassis_parts():
                 ubb = teardrop(1.6, 10.0, axis="x")   # re-open the core's wall bore
                 ubb.apply_translation((s * 73.0, my_, mzu))           # through the boss
                 pnl = sub(pnl, ubb)
-                useat = (s * 72.4, my_, mzu + M3_AC / 2)      # far wall = seat, so the
-                pnl = sub(pnl, geo.nut_slot(useat, screw_axis="x",    # nut centres on
-                                            open_dir=(0, 0, -1), size="M3",  # the bore
-                                            length=(mzu + M3_AC / 2) - 29.0))
+                pnl = sub(pnl, geo.nut_slot((s * 72.4, my_, mzu),   # = the bore axis;
+                                            screw_axis="x",         # nut_slot seats the
+                                            open_dir=(0, 0, -1), size="M3",   # nut onto
+                                            length=(mzu + M3_AC / 2) - 29.0))  # it
             # NO counterbore (fittings audit 2026-07-14): a O6.6 cb broke out of
             # the 4.8-wide foot's side walls (0.1-0.5 remnants in wallcheck) --
             # the M3 socket head seats PROUD on the foot top instead (O5.5 on a
@@ -1538,17 +1534,22 @@ def build_pan_pedestal():
                                          (ex + 4 * u[0], ey + 4 * u[1])]).buffer(4.0), 24.0)
     cbl.apply_translation((0, 0, seat_floor - 22))
     ped = sub(ped, cbl)
-    # mounting: 4x Ø3.4 vertical bores + side-slide hex nut traps (M3 AF 5.5 +
-    # 0.2, 2.6 thick + 0.2, slot opens to the NEAREST side face); the csk heads
-    # live in the plate (see build_belly_plate). Nut seat at z 14.5 puts an
-    # M3x12 tip at ~19 -- 2 threads past the nut.
+    # mounting: 4x Ø3.4 vertical bores + side-slide hex nut traps (slot opens to
+    # the NEAREST y face); the csk heads live in the plate (see build_belly_plate).
+    # Nut seat at z 15.9 puts an M3x12 tip ~2 threads past the nut.
+    # FIXED 2026-07-15 (fastening campaign): the hand-rolled trap ran its box FROM
+    # the bore axis AWAY from it, so the nut -- 6.35 across corners, not 5.5 --
+    # could only ever reach axis+3.175 and the screw MISSED it by twice its thread
+    # radius. This "reference good" joint never worked, which is why even the
+    # chassis's one real nut pocket failed on the first print. geo.nut_slot() now
+    # seats the nut on the axis; checks.py asserts the reach.
     for dx_, dy_ in ((-18.0, -18.0), (18.0, -18.0), (-18.0, 18.0), (18.0, 18.0)):
         bx_, by_ = mx + dx_, my + dy_
         bore = cyl(1.7, 12.0); bore.apply_translation((bx_, by_, zb + 3.0))
         ped = sub(ped, bore)
-        trap = box(5.7, 14.0, 2.8)                    # slides in from the +-y face
-        trap.apply_translation((bx_, by_ + np.sign(dy_) * 7.0, 14.5 + 1.4))
-        ped = sub(ped, trap)
+        ped = sub(ped, geo.nut_slot((bx_, by_, 15.9), screw_axis="z",
+                                    open_dir=(0.0, float(np.sign(dy_)), 0.0),
+                                    size="M3", length=14.0))
     for dx_ in (-18.0, 18.0):                         # printed registration pins:
         pin = cyl(2.0, 2.8)                           # 0.3 fused into the body, 2.45
         pin.apply_translation((mx + dx_, my, zb - 1.4 + 0.3))   # proud into the

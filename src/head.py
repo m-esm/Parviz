@@ -9,6 +9,7 @@ import shapely.geometry as sg
 from trimesh.creation import extrude_polygon
 from trimesh.transformations import rotation_matrix as R
 from params import DEG, P, TAU
+import geo
 from geo import (NUT, _T, _color, _orient, blind_socket, box,
     cyl, fix_pin, frustum, hex_prism, inter, nut_slot,
     rounded_box, screw_post, sub, teardrop, uni)
@@ -20,24 +21,18 @@ from gears import gear_disc
 # Fastening helpers (2026-07-15 FASTENING AUDIT, docs/FASTENING_AUDIT.md)
 # ---------------------------------------------------------------------------
 def _nut_trap(nut_c, screw_axis, open_dir, size="M3", length=14.0):
-    """Slide-in captive hex-nut trap NEGATIVE, positioned by the NUT CENTRE.
+    """Slide-in captive hex-nut trap NEGATIVE, positioned by the NUT CENTRE, with
+    `length` measured from that centre out to the slot MOUTH.
 
-    Thin wrapper over geo.nut_slot() with two corrections the raw helper leaves to
-    the caller:
-
-    1. nut_slot() builds its box spanning [center, center + length*open_dir] -- i.e.
-       `center` is the slot's CLOSED END, not the nut's mid-plane. Handing it the nut
-       centre straight leaves the nut's REAR HALF uncut and nothing seats.
-    2. The hex bottoms CORNER-first on a flat trap end (its flats ride the slot walls
-       = the rotation lock), so the seat plane sits af/sqrt(3) behind the nut centre.
-
-    So: pass the true nut centre; `length` is measured from it to the slot MOUTH.
-    Keep >= 1.2 of part beyond seat = nut_c + af/sqrt(3) along -open_dir.
+    geo.nut_slot() now owns the seat correction itself (it cuts from ac/2 behind
+    the screw axis so a nut pushed home centres on the bore -- see its docstring
+    and the chassis_pedestal defect that motivated it), so this is just a units
+    shim: nut_slot's `length` runs seat->mouth, ours runs centre->mouth.
+    Keep >= 1.2 of part beyond the seat at nut_c - open_dir*ac/2.
     """
-    o = np.asarray(open_dir, float); o /= np.linalg.norm(o)
-    back = NUT[size][0] / np.sqrt(3.0)          # nut centre -> rear corner (M3: 3.175)
-    return nut_slot(np.asarray(nut_c, float) - o * back, screw_axis=screw_axis,
-                    open_dir=o, size=size, length=length + back)
+    return nut_slot(np.asarray(nut_c, float), screw_axis=screw_axis,
+                    open_dir=open_dir, size=size,
+                    length=length + geo.nut_ac(size) / 2.0)
 
 
 def _yz_post(center_xz, y0, y1, wx, wz, r=2.0):
