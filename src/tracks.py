@@ -137,7 +137,7 @@ def _keel(x0, x1, py, kind):
     return m
 
 
-def _track_link(open_a=False, open_b=False):
+def _track_link(open_a=False, open_b=False, press_a=False):
     """One articulated track link (local frame: own pin axis = X axis, next pin at y=+pitch,
     OUTER face toward -z). Pad web + grouser + interleaved pin knuckles + 45deg keels under
     every knuckle band (print-in-place strips 2026-07-12: grouser-down is self-supporting)
@@ -148,7 +148,24 @@ def _track_link(open_a=False, open_b=False):
     knuckles (no bore), the far (y=pitch) B bores are Ø2.7 print-in-place clearance around
     the neighbor's rod. open_a: strip-FIRST link -- no integral pin, old Ø2.2 A bores for
     a Ø1.75 filament boundary pin. open_b: strip-LAST link -- far bores revert to Ø2.2
-    (the next strip's first link + filament pin land there). Master = both open + jaw."""
+    (the next strip's first link + filament pin land there). Master = both open + jaw.
+
+    press_a (2026-07-15 fastening audit P2-22): the boundary filament pins had ZERO
+    axial retention -- Ø2.2 bores at BOTH ends of a Ø1.75 pin, i.e. 0.45 of slop and
+    nothing to stop the pin walking out sideways on the wraps. The LAST
+    `track_pin_press_l` of the -X A bore now steps down to `track_pin_press_d` (Ø1.6,
+    0.15 diametral interference on Ø1.75 filament): the pin pushes in from +X through
+    plain Ø2.2 all the way, then its tip presses the last 1.5 mm and STAYS. One press
+    section per joint BY CONSTRUCTION -- only the strip-FIRST link (which owns the A end
+    of every boundary joint) gets it; the mating strip-LAST link's far bores stay Ø2.2
+    for insertion, and the MASTER never gets it (its A bores are the C-jaw drop-on mouth
+    -- a press ring there would fight the swing-down, and its jaw pin is retained by the
+    keeper bars instead). FALLBACK if the press proves fussy on the plate-20 coupon (PLA
+    creep relaxing the grip, or the bore printing oversize): pull the pin ~0.5 proud at
+    each end and MELT-MUSHROOM the ends with a soldering-iron tip -- a ~1 s touch spreads
+    the filament to ~Ø2.6, a permanent cap on a Ø2.2 bore. The plain Ø2.2 insertion end
+    is untouched either way, so the mushroom option needs no geometry change and can be
+    applied per-joint on the bench."""
     pitch, tw = P["track_pitch"], P["track_width"]
     kr = 3.5                                           # knuckle radius about the pin
     parts = [box(tw, 3.2, 2.7), box(tw, 2.0, 1.5)]     # web z -4.5..-1.8, grouser z -6.0..-4.5
@@ -172,7 +189,15 @@ def _track_link(open_a=False, open_b=False):
     link = uni(parts)                                  # (sprocket drives on the rod in
     if open_a:                                         # the central channel; neighbor's
         # Ø2.7 B bores ride it print-in-place
-        d = cyl(P["track_pin_bore_d"] / 2, tw + 4, axis="x")
+        if press_a:                                    # PRESS-STEPPED boundary A bore:
+            pl = P["track_pin_press_l"]                # plain Ø2.2 from +X down to
+            x0 = -tw / 2 + pl                          # x0, then Ø1.6 out the -X face
+            d = cyl(P["track_pin_bore_d"] / 2, (tw / 2 + 2) - x0, axis="x")
+            d.apply_translation((((tw / 2 + 2) + x0) / 2, 0, 0))
+            link = sub(link, d)
+            d = cyl(P["track_pin_press_d"] / 2, tw + 4, axis="x")
+        else:
+            d = cyl(P["track_pin_bore_d"] / 2, tw + 4, axis="x")
         link = sub(link, d)                            # boundary A bores (filament pin)
     far_d = P["track_pin_bore_d"] if open_b else P["track_bore_pip_d"]
     d = cyl(far_d / 2, tw + 4, axis="x"); d.apply_translation((0, pitch, 0))
@@ -216,6 +241,20 @@ def _track_master_link():
         bs = cyl(2.25, 7.0, axis="x")
         bs.apply_translation((sxs * (tw / 2 - 3.5), 2.6, -1.9))
         body = uni([body, bs])
+    # JAW CROWN = 2.40 (bore top z 1.10 -> knuckle crown z 3.50 at y 0), the master's
+    # thinnest tension-carrying section (2026-07-15 fastening audit P2-20). LEFT AS IS:
+    # it cannot be thickened without breaking the loop. Both bounds are hard --
+    # downward, the bore radius IS the pin; upward, the knuckle crown IS the rolling
+    # surface (road wheels clear it by 0.10, end idlers by 0.12), so a taller crown
+    # jacks the wheels off the whole chain, not just the master. Widening the r3.5
+    # knuckle is the same wall. The jaw mouth can't shrink either: 2.0 over a Ø1.75 pin
+    # is 0.25 total, and the drop-on closure is the entire point of the master.
+    # => MATERIAL is the lever, not geometry: PRINT THE MASTER LINK (and its keepers) IN
+    # PETG/PCTG, not PLA. PETG's ~2x notched impact toughness is exactly what a 2.4 mm C
+    # around a stress-raiser needs, and the master is a 2-per-robot part on its own plate
+    # (plate 20 coupon), so the filament swap is nearly free. Watch this one on the
+    # coupon: if the crown cracks in PETG, the fix is a different closure (a full solid
+    # link + hand-flexed insertion), not a thicker crown.
     for (x0, x1) in ka:                                # jaw slots through both A knuckles,
         s = box((x1 - x0) + 1.2, 2.0, 7.0)             # open out the side faces (+0.6/end)
         s.apply_translation(((x0 + x1) / 2, 0, -4.4))  # z -7.9..-0.9: bore keeps its top arc
@@ -340,10 +379,45 @@ def _sprocket(sx, phase=0.0):
                box(8.8, 8, 3.70 + 0.15))
     dd.apply_translation((hub_in + 4.1, 0, 0))                     # face-0.2 .. face+8.4
     spr = sub(spr, dd)
-    bore = cyl(3.0, 16.0, axis="x"); bore.apply_translation((-3.3, 0, 0))
-    spr = sub(spr, bore)                                           # Ø6 free bore to the outer face
+    # AXIAL RETENTION (2026-07-15 fastening audit P0-7). Two independent paths:
+    #
+    # PRIMARY -- M2 + Ø9 washer at the outer face, screwed the length of the Ø6 bore
+    # into the TT shaft tip's Ø2 axial hole; the washer spans the bore and bears on the
+    # Ø9 counterbore floor, so it traps the sprocket positively. This path was DEAD as
+    # modeled until now: the Ø6 bore stopped at x -11.3 and the socket started at -19.7,
+    # i.e. 8.4 mm of SOLID hub sat between the screw and the shaft it was supposed to
+    # reach (probed on the built mesh). The bore now runs from the outer face all the
+    # way to the socket mouth (hub_in + 8.4), which is what makes the screw possible --
+    # and it costs nothing structurally: torque goes shaft -> D-socket -> hub TUBE ->
+    # disc, and a Ø12/Ø6 tube keeps a 3.0 wall against a ~4.1 N stall tooth force.
+    # BOM/VERIFY_ON_ARRIVAL: the screw must span cb floor (x 2.4) -> shaft tip (-19.7),
+    # so it is an M2x25, NOT a stock short M2 -- and the whole path assumes the owned
+    # TT gearmotors actually have the Ø2 axial hole. MANY TT VARIANTS DO NOT. Check the
+    # 3x TT 1:120 (Bag 5) shaft tips before ordering the M2x25 + Ø9 washers.
+    #
+    # FALLBACK (needs no shaft feature, no long screw, always present) -- CRUSH RIBS in
+    # the socket's round arcs, so the sprocket is a light PRESS onto the shaft and holds
+    # itself axially by friction. This is the fallback because the obvious one is
+    # geometrically impossible here: a radial grub boss has nowhere to live. Probed on
+    # the assembly -- over the ENTIRE shaft overlap (local x <= -19.7) the free radius
+    # around the axle is 6.50 against a hub radius of 6.0, because that whole length
+    # runs inside the side panel's Ø13.5 L-return notch. So there is no room for a boss
+    # (needs ~r9) AND no tool access to a flush grub either: the panel buries it, and
+    # the socket can only go onto the shaft after the panel + TT are built up. Ribs sit
+    # on the ±y arcs (the ±z flats already clock the shaft), so shaft location is
+    # flats + 2 ribs = well constrained, not over-constrained. Vertical extrusions in
+    # the print pose (axle axis prints up), so they are free.
+    rib_cr = P["tt_shaft_d"] / 2 - P["spr_socket_rib_bite"]        # crest radius
+    for sgn in (-1, 1):                                # tangent circle: crest bites the
+        rb = cyl(0.6, 8.6, axis="x")                   # shaft, root buried in the socket
+        rb.apply_translation((hub_in + 4.1, sgn * (rib_cr + 0.6), 0))   # wall (r 2.825)
+        spr = uni([spr, rb])                           # -> only the sliver inside is new
+    bore_x1 = hub_in + 8.4                             # socket mouth: the bore must REACH
+    bore = cyl(3.0, 4.7 - bore_x1, axis="x")           # it or the M2 hits solid hub
+    bore.apply_translation(((4.7 + bore_x1) / 2, 0, 0))
+    spr = sub(spr, bore)                               # Ø6 free bore, outer face -> socket
     cb = cyl(4.5, 1.7, axis="x"); cb.apply_translation((3.25, 0, 0))       # band_half - 0.75
-    spr = sub(spr, cb)                                             # retaining-screw counterbore
+    spr = sub(spr, cb)                                 # M2 + Ø9 washer retaining seat
     for k in range(6):                                 # lightening-hole ring (tank-ref
         aa = TAU * k / 6                               # spoked sprocket look): 6x Ø4.6
         lh = cyl(2.3, 12.0, axis="x")                  # through the web at r 11.5,
@@ -387,8 +461,8 @@ def build_tracks():
     # joints, 3 strip-to-strip filament joints, 1 master closure (master far
     # filament pin + jaw drop-on).
     mid = _track_link()
-    first = _track_link(open_a=True)
-    last = _track_link(open_b=True)
+    first = _track_link(open_a=True, press_a=True)     # press step retains the boundary
+    last = _track_link(open_b=True)                    # filament pin (see _track_link)
     mbody, mkeepers = _track_master_link()             # link 0 = the loop-closing master
     sizes = _strip_plan(P["track_links"])
     starts, ends, idx = set(), set(), 1
@@ -433,11 +507,32 @@ def build_tracks():
         # pylons; the front pair tensions): rides the knuckle crowns with 0.12 running
         # clearance; TWO
         # F688ZZ bearings (2026-07-10 fix: one 5-wide bearing at the inboard face let the
-        # 30-wide wheel tilt/wander on its Ø8 stub) in the Ø15.95 through-bore, one pressed
-        # at EACH face with its Ø18 flange in a Ø18.5 x 1.0 recess; the Ø8 stub axle
+        # 30-wide wheel tilt/wander on its Ø8 stub) in the Ø16.05 RIB-CALIBRATED bore, one
+        # pressed at EACH face with its Ø18 flange in a Ø18.5 x 1.0 recess; the Ø8 stub axle
         # (hardware) cantilevers from the chassis tension-slot plate. BUY 4x F688ZZ (was 2).
+        #
+        # CRUSH-RIB PRESS (2026-07-15 fastening audit P2-17): the old Ø15.95 seat was a
+        # nominal 0.05 DIAMETRAL interference on a Ø16.0 bearing -- meaningless, because
+        # FDM hole repeatability on this printer is +-0.15: the same seat prints as a
+        # 0.2 jam (split the 3.07-equivalent rim / hammer the shield) or a 0.1 slip fit
+        # (wobble hinge), with no way to tell which until it is in your hand. The bore is
+        # now Ø16.05 = a 0.05 CLEARANCE on nominal, so it can never jam, and the press is
+        # carried by `idler_rib_n` axial crush ribs standing `idler_rib_proud` into it.
+        # Ribs are the standard fix for exactly this: only ~3 x 0.9 mm of arc bears, so
+        # the contact pressure is high enough to grip and to deform locally, the ribs eat
+        # the print tolerance instead of the rim, and the bearing self-centres on 3
+        # points. Rounded (tangent-circle) crests -- a square rib shaves into a chip that
+        # packs behind the bearing. Ribs run the full bore: the axis prints VERTICAL
+        # (running-gear orientation normalization), so they are zero-overhang extrusions.
         ir, iw = R - kr - 0.12, 30.0                   # widened with the 45-link stretch
         idl = sub(cyl(ir, iw, axis="x"), cyl(P["idler_bore_d"] / 2, iw + 2, axis="x"))
+        rib_cr = P["idler_bore_d"] / 2 - P["idler_rib_proud"]   # crest radius
+        for k in range(P["idler_rib_n"]):
+            aa = TAU * k / P["idler_rib_n"]
+            rb = cyl(0.9, iw, axis="x")                # tangent circle: crest at rib_cr,
+            rb.apply_translation((0, (rib_cr + 0.9) * np.cos(aa),   # root buried in the
+                                  (rib_cr + 0.9) * np.sin(aa)))     # bore wall
+            idl = uni([idl, rb])
         for bs_ in (-1, 1):
             fr = cyl(18.5 / 2, 1.05, axis="x")
             fr.apply_translation((bs_ * (iw / 2 - 0.5), 0, 0))
@@ -454,11 +549,13 @@ def build_tracks():
             idl2.apply_translation((cx + sx * 6.0, ey_, za))
             wheel_pieces.append((inm, idl2))
         # road wheels (tank-ref style): dense dished row riding the bottom-run knuckle
-        # crowns (0.1 running clearance). Rim ring + recessed dish + raised hub with a
-        # 5-hole bolt circle on each face; Ø4.2 center bore = slip fit on the M4 x 40
+        # crowns (0.1 running clearance). Rim ring + recessed dish + raised hub;
+        # Ø4.2 center bore = slip fit on the M4 x 40
         # bolt-axle (2026-07-10 fix: the wheels were mounted to NOTHING -- weight went
         # to ground through the TT gearbox shaft + idler stub only; they now bolt to
-        # the pod-rail wheel beam, captive M4 nut inboard, head = the outer hubcap).
+        # the WHEEL BEAM, which since 2026-07-14 is the integral L-return of the
+        # chassis_side_{L,R}_{front,rear} panels (pod_rail_L/R deleted): captive M4
+        # nut in the beam's slide-up slot inboard, head = the outer hubcap.
         rr_ = P["roadwheel_d"] / 2
         for ry in P["roadwheel_ys"]:
             rw = cyl(rr_, 30.0, axis="x")
@@ -466,12 +563,15 @@ def build_tracks():
                 dsh = sub(cyl(rr_ - 2.2, 2.4, axis="x"), cyl(5.2, 3.4, axis="x"))
                 dsh.apply_translation((fs * (30.0 / 2 - 1.1), 0, 0))
                 rw = sub(rw, dsh)
-                for k in range(5):
-                    aa = TAU * k / 5
-                    bh = cyl(0.9, 2.0, axis="x")       # bolt circle on the hub boss
-                    bh.apply_translation((fs * (30.0 / 2 - 0.9),
-                                          3.6 * np.cos(aa), 3.6 * np.sin(aa)))
-                    rw = sub(rw, bh)
+                # COSMETIC 5-hole bolt circle DELETED (2026-07-15 fastening audit
+                # P2-21). The hub boss is an r 2.1 (M4 bore) -> r 5.2 (dish wall)
+                # annulus = 3.1 of stock, and it is the LOADED section: the wheel
+                # carries ~1/7 of the robot through it and spins on the bolt. The
+                # Ø1.8 holes at r 3.6 spanned r 2.7..4.5, leaving a 0.6 ligament to
+                # the bore and 0.7 to the dish -- a 5-point perforation ring at the
+                # peak-stress annulus, for looks. No hole fits: >=1.2 ligaments both
+                # sides caps the hole at Ø0.7, under one nozzle width. The dished
+                # faces alone carry the tank-ref read.
             rw = sub(rw, cyl(2.1, 34.0, axis="x"))
             rw.apply_translation((cx, ry, (zc - R) + kr + rr_ + 0.1))
             wheel_pieces.append((f"road_wheel_{len(wheel_pieces) - 3}", rw))
@@ -512,10 +612,13 @@ def build_tracks():
             ws8.apply_translation((sx * 61.25, ey_, za))   # inboard face (x 60.5..62)
             nt8 = cyl(7.2, 5.0, axis="x", sections=6)  # M8 NYLOC as a true hex
             if ey_ > 0:                                # (x 55.5..60.5). FRONT: flats
-                nt8.apply_transform(R_x(TAU / 12))     # to +-Z -- the 2026-07-13
-            # capture duct's floor/roof grip them across the tension stroke. REAR:
-            # flats to +-y, held by the 13.8 nut-channel walls while the bolt is
-            # torqued from the outboard head (see build_chassis_core's sgn branch).
+                nt8.apply_transform(R_x(TAU / 12))     # to +-Z.
+            # BOTH nuts now ride LEDGE+ROOF CAGES on the side panels' end towers
+            # (chassis.py; 2026-07-14 running-gear V2 DELETED the hull prow cheeks and
+            # with them the M8 nut ducts/channels this comment used to describe). Cage
+            # gap 13.4 = AF13+0.4: the strips only stop rotation, the axial load lands
+            # on the tower face, and the front cage spans the whole tension stroke -- so
+            # a bare track module tensions with zero hull pieces on the bench.
             nt8.apply_translation((sx * 58.0, ey_, za))
             hw.append((bnm, trimesh.util.concatenate([sh8, hd8, ws8, nt8])))
             # F688ZZ placeholders (2026-07-11, user: "bolt not properly connected

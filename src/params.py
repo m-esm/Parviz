@@ -288,6 +288,18 @@ P = {
                             # hinges). 0.45 slop on a chained hinge is harmless
                             # (track tension owns the geometry) and the sprocket's
                             # conjugate envelope already budgets bore slop.
+    "track_pin_press_d": 1.6,   # PRESS step at the far (-X) end of a strip-FIRST link's
+                            # A bore (2026-07-15 fastening audit P2-22: boundary
+                            # filament pins had zero axial retention -- Ø2.2 both ends
+                            # of a Ø1.75 pin). 1.6 = 0.15 diametral interference on
+                            # Ø1.75 filament: enough for a push-in that stays, small
+                            # enough that a Ø1.7 twist drill re-opens it if a pin has
+                            # to come out. NOT applied to the master (its A bores are
+                            # the C-jaw drop-on mouth) -- see _track_link(press_a).
+    "track_pin_press_l": 1.5,   # press-section length. 1.5 = ~7 layers at 0.2: long
+                            # enough to grip through the first-layer-of-bore sag, short
+                            # enough that the pin still pushes home by thumb (a full-
+                            # length press would need a hammer and would bow the rod).
     "track_pin_print_d": 2.0,   # INTEGRAL printed hinge pin (2026-07-12 print-in-place
                             # strips, after the chain print failure): each link's own
                             # (y0) pin is a solid Ø2.0 rod fused into its A knuckles,
@@ -321,7 +333,36 @@ P = {
                             # over the ground run = 0.62 above the link web face (4.2).
                             # Ceiling: tip r <= 20.72 keeps the 0.4 web clearance; 20.5
                             # leaves 0.22 for FDM. See _sprocket_profile() in tracks.py.
-    "idler_bore_d": 15.95,  # F688ZZ (8x16x5, flange 18) press seat; flange recess 18.5 x 1.0
+    "idler_bore_d": 16.05,  # F688ZZ (8x16x5, flange 18) seat; flange recess 18.5 x 1.0.
+                            # 15.95 -> 16.05 (2026-07-15 fastening audit P2-17): a 0.05
+                            # DIAMETRAL interference on a Ø16.0 bearing is below FDM hole
+                            # repeatability (+-0.15 here), so the same number printed as
+                            # either a rim-splitting jam or a wobble fit. Now a 0.05
+                            # CLEARANCE that can never jam -- the press is rib-calibrated
+                            # (idler_rib_*), which is what actually holds a bearing in a
+                            # printed seat. See build_tracks' CRUSH-RIB PRESS note.
+    "spr_socket_rib_bite": 0.10,   # radial interference of the 2 crush ribs standing in
+                            # the sprocket's TT double-D socket arcs -> crest r 2.60 on
+                            # the Ø5.4 shaft (2026-07-15 fastening audit P0-7). This is
+                            # the axial-retention FALLBACK: the M2-into-the-shaft-tip
+                            # primary needs a Ø2 axial hole that many TT variants lack
+                            # (VERIFY_ON_ARRIVAL on the owned Bag 5 motors), and a radial
+                            # grub is impossible -- the whole shaft overlap of the hub
+                            # runs inside the side panel's Ø13.5 notch (free r 6.50 vs
+                            # hub r 6.0: no boss room, no tool access). Ribs on the ±y
+                            # ARCS only; the ±z flats already clock the shaft. 0.10 = the
+                            # same bite as idler_rib_proud, and it doubles as a backlash
+                            # killer when the M2 path IS available. See _sprocket().
+    "idler_rib_n": 3,       # axial crush ribs in the F688 seat. 3 = the minimum that
+                            # kinematically centres a circle (4+ over-constrains: one rib
+                            # takes the whole tolerance and the bearing sits off-axis).
+    "idler_rib_proud": 0.125,   # rib crest stands this far INTO the bore -> crest Ø15.80,
+                            # i.e. 0.10 radial interference on the Ø16.0 bearing. 0.10-0.15
+                            # is the standard crush-rib bite for PLA: enough grip that the
+                            # bearing needs a press, little enough that the rib yields
+                            # instead of hoop-loading the rim. Rounded (tangent-circle)
+                            # crests, ~0.9 base -- a square rib shaves a chip that packs
+                            # behind the bearing and cocks it.
     "roadwheel_d": 20.0,    # dished road wheels riding the bottom-run knuckle crowns
     "roadwheel_ys": (57.5, 33.5, 11.5, -11.5, -33.5),   # EXPLICIT stations
                             # (2026-07-11 mid-drive): the ground-run sprocket at spr_y
