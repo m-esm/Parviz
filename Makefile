@@ -2,7 +2,7 @@
 # and web/assembly.glb. Run `make help`. See the 3d-print-modeling skill for the loop.
 PORT ?= 8770         # dedicated to desk-pi; 8765 collides with the finnish-doors serve.py
 
-.PHONY: help install build viewer shot watch check check-sweep fits export slicecheck wallcheck invariants tipover docs all
+.PHONY: help install build viewer shot watch check check-sweep fits export stls slicecheck wallcheck invariants tipover docs all
 
 help:                ## List targets
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
@@ -41,10 +41,13 @@ export:              ## Regenerate STLs + sliceable Bambu .3mf plates -> exports
 slicecheck:          ## Headless-slice EVERY plate in exports/bambu.3mf (BambuStudio CLI); fails on any warning
 	python3 tools/slice_check.py
 
-wallcheck:           ## Wall-thickness gate on the printed STL set (ray thickness; whitelist carries reasons)
+stls:                ## Refresh stl/ ONLY (no .3mf) -- what the STL-reading gates measure
+	EXPORT=1 python3 src/build.py
+
+wallcheck: stls      ## Wall-thickness gate on the printed STL set (ray thickness; whitelist carries reasons)
 	python3 src/wallcheck.py
 
-invariants:          ## Design-invariant gate: user-approved features asserted vs STLs/GLB/PARAMS (src/checks.py)
+invariants: stls     ## Design-invariant gate: user-approved features asserted vs STLs/GLB/PARAMS (src/checks.py)
 	python3 src/checks.py
 
 tipover:             ## Mass/CoM/stability report: tip angles, accel limits, fast-pan swing (INFILL=0.5 = conservative)
@@ -56,6 +59,7 @@ docs:                ## Render project markdown docs -> web/docs/*.html (linked 
 all:                 ## Full pipeline: build GLB, interference gate, design invariants, then export STLs + .3mf plates
 	python3 src/build.py
 	python3 src/assembly_check.py web/assembly.glb
+	EXPORT=1 python3 src/build.py
 	python3 src/checks.py
 	python3 src/wallcheck.py
 	python3 tools/build_docs.py
