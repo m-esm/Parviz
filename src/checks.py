@@ -30,6 +30,7 @@ warnings.filterwarnings("ignore", category=RuntimeWarning)
 import trimesh  # noqa: E402
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import geo  # noqa: E402
 from params import P  # noqa: E402
 from stlpaths import stlp, webpath  # noqa: E402
 
@@ -75,6 +76,39 @@ def bore_pierces(mesh, start, direction, length, n=12):
     d = d / np.linalg.norm(d)
     pts = np.asarray(start, float) + np.outer(np.linspace(0.0, length, n), d)
     return clear(mesh, pts)
+
+
+def _void_cube(mesh, pt, s=0.5):
+    """Void probe via manifold-cube intersection, NOT trimesh .contains(): the
+    ray-parity test lies near coincident faces (CLAUDE.md CSG ROBUSTNESS #3),
+    and nut-trap walls sit exactly on probe planes."""
+    c = geo.box(s, s, s)
+    c.apply_translation(np.asarray(pt, float))
+    try:
+        return geo.inter(mesh, c).volume < 1e-9
+    except Exception:
+        return False
+
+
+def nut_reaches_bore(mesh, axis_pt, open_dir, size="M3", pad=0.25):
+    """THE 2026-07-15 CAMPAIGN'S LOAD-BEARING INVARIANT: can the captive nut
+    actually sit centred on its screw axis?
+
+    A hex nut with its flats on the trap walls (the rotation lock) spans ACROSS
+    CORNERS -- ac = AF*2/sqrt(3), 6.35 for M3, NOT the 5.5 across-flats -- along
+    the insertion run. So the trap must be cut from ac/2 BEHIND the screw axis.
+    Every trap in the first print got this wrong (chassis_pedestal ran its box
+    from the axis away from it), leaving the nut 3.175 short of a 1.5 mm thread
+    radius: the screw could never catch it. That is why "the screws don't work".
+
+    Probes the void across the nut's full ac span, centred on the bore, along the
+    slot run. A hand-rolled trap or a pre-offset nut_slot() call fails this.
+    """
+    ac = geo.nut_ac(size)
+    o = np.asarray(open_dir, float); o /= np.linalg.norm(o)
+    p = np.asarray(axis_pt, float)
+    return all(_void_cube(mesh, p + o * d)
+               for d in (-ac / 2 + pad, 0.0, ac / 2 - pad))
 
 
 def main():
@@ -433,6 +467,47 @@ def main():
               and abs(ext("hw_tilt_axle")[1] - (P["head_w"] + 4)) < 0.1
               and abs(ext("hw_pan_ring")[0]
                       - (P["pan_race_circle_d"] + 5.8)) < 0.1)  # ball-circle torus
+
+    # ---------------- FASTENING CAMPAIGN (2026-07-15) --------------------------
+    # docs/FASTENING_AUDIT.md. The first print failed because captive traps could
+    # not reach their bores and structural joints self-tapped into PLA. One
+    # assertion per fix so neither class can silently come back.
+    from chassis import _ped_c
+    mx, my = _ped_c()
+    ped = M("chassis_pedestal")
+    check("pedestal nut traps reach their bores (the 2026-07-15 off-by)",
+          all(nut_reaches_bore(ped, (mx + dx, my + dy, 15.9),
+                               (0.0, float(np.sign(dy)), 0.0))
+              for dx in (-18.0, 18.0) for dy in (-18.0, 18.0)),
+          "nut centres on the screw axis at all 4 feet")
+
+    nk = M("neck_clevis")
+    root = []
+    for az in (270.0, 30.0, 150.0):
+        a = math.radians(az)
+        hx, hy = 16.5 * math.cos(a), P["neck_y"] + 16.5 * math.sin(a)
+        # slot runs -Y on the rear bolt, +-X on the flank pair (neck.py root joint)
+        od = (0.0, -1.0, 0.0) if az == 270.0 else (math.copysign(1.0, hx), 0.0, 0.0)
+        root.append(nut_reaches_bore(nk, (hx, hy, 72.0), od))
+    check("neck root joint: 3x M3 captive nuts reach their bores", all(root),
+          "was 3x Ø2.5 thread-form pilots + zero registration")
+
+    check("neck root joint keeps its registration pins",
+          inside(M("pan_platform"), [(s * 18.0, -32.0, P["base_h"] + 1.2)
+                                     for s in (-1, 1)]),
+          "platform pins locate the column hands-free while screwing")
+
+    # the tail seam that snapped off the first print: it had NO joint at all
+    tail = M("chassis_lower_tail")
+    sy = P["lower_seam2_y"]
+    check("tail seam has a real joint (pads + tongue), not a bare butt plane",
+          inside(tail, [(P["tail_pad_x"], sy - 9.0, 20.0),
+                        (P["tail_pad_x"], sy + 4.0, 16.0)]),
+          "y=%.0f pads + tongue across the seam" % sy)
+    check("tail seam captive nuts reach their bores, both sides",
+          all(nut_reaches_bore(tail, (s * P["tail_pad_x"], sy - 6.0, 21.5),
+                               (0.0, 0.0, 1.0)) for s in (-1, 1)),
+          "M3x16 axis-Y, nut drops in from above onto the z 21.5 screw axis")
 
     finish()
 
