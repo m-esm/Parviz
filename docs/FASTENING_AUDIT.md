@@ -1,8 +1,25 @@
 # Fastening & Assembly Audit — post-print failure report (2026-07-15)
 
-> **STATUS: FIXED, all gates green** (build · check · check-sweep · 58/58 invariants ·
-> wallcheck · fits 64 contacts all expected · export · 20/20 plates slice clean).
-> Fixed in 4 parallel worktrees (chassis / head / neck+pan / tracks), then merged.
+> **STATUS: COMPLETE, all gates green** (build · check · check-sweep · 62/62
+> invariants · wallcheck · fits 64 contacts all expected · export · 20/20 plates
+> slice clean). Fixed in 4 parallel worktrees (chassis / head / neck+pan / tracks),
+> then items 6-14 finished in 2 more (2026-07-16). No thread-form pilot remains on
+> any structural joint.
+>
+> **THE AUDIT UNDERSTATED THE DAMAGE.** It graded these joints "weak". On probing
+> the built meshes, **NINE WERE DEAD AS MODELLED** -- the screw could never engage
+> anything: two `chassis_base` stations had **no hull material at any z** (the
+> glacis had eaten the floor, so `sub(pilot)` was a silent no-op), the cliff M2s
+> engaged **0.30 mm** then hit undrilled solid, the ULN pilots stopped 3.0 below
+> their post tops, and the **IMU posts had height ZERO -- they did not exist**.
+> Root cause worth naming: **a derived feature next to a hardcoded partner**. When
+> `chassis_clear` went 7 -> 10, every z-derived post moved and the hardcoded pilot
+> depths stayed. The power-tray posts beside the ULN posts were fine -- because
+> they derived their pilot.
+> `checks.py` now gates exactly that: every fastener station must land on real
+> material, probed as a RING at r=3 (an on-axis probe reads "void" for a healthy
+> joint *and* for a hole drilled through thin air -- only the surrounding material
+> distinguishes them). Verified to fail at the old dead coordinates, 0/8.
 >
 > **THE ROOT CAUSE WAS DEEPER THAN THIS AUDIT ORIGINALLY SAID.** The audit named the
 > Ø2.5 thread-form pilots and told everyone to copy `chassis_pedestal`'s "reference
