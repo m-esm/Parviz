@@ -859,7 +859,34 @@ P = {
     # iterate on a swappable base, not the finalized hull). The base carries the
     # Arduino + IMU + SW-420 seats in the rear bay; the hull keeps only these 4 M3
     # hold-down pilots in the floor. BME stays wall-mounted (air-coupled to the vent).
-    "base_mount_pts": ((-44.0, -64.0), (44.0, -64.0), (-44.0, -114.0), (44.0, -114.0)),
+    # RE-STATIONED 2026-07-15 (fastening campaign). The original four were all DEAD,
+    # probe-verified on the built hull -- a defect the audit missed because it assumed
+    # the pilots existed:
+    #   (+-44, -114): NO HULL MATERIAL AT ANY z. The glacis cut eats the floor slab
+    #     past |y| 108.94, so `sub(pilot)` was a no-op and both screws threaded air.
+    #   (+-44, -64): inside the belly REBATE, so the floor is only z 11.5..15 and the
+    #     "blind" pilot vented straight out of it -- and the bore sits 2.50 mm from the
+    #     belly boss bore at (+-42, -65.5), i.e. tangent at O2.5 and overlapping once
+    #     that boss got its M3 clearance.
+    # The valid hull band is y -103..-74.7 (flat 5 mm floor, clear of the rebate and
+    # the O9 belly bosses). The free base strips are |x| 37..49 only (the Arduino
+    # board owns x -34.3..34.3), and the IMU/SW-420 already occupy the rear of both,
+    # so the rear pair goes INBOARD instead: the Arduino board floats at z 21.05 on
+    # its posts and the plate top is z 18, leaving 3.05 mm of head room under it.
+    # Trapezoid: 88 wide at the front, 36 at the rear, 24 deep.
+    "base_mount_pts": ((-44.0, -76.0), (44.0, -76.0), (-18.0, -100.0), (18.0, -100.0)),
+    # Captive M3 nut in a hex recess opening at the BELLY FACE (z 10 = the bed in the
+    # floor-down tub print, so it is just a first-layer pocket). Nut 10.0..12.8; the
+    # screw comes from ABOVE and pulls it UP, so the 2.2 mm ceiling (12.8..15) works in
+    # pure COMPRESSION. Replaces the O2.5 thread-form pilots (FASTENING_AUDIT P1).
+    "base_nut_ztop": 12.8,
+    # 2 printed O4 locating pins (the chassis_pedestal pattern): the base used to be
+    # located only by its loose hull-relief pockets and screwed down blind. Pins rise
+    # from the hull floor; the base's matching holes are cut at +0.15/side (the audit's
+    # P3 "O4.0-in-O4.0 is jam-or-rattle"). Printed, so zero BOM and nothing to lose.
+    "base_pin_pts": ((-44.0, -84.0), (44.0, -84.0)),
+    "base_pin_d": 4.0,
+    "base_pin_h": 2.8,          # z 15..17.8: proud into the 3 mm plate, never past it
     "vib_board_wl": (21.5, 10.5),   # module envelope, long axis X. VERIFY_ON_ARRIVAL
     "vib_hole_off": -5.5,   # single O3 hole, offset from board center along X
                             # (toward the wall end). VERIFY_ON_ARRIVAL

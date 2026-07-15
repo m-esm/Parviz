@@ -622,13 +622,34 @@ def build_chassis_core():
     # belly cut on purpose.
     # ARDUINO + IMU + SW-420 seats MOVED to the removable chassis_base (2026-07-14,
     # user: split the shell so the in-flux electronics iterate on a swappable base,
-    # not the finalized hull). The hull keeps only 4x blind Ø2.5 thread-form pilots
-    # in the floor for the base's hold-down M3s (build_chassis_base). BME stays here
-    # (its bosses are air-coupled to the left wall vent, shell-integral like the sonars).
+    # not the finalized hull). The hull keeps the base's 4 hold-down stations + 2
+    # locating pins. BME stays here (its bosses are air-coupled to the left wall vent,
+    # shell-integral like the sonars).
+    #
+    # 2026-07-15 (FASTENING_AUDIT P1 + a defect the audit MISSED): these were 4 blind
+    # Ø2.5 thread-form pilots -- and probing the built hull showed ALL FOUR were dead.
+    # Two sat where the glacis has eaten the floor entirely (no material at any z: the
+    # sub() was a no-op and the screws threaded air); the other two sat in the belly
+    # rebate on 3.5 mm of floor with their bores tangent to the belly bosses'. The
+    # stations moved into the valid band (see PARAMS base_mount_pts) and every one is
+    # now an M3 THROUGH-BOLT into a CAPTIVE HEX NUT recessed at the belly face.
     for tmx, tmy in P["base_mount_pts"]:
-        tpil = cyl(1.25, 5.0)                        # blind pilot up from the floor bottom
-        tpil.apply_translation((tmx, tmy, z0 + floor - 2.5 + 0.2))
-        body = sub(body, tpil)
+        thr = cyl(P["m3_clear_r"], (z0 + floor) - P["base_nut_ztop"] + 2.0)
+        thr.apply_translation((tmx, tmy, (P["base_nut_ztop"] + z0 + floor + 2.0) / 2))
+        body = sub(body, thr)                        # bore: nut ceiling -> floor top
+        # hex recess opening DOWN at the belly face -- a first-layer pocket in the
+        # floor-down tub print, and the nut's flats take the driving torque.
+        rec = hex_prism(geo.NUT["M3"][0] + 0.2, (P["base_nut_ztop"] - z0) + 0.2)
+        rec.apply_translation((tmx, tmy, (z0 - 0.2 + P["base_nut_ztop"]) / 2))
+        body = sub(body, rec)
+    # 2 printed Ø4 locating pins (chassis_pedestal pattern): the base drops over them
+    # and self-holds square while the 4 screws go in. The base's own Ø4.3 holes are cut
+    # in build_chassis_base, so the hull-relief sub() there is a no-op -- which is also
+    # the standing proof that the pins can never jam.
+    for tpx, tpy in P["base_pin_pts"]:
+        pin = cyl(P["base_pin_d"] / 2, P["base_pin_h"])
+        pin.apply_translation((tpx, tpy, z0 + floor + P["base_pin_h"] / 2))
+        body = uni([body, pin])
     # BME688: 2x O5 x 2 standoff bosses on the LEFT wall inner face flanking the
     # y=-96 vent + O1.7 M2 pilots 3.0 into the 5-wall (2.0 web outside).
     wallx = -(P["chassis_w"] / 2 - 5.0)              # inner face -65
@@ -1411,12 +1432,21 @@ def build_chassis_base():
         nub.apply_translation((vx_ + vw_ / 2 + 0.3 + 1.0, vy_ + sy_ * (vl_ / 2 - 1.0),
                                btop + (P["vib_pad_h"] + 3.0) / 2))
         base = uni([base, nub])
-    # 4x M3 hold-down: clearance + top counterbore (opens up -> self-supporting)
+    # 4x M3x6 hold-down into the hull's captive belly-face nuts (2026-07-15): clearance
+    # + top counterbore (opens up -> self-supporting). cb 2.4 -> 1.8 deep: with the head
+    # bottom at z 16.2 an M3x6 tips out at z 10.2, i.e. dead through the nut (10.0..12.8)
+    # and 0.2 shy of the belly face. The head then stands 1.2 proud (z 19.2), which still
+    # clears the Arduino board's 21.05 underside by 1.85 -- the rear pair sits under it.
     for mx_, my_ in P["base_mount_pts"]:
         clr = cyl(P["m3_clear_r"], 8.0); clr.apply_translation((mx_, my_, btop - 3.0))
         base = sub(base, clr)
-        cb = cyl(3.4, 2.4); cb.apply_translation((mx_, my_, btop - 1.2))
+        cb = cyl(3.4, 1.8); cb.apply_translation((mx_, my_, btop - 0.9))
         base = sub(base, cb)
+    # 2 locating-pin holes over the hull's printed Ø4 pins, +0.15/side slip
+    for px_, py_ in P["base_pin_pts"]:
+        ph = cyl(P["base_pin_d"] / 2 + 0.15, 8.0)
+        ph.apply_translation((px_, py_, btop - 1.0))
+        base = sub(base, ph)
     _color(base, "pi"); base.metadata["name"] = "chassis_base"
     return base
 
