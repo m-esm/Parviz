@@ -113,6 +113,20 @@ render neutral (`PAN=0 TILT=0`) and motion extremes, and add a bottom view to `s
 
 ## The build loop (do this on every geometry change)
 
+**FASTENING RULE (2026-07-15, after the first full print came back unassemblable):**
+every structural joint is **M3 through-bolt + a captive hex nut** cut with
+`geo.nut_slot()`, plus a **locator** (dowel/pin/tongue/rebate) so the parts self-hold
+while you drive the screw. **Ø2.5 "thread-form" pilots are BANNED on structural
+joints** -- they self-tap into PLA and strip (the user's "almost none of the screws
+work"). Only low-load electronics posts may keep self-tap. Pass `nut_slot()` the
+**SCREW AXIS**, never a pre-offset point: it cuts the seat ac/2 behind, where
+**ac = AF*2/sqrt(3) = 6.35 for M3, NOT the 5.5 across-flats** -- a hex with its flats
+on the walls spans across CORNERS along the run. Getting this wrong is what broke
+every trap in print 1, including `chassis_pedestal`'s, which the audit had called
+the reference-good joint. `checks.nut_reaches_bore()` gates it; add an assertion for
+each new trap. Where a nut geometrically cannot fit, **measure it, then** use an M3/M2
+brass heat-set insert (bosses >= Ø9 for M3). Full ledger: docs/FASTENING_AUDIT.md.
+
 ```
 make build          # python3 src/build.py -> web/assembly.glb
 make viewer         # python3 src/serve.py 8770 (leave running; user watches live at
@@ -127,9 +141,14 @@ make fits           # fit/pressure map (ported from finnish-doors 2026-07-08): n
                     #   opt-in, not part of the watch loop. Patches are NEUTRAL-pose coords
                     #   but the viewer re-poses them per kinematic group (2026-07-10), so
                     #   they track the pan/tilt sliders and sit right on ANY baked GLB pose.
-make invariants     # design-invariant gate (src/checks.py, ~1.3 s, IN make all): one
+make invariants     # design-invariant gate (src/checks.py, IN make all): one
                     #   assertion per user-approved feature -- ADD A CHECK THE SAME TURN a
                     #   feature is approved, so it can't silently regress later.
+                    #   READS stl/*.stl, so it now DEPENDS on `make stls` (EXPORT=1 build).
+                    #   Before 2026-07-15 it (and wallcheck, and make all's ordering) read
+                    #   whatever the LAST export left on disk -- i.e. silently gated STALE
+                    #   geometry and reported a pass. Two agents lost work to it. If you add
+                    #   an STL-reading gate, give it the `stls` prerequisite.
 make wallcheck      # min-wall gate over the printed STL set (0.8 mm p1 + documented
                     #   whitelist floors; IN make all since 2026-07-13, all findings
                     #   dispositioned: keepers fixed Ø4.0 cb + 5.7 tab rim 0.85,
