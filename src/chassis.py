@@ -1492,21 +1492,32 @@ def build_chassis_base():
     base = uni([base, shelf])
     for lx_, ly_ in P["ard_holes"]:
         hx_, hy_ = sx0 - lx_, sy0 - ly_
-        post = cyl(3.5, seat_z - btop)
+        post = cyl(P["elec_post_r"], seat_z - btop)       # already O7
         post.apply_translation((hx_, hy_, (btop + seat_z) / 2))
         base = uni([base, post])
-        pil = cyl(1.25, 5.5)
-        pil.apply_translation((hx_, hy_, seat_z + 0.5 - 2.75))
+        # pilot DEEPENED 2026-07-15 (FASTENING_AUDIT P1): it ran seat_z-2.25..seat_z+3.25,
+        # i.e. 3.0 mm of thread in the post and 3.25 wasted in mid-air above it. Run it
+        # from just over the seat down 1.0 into the plate: 4.0 of thread, no waste.
+        pil = cyl(1.25, (seat_z + 0.5) - (btop - 1.0))
+        pil.apply_translation((hx_, hy_, ((seat_z + 0.5) + (btop - 1.0)) / 2))
         base = sub(base, pil)
-    # IMU: 2 posts to imu_seat_z (right side strip)
+    # IMU: a hard PAD (2026-07-15, FASTENING_AUDIT P1). This was "2 posts to
+    # imu_seat_z" -- but imu_seat_z EQUALLED btop, so `cyl(3.0, imu_seat_z - btop)`
+    # built cylinders of height ZERO: the posts did not exist and the pilot drilled the
+    # bare 3 mm plate for 2.25 of thread. (Broken by the 2026-07-14 move onto
+    # chassis_base: the plate top rose, imu_seat_z did not.) Rebuilt as a pad, the
+    # SW-420 pattern already used below: stiffer than two pillars -- which is what an
+    # IMU wants -- and it gives 4.5 mm of thread (2.0 pad + 2.5 plate).
     ix_, iy_ = P["imu_c"]
+    ibw_, ibl_ = P["imu_board_wl"][1], P["imu_board_wl"][0]     # board x, y
+    ipad = box(ibw_ + 1.0, ibl_ + 1.0, P["imu_pad_h"])          # +1.0: the plate ends
+    ipad.apply_translation((ix_, iy_, btop + P["imu_pad_h"] / 2))   # at x 49
+    base = uni([base, ipad])
     for sy_ in (-1, 1):
         py_ = iy_ + sy_ * P["imu_hole_cc"] / 2
-        post = cyl(3.0, P["imu_seat_z"] - btop)
-        post.apply_translation((ix_, py_, (btop + P["imu_seat_z"]) / 2))
-        base = uni([base, post])
-        pil = cyl(1.25, 5.5)
-        pil.apply_translation((ix_, py_, P["imu_seat_z"] + 0.5 - 2.75))
+        pil = cyl(1.25, (P["imu_seat_z"] + 0.5) - (btop - 2.0))
+        pil.apply_translation((ix_, py_,
+                               ((P["imu_seat_z"] + 0.5) + (btop - 2.0)) / 2))
         base = sub(base, pil)
     # SW-420: hard pad + pilot + 2 anti-rotation fence nubs (left side strip)
     vx_, vy_ = P["vib_c"]; vw_, vl_ = P["vib_board_wl"]
@@ -1588,14 +1599,23 @@ def build_belly_plate():
     # --- ULN2003 standoffs x2 (round 5: BOTH driver boards ride the plate now --
     # they were hull-floor posts rooted on the deleted keep strap / at (0,80)).
     # Same Ø6 posts, tops at z 16 like before, Ø2.5 pilots stopping in the post.
+    # posts O6 -> O7 (PARAMS elec_post_r, FASTENING_AUDIT P1 "posts split on tapping").
+    # PILOT Z FIXED 2026-07-15: it was a hardcoded `16.0 - 2.5` while the post derives
+    # from z0. The v2 chassis_clear 7 -> 10 change lifted the post to z 13..19 and left
+    # the pilot at z 11..16, so the screw met 3.0 mm of UNDRILLED solid before finding
+    # any pilot at all -- another dead joint. Derived from the post top now, so it
+    # cannot drift again. (The power-tray posts below already derived theirs and were
+    # fine, which is exactly why they diverged.)
     for cx_, cy_ in (P["uln1_c"], P["uln2_c"]):
         for sx in (-1, 1):
             for sy in (-1, 1):
                 px_ = cx_ + sx * P["uln_w"] / 2
                 py_ = cy_ + sy * P["uln_h"] / 2
-                post = cyl(3.0, 6.0); post.apply_translation((px_, py_, z0 + 3.0 + 3.0))
+                post = cyl(P["elec_post_r"], 6.0)
+                post.apply_translation((px_, py_, z0 + 3.0 + 3.0))       # z 13..19
                 plate = uni([plate, post])
-                pil = cyl(1.25, 5.0); pil.apply_translation((px_, py_, 16.0 - 2.5))
+                pil = cyl(1.25, 5.0)
+                pil.apply_translation((px_, py_, (z0 + 9.0) - 2.5))      # z 14..19
                 plate = sub(plate, pil)
     # POWER TRAY (wiring pass 2026-07-08, see firmware/WIRING.md): the main 5.1 V buck
     # mounts on the plug's rear bay, so dropping the belly plate drops the power stage
@@ -1607,7 +1627,8 @@ def build_belly_plate():
     # standoffs -- no dedicated pad until that decision lands.
     tray = [(-35.75, -53.0), (-35.75, -33.0), (4.25, -53.0), (4.25, -33.0)]
     for px_, py_ in tray:
-        post = cyl(3.0, 6.0); post.apply_translation((px_, py_, z0 + 3.0 + 3.0))
+        post = cyl(P["elec_post_r"], 6.0)                 # O6 -> O7, see the ULN note
+        post.apply_translation((px_, py_, z0 + 3.0 + 3.0))
         plate = uni([plate, post])
         pil = cyl(1.25, 5.0); pil.apply_translation((px_, py_, z0 + 9.0 - 2.5))
         plate = sub(plate, pil)

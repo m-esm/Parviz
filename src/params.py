@@ -858,7 +858,15 @@ P = {
                                  # deck boss (y-113). 2026-07-14: moved off the hull strap
     "imu_hole_cc": 15.5,    # 2-hole pattern along Y (GY-521-class). VERIFY_ON_ARRIVAL
     "imu_board_wl": (21.0, 16.5),   # breakout envelope. VERIFY_ON_ARRIVAL
-    "imu_seat_z": 18.0,     # post tops (O6 posts, M2.5/M3 self-tap into O2.5 pilots)
+    # 18.0 -> 20.0 (2026-07-15). At 18.0 this EQUALLED the base plate top, so
+    # `cyl(3.0, imu_seat_z - btop)` built posts of height ZERO -- the IMU posts did not
+    # exist, and their pilot drilled the bare 3 mm plate for 2.25 mm of thread. Broken
+    # by the 2026-07-14 move onto chassis_base (the plate top rose, imu_seat_z did not).
+    # Fixed as a PAD, not posts (the SW-420 pattern already in build_chassis_base): a
+    # solid pad is stiffer than two O7 pillars, which is what an IMU actually wants,
+    # and it gives the screws 4.5 mm of thread (2.0 pad + 2.5 plate) instead of 2.25.
+    "imu_seat_z": 20.0,     # pad top (imu_pad_h above the z18 plate)
+    "imu_pad_h": 2.0,
     # BME688 breakout (NOT owned): hangs on the LEFT wall's INNER face over the
     # y=-96 side vent so it samples ROOM air through the slot, 43+ behind the
     # belly buck tray (y -53..-33) and 16 behind the rear TT gearbox (wall zone
@@ -1412,6 +1420,13 @@ P = {
     "m3_nut_h": 2.8,        # nut pocket depth
     "boss_r": 4.3,          # screw boss outer radius
     "m25_clear_r": 1.45,    # M2.5 clearance (Pi standoffs)
+    # Electronics standoff radius, 3.0 -> 3.5 (O6 -> O7): FASTENING_AUDIT P1
+    # "ULN2003 / power-tray / Arduino / IMU posts (O6 posts split on tapping)".
+    # O6 around a O2.5 pilot leaves 1.75 walls; O7 leaves 2.25. Self-tap is KEPT on
+    # these -- they carry gram-scale driver/buck boards, and the audit's complaint is
+    # the post splitting while you drive, not the thread failing. The Arduino posts
+    # were already O7.
+    "elec_post_r": 3.5,
     "uln_w": 35.0, "uln_h": 32.0,   # ULN2003 driver board footprint
 
     # --- Preview pose (view only; does NOT change printed geometry) ---
