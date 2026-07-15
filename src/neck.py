@@ -50,7 +50,10 @@ def build_neck_clevis():
         if s > 1e-6:
             cheek.apply_transform(R(np.arctan2(s, np.dot([0, 0, 1.0], d)), v / s))
         cheek.apply_translation((top + bot) / 2 - d * 10.0)   # top end flush with the axle
-        hoop = cyl(9.5, P["cheek_t"], axis="x")               # bearing-seat land around the axle
+        hoop = cyl(9.6, P["cheek_t"], axis="x")               # bearing-seat land around the axle
+                                                              # (9.5 -> 9.6: holds the radial
+                                                              # wall >= 3 over the opened
+                                                              # Ø13.05 seat, see below)
         hoop.apply_translation(top)
         parts += [cheek, hoop]
         # TILT-STOP POST (homing pass 2026-07-08): a block r 12..17 straight behind the
@@ -126,14 +129,37 @@ def build_neck_clevis():
     bore.apply_translation((0, yt, zt))
     neck = sub(neck, bore)
     # 695-2RS bearing seats: OPEN FLUSH to each cheek's INNER face (the old 0.75 mm membrane made
-    # the bearing uninsertable). Bore Ø12.85 = press allowance on the Ø13 OD; the bearing presses
-    # in from inside the clevis gap, 3.5 mm outer wall remains (loose Ø5.8 axle pass-through).
-    seat_r = 12.85 / 2
+    # the bearing uninsertable). The bearing presses in from inside the clevis gap; a loose
+    # Ø5.8 axle pass-through carries on to the outer face.
+    # RIB-CALIBRATED PRESS (fastening campaign 2026-07-15, audit P2 item 17): the seat was a
+    # plain Ø12.85 bore = 0.15 INTERFERENCE on the Ø13 OD, taken on a 3 mm radial wall. 0.15
+    # is below FDM repeatability, so the real part lands anywhere between a drop-in fit and a
+    # split hoop, and a split hoop loses the tilt axis. Now the bore is Ø13.05 (+0.05
+    # CLEARANCE on nominal -- it can always be assembled) and the press is carried by 3 CRUSH
+    # RIBS at 120 deg: r 0.6 fillets whose crowns stand 0.125 proud of the bore (effective
+    # Ø12.80 = 0.20 grip). Ribs are what actually gets calibrated -- they yield locally
+    # instead of hooping the wall, they self-centre the race, and a coupon only has to dial
+    # the rib crown, not a whole bore. Two of the three sit low (210/330 deg) under the load.
+    # Ribs stop 0.75 short of the seat mouth = a press lead-in. Hoop r 9.5 -> 9.6 holds the
+    # radial wall at 3.075 (>= 3) against the opened bore; 9.6 keeps 0.68 mm to the Pi 5
+    # cooler keep-out at every tilt pose (probe_cooler's neck_clevis floor is 0.60 elsewhere,
+    # and the 0.6-inflated stall cutter still misses it -- re-run tools/probe_cooler.py if
+    # this radius ever moves again).
+    seat_r = (P["brg_od"] + 0.05) / 2
     inner_x = P["clevis_half"] - P["cheek_t"] / 2                 # cheek inner face (18)
     for sx in (-1, 1):
         seat = cyl(seat_r, P["brg_w"] + 1.5, axis="x")
         seat.apply_translation((sx * (inner_x - 1.0 + (P["brg_w"] + 1.5) / 2), yt, zt))
         neck = sub(neck, seat)
+    rib_r, rib_crown = 0.6, 0.125
+    for sx in (-1, 1):
+        for az in (90, 210, 330):
+            d = seat_r - rib_crown + rib_r               # rib axis offset from the tilt axle
+            rib = cyl(rib_r, P["brg_w"] + 0.5, axis="x", sections=16)
+            rib.apply_translation((sx * (inner_x + P["brg_w"] / 2 + 0.25),
+                                   yt + d * np.cos(np.radians(az)),
+                                   zt + d * np.sin(np.radians(az))))
+            neck = uni([neck, rib])
     # worm PASS through the bracket plate: Ø12.2 (cartridge pass 2026-07-08: was Ø10, just
     # shaft-boss clearance -- now the WORM (OD 10.55) extracts rearward through the plate
     # with the motor as one cartridge; sliding the worm axially out of mesh only spins the
