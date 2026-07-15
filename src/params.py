@@ -455,18 +455,67 @@ P = {
                             # bosses ride the rear wall instead (sensor hole z16, trim
                             # pins outer-face only, motor tabs x +-55.6 -- all clear)
     "chassis_split_boss_r": 4.0,
+    "deck_nut_z": 43.0,          # captive M3 nut centre in each deck hold-down boss
+                                 # (2026-07-15, FASTENING_AUDIT P1: all 8 were thread-
+                                 # form pilots, and 6 are the side panels' ONLY top
+                                 # retention). The six wall bosses are scarfed 45 deg
+                                 # underneath for the panels' upright print and only
+                                 # exist z 40.55..46 at x 64, so 43 is as low as the
+                                 # nut goes: 1.7 of boss over its top flat -- squeezed
+                                 # in pure COMPRESSION between the nut and the z 46
+                                 # deck seat (~1800 N of PLA), no shear-out path.
+                                 # Screw: M3x25 from the deck's z 63 cbore.
+    "deck_nut_run": 11.0,        # slot run from the seat to past the boss's inboard
+                                 # face: the six wall bosses seat INSIDE the 5-wall
+                                 # (x 67.175, 2.8 left outboard) and open -x into the
+                                 # tub; the two rear-wall bosses seat at y -116.175 and
+                                 # open +y. Both reachable with the deck off.
     # PRINT-SPEED SUB-SPLITS (2026-07-10, user: break the biggest prints apart). See
     # build_chassis_parts' docstring for the joint scheme per seam.
     "lower_seam_y": 26.0,        # lower tub front/rear seam (vent-free wall band
                                  # 18.5..29.5, pan pedestal <=|24|, pod joins +-40)
-    "lower_seam2_y": -88.0,      # 2nd rear seam: peels the feature-dense TAIL cap
-                                 # (rear wall + cheeks + rear sensors/buzzer/USB +
-                                 # M8 nut ducts) off chassis_lower_rear so the main
-                                 # housing is a clean, short, fast print. Clean full-
-                                 # width wall band: behind the Arduino (ends -85.7),
-                                 # in front of the SW-420 seat (-89.75) + side vents
-                                 # (-96..-112). Same floor-pad + M3x12 + Ø4 dowel joint
-                                 # as lower_seam_y; deck screws + pod rails also bridge.
+    "lower_seam2_y": -95.0,      # 2nd rear seam: peels the feature-dense TAIL cap
+                                 # (rear wall + rear sensors/buzzer/USB) off
+                                 # chassis_lower_rear so the main housing is a clean,
+                                 # short, fast print.
+                                 # MOVED -88 -> -95 (2026-07-15 fastening campaign,
+                                 # FASTENING_AUDIT P0-2 "the tail break"): at -88 the
+                                 # seam had NO joint at all and none could be built --
+                                 # the only free hull floor beside the equipment base
+                                 # (x <= 49) and inside the side-panel plane (x 64.85)
+                                 # is the x 50..60.2 strip, and the rear TT tab RIB
+                                 # capture owns y -87..-79.2 of it (that material goes
+                                 # to chassis_side_*_rear). -95 leaves a REAL joint
+                                 # band: tail pad y -106..-95, rear pad -95..-87.2.
+                                 # Floor-pad + M3 + CAPTIVE NUT + tongue, see
+                                 # _tail_join in build_chassis_parts. Still spanned by
+                                 # chassis_base (y -62..-118) and the side panels.
+    "tail_pad_x": 55.1,          # tail-seam floor-pad center |x| (pad 50..60.2): 1.0
+                                 # off the equipment base edge (49), 0.3 off the rear
+                                 # panel's L-foot (60.5), 0.15+ off the panel plane.
+    "tail_pad_y": (-106.0, -87.2),   # pad y span: -106 keeps 2+ mm of floor under the
+                                 # root (the rear glacis eats the slab past ~-110.8);
+                                 # -87.2 is 0.2 off the TT tab-rib panel capture (-87).
+    "tail_pad_z": (14.0, 25.0),  # rooted 1 into the floor top (15); 11 tall so the
+                                 # tongue (14..18) and the screw band (axis 21.5) both
+                                 # fit with >= 1.0 of pad over/under the bore.
+    "end_gusset_x": (40.0, 55.0),    # (FRONT, REAR) |x| of the end-wall gusset ribs
+                                 # (FASTENING_AUDIT P2-1: past |y| ~109 the r12 cavity-
+                                 # corner crescents are the hull's ONLY floor<->end-wall
+                                 # ligaments, so both glacis end walls hang on them).
+                                 # FRONT 40: the front TT tab-rib capture owns x >= 51.3
+                                 # at y 101..109. REAR 55: the equipment base owns
+                                 # x <= 49 and the BME/tower captures x >= 62.
+    "end_gusset_t": 4.0,         # rib thickness (x); vertical fin, zero overhang in the
+                                 # tub's floor-down print
+    "end_gusset_z": 30.0,        # rib top (floor top 15 -> 30); under the TT pocket
+                                 # bands and the deck seam
+    "end_gusset_run": 17.0,      # inboard reach from the end-wall inner face (|y| 115)
+    "glacis_tip_t": 1.2,         # MIN floor thickness kept at the glacis/floor-top
+                                 # tangent: past it the wedge feathers to a 33 deg PLA
+                                 # knife that chips in handling (FASTENING_AUDIT P2-1,
+                                 # and the chassis_lower_tail wallcheck whitelist). The
+                                 # feather is cut back to a vertical face instead.
     "deck_seam_y": (66.0, -52.0),  # deck strip seams (front clip reaches y 58; the
                                  # y-60 corner bosses reach 64 -> strips own them)
     "deck_center_screws": ((-64.0, 8.0), (64.0, 8.0), (-64.0, -26.0), (64.0, -26.0)),
@@ -892,6 +941,14 @@ P = {
     "us_dx": 13.0,          # ultrasonic barrel centers at x=+-13 (HC-SR04 transducer pitch ~26)
     "us_cz": 32.0,          # barrel Ø16 -> z 24..40, centred in the grille opening (the
                             # 28.5 spot collided with the relocated ring's lower band)
+    # OBSTACLE HC-SR04 RETENTION (2026-07-15, FASTENING_AUDIT P0-5: both obstacle
+    # boards floated -- nothing held them against the wall but gravity + the loom).
+    # The board goes in along +-Y (its barrels thread the wall bores), so the seat is
+    # a SHELF + two side ribs + 2 M2 clamps on the board's own top corner holes.
+    "us_board_wl": (45.7, 20.9),    # board envelope (w, h) -- the sensor_us placeholder
+    "us_hole_cc": (41.0, 16.7),     # HC-SR04 corner-hole pattern (same as the cliff pair)
+    "us_seat_d": 3.0,               # shelf/rib reach inboard of the wall face (board 1.6)
+    "us_shelf_t": 2.0,              # shelf thickness
     "us_d": 16.0,
     "lamp_x": 54.0, "lamp_cz": 23.0,   # amber corner lamps 12x7, proud 2, on the PROW
                             # CHEEK noses (2026-07-11; z 26 -> 23 so the wire drill at
@@ -925,6 +982,15 @@ P = {
     # in a 4-wall leaves 1.5 skin; nothing pierces a visible face or the screen / display /
     # camera voids). Pin protrudes 2.3 into the 2.5 socket (0.2 bottoming + glue room).
     "fix_pin_r": 1.5, "fix_socket_r": 1.6, "fix_socket_deep": 2.5, "fix_pin_len": 2.3,
+    # CHASSIS trim pins only (2026-07-15, FASTENING_AUDIT P3 "fascia/rear trim pins
+    # 2.5 engagement -> deepen to 5"): 2.5 of Ø3 pin in a glued blind socket is a nub,
+    # not a locator, and the trim rings are exactly what a hand grabs. Kept SEPARATE
+    # from fix_socket_deep/fix_pin_len: those are shared with head.py, where deepening
+    # the sockets cuts into the head_back frames' split-plane rim (wallcheck caught
+    # head_back_frame_R p1 0.34 -> 0.24 on the shared bump).
+    # 4.0 checked against both end walls: the sockets are blind in the 5-wall (the
+    # cavity behind is empty) and the z 50 pair backs onto the solid deck.
+    "trim_socket_deep": 4.0, "trim_pin_len": 3.7,
     "fix_pin2_r": 1.0, "fix_socket2_r": 1.1,   # Ø2 pins (camera_pod, sensor_rear cap)
     # trim_rail sockets, (y, z) per side wall (mirrored in x). Keep-outs: the shoulder
     # hardware below (z 125..136), the bezel<->back SIDE POSTS at (x +-97.5, z 119.8 and
