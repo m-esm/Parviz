@@ -130,6 +130,35 @@ def teardrop(r, length, axis="y", up="z"):
     return uni([base, cap])
 
 
+NUT = {"M2": (4.0, 1.6), "M2.5": (5.0, 2.0), "M3": (5.5, 2.6), "M4": (7.0, 3.2)}
+# hex nut (across-flats, thickness); M3 matches the proven chassis_pedestal traps.
+
+
+def nut_slot(center, screw_axis="z", open_dir=(0, 1, 0), size="M3",
+             length=14.0, c_af=0.2, c_t=0.2):
+    """Slide-in captive hex-nut trap NEGATIVE (the proven chassis_pedestal
+    pattern, standardized for the 2026-07-15 fastening campaign): a rectangular
+    slot, width = nut AF + c_af (the flats ride the walls = the rotation lock),
+    thickness = nut_t + c_t along the screw axis, running `length` from the nut
+    seat toward (and past) the part's open face along `open_dir`. Pair it with
+    a cyl()/teardrop() screw bore; keep >= 1.2 wall beyond the slot, and put
+    the nut seat so the screw tip lands ~2 threads past the nut. `center` =
+    the nut's center ON the screw axis; `screw_axis` is 'x'/'y'/'z' or a
+    vector; `open_dir` must be perpendicular to it."""
+    axv = {"x": (1, 0, 0), "y": (0, 1, 0), "z": (0, 0, 1)}.get(screw_axis, screw_axis)
+    a = np.asarray(axv, float); a /= np.linalg.norm(a)
+    o = np.asarray(open_dir, float); o /= np.linalg.norm(o)
+    if abs(np.dot(a, o)) > 1e-6:
+        raise ValueError("nut_slot(): open_dir must be perpendicular to screw_axis")
+    af, nut_t = NUT[size]
+    b = box(af + c_af, length, nut_t + c_t)      # x=flats, y=slot run, z=screw axis
+    T = np.eye(4)
+    T[:3, 0] = np.cross(o, a); T[:3, 1] = o; T[:3, 2] = a
+    T[:3, 3] = np.asarray(center, float) + o * (length / 2.0)
+    b.apply_transform(T)
+    return b
+
+
 def _orient(m, normal):
     """Rotate a +Z-aligned mesh so +Z points along `normal`."""
     n = np.asarray(normal, float); n /= np.linalg.norm(n)
