@@ -743,6 +743,17 @@ P = {
                                  # was a 33.7 deg acute PLA knife edge (user 2026-07-11:
                                  # "the chassis angle is too sharp"). Slope angle -- and
                                  # with it the cliff-sensor geometry -- is unchanged.
+    # Cliff HC-SR04 retention (2026-07-15 fastening campaign): M2 BRASS HEAT-SET
+    # INSERTS, not self-tap pilots and not captive nuts. Probing the built deck killed
+    # both alternatives: the old O1.6 pilots engaged 0.30 mm of skin (dead as modelled),
+    # and profiling all 8 corners shows the two LOWER corners have ZERO material behind
+    # the board (open pocket), so a nut cannot be trapped at 4-of-4.
+    # Standard M2 insert: OD 3.2, L 3.0, recommended hole O2.8.
+    "cliff_insert_d": 2.8,
+    # skin kept in FRONT of the insert -> the pocket is BLIND: nothing breaks the
+    # slope's cosmetic outer face and the screw cannot push through. 3.8 skin - 0.8
+    # kept = 3.0 of insert, exactly its length. Screw M2x4 from the pocket side.
+    "cliff_skin_keep": 0.8,
     "cliff_v": 9.6,              # barrel-pair center, mm up the slope from its bottom
                                  # edge (slant length 36.06): bore rim keeps 1.3 to
                                  # the wall-top corner, board top keeps 0.7 under the

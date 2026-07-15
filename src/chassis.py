@@ -1344,12 +1344,35 @@ def build_chassis_parts():
             bb.apply_transform(R(np.pi + sgn * sa_, (1, 0, 0)))
             bb.apply_translation(pb_ + np.array([bx_ * P["us_dx"], 0.0, 0.0]) - 2.5 * nnf)
             d_ = sub(d_, bb)
-        for px_ in (-20.5, 20.5):                     # HC-SR04 corner holes 41 x 16.7:
-            for py_ in (-8.35, 8.35):                 # Ø1.6 self-tap pilots through-ish
-                pil = cyl(0.8, 4.0)                   # the 3.8 remaining skin
-                pil.apply_transform(R(np.pi + sgn * sa_, (1, 0, 0)))
-                pil.apply_translation(pb_ + np.array([px_, 0.0, 0.0]) + py_ * sn_ - 5.5 * nnf)
-                d_ = sub(d_, pil)
+        # HC-SR04 corner holes 41 x 16.7 -> M2 BRASS HEAT-SET INSERTS (2026-07-15,
+        # FASTENING_AUDIT P1 "cliff M2 pilots strip on the 2nd service" -- plus a
+        # defect the audit MISSED: these pilots were DEAD. `cyl(0.8, 4.0)` centred
+        # 5.5 inward spans 3.5..7.5, but the skin is 0..3.8 and the board recess
+        # 3.8..5.2 is already void -- so the pilot only overlapped real skin over
+        # 3.5..3.8 = 0.30 mm. The screw met 3.5 mm of UNDRILLED PLA and could never
+        # go in. Probed on the built deck.
+        #
+        # The audit's "M2 nut + washer behind the skin" was MEASURED and rejected:
+        # profiling all 8 corners along the slope normal shows the two LOWER corners
+        # (py -8.35) have ZERO material behind the board -- open pocket straight down
+        # to the tub -- while only the upper pair has 4.4 mm at 7.8 in. A captive nut
+        # is impossible at 4-of-4, so per the campaign rule this is an insert joint.
+        #
+        # BLIND pocket from the recess floor (3.8 in) FORWARD to cliff_skin_keep: the
+        # insert never breaks the slope's outer face, so the cliff eyes stay clean and
+        # the screw cannot push through. Screw is M2x4 from the POCKET side (the
+        # serviceable side, no heads on the cosmetic slope) through the board into the
+        # insert, clamping the board onto the recess floor. In-plane the insert holes
+        # clear the Ø16.6 barrel bores by 1.53 (centres 11.23 apart).
+        d0_ = P["cliff_skin_keep"]
+        d1_ = 4.8                                     # 1.0 past the recess floor (3.8)
+        for px_ in (-20.5, 20.5):
+            for py_ in (-8.35, 8.35):
+                ins = cyl(P["cliff_insert_d"] / 2, d1_ - d0_)
+                ins.apply_transform(R(np.pi + sgn * sa_, (1, 0, 0)))
+                ins.apply_translation(pb_ + np.array([px_, 0.0, 0.0]) + py_ * sn_
+                                      - ((d0_ + d1_) / 2) * nnf)
+                d_ = sub(d_, ins)
         decks[sgn] = d_
     deck_f, deck_r = decks[1], decks[-1]
 
