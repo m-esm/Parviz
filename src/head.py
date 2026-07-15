@@ -40,6 +40,27 @@ def _nut_trap(nut_c, screw_axis, open_dir, size="M3", length=14.0):
                     open_dir=o, size=size, length=length + back)
 
 
+def _teardrop(r, length, axis="x", up=(0, -1, 0)):
+    """Self-supporting horizontal-bore cutter for the HEAD's print orientations.
+
+    geo.teardrop() hard-codes `up="z"` -- it only covers parts printed with world +Z as
+    the print-up direction (the seam-up chassis tub). Every head piece prints on another
+    face: head_bezel goes FACE-DOWN and the head_back frames go FRONT-DOWN, so for both
+    of them print-up is world -Y and their bed-plane bores run along world X or Z. Same
+    construction as geo.teardrop (cyl + a 45deg square cap rotated about the bore axis,
+    lifted r*sqrt(0.5) so its lower vertex sits on the bore centre and the roof never
+    exceeds 45deg); `up` just has to be perpendicular to `axis`.
+    """
+    a = {"x": (1.0, 0, 0), "y": (0, 1.0, 0), "z": (0, 0, 1.0)}[axis]
+    u = np.asarray(up, float); u /= np.linalg.norm(u)
+    if abs(float(np.dot(np.asarray(a, float), u))) > 1e-6:
+        raise ValueError("_teardrop(): up must be perpendicular to axis")
+    cap = box(*{"x": (length, r, r), "y": (r, length, r), "z": (r, r, length)}[axis])
+    cap.apply_transform(R(TAU / 8, a))               # 45deg about the bore axis
+    cap.apply_translation(u * (r * np.sqrt(0.5)))
+    return uni([cyl(r, length, axis=axis), cap])
+
+
 def _yz_post(center_xz, y0, y1, wx, wz, r=2.0):
     """A rounded-box POST spanning y0..y1, footprint wx (X) x wz (Z) about center_xz.
 
@@ -685,13 +706,26 @@ def build_head_parts():
     fl1 = box(28.0, 21.0, 7.0)
     fl1.apply_translation((0, -2.5, zfl))            # y -13..8
     back = uni([back, fl1])
-    for fy_ in (-9.0, 4.5):
-        scr = cyl(P["m3_clear_r"], 15.0, axis="x")
+    # 2026-07-15 FASTENING AUDIT: Ø2.5 self-tap -> M3 into a captive nut, + a Ø4 dowel at
+    # the seam (audit "assembly-holding gaps" #3: the two frames had NOTHING registering
+    # them to each other -- only the panels' tongue). Screws moved (-9, 4.5) -> (-8, 3.5)
+    # so the 5.7 nut slot keeps >= 1.65 of flange either side of it.
+    # The trap runs -Z, out of the flange's underside: that is FORCED, because the seat has
+    # to be the CEILING. The flange's own top (z 238) is fused into the z 238..242 top wall,
+    # giving 4.325 above the seat; running the slot up instead would hole the head's crown.
+    # Nut in, then screw, with the frames laid on their backs (audit P3: the nut can drop
+    # out of a downward mouth before the screw starts).
+    for fy_ in P["flange_screw_y"]:
+        scr = _teardrop(P["m3_clear_r"], 15.0, axis="x", up=(0, -1, 0))
         scr.apply_translation((7.0, fy_, zfl)); back = sub(back, scr)
-        cbx = cyl(3.4, 4.0, axis="x")
+        cbx = _teardrop(3.4, 4.0, axis="x", up=(0, -1, 0))
         cbx.apply_translation((12.5, fy_, zfl)); back = sub(back, cbx)
-        pil = cyl(1.25, 9.0, axis="x")
-        pil.apply_translation((-4.5, fy_, zfl)); back = sub(back, pil)
+        thr = _teardrop(P["m3_clear_r"], 11.0, axis="x", up=(0, -1, 0))
+        thr.apply_translation((-5.5, fy_, zfl)); back = sub(back, thr)   # x -11..0
+        back = sub(back, _nut_trap((P["flange_nut_x"], fy_, zfl), "x", (0, 0, -1),
+                                   length=6.0))
+    dwl = cyl(P["bez_dowel_socket_r"], 14.0, axis="x")   # Ø4 dowel across the frame seam
+    dwl.apply_translation((0, P["flange_dowel_y"], zfl)); back = sub(back, dwl)
 
     # panel / frame split at the wall inner face; recover wall-hung floaters (the
     # gusset webs) into the panel so nothing is left floating in the frame
@@ -736,9 +770,20 @@ def build_head_parts():
     # posts, and the led_slot starting at x 24): flange pads behind the forehead and
     # chin face strips, 1x M3 (axis X) + 1x Ø4 dowel each.
     for pz_, pdz in ((215.0, 8.0), (92.0, 5.0)):
-        pad = box(21.0, 8.0, 2 * pdz)
-        pad.apply_translation((25.0, 22.0, pz_))     # x 14.5..35.5 (0.5 off the camera
-        bezel = uni([bezel, pad])                    # bosses), y 18..26 behind the face
+        # 2026-07-15 FASTENING AUDIT: the CHIN pad grows y 18..26 -> 18..30 so it buries
+        # 1.0 into the face wall (29..33) and becomes a gusset off the face instead of a
+        # block on a stub -- the same "floating pad" class of defect the 2026-07-14 pass
+        # found on the forehead side. It also buys the depth the seam needs: an 8x10 pad
+        # CANNOT hold both a Ø4.1 dowel and an M3 with 1.2 ligaments and a 1.2 wall
+        # between them (that needs 11.2 mm in some direction; it had 8 and 10). With
+        # y 18..30 the two features separate in Y at 22 / 27 instead of fighting in Z.
+        # The FOREHEAD pad cannot do the same: the glass slab void (y 28.3..31.1) runs up
+        # to z 208.9, straight through where its +Y growth would go -- it keeps the pad +
+        # ext, with the ext thickened 3.2 -> 4.0 (audit P2-11).
+        pdy = P["bez_seam_pad_dy"] if pz_ < 100 else 8.0
+        pad = box(21.0, pdy, 2 * pdz)
+        pad.apply_translation((25.0, 18.0 + pdy / 2, pz_))    # x 14.5..35.5 (0.5 off the
+        bezel = uni([bezel, pad])                             # camera bosses)
         if pz_ > 100:
             # FUSE the forehead pad to the face (user 2026-07-14: "long hanging
             # thread in the LCD frame" = this pad FLOATING loose in bezel_R). The
@@ -749,17 +794,30 @@ def build_head_parts():
             # bridges pad -> face, z-clipped 209.4..223: above the glass band
             # (pocket top 208.9, so it can never press the LCD) and 0.5 under
             # the led_slot floor (223.5). The chin pad (z 92) is still fused.
-            ext = box(21.0, 3.2, 223.0 - 209.4)
-            ext.apply_translation((25.0, 27.6, (209.4 + 223.0) / 2))
-            bezel = uni([bezel, ext])
-        scr = cyl(P["m3_clear_r"], 14.0, axis="x")
+            ext = box(21.0, P["bez_ext_t"], 223.0 - 209.4)     # 3.2 -> 4.0 (audit P2-11):
+            ext.apply_translation((25.0, 26.0 + P["bez_ext_t"] / 2,   # y 26..30, so it
+                                   (209.4 + 223.0) / 2))             # buries 1.0 into the
+            bezel = uni([bezel, ext])                                # face wall (29..33)
+        # M3 + captive nut (was a Ø2.5 self-tap into the same 1.2-class plastic). The trap
+        # opens -Y = INTO the head interior, which is also print-UP for the face-down bezel:
+        # the nut drops in and rests on its seat while the two halves lie on the bench.
+        scr = _teardrop(P["m3_clear_r"], 14.0, axis="x", up=(0, -1, 0))
         scr.apply_translation((28.0, 22.0, pz_)); bezel = sub(bezel, scr)
-        cbx = cyl(3.4, 4.0, axis="x")
+        cbx = _teardrop(3.4, 4.0, axis="x", up=(0, -1, 0))
         cbx.apply_translation((33.6, 22.0, pz_)); bezel = sub(bezel, cbx)
-        pil = cyl(1.25, 7.0, axis="x")
-        pil.apply_translation((18.5, 22.0, pz_)); bezel = sub(bezel, pil)
-        dwl = cyl(2.05, 15.0, axis="x")              # Ø4 dowel across the seam
-        dwl.apply_translation((22.0, 22.0, pz_ + (pdz - 2.6) * (1 if pz_ > 100 else -1)))
+        thr = _teardrop(P["m3_clear_r"], 9.0, axis="x", up=(0, -1, 0))
+        thr.apply_translation((16.5, 22.0, pz_)); bezel = sub(bezel, thr)   # x 12..21
+        bezel = sub(bezel, _nut_trap((P["bez_seam_nut_x"], 22.0, pz_), "x", (0, -1, 0),
+                                     length=8.0))
+        # Ø4 dowels KEPT (audit). The CHIN one moves off its 0.55 ligament: it used to sit
+        # 2.6 from the pad's z edge, i.e. 0.55 of plastic beyond the bore. On the deepened
+        # chin pad it separates from the screw in Y instead (22 -> 27, a 1.2 wall between
+        # them) and now has the whole face wall behind it.
+        dwl = cyl(P["bez_dowel_socket_r"], 15.0, axis="x")
+        if pz_ > 100:
+            dwl.apply_translation((22.0, 22.0, pz_ + pdz - 2.6))
+        else:
+            dwl.apply_translation((22.0, P["bez_chin_dowel_y"], pz_))
         bezel = sub(bezel, dwl)
     bez_l = slice_mesh_plane(bezel, plane_normal=(-1, 0, 0), plane_origin=(22.0, 0, 0), cap=True)
     bez_r = slice_mesh_plane(bezel, plane_normal=(1, 0, 0), plane_origin=(22.0, 0, 0), cap=True)

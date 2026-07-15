@@ -200,6 +200,34 @@ P = {
     "rim_pad_dz": -5.0,              # pad centre below the screw (cb r3.2 -> 1.8 clear)
     "rim_pad_fit": 0.15,
 
+    # --- head_back FRAME<->FRAME top flange (2026-07-15 FASTENING AUDIT P1) ---
+    # Ø2.5 self-tap -> M3 + captive nut, and a Ø4 dowel: the two frames had NOTHING
+    # registering them to each other (audit "assembly-holding gaps" #3 -- only the panels
+    # carry a tongue). Screws moved off (-9, 4.5) so the 5.7 slot keeps >= 1.65 of the
+    # 21-deep flange either side. The trap runs -Z out of the flange underside because the
+    # SEAT must be the ceiling: the flange's top (238) is fused into the 238..242 top wall,
+    # giving 4.325 above the seat, whereas running it up would hole the head's crown.
+    "flange_screw_y": (-8.0, 3.5),
+    "flange_nut_x": -5.0,        # nut mid-plane in the L frame (screw enters from +X)
+    "flange_dowel_y": -2.25,     # between the two screws: 5.75 from each (>= 3.8 + wall)
+
+    # --- head_bezel L<->R seam pads (2026-07-15 FASTENING AUDIT P1 + P2-11) ---
+    "bez_seam_nut_x": 18.0,      # M3 captive nut in bezel_L (was a Ø2.5 self-tap)
+    "bez_ext_t": 4.0,            # forehead pad->face bridge 3.2 -> 4.0 (audit P2-11); it
+                                 # spans y 26..30, burying 1.0 into the face wall (29..33)
+    "bez_seam_pad_dy": 12.0,     # CHIN pad y 18..30 (was 18..26, depth 8). It now buries
+                                 # into the face and becomes a gusset rather than a block
+                                 # on a stub. It also buys the depth the seam needs: an
+                                 # 8x10 pad cannot hold a Ø4.1 dowel AND an M3 with 1.2
+                                 # ligaments plus a 1.2 wall between them -- that wants
+                                 # 11.2 mm along some axis and it had 8 and 10, which is
+                                 # exactly why the dowel ended up 0.55 from the pad edge.
+                                 # The FOREHEAD pad cannot copy this: the glass slab void
+                                 # (y 28.3..31.1) runs to z 208.9, right through its +Y
+                                 # growth path -- it keeps pad + thickened ext instead.
+    "bez_chin_dowel_y": 27.0,    # 5.0 off the screw (22.0) = 1.2 wall between the bores;
+                                 # the face wall now backs it instead of a 0.55 ligament
+
     # --- Screen factory mount: 4x M3 into the display's OWN outer case-mount holes ---
     # Measured from Raspberry_Pi_Touch_Screen_Assembly_v12.stl (outer 126.2 x 65.65 pattern),
     # confirmed vs the reference case STL + RPi mechanical drawing. Screen-LOCAL frame (post-flip);
