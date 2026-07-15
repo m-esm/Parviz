@@ -719,11 +719,12 @@ def build_chassis_parts():
     sub-split for print speed (2026-07-10, user: break the biggest prints apart):
 
     - lower tub -> chassis_lower_front / chassis_lower_rear at y = +26 (the only
-      vent-free wall band clear of the pan pedestal <=|24| and the pod-join stations
-      +-40). Joined by two FLOOR PADS at x +-61 (M3x12 axis Y from the front face into
-      rear thread-form pilots + a Ø4 press/slip dowel each) -- plus, in the assembly,
-      the one-piece pod RAILS (stations y +-40 land one per half) and the deck screws
-      bridge the halves.
+      vent-free wall band clear of the pan pedestal <=|24|). Joined by two FLOOR PADS
+      (M3x20 axis Y from the front face into a CAPTIVE M3 HEX NUT in the -y pad + a
+      Ø4 press/slip dowel each; the nut and the deleted counterbore date from the
+      2026-07-15 fastening campaign -- the old M3x12-into-a-thread-form-pilot is the
+      failing class, and its cbore left only a 1.0 wall) -- plus, in the assembly,
+      the deck screws and the side panels bridge the halves.
     - pan deck -> chassis_deck_front (y 66..) / chassis_deck_center / chassis_deck_rear
       (y ..-52). Seams clear the pan clips (front clip reaches y 58) and keep the pan
       seat MONOLITHIC in the center piece. Each seam is a half-lap (center's lower-half
@@ -858,8 +859,9 @@ def build_chassis_parts():
           - 1x M3x16 axis-Y through the REAR pad's free +y face into a CAPTIVE M3 HEX
             NUT slide-dropped into the tail pad from ABOVE (the tub is open-top, so
             the slot is reachable at assembly AND self-supporting in the seam-up
-            print). This replaces the thread-form pilot the y=26 seam still uses --
-            the failing class per the audit's systemic verdict.
+            print). Same captive-nut pattern the y=26 seam now uses -- the audit's
+            systemic verdict was that the thread-form pilot is the failing class,
+            and no structural joint in this file keeps one.
         Driver access: along +y at z 21 inside the open tub, before the side panels
         (whose TT tab rib crosses that corridor at y -87..-79.2) go on -- and the
         panels bridge this seam anyway, so they always come off first."""
