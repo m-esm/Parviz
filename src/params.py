@@ -57,6 +57,127 @@ P = {
     "screen_clear": 0.5,    # clearance around the module in its pocket
     "bezel_back": 4.0,      # split plane sits this far behind the screen back
 
+    # --- Bezel<->back joint hardware (2026-07-15 FASTENING AUDIT P0-1) ---
+    # The 8 perimeter M3x35 are the head's primary structural joint. Until this pass the
+    # "captive nut" was a hex void SEALED inside the back boss with no insertion slot --
+    # the joint was literally unbuildable as printed (audit P0-1). Each back boss is now a
+    # slide-in trap opening INBOARD (toward the open head interior), and the flat-on-flat
+    # split plane got a diagonal Ø4 dowel pair so the halves self-register while 8 blind
+    # M3x35 are driven (audit "assembly-holding gaps" #4).
+    # ASSEMBLY ORDER: the 8 nuts drop into their slots BEFORE the screen module / tray goes
+    # in -- the module (|x| <= 96.48, y -11.4..28.6) buries every side-post mouth, exactly
+    # like the arm-shoulder nuts.
+    # SLOT DIRECTION -- each trap runs OUT OF THE WALL ITS BOSS RIDES, into the open head:
+    # the |x|=40 pairs slide along -+Z (out of the ceiling / floor), the |x|=97.5 side posts
+    # inboard along -+X. This is not cosmetic. Every boss is fused to a wall along its whole
+    # length (the split plane's interior is all screen-module pocket, so nothing may float
+    # there), and at z 237 the nut's own 5.5 body sits 1.75 INSIDE the ceiling -- run that
+    # trap inboard and the nut jams on the ceiling 12 mm before the mouth (probed: 9.5 mm^3
+    # of interference). Running it out of the wall instead makes THE WALL the trap's closed
+    # end, which is exactly the material the audit wants behind the hex.
+    "bez_nut_boss_run": 11.0,  # back-boss footprint ALONG the slot run: closed end 5.5 off
+                               # the screw axis = 2.3 past the hex corner (>= 1.2 required)
+    "bez_nut_boss_web": 9.0,   # ... and ACROSS it: 1.65 PARALLEL webs beside the 5.7 slot.
+                               # Deliberately a rounded box, not the old r4.3 cylinder: a
+                               # cylindrical boss leaves crescent webs that feather to 0.0
+                               # where the slot walls exit the barrel (wallcheck bait, and
+                               # the old boss gave only 0.84 at the hex corner anyway).
+    "bez_nut_y": -4.0,        # nut mid-plane (unchanged): M3x35 entering the face at
+                              # y~28.6 lands its tip ~2.4 past the nut
+    "bez_nut_slot_len": 14.0, # nut centre -> slot mouth; every mouth opens into the head
+    # Ø4 registration dowels on the split plane (y=2), pin on the BEZEL (it prints
+    # face-down, so the pin grows straight up), socket in head_back. DIAGONAL so the pair
+    # locks X, Z and yaw: (-62, 237) rides the ceiling in bezel_L/frame_L, (62, 92.6) the
+    # bottom wall in bezel_R/frame_R. Both bosses MUST touch a wall -- the split plane's
+    # whole interior (|x| <= 86.6, z 98.35..203.75) is screen-module pocket, so a
+    # free-standing post there would print as a loose body (this is why the 8 screw posts
+    # all sit on the ceiling / floor / side walls too).
+    "bez_dowel_pts": ((-62.0, 237.0), (62.0, 92.6)),
+    "bez_dowel_r": 2.0,       # pin Ø4.0 ...
+    "bez_dowel_socket_r": 2.1,  # ... in a Ø4.2 socket (+0.1/side: the audit's P3 note --
+                              # Ø4.0-in-Ø4.0 is jam-or-rattle, never a slip fit)
+    "bez_dowel_len": 4.5, "bez_dowel_deep": 5.0,   # 0.5 bottoming clearance
+    "bez_dowel_boss_r": 4.5,  # 2.4 wall around the socket
+
+    # --- Tilt-axle PINCH CLAMPS (2026-07-15 FASTENING AUDIT P0-3) ---
+    # Was: a Ø2.5 "M2.5 grub pilot" per side, driven up from the neck slot. Ø2.5 is M2.5
+    # CLEARANCE -- the thread had literally nothing to bite (audit P0-3), and even a real
+    # grub strips PLA on re-torque, which is fatal for a joint whose whole job is
+    # CONTINUOUS tilt-zero trim (loosen, rotate the head on the axle, re-tighten).
+    # Now: a proper split clamp per side. A block engulfs the Ø14 torque tube, a slit
+    # through the plane of the axle splits it into front/rear jaws below the bore (they
+    # stay joined over the top = the hinge), and one cross M3x16 pulls them shut.
+    # POSITION x 33..43 is DERIVED, not chosen: inboard is impossible (the neck's tilt-stop
+    # post occupies x 20..32 at r 12..17 about the axle, and a block big enough for an M3
+    # + nut reaches r ~14.4, so it would collide over the +-33.8 sweep), and outboard of 44
+    # the axle bore goes loose (Ø5.3) by design.
+    # DRIVER ACCESS deviates from the old grub's "from below through the neck slot": at
+    # x 38 the head's OWN floor (z 88..92, solid for |x| 33..98.5) blocks a vertical line,
+    # and the bay opening is only |x| <= 33. The bolt axis is +-Y instead and is driven
+    # from the REAR through the tool-free head_door void (|x| <= 54.5, z 115.5..188.2) --
+    # a designed, sighted service path rather than a blind 53 mm reach through the floor.
+    # The NUT is captive, so it only needs bench access. Its slot runs DOWN, mouth at
+    # z 138 under the block, open into the head interior -- and that direction is FORCED,
+    # not preferred. Feeding it along +-X is blocked by the Ø14 torque tube itself (it
+    # runs |x| 27..99 and the nut sits at r 4.9 from its axis: probed 5.0 mm^3 of jam).
+    # Running it UP instead brings the 5.7 channel alongside the Ø5.1 axle bore with only
+    # 0.55 of wall; running it DOWN walks away from the bore and keeps 2.37.
+    # KNOWN LIMIT (audit P3, same as the M4 slide-up slots): with the head upright and the
+    # bolt not yet started, the nut can drop back out of the mouth. Insert it with the
+    # frame in its print pose (front-down = the slot horizontal) and start the bolt before
+    # standing the head up. A crush-rib nib in the mouth is the audit's fix; not modelled
+    # here because a 0.4 mm nib trips the wallcheck ray gate.
+    "clamp_x": (34.0, 44.0),  # block x band, per side. 2.0 off the neck tilt-stop post
+                              # (x 20..32): this gap is PURELY axial, so it cannot close
+                              # over the sweep -- probed 2.18 mm min at the -33.8 stall.
+    "clamp_wy": 16.0,         # block depth  (y -26..-10): 5.45 behind the bore, 7.55 ahead
+    "clamp_wz": 20.0,         # block height (z 141..161): 2.6 under the ant_bracket motor
+                              # face plate (z 163.6), and the bolt sits clear below the bore
+    "clamp_slit_t": 1.0,      # slit gap: closes ~0.1 of Ø5.1-on-Ø5.0 bore long before it
+                              # bottoms out (hinge is the 5.45 of block over the bore)
+    "clamp_bolt_z": 146.0,    # cross-bolt axis: 7 below the axle, and its Ø5.7 nut slot
+                              # tops out 1.6 clear of the Ø5.1 axle bore
+    "clamp_nut_y": -13.5,     # nut mid-plane: leaves a 2.6 bearing plate between the trap
+                              # and the slit (that plate takes the whole clamp load), 2.1
+                              # of block ahead of it, and the M3x16 tip lands at y -10.1 =
+                              # 3.1 clear of the Pi/display stack front (y -7.0)
+    "clamp_head_cb_r": 3.2, "clamp_head_cb_deep": 3.4,   # M3 socket-head recess
+
+    # --- ant_bracket MOUNTING + motor ears (2026-07-15 FASTENING AUDIT P0-4) ---
+    # The bracket carries BOTH antenna 28BYJs and their gear trains and was attached to
+    # the head by NOTHING: its wall spine simply rested against the back wall's inner face
+    # (audit P0-4). Now 4x M3x12 from OUTSIDE the back panel into captive nuts in spine
+    # bosses. Screw heads land at z 212, which is 2.5 ABOVE the trim_hatch_frame's top
+    # (203.5) and well above the door outline (188.2) and louvres (187) -- so they stay on
+    # fixed, visible wall and are not buried under the glued-on orange frame.
+    "ant_mount_x": (26.0, 62.0),   # 4 points/head. x 26 threads the gap between the
+                                   # gearbox (x 25.7..34.7) and the G1 gear plane (x 22);
+                                   # x 62 sits between the motor can (to 53.5) and the
+                                   # outer arm (76.75). Both clear the y -48.1..-44.1
+                                   # half-shaft (the bosses live at y <= -54).
+    "ant_mount_z": 212.0,
+    "ant_mount_boss": (10.0, 12.0),   # boss (X, Z): 2.15 webs beside the 5.7 nut slot,
+                                      # 2.825 under the seat
+    "ant_mount_y": (-64.0, -54.0),    # boss runs forward off the spine's front face
+    "ant_mount_nut_y": -60.0,         # M3x12: head at the panel's outer counterbore,
+                                      # tip 2.0 past the nut
+    # Motor FACE PLATE: 1.2 -> 2.5 (audit P0-4; these plates already printed SEVERED once,
+    # see the 2026-07-10 connectivity audit). It grows OUTBOARD only: its inboard face is
+    # the datum the 28BYJ's 1.0-thick ear flange (x 34.7..35.7) bolts to, and 36.0 also
+    # lifts that placeholder gap 0.2 -> 0.3 (the CSG-robustness floor).
+    "ant_plate_x": 36.0,      # face-plate inboard face (was 35.9)
+    "ant_plate_t": 2.5,       # ... thickness (was 1.2)
+    # EAR BOLTS: 2x M3x10 per motor through the ear + plate into a captive nut on the
+    # OPEN OUTBOARD face (replaces two vestigial Ø2.5 self-tap pilots in a 1.2 plate).
+    # The nut pad geometry is FORCED by the can: the ear holes sit at r 17.5 from the
+    # motor axis and the Ø28.25 can at r 14.1, leaving 3.4 of radial room, so a pad
+    # centred on the hole would bury itself in the can. Each pad is therefore pushed
+    # RADIALLY OUTWARD by 1.15 and its nut slot runs INWARD (seat outboard), which keeps
+    # 0.8 to the can and 1.725 of pad beyond the hex corner.
+    "ant_ear_pad": (9.0, 7.5, 6.0),   # (Y, Z, X-depth off the plate's outboard face)
+    "ant_ear_pad_off": 1.15,          # radial push away from the can
+    "ant_ear_nut_x": 41.0,            # nut mid-plane (trap x 39.6..42.4)
+
     # --- Screen factory mount: 4x M3 into the display's OWN outer case-mount holes ---
     # Measured from Raspberry_Pi_Touch_Screen_Assembly_v12.stl (outer 126.2 x 65.65 pattern),
     # confirmed vs the reference case STL + RPi mechanical drawing. Screen-LOCAL frame (post-flip);
