@@ -348,9 +348,21 @@ def build_chassis_core():
     # floor rim behind the belly opening: the incoming wall cable zip-ties down before
     # the jack, so a yanked cable loads the tie, not the board (the robot WILL drag its
     # own tether eventually).
+    # PD-TRIGGER -> M2 BRASS HEAT-SET INSERTS (2026-07-15, FASTENING_AUDIT P1: "M2
+    # edge-on into wall layers (weakest orientation)"). The pilots' axis is Y and the
+    # tub prints floor-down, so a cut thread there runs straight across the layer
+    # stack -- it peels the wall apart rather than stripping. An insert is the exact
+    # answer: its knurl grips plastic melted around a smooth bore, so no thread is cut
+    # across layers at all. (The audit's other option, a printed slide-in carrier,
+    # needs board dimensions this project does not have -- see PARAMS pd_hole_cc.)
+    # Spacing 9.0 -> pd_hole_cc/2: a Ø2.8 insert bore at the old ±9 left only 0.60 mm
+    # of wall to the USB-C corridor (x -45..-31); ±10.4 restores 2.00.
+    pdx_, pdz_ = P["pd_c"]
     for sxp in (-1, 1):
-        pd = cyl(0.85, 4.0, axis="y")
-        pd.apply_translation((-38.0 + sxp * 9.0, -P["chassis_l"] / 2 + 5 - 1.9, z0 + 24))
+        pd = cyl(P["pd_insert_d"] / 2, P["pd_insert_l"] + 1.0, axis="y")
+        pd.apply_translation((pdx_ + sxp * P["pd_hole_cc"] / 2,
+                              -P["chassis_l"] / 2 + 5 - (P["pd_insert_l"] + 1.0) / 2 + 0.5,
+                              pdz_))                     # blind: 2.0 of wall behind
         body = sub(body, pd)
     for sxp in (-1, 1):
         zh = cyl(1.6, 7.0)

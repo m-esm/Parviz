@@ -987,6 +987,23 @@ P = {
     # USB) + two front channels (ULN wiring). Plate = 1.45 flange in a 1.5 rebate
     # (belly face stays flush at z=7: ground clearance is only 7) + a 3-thick plug
     # filling the opening; the two inboard ballast ribs move ONTO the plug.
+    # PD TRIGGER (12V, on the buy list -- NOT owned, NOT measured). The board hangs on
+    # the rear wall's inner face with its USB-C jack aligned to the wall slot. Mount is
+    # 2x M2 BRASS HEAT-SET INSERTS (2026-07-15, FASTENING_AUDIT P1 "M2 edge-on into
+    # wall layers = the weakest thread orientation"): the bore axis is Y and the tub
+    # prints floor-down, so a CUT thread runs across the layer stack and peels the wall
+    # apart. An insert grips melted plastic around a smooth bore -- no thread across
+    # layers. The audit's alternative (a printed slide-in carrier) needs board
+    # dimensions we do not have.
+    # !! VERIFY_ON_ARRIVAL: pd_hole_cc is a GUESS. The old code hardcoded a +-9 (18.0)
+    # pitch with no param and no source. 20.8 is the value that keeps a 2.00 mm wall
+    # between the O2.8 insert bores and the USB-C corridor (x -45..-31) -- at 18.0 it
+    # was 0.60. Re-derive from the real board on arrival; only chassis_lower_tail
+    # (32 cm3) reprints.
+    "pd_c": (-38.0, 34.0),          # centre: on the USB slot's axis (x), z0+24
+    "pd_hole_cc": 20.8,
+    "pd_insert_d": 2.8,             # M2 insert: OD 3.2, L 3.0, recommended hole O2.8
+    "pd_insert_l": 3.0,             # blind in the 5-wall -> 2.0 of wall behind it
     "belly_open_wl": (100.0, 110.0),        # opening W(X) x L(Y), corners r8
     "belly_open_c": (0.0, -6.0),            # centre (rear-biased toward the ballast bay)
     # ("belly_keep" strap RETIRED 2026-07-14 round 5: the pedestal it rooted is the
