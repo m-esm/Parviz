@@ -985,16 +985,16 @@ def build_chassis_parts():
                 # the WALL (x 65..70) belongs to the OTHER piece for part of the
                 # span (wall butt at -18.5, lap at -21.5..-15.55 -- staggered),
                 # and a 69.5-rooted tongue pressed 0.5 into it (fits caught it)
-                lap = box(80.4 - 70.0, 21.35 - 15.55, 27.0 - 21.15)   # upper tongue
+                lap = box(80.4 - 70.0, 21.35 - 15.55, 27.0 - 23.15)   # upper tongue
                 lap.apply_translation((s * (70.0 + 80.4) / 2, -(21.35 + 15.55) / 2,
-                                       (21.15 + 27.0) / 2))
+                                       (23.15 + 27.0) / 2))
             else:
                 lsec = extrude_polygon(sg.Polygon(lpoly), -21.5 - (-112.0))
                 lsec.apply_transform(R(-TAU / 4, (1, 0, 0)))
                 lsec.apply_translation((0, -112.0, 0))
                 lap = extrude_polygon(sg.Polygon(                  # lower tongue =
                     [(s * 70.0, -15.0), (s * 80.4, -15.0),         # L-block under
-                     (s * 80.4, -21.0), (s * 70.0, -21.0)]),       # the z 21 lap
+                     (s * 80.4, -23.0), (s * 70.0, -23.0)]),       # the z 23 lap
                     21.5 - 15.7)                                   # plane
                 lap.apply_transform(R(-TAU / 4, (1, 0, 0)))
                 lap.apply_translation((0, -21.5, 0))
@@ -1135,14 +1135,29 @@ def build_chassis_parts():
                 scf.apply_transform(R(-TAU / 4, (1, 0, 0)))    # (x,-z) convention
                 scf.apply_translation((0, by_ - 5.0, 0))
                 pnl = sub(pnl, scf)
-            # splice screw: 1x M3x10 vertical through the lap at (75.4, -18.5)
+            # SPLICE: 1x M3x12 vertical through the lap at (75.4, -18.5) into a
+            # CAPTIVE HEX NUT in the rear L-block (2026-07-15, FASTENING_AUDIT P1).
+            # This ONE screw is what makes each "standalone track module" rigid, and
+            # it was a Ø2.5 thread-form pilot with 5.5 mm of self-tapped PLA thread.
+            # Three changes:
+            #  - the lap plane moved z 21.15 -> 23.15, so the REAR (lower) tongue is
+            #    8 tall (z 15..23) and can carry the nut at z 19.0 with 2.6 of floor
+            #    and 2.6 of roof. The screw pulls the nut UP into that roof.
+            #  - the Ø6.8 counterbore is DELETED (P2-4: it left 1.8 mm tongue cheeks
+            #    in a 10.4-wide tongue). The M3 socket head seats PROUD at z 27 --
+            #    the chassis_side foot convention -- and the cheeks become 3.7. The
+            #    head sits in the loop's free interior (the top run is at z ~51).
+            #  - the nut slot runs out the rear tongue's TIP face (y -15.7), which the
+            #    FRONT piece's own L-block butts at -15.55: slide the nut in on the
+            #    bench, and once the two pieces mate it is trapped by the front block.
             if fi == 0:
-                spc = cyl(1.65, 8.0); spc.apply_translation((s * 75.4, -18.5, 24.0))
-                spb = cyl(3.4, 3.0); spb.apply_translation((s * 75.4, -18.5, 26.2))
-                pnl = sub(sub(pnl, spc), spb)
+                spc = cyl(1.65, 6.0); spc.apply_translation((s * 75.4, -18.5, 25.0))
+                pnl = sub(pnl, spc)                    # through the 23.15..27 tongue
             else:
-                spp = cyl(1.25, 5.5); spp.apply_translation((s * 75.4, -18.5, 18.2))
-                pnl = sub(pnl, spp)
+                spc = cyl(1.65, 10.0); spc.apply_translation((s * 75.4, -18.5, 18.0))
+                pnl = sub(pnl, spc)                    # z 13..23 (tip relief past the nut)
+                pnl = sub(pnl, geo.nut_slot((s * 75.4, -18.5, 19.0), screw_axis="z",
+                                            open_dir=(0, 1, 0), size="M3", length=7.0))
             for ry in P["roadwheel_ys"]:                   # M4 bolt-axle stations
                 if not (ky0 + 4.0 < ry < ky1 - 4.0):
                     continue
