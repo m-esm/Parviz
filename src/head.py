@@ -20,7 +20,7 @@ from gears import gear_disc, involute_spur
 # ---------------------------------------------------------------------------
 # Fastening helpers (2026-07-15 FASTENING AUDIT, docs/FASTENING_AUDIT.md)
 # ---------------------------------------------------------------------------
-def _nut_trap(nut_c, screw_axis, open_dir, size="M3", length=14.0):
+def _nut_trap(nut_c, screw_axis, open_dir, size="M3", length=14.0, nib=False):
     """Slide-in captive hex-nut trap NEGATIVE, positioned by the NUT CENTRE, with
     `length` measured from that centre out to the slot MOUTH.
 
@@ -32,7 +32,7 @@ def _nut_trap(nut_c, screw_axis, open_dir, size="M3", length=14.0):
     """
     return nut_slot(np.asarray(nut_c, float), screw_axis=screw_axis,
                     open_dir=open_dir, size=size,
-                    length=length + geo.nut_ac(size) / 2.0)
+                    length=length + geo.nut_ac(size) / 2.0, nib=nib)
 
 
 def _teardrop(r, length, axis="x", up=(0, -1, 0)):
@@ -274,7 +274,7 @@ def build_head_shell():
                               P["clamp_bolt_z"]))    # opens at the rear face, 1.0 overshoot
         shell = sub(shell, cb)
         shell = sub(shell, _nut_trap((bx_, P["clamp_nut_y"], P["clamp_bolt_z"]), "y",
-                                     (0, 0, -1), length=8.0))   # mouth z 138, under the block
+                                     (0, 0, -1), length=8.0, nib=True))
 
     # camera: CM3 recessed inside the raised forehead behind the plain 4 mm wall (no lens
     # bump: the countersunk aperture clears the full 75 deg diagonal FoV with the pupil
@@ -377,8 +377,9 @@ def build_head_shell():
                                         (0, 1, 0), (px, fy, pz)))
     # antenna mast exits (2026-07-10, twin deployable masts -- see PARAMS TWIN DEPLOYABLE
     # ANTENNAS): per side a Ø7.0 through-bore in the top wall (mast Ø6.5 slides, 0.25/side)
-    # + a Ø13 interior guide boss extending the bore to 10 long (z 216..226). A friction
-    # O-ring seated in the bore mouth parks the mast against back-drive (docs/ASSEMBLY.md).
+    # + a Ø13 interior guide boss extending the bore to 10 long (z 216..226). The modeled
+    # annular gland captures a metric 6.0 x 1.0 O-ring; it damps sliding, while matching
+    # positive mast grooves hold both park positions. Gland and breakaway VERIFY_ON_BENCH.
     zt_ = P["body_z_top"]
     for sxa in (-1, 1):
         gb = cyl(6.5, 7.0)
@@ -387,6 +388,17 @@ def build_head_shell():
         bore = cyl(P["ant_mast_d"] / 2 + 0.25, 16.0)
         bore.apply_translation((sxa * P["ant_x"], P["ant_y"], zt_ - 6.0))
         shell = sub(shell, bore)
+        gland = cyl(P["ant_gland_d"] / 2.0, P["ant_gland_w"])
+        gland.apply_translation((sxa * P["ant_x"], P["ant_y"], P["ant_gland_z"]))
+        shell = sub(shell, gland)
+        # 45 degree lead-in from the Ø7 guide on the gland's top side. The radial
+        # step is 0.65 mm, so the axial run is the same. Insert the ring from the mouth.
+        lead_h = (P["ant_gland_d"] - (P["ant_mast_d"] + 0.5)) / 2.0
+        lead = frustum(P["ant_gland_d"] / 2.0,
+                       P["ant_mast_d"] / 2.0 + 0.25, lead_h)
+        lead.apply_translation((sxa * P["ant_x"], P["ant_y"],
+                                P["ant_gland_z"] + P["ant_gland_w"] / 2.0))
+        shell = sub(shell, lead)
         slot = box(3.8, 3.2, 18.0)                   # rack corridor: the molded teeth
         slot.apply_translation((sxa * P["ant_x"], P["ant_y"] - 4.15, zt_ - 7.0))
         shell = sub(shell, slot)                     # cannot pass a round bore
@@ -471,7 +483,7 @@ def build_head_parts():
         clr = _orient(cyl(P["m3_clear_r"], 70), n); clr.apply_translation(w)
         bezel = sub(bezel, clr.copy()); back = sub(back, clr.copy())
         back = sub(back, _nut_trap((w[0], P["bez_nut_y"], w[2]), "y", o,
-                                   length=P["bez_nut_slot_len"]))
+                                   length=P["bez_nut_slot_len"], nib=(o[2] < 0)))
 
     # split-plane REGISTRATION (audit "assembly-holding gaps" #4: bezel on back had NONE).
     # Pin on the bezel (prints face-down -> the pin grows straight up, self-supporting),
@@ -763,7 +775,7 @@ def build_head_parts():
         thr = _teardrop(P["m3_clear_r"], 11.0, axis="x", up=(0, -1, 0))
         thr.apply_translation((-5.5, fy_, zfl)); back = sub(back, thr)   # x -11..0
         back = sub(back, _nut_trap((P["flange_nut_x"], fy_, zfl), "x", (0, 0, -1),
-                                   length=6.0))
+                                   length=6.0, nib=True))
     dwl = cyl(P["bez_dowel_socket_r"], 14.0, axis="x")   # Ø4 dowel across the frame seam
     dwl.apply_translation((0, P["flange_dowel_y"], zfl)); back = sub(back, dwl)
 
@@ -1066,6 +1078,26 @@ def build_antennas():
         dome = trimesh.creation.icosphere(subdivisions=2, radius=P["ant_tip_d"] / 2)
         dome.apply_translation((0, 0, z1 + P["ant_tip_h"]))
         mast = uni([shaft, cap, dome] + teeth)
+        # Positive O-ring park detents. At full deploy the retracted groove rides
+        # ant_travel above the head as an accepted cosmetic ring on the exposed mast.
+        park_z = (P["ant_gland_z"], P["ant_gland_z"] - P["ant_travel"])
+        retract_cut = trimesh.creation.torus(
+            major_radius=(P["ant_mast_d"] / 2.0 + P["ant_park_groove_minor_r"]
+                          - P["ant_park_groove_depth"]),
+            minor_radius=P["ant_park_groove_minor_r"])
+        retract_cut.apply_translation((0, 0, park_z[0]))
+        deployed_cut = trimesh.creation.torus(
+            major_radius=(P["ant_mast_d"] / 2.0 + P["ant_park_groove_minor_r"]
+                          - P["ant_park_groove_depth"]),
+            minor_radius=P["ant_park_groove_minor_r"])
+        deployed_cut.apply_translation((0, 0, park_z[1]))
+        # The deployed station crosses the rack band. Remove the rack sector from the
+        # cutter first, sparing everything y <= -2.0 in mast-local coordinates.
+        rack_guard = box(20.0, 20.0, 4.0)
+        rack_guard.apply_translation((0, -12.0, park_z[1]))
+        deployed_cut = sub(deployed_cut, rack_guard)
+        mast = sub(mast, retract_cut)
+        mast = sub(mast, deployed_cut)
         for gz in (z1 + 3.5, z1 + 7.0, z1 + 10.5):   # knurl-read ring grooves on the cap
             gr = trimesh.creation.torus(major_radius=P["ant_tip_d"] / 2, minor_radius=0.6)
             gr.apply_translation((0, 0, gz))
@@ -1073,6 +1105,20 @@ def build_antennas():
         mast.apply_translation((ax_, P["ant_y"], 0))
         _color(mast, "antenna"); mast.metadata["name"] = f"antenna_{side}"
         out.append(mast)
+    return out
+
+
+def build_ant_orings():
+    """Bought metric 6.0 x 1.0 O-rings shown seated in the two head glands."""
+    out = []
+    major_r = P["ant_mast_d"] / 2.0 + 0.5
+    for sxa, side in ((-1, "L"), (1, "R")):
+        ring = trimesh.creation.torus(major_radius=major_r, minor_radius=0.5)
+        ring.apply_translation((sxa * P["ant_x"], P["ant_y"], P["ant_gland_z"]))
+        _color(ring, "antenna")
+        ring.metadata["name"] = f"ant_oring_{side}"
+        ring.metadata["export"] = None
+        out.append(ring)
     return out
 
 
@@ -1233,7 +1279,7 @@ def build_ant_drive():
             bracket = sub(bracket, eh)
             bracket = sub(bracket, _nut_trap(
                 (sxa * P["ant_ear_nut_x"], ey_, mz_ + sz_ * 17.5), "x",
-                (0, 0, -sz_), length=6.0))
+                (0, 0, -sz_), length=6.0, nib=(sz_ > 0)))
     _color(bracket, "back"); bracket.metadata["name"] = "ant_bracket"
     out.append(bracket)
     return out

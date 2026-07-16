@@ -122,11 +122,10 @@ P = {
     # runs |x| 27..99 and the nut sits at r 4.9 from its axis: probed 5.0 mm^3 of jam).
     # Running it UP instead brings the 5.7 channel alongside the Ø5.1 axle bore with only
     # 0.55 of wall; running it DOWN walks away from the bore and keeps 2.37.
-    # KNOWN LIMIT (audit P3, same as the M4 slide-up slots): with the head upright and the
-    # bolt not yet started, the nut can drop back out of the mouth. Insert it with the
-    # frame in its print pose (front-down = the slot horizontal) and start the bolt before
-    # standing the head up. A crush-rib nib in the mouth is the audit's fix; not modelled
-    # here because a 0.4 mm nib trips the wallcheck ray gate.
+    # RETENTION (audit P3, same as the M4 slide-up slots): two modeled 0.25 mm crush-rib
+    # nibs click the nut past the gravity-down mouth and leave the seated hex unpinched.
+    # The front-down bench pose remains convenient, but is no longer required to keep the
+    # nut in place before the clamp bolt starts.
     "clamp_x": (34.0, 44.0),  # block x band, per side. 2.0 off the neck tilt-stop post
                               # (x 20..32): this gap is PURELY axial, so it cannot close
                               # over the sweep -- probed 2.18 mm min at the -33.8 stall.
@@ -1176,10 +1175,16 @@ P = {
     # planes |x| 22 / 14) -> a Ø4 HALF-shaft (|x| 6..88) -> a 27T m0.8 pinion (pitch
     # Ø21.6) at |x| 84 meshing the rack molded on its mast's -Y face. Two motors =
     # each antenna individually controllable (user); two more ULN2003s (own 9, now
-    # 4 used). Speed: ~15 RPM usable x 6.25 x 67.9 mm/rev ~= 104 mm/s -> 50 in ~0.5 s;
-    # force ~0.3 N per rack (20 mN.m / 6.25 / r10.8) -- masts stay light (<10 g) and
-    # slide free. Back-drive: gear-up means masts sag de-energized; a friction O-ring
-    # in each top guide bore parks them (docs/ASSEMBLY.md).
+    # 4 used). Speed: ~104 mm/s is the theoretical no-load ceiling. Under load, with
+    # the acceleration ramp from pull-in rates, backlash take-up across three meshes,
+    # mesh + O-ring friction, and pull-out torque derating, plan on ~40 mm/s average:
+    # 50 mm in ~1.2-1.5 s. VERIFY_ON_BENCH. Rack force is ~0.3 N at 15 RPM, but ~0.5 N
+    # at pull-in rates (34 mN.m / 6.25 / r10.8); this low-rate force sizes park
+    # breakaway. Positive mast grooves now hold back-drive sag: the O-ring must expand
+    # radially 0.45 over a groove shoulder to leave park. Sliding friction only damps
+    # mid-travel. Targets: sliding breakaway <=0.15 N; park breakaway 0.2-0.3 N (>=2x
+    # mast weight plus vibration margin, <=60% of ~0.5 N low-rate force).
+    # VERIFY_ON_BENCH. Firmware leaves park at the lowest step rate (max torque), then ramps.
     # PLACEMENT (probe-driven): masts sit at y -31 BEHIND the tilt clamp tubes (Ø14 at
     # y -18/z 153, spanning to |x| 99 -- a y -24 mast ran through them at full
     # retract); the screen tray's rail+pillar bands own |x| 56..68 z<196 and the tilt
@@ -1190,6 +1195,13 @@ P = {
     "ant_x": 85.0, "ant_y": -31.0,  # mast axes (mirrored +-)
     "ant_mast_d": 6.5,      # mast shaft Ø (slides in Ø7 top-wall bore, 0.25/side)
     "ant_travel": 50.0,     # max extension past the head top surface
+    "ant_gland_z": 240.0,   # O-ring gland center in the 238..242 top wall band; VERIFY_ON_BENCH
+    "ant_gland_d": 8.3,     # gland bore: gives light 5-10% radial squeeze; VERIFY_ON_BENCH
+    "ant_gland_w": 1.4,     # axial gland width captures a 1.0 mm section; VERIFY_ON_BENCH
+    "ant_oring": "metric 6.0 x 1.0",  # ID 6.0, CS 1.0; ~8% stretch on Ø6.5 mast;
+                            # sliding friction only, positive grooves hold park; VERIFY_ON_BENCH
+    "ant_park_groove_depth": 0.45,  # radial re-expansion shoulder, tuning knob; VERIFY_ON_BENCH
+    "ant_park_groove_minor_r": 0.7, # round-bottom groove is its own lead chamfer; VERIFY_ON_BENCH
     "ant_mast_z": (147.0, 242.5),   # retracted shaft span: top = body_z_top + 0.5 (cap rests
                             # on the top-wall boss); tracks the 2026-07-11 forehead raise.
                             # Rack (150..214) still meshes the z-205 pinion at +50 extension
@@ -1450,4 +1462,3 @@ P = {
 }
 
 EXPORT = os.environ.get("EXPORT") == "1"
-

@@ -47,6 +47,7 @@ settled below). "Need" is per robot.
 | 695-2RS | 5x13x4, tilt-axle cheeks | 2 | 30 (Bag 13) |, |
 | F688ZZ flanged | 8x16x5, flange Ø18; END idlers (both loop ends are free idlers since the 2026-07-11 mid-drive), **2 per wheel x 4 wheels** (one pressed at each face, Ø15.95 through-seat + Ø18.5x1.0 flange recess both sides). The Bag 13 "Miniature Ball Bearings" were checked as a candidate 2026-07-13: label reads **10pcs MR105 ZZ** (5x10x4, unflanged) -- wrong part | 8 | 0 | **8** |
 | 6 mm airsoft BBs | pan race, Ø80 circle, `pan_race_n`=18 | 18 | 0 | **smallest bag (100+)** |
+| Metric O-ring 6.0 x 1.0 | antenna gland and positive park grooves; NBR or silicone, silicone preferred for low breakaway; VERIFY_ON_BENCH | 2 | 0 | **2** |
 | Ø5 SOLID rod | tilt axle, ~100 mm silver steel (**NOT tube**: a 1.0 flat on a Ø5/Ø2.5 tube leaves a 0.25 wall). **File a 1.0-deep flat** from the insertion end to ~15 past center (D-key for the worm wheel's hub ledge); only the ~6 mm under the hub needs a clean 1.0 ±0.1 depth. The flat crosses the +X 695 seat, so that inner race rides a D-profile (fine, the spacer tubes clamp it). Print a D-bore coupon first, starting at **+0.05** clearance (+0.15 measured as ±4.4° of head backlash) | 1 | 0 | **1** |
 | M8x**70** bolts + NYLOC nuts | END BOLT-AXLES: head = outboard hubcap, smooth journal through both F688s, thread begins at x=78 and crosses the tower clamp stack. M8x60 is too short to reach the NYLOC insert. | 4+4 | 0 | **4x M8x70 + 4 NYLOC** |
 | M8 JAM NUTS + washers | **Required and modeled:** one AF13 jam nut bears on each tower's outboard face; the washer and NYLOC bear inboard. This closes the previous 17.4 mm air gap, clamps the tension slot/tower, and leaves the idler free on the smooth journal. The printed export likewise contains 8 total M8 nuts. | 4+4 washers | 0 | **4x M8 jam nut + 4 washers** |
@@ -237,7 +238,8 @@ tray killed the 88.5 mm blind channels, 2026-07-08.)
    hold alignment before tightening.
 3. **TT motors.** Set each TT gearmotor: shaft +X into the sprocket hub's double-D socket,
    front tab into the rear-wall pocket, nub into the wall pocket, 2× M3 through the
-   gearbox + wall with the nut floating in the pod gap.
+   gearbox + wall. Push each upper nut past the slot-mouth crush nibs until it clicks
+   into the captive seat; it stays retained while the motor is positioned.
 4. **Track running gear.** Press an F688ZZ into EACH face of all four end idlers (Ø15.95
    seat + Ø18.5 flange recess both sides). Each end wheel: M8 bolt from outboard
    through the bearings, add the OUTBOARD jam nut against the tower, then the flatted
@@ -248,8 +250,7 @@ tray killed the 88.5 mm blind channels, 2026-07-08.)
    inboard tool ever needed. Rear pair: snug. Front pair: leave loose, set tension
    AFTER threading the tracks, then tighten from the head -- the channel holds the
    nut, the nut clamps the slot. Fit the sprockets on the
-   TT shafts (they mesh the ground run under the hull; the robot's weight seats them). Drop an M4 nut up each wheel-beam slot (do this BEFORE mounting the
-   rails if access is tight), then bolt each road wheel with its M4x40 from outboard --
+   TT shafts (they mesh the ground run under the hull; the robot's weight seats them). Push an M4 nut up each wheel-beam slot until it clicks past the two crush nibs. The nuts remain retained while the panel is handled; inserting them on the bench is convenient but not required. Then bolt each road wheel with its M4x40 from outboard --
    snug, then back off 1/8 turn so the wheel spins free.
 5. **Join the strips + close with the master (print-in-place chain, 2026-07-12).**
    Each pod is 4 PRINT-IN-PLACE strips (16+16+16+15 links, hinges already free off
@@ -312,9 +313,11 @@ tray killed the 88.5 mm blind channels, 2026-07-08.)
     retired, 2026-07-13.) Route
     the tilt ULN wiring on the column back standoffs, board centered at z 93, below the
     carrier (motor + driver both ride the pan group, so no leads cross a joint).
-12. **Hang the head on the axle.** Lower `head_back` so its side hubs take the axle ends, then
-    set the two head-clamp grubs at x=±30 with a 1.5 mm hex key driven UP through the bottom
-    motor bay (4.0 mm clear). The axle now turns with the head; the worm holds tilt with the
+12. **Hang the head on the axle.** Before lowering `head_back`, push each M3 clamp nut
+    through its downward-facing slot mouth until it clicks past the crush nibs and seats
+    on the cross-bolt axis. The front-down bench pose is still convenient, but retention
+    no longer depends on it. Lower the head so its side hubs take the axle ends, then drive
+    the two M3 pinch-clamp bolts from the rear bay. The axle now turns with the head; the worm holds tilt with the
     driver off ONLY marginally (fast-tilt 2026-07-12: the 3-start worm back-drives;
     hold is 28BYJ detent+gear friction through 4:1 -- firmware energize-hold or park
     at the balance point; see CLAUDE.md fast pan/tilt pass).
@@ -335,19 +338,44 @@ tray killed the 88.5 mm blind channels, 2026-07-08.)
     (the stepped rear pod): engage the two top hook tabs first, swing the door in until
     both leg snap tongues CLICK behind the wall band beside the void (tool-free; replaced
     the 2× M3 csk 2026-07-10). To open: firm pull on the pod's bottom edge (35 mm proud,
-    that IS the grip); the barbs' back ramps cam the tongues inboard and release. Open at
-    roughly neutral tilt: at the ±33.8° stalls the tilt drivetrain reaches into the pod's
-    internal cavity.
+    that IS the grip); the barbs' back ramps cam the tongues inboard and release.
 
-15b. **Antenna drives.** Slip a friction O-ring into each top-wall guide bore, drop each
+    **SERVICE (door / dead head):** the tilt drivetrain occupies the pod cavity at the
+    ±33.8° stalls by design (hollow clearance, not a closed-door clash). `tools/probe_door_stall.py`
+    (2026-07-16) swept the tool-free open path (hook pivot 0..24°, then 15 mm lift along
+    swung -Y) at tilt -33.8 / 0 / +33.8 against `tilt_carrier`, `motor_tilt`, `tilt_worm`,
+    `worm_wheel`, and `neck_clevis`: **all three poses path-clear** on the baseline cavity
+    (no enlargement). Stall-open is therefore geometrically possible, but the margin is
+    millimeter-scale (closed-pose drivetrain-to-door clearance is ~2-3 mm at the stalls,
+    and the swept path was checked at 2 deg / 1 mm resolution); **neutral tilt remains
+    the comfortable service pose** (more free volume, easier hands, print tolerance and
+    an un-held nodding head both eat into that margin). For a dead-motor or
+    dead-Pi head: the 3-start worm **back-drives**, so hand-nod the head to roughly neutral
+    first, then either hold it there with a second hand or wedge a soft prop (folded cloth /
+    foam block) between the head chin and the chassis deck before pulling the door. Why prop:
+    without energize-hold the head can slowly nod under its own imbalance while you work, and
+    a hard-down park is awkward even though the open path does not collide.
+
+15b. **Antenna drives.** Push one metric O-ring 6.0 x 1.0 into each modeled top-wall
+    gland, then drop each
     mast in from above (rack facing the pinion slot), then hang `ant_bracket` on the back
     wall (spine + locating shoulders and 4x M3). Insert each printed `ant_output_*`
     half-shaft/pinion through its Ø4.2 bushings, fit `ant_idler_axle_*` and the compound
     `ant_idler_gear_*`, press `ant_motor_gear_*` onto the motor double-D, and bolt each 28BYJ nose-through
     its face plate (2x M3 into the vertical-ear pilots, shaft inboard). Each mast has its
     OWN motor + ULN2003 (independent control); wire both to the Pi in the head. Homing:
-    drive down until stall (tip cap on the boss). BUY: 2x O-ring sized for the Ø7 guide.
+    leave park at the lowest step rate for maximum torque, then ramp. BUY: 2x metric
+    O-ring 6.0 x 1.0, NBR or silicone; silicone is preferred for low breakaway.
     All 30T/12T/27T m0.8 gears, axles, shafts, and rack teeth are exported printable parts.
+
+    **BENCH BREAKAWAY PROTOCOL:** assemble one mast and ring with NO gears fitted. Measure
+    axial breakaway with a 0-1 N spring gauge, or hang calibrated 10/20/30 g weights from
+    the mast tip. Sliding breakaway target: <=0.15 N (~15 g). Park-groove breakaway target:
+    0.2-0.3 N (20-30 g). If outside the window, silicone grease lowers sliding friction;
+    a 6.0 x 0.8 ring gives a lighter section/squeeze variant; or reprint the cheap vertical
+    mast with `ant_park_groove_depth` adjusted by +/-0.1 mm. Groove depth is the park-force
+    tuning knob. Final friction and breakaway are bench validation. CAD fixes only the
+    geometry and the acceptable window.
 
 ### Cables (per docs/CABLE-CHECK.md + firmware/WIRING.md)
 

@@ -35,7 +35,7 @@ from motors import antenna_motor, motor_28byj, motor_tt
 import refparts
 from pan import build_pan_clips, build_pan_platform, build_pan_race
 from neck import build_neck_clevis, build_tilt_carrier, build_trim_neckfoot
-from head import (build_ant_drive, build_antennas, build_arms, build_cam_pod, build_hatch_frame,
+from head import (build_ant_drive, build_antennas, build_ant_orings, build_arms, build_cam_pod, build_hatch_frame,
                   build_ear_jacks, build_head_parts, build_head_rails, build_led_strip,
                   build_pi5_cooler, build_screen_tray, build_sd_plug)
 from chassis import (build_belly_plate, build_chassis_electronics, build_chassis_parts,
@@ -333,6 +333,8 @@ def build():
         ant_nodes.append(mast.metadata["name"])
         add(mast, M_ant, f"{mast.metadata['name']}.stl")
         pose_groups["head"].append(mast.metadata["name"])   # add() saw M_ant, not M_head
+    for ring in build_ant_orings():
+        add(ring, M_head)
     for pc in build_ant_drive():
         add(pc, M_head, f"{pc.metadata['name']}.stl")
     for sxa, side in ((-1, "L"), (1, "R")):          # one stepper PER MAST (user:

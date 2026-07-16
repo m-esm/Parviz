@@ -1278,21 +1278,11 @@ def build_chassis_parts():
                 ab.apply_translation((s * 75.7, ry, rr_z))  # the upright print. Runs
                 # x 69.7..81.7 -- THROUGH the web: the M4x40 shank tip reaches x 71.4
                 # (it hung in gap air beside the old rail; the web owns that band now)
-                slot = box(3.6, 7.3, 23.65 - 14.5)         # nut slide-up slot, open
-                slot.apply_translation((s * 75.7, ry,      # under the z 15 block base
-                                        (14.5 + 23.65) / 2))
+                slot = geo.nut_slot((s * 75.7, ry, rr_z), screw_axis="x",
+                                    open_dir=(0, 0, -1), size="M4",
+                                    length=geo.nut_ac("M4") + geo.NUT_NIB_MIN_EXTRA,
+                                    c_af=0.3, c_t=0.4, nib=True)
                 pnl = sub(sub(pnl, ab), slot)
-                # CRUSH-RIB NIB in the slot mouth (2026-07-15, FASTENING_AUDIT P3:
-                # "M4 nut slide-up slots: nuts drop out when flipping the panel").
-                # The nuts have to go in BEFORE the panel mounts (the slots are blind
-                # after), and the panel gets flipped a dozen times during a track
-                # build. A 0.35 nib per wall, one layer proud, at the mouth: the nut
-                # is pushed past it once and then cannot fall back out.
-                for sn_ in (-1, 1):
-                    nib = box(3.6, 0.35, 1.2)
-                    nib.apply_translation((s * 75.7, ry + sn_ * (7.3 / 2 - 0.175),
-                                           16.4))
-                    pnl = uni([pnl, nib])
             for sy_, o_ in ((P["spr_y"], 1.0), (P["spr_y2"], -1.0)):   # TT stations
                 if not (ky0 < sy_ < ky1):
                     continue
@@ -1343,7 +1333,8 @@ def build_chassis_parts():
                 pnl = sub(pnl, geo.nut_slot((s * 72.4, my_, mzu),   # = the bore axis;
                                             screw_axis="x",         # nut_slot seats the
                                             open_dir=(0, 0, -1), size="M3",   # nut onto
-                                            length=(mzu + M3_AC / 2) - 29.0))  # it
+                                            length=(mzu + M3_AC / 2) - 29.0,
+                                            nib=True))
             # The screw head left the foot entirely (it recesses in the floor from
             # the belly side now), so the old "no counterbore, head proud on a 4.8
             # face" note and the 0.75 mm bore walls are both moot.
@@ -1594,7 +1585,7 @@ def build_chassis_parts():
         deck_f = sub(deck_f, geo.nut_slot((hx_, mty0 - 0.9, mnz),   # nut +Y face on the
                                           screw_axis="y",           # tab back (y 106)
                                           open_dir=(0, 0, -1), size="M2",
-                                          length=P["mmw_nut_run"]))
+                                          length=P["mmw_nut_run"], nib=True))
 
     out = []
     for m_, nm in ((lower_f, "chassis_lower_front"), (lower_r, "chassis_lower_rear"),

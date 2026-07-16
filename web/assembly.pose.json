@@ -24,6 +24,8 @@
    "led_strip",
    "antenna_L",
    "antenna_R",
+   "ant_oring_L",
+   "ant_oring_R",
    "ant_motor_gear_L",
    "ant_idler_gear_L",
    "ant_idler_axle_L",

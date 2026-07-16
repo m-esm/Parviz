@@ -8,8 +8,8 @@ from trimesh.transformations import rotation_matrix as R
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "src"))
 
-from geo import inter, sub
-from head import build_antennas, build_ant_drive
+from geo import box, cyl, inter, sub
+from head import build_antennas, build_ant_drive, build_ant_orings, build_head_shell
 from motors import antenna_motor
 from params import P
 
@@ -65,6 +65,65 @@ class AntennaDriveTests(unittest.TestCase):
                 self.assertGreater(abs(inter(self.parts[f"ant_motor_gear_{side}"],
                                              hub_probe).volume), 1.0)
                 self.assertLess(abs(inter(motor, self.parts["ant_bracket"]).volume), 0.01)
+
+    def test_both_masts_have_two_park_grooves_one_travel_apart(self):
+        stations = (P["ant_gland_z"], P["ant_gland_z"] - P["ant_travel"])
+        self.assertAlmostEqual(stations[0] - stations[1], P["ant_travel"], places=6)
+        major = (P["ant_mast_d"] / 2.0 + P["ant_park_groove_minor_r"]
+                 - P["ant_park_groove_depth"])
+        for side, sx in (("L", -1), ("R", 1)):
+            mast = self.parts[f"antenna_{side}"]
+            for z in stations:
+                probe = cyl(P["ant_mast_d"] / 2.0, 0.12)
+                core = cyl(major - P["ant_park_groove_minor_r"] + 0.08, 0.2)
+                probe = sub(probe, core)
+                probe.apply_translation((sx * P["ant_x"], P["ant_y"], z))
+                # The lower groove intentionally omits the rack sector. Probe only the
+                # remaining arc, which is the surface the O-ring relaxes into.
+                arc = box(20.0, 12.0, 2.0)
+                arc.apply_translation((sx * P["ant_x"], P["ant_y"] + 4.0, z))
+                probe = inter(probe, arc)
+                with self.subTest(side=side, z=z):
+                    self.assertLess(abs(inter(mast, probe).volume), 0.03)
+
+    def test_deployed_park_groove_spares_rack_sector(self):
+        z = P["ant_gland_z"] - P["ant_travel"]
+        for side, sx in (("L", -1), ("R", 1)):
+            rack_probe = box(2.8, 0.5, 0.2)
+            rack_probe.apply_translation((sx * P["ant_x"], P["ant_y"] - 2.75, z))
+            with self.subTest(side=side):
+                self.assertGreater(abs(inter(self.parts[f"antenna_{side}"], rack_probe).volume),
+                                   0.05)
+
+    def test_head_shell_contains_annular_oring_glands(self):
+        shell = build_head_shell()
+        for sx in (-1, 1):
+            gland = cyl(P["ant_gland_d"] / 2.0 - 0.05, P["ant_gland_w"] * 0.8)
+            bore = cyl(P["ant_mast_d"] / 2.0 + 0.30, P["ant_gland_w"] + 0.2)
+            gland = sub(gland, bore)
+            gland.apply_translation((sx * P["ant_x"], P["ant_y"], P["ant_gland_z"]))
+            with self.subTest(side=sx):
+                self.assertLess(abs(inter(shell, gland).volume), 0.03)
+
+    def test_oring_seats_at_both_parks_and_bites_between_them(self):
+        rings = {m.metadata["name"]: m for m in build_ant_orings()}
+        for side in ("L", "R"):
+            mast = self.parts[f"antenna_{side}"]
+            ring = rings[f"ant_oring_{side}"]
+            for extension in (0.0, P["ant_travel"]):
+                moved = mast.copy()
+                moved.apply_translation((0, 0, extension))
+                # Exclude the deliberately ungrooved rack sector at deployed park.
+                arc = box(20.0, 12.0, 4.0)
+                arc.apply_translation(((-1 if side == "L" else 1) * P["ant_x"],
+                                       P["ant_y"] + 4.0, P["ant_gland_z"]))
+                with self.subTest(side=side, extension=extension):
+                    self.assertLess(abs(inter(inter(moved, arc), ring).volume), 0.08)
+            ring_inner_r = P["ant_mast_d"] / 2.0
+            groove_root_r = (P["ant_mast_d"] / 2.0
+                             - P["ant_park_groove_depth"])
+            self.assertAlmostEqual(ring_inner_r - groove_root_r,
+                                   P["ant_park_groove_depth"], places=6)
 
 
 if __name__ == "__main__":

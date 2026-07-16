@@ -61,6 +61,7 @@ HEAD_NODES = {
     "ant_motor_gear_L", "ant_motor_gear_R",
     "ant_idler_gear_L", "ant_idler_gear_R",
     "ant_idler_axle_L", "ant_idler_axle_R", "ant_output_L", "ant_output_R",
+    "ant_oring_L", "ant_oring_R",
 }
 PAN_NODES = {"pan_platform", "neck_clevis", "tilt_worm", "motor_tilt", "tilt_carrier",
              "trim_neckfoot"}
@@ -93,6 +94,10 @@ WHITELIST = {
                                                  # (placeholder teeth, real pass later)
     frozenset(("ant_output_L", "antenna_L")),    # involute rack/pinion working contact
     frozenset(("ant_output_R", "antenna_R")),
+    frozenset(("ant_oring_L", "antenna_L")),     # designed gland and mast contact
+    frozenset(("ant_oring_R", "antenna_R")),
+    frozenset(("ant_oring_L", "head_back")),     # bought ring captured by split shell gland
+    frozenset(("ant_oring_R", "head_back")),
     frozenset(("ant_motor_gear_L", "motor_ant_L")), # G1 keyed to each 28BYJ D-shaft
     frozenset(("ant_motor_gear_R", "motor_ant_R")),
     frozenset(("axle_hw_L", "chassis_lower")),   # M4 nuts in the panel beam slots +

@@ -111,6 +111,42 @@ def nut_reaches_bore(mesh, axis_pt, open_dir, size="M3", pad=0.25):
                for d in (-ac / 2 + pad, 0.0, ac / 2 - pad))
 
 
+def nib_retention(mesh, axis_pt, screw_axis, open_dir, size, length,
+                  c_af=0.2, c_t=0.2, min_volume=0.01):
+    """Probe both crush ribs for material and the mouth centerline for void.
+
+    Coordinates use the same nut dimensions and slot frame as geo.nut_slot().
+    This is also imported by the focused mutation coupon test.
+    """
+    av = {"x": (1, 0, 0), "y": (0, 1, 0), "z": (0, 0, 1)}.get(
+        screw_axis, screw_axis)
+    a = np.asarray(av, float); a /= np.linalg.norm(a)
+    o = np.asarray(open_dir, float); o /= np.linalg.norm(o)
+    x = np.cross(o, a)
+    af, nut_t = geo.NUT[size]
+    ac = geo.nut_ac(size)
+    back_ramp = geo.NUT_NIB_PROUD / math.tan(math.radians(60.0))
+    along = ac + geo.NUT_NIB_SEAT_CLEAR + back_ramp + 0.12
+    p = np.asarray(axis_pt, float)
+    volumes = []
+    for side in (-1.0, 1.0):
+        q = (p - o * ac / 2.0 + o * along
+             + x * side * ((af + c_af) / 2.0 - geo.NUT_NIB_PROUD / 2.0))
+        probe = geo.box(geo.NUT_NIB_PROUD * 0.7, 0.16, nut_t + c_t - 0.1)
+        T = np.eye(4)
+        T[:3, 0] = x; T[:3, 1] = o; T[:3, 2] = a; T[:3, 3] = q
+        probe.apply_transform(T)
+        volumes.append(float(geo.inter(mesh, probe).volume))
+    mouth = p + o * (length - ac / 2.0 - 0.15)
+    mouth_probe = geo.box(0.4, 0.2, min(0.4, nut_t + c_t - 0.1))
+    T = np.eye(4)
+    T[:3, 0] = x; T[:3, 1] = o; T[:3, 2] = a; T[:3, 3] = mouth
+    mouth_probe.apply_transform(T)
+    mouth_volume = float(geo.inter(mesh, mouth_probe).volume)
+    return (all(v > min_volume for v in volumes) and mouth_volume < 1e-6,
+            volumes, mouth_volume)
+
+
 def main():
     print("checks: desk-pi design invariants")
 
@@ -202,6 +238,15 @@ def main():
                        (73.0, P["roadwheel_ys"][0],
                         (25.32 - P["track_wheel_r"]) + 3.5 + P["roadwheel_d"] / 2 + 0.1),
                        (1, 0, 0), 8.0))
+    from tracks import _track_zc as track_zc  # noqa: E402
+    rr_z = track_zc() - P["track_wheel_r"] + 3.5 + P["roadwheel_d"] / 2 + 0.1
+    m4_len = geo.nut_ac("M4") + geo.NUT_NIB_MIN_EXTRA
+    m4_nib = nib_retention(M("chassis_side_R_front"),
+                           (75.7, P["roadwheel_ys"][0], rr_z), "x", (0, 0, -1),
+                           "M4", m4_len, c_af=0.3, c_t=0.4)
+    check("M4 roadwheel slot crush nibs present and mouth open", m4_nib[0],
+          "ribs %.4f/%.4f, mouth %.6f mm3" %
+          (m4_nib[1][0], m4_nib[1][1], m4_nib[2]))
     check("pod_rail nodes deleted", not {"pod_rail_L", "pod_rail_R"} & nodes)
     # user 2026-07-14 round 4 (standalone track module): the panels run to the end
     # axles -- END TOWERS replace the deck pylons (front tension slot open across
@@ -311,6 +356,16 @@ def main():
             y0 = -11.125             # fin box center radius on the clamp tube
             fin_pts.append((sxf * 29.0, y0 * math.cos(a) + yt, y0 * math.sin(a) + zt))
     fL, fR = M("head_back_frame_L"), M("head_back_frame_R")
+    clamp_len = 8.0 + geo.nut_ac("M3") / 2.0
+    clamp_nibs = [nib_retention(mesh,
+                                (sx * sum(P["clamp_x"]) / 2.0,
+                                 P["clamp_nut_y"], P["clamp_bolt_z"]),
+                                "y", (0, 0, -1), "M3", clamp_len)
+                  for sx, mesh in ((-1.0, fL), (1.0, fR))]
+    check("head clamp crush nibs present and mouths open",
+          all(v[0] for v in clamp_nibs),
+          "; ".join("%.4f/%.4f mouth %.6f" % (v[1][0], v[1][1], v[2])
+                    for v in clamp_nibs))
     # user 2026-07-08 (stall homing): 4 radial fins on the head clamp tubes at
     # +-55 deg; they meet the cheek posts at +-33.8 deg tilt.
     check("tilt clamp-tube fins x4 (+-55 deg)",
@@ -436,6 +491,19 @@ def main():
     check("antenna rack teeth on the mast (-Y face)",
           bool(hits.any() and (~hits).any() and not above.any()),
           "%d/%d tooth hits in band, none above rack top" % (int(hits.sum()), len(zs)))
+    # user 2026-07-16: modeled O-ring gland and two positive parks, with the station
+    # spacing derived from ant_travel. Probe the actual exported head frame and mast STLs.
+    park_z = (P["ant_gland_z"], P["ant_gland_z"] - P["ant_travel"])
+    check("antenna park-groove spacing equals ant_travel and upper park matches gland",
+          abs(park_z[0] - P["ant_gland_z"]) < 1e-9
+          and abs((park_z[0] - park_z[1]) - P["ant_travel"]) < 1e-9)
+    gland_void = all(_void_cube(M("head_back_frame_R"),
+                               (P["ant_x"] + 3.85, P["ant_y"], z), 0.18)
+                     for z in (P["ant_gland_z"] - 0.4, P["ant_gland_z"] + 0.4))
+    groove_void = all(_void_cube(ant, (-P["ant_x"] + 3.05, P["ant_y"], z), 0.12)
+                      for z in park_z)
+    check("antenna gland and both park grooves exist in exported STLs",
+          gland_void and groove_void)
 
     # ---------------- belly power tray ------------------------------------------
     # user 2026-07-08 (power decision, firmware/WIRING.md): the belly plate

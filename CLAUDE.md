@@ -35,12 +35,14 @@ re-colors by node name and wins on render), orange head side rails (`trim_rail_L
 arm shoulders land on them), forehead LED strip + slot, TWIN DEPLOYABLE ANTENNAS
 (2026-07-10, replaced the static stub: two knurled-cap masts at x +-85 / y -31, each with
 a molded m0.8 rack, INDEPENDENTLY driven by its own 28BYJ through a mirrored two-stage
-30:12 gear-up (6.25:1) and a Ø4 half-shaft pinion -- ~104 mm/s, 50 mm max past the head
-top, ~0.5 s full deploy; masts sit behind the tilt clamp tubes, gear tips stay above the
+30:12 gear-up (6.25:1) and a Ø4 half-shaft pinion -- ~104 mm/s theoretical no-load,
+~40 mm/s planning average, 50 mm max past the head top, ~1.2-1.5 s full deploy
+(VERIFY_ON_BENCH); masts sit behind the tilt clamp tubes, gear tips stay above the
 z 174 drivetrain-sweep ceiling, motor bodies fill the x 25.7..44.5 band (2026-07-16
 phantom-tier fix; was ..53.5) between the sweep
 and the screen-tray rails, half-shafts pass over the rails at z 205; the top-wall guide
-bores carry friction O-rings against gear-up back-drive, and ANT=<mm> bakes a preview
+bores carry metric 6.0 x 1.0 O-rings in modeled glands; positive mast grooves hold
+retracted/deployed park against back-drive while light ring friction damps travel, and ANT=<mm> bakes a preview
 extension while the viewer gets one slider per mast; parts: antenna_L/R, ant_motor_gear_L/R,
 ant_idler_gear_L/R, ant_idler_axle_L/R, ant_output_L/R, ant_bracket, and motor_ant_L/R;
 the printable involute train has an exact coupled full-travel mesh test), rear orange `trim_hatch_frame` (bottom band
@@ -61,8 +63,11 @@ deleted. TOOL-FREE retention 2026-07-10, user "easy to open and close": per-leg 
 TONGUES -- a corner notch clears the pod mass off the tongue zone, one slit frees each
 leg's outer strip, an outboard barb at plug level clicks behind the fixed wall band
 beside the void; open = firm pull on the pod's bottom edge (35 proud = the grip), the
-barb back ramp releases. Replaced the 2x M3x10 csk + captive-nut blocks. NOTE: open the
-door at neutral-ish tilt; at the stalls the drivetrain reaches into the pod cavity.
+barb back ramp releases. Replaced the 2x M3x10 csk + captive-nut blocks. NOTE: at the
+stalls the drivetrain still occupies the pod cavity (by design, hollow clearance), but
+stall-open cleared 2026-07-16 (probe_door_stall; baseline cavity already path-clear, no
+enlargement) -- neutral remains the comfortable service pose; dead-motor service =
+hand-nod to neutral + chin prop, see ASSEMBLY.md.
 head_back's rebate extends to the pod root footprint), chassis front fascia
 (hex grille field +
 orange surround/fins, HC-SR04 `sensor_us` in a floor recess, amber lamps, white LED bar),
