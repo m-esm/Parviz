@@ -63,8 +63,11 @@ deleted. TOOL-FREE retention 2026-07-10, user "easy to open and close": per-leg 
 TONGUES -- a corner notch clears the pod mass off the tongue zone, one slit frees each
 leg's outer strip, an outboard barb at plug level clicks behind the fixed wall band
 beside the void; open = firm pull on the pod's bottom edge (35 proud = the grip), the
-barb back ramp releases. Replaced the 2x M3x10 csk + captive-nut blocks. NOTE: open the
-door at neutral-ish tilt; at the stalls the drivetrain reaches into the pod cavity.
+barb back ramp releases. Replaced the 2x M3x10 csk + captive-nut blocks. NOTE: at the
+stalls the drivetrain still occupies the pod cavity (by design, hollow clearance), but
+stall-open cleared 2026-07-16 (probe_door_stall; baseline cavity already path-clear, no
+enlargement) -- neutral remains the comfortable service pose; dead-motor service =
+hand-nod to neutral + chin prop, see ASSEMBLY.md.
 head_back's rebate extends to the pod root footprint), chassis front fascia
 (hex grille field +
 orange surround/fins, HC-SR04 `sensor_us` in a floor recess, amber lamps, white LED bar),

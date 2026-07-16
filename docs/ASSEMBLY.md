@@ -337,9 +337,23 @@ tray killed the 88.5 mm blind channels, 2026-07-08.)
     (the stepped rear pod): engage the two top hook tabs first, swing the door in until
     both leg snap tongues CLICK behind the wall band beside the void (tool-free; replaced
     the 2× M3 csk 2026-07-10). To open: firm pull on the pod's bottom edge (35 mm proud,
-    that IS the grip); the barbs' back ramps cam the tongues inboard and release. Open at
-    roughly neutral tilt: at the ±33.8° stalls the tilt drivetrain reaches into the pod's
-    internal cavity.
+    that IS the grip); the barbs' back ramps cam the tongues inboard and release.
+
+    **SERVICE (door / dead head):** the tilt drivetrain occupies the pod cavity at the
+    ±33.8° stalls by design (hollow clearance, not a closed-door clash). `tools/probe_door_stall.py`
+    (2026-07-16) swept the tool-free open path (hook pivot 0..24°, then 15 mm lift along
+    swung -Y) at tilt -33.8 / 0 / +33.8 against `tilt_carrier`, `motor_tilt`, `tilt_worm`,
+    `worm_wheel`, and `neck_clevis`: **all three poses path-clear** on the baseline cavity
+    (no enlargement). Stall-open is therefore geometrically possible, but the margin is
+    millimeter-scale (closed-pose drivetrain-to-door clearance is ~2-3 mm at the stalls,
+    and the swept path was checked at 2 deg / 1 mm resolution); **neutral tilt remains
+    the comfortable service pose** (more free volume, easier hands, print tolerance and
+    an un-held nodding head both eat into that margin). For a dead-motor or
+    dead-Pi head: the 3-start worm **back-drives**, so hand-nod the head to roughly neutral
+    first, then either hold it there with a second hand or wedge a soft prop (folded cloth /
+    foam block) between the head chin and the chassis deck before pulling the door. Why prop:
+    without energize-hold the head can slowly nod under its own imbalance while you work, and
+    a hard-down park is awkward even though the open path does not collide.
 
 15b. **Antenna drives.** Push one metric O-ring 6.0 x 1.0 into each modeled top-wall
     gland, then drop each
