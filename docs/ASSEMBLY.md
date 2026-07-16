@@ -22,10 +22,11 @@ settled below). "Need" is per robot.
 | Raspberry Pi 5 | 2 GB, rides the display's own 58x49 standoffs | 1 | 1 (Tray 1) |, |
 | 7" touchscreen | official kit; 4 factory M3 mounts (126.2x65.65) | 1 | 1 (Tray 1) |, |
 | Camera Module 3 | recessed forehead, 4x M2 at 21x12.5 | 1 | 1 (Tray 1) |, |
-| 30W+ USB-C PD brick | any brick offering 12V (the official 27W works); the robot bucks 12V down internally, see firmware/WIRING.md | 1 | 0 | **1** |
-| USB-C PD trigger board | set to 12V; mounts on the rear-wall M2 pilots beside the USB slot | 1 | 0 | **1** |
-| XL4015-class 5A buck | Pi rail (trim to 5.25V); 40x20 post grid on the belly-plate tray | 1 | 0 | **1** |
+| 45-65W USB-C PD brick | must advertise 15V (mandatory at 45W per PD power rules; fixed 12V is optional on generic bricks); the robot bucks 15V down internally. The official 27W brick is a 12V FALLBACK only, with the strict firmware co-scheduling rules load-bearing again -- power review 2026-07-16, firmware/WIRING.md | 1 | 0 (27W owned = fallback) | **1** |
+| USB-C PD trigger board | set to 15V (12V only for the 27W fallback); mounts on the rear-wall M2 pilots beside the USB slot | 1 | 0 | **1** |
+| XL4015-class 5A buck, CC/CV variant | Pi rail (trim to 5.25V, CC pot set to 5.0A -- the CV-only board has no current limit and does not satisfy the hard-limiting rule); 40x20 post grid on the belly-plate tray | 1 | 0 | **1** |
 | MP1584-class mini buck | motor rail 5V; zip anchors beside the main buck | 1 | 0 | **1** |
+| Polyfuse 2A hold / ~4A trip (MF-R200 class) | in series with the MX1588 VCC feed on the tray: a dual TT stall trips it and self-recovers instead of folding the shared brick (firmware/WIRING.md "Hard current limiting") | 1 | 0 | **1** |
 | JST-XH kit + crimper | every joint-crossing / board run is a keyed XH plug | 1 | 0 | **1** |
 | 18 AWG silicone pair + 5A blade fuse + inline holder | Pi-rail run + inline fuse at the tray | 1 m | fuse: OWNED (ATC/ATO blade assortment, settled 2026-07-13); wire + holder: 0 | **1 m wire + 1 holder** |
 | 28BYJ-48 stepper | 5V, pan + tilt + 2x antenna drives | 4 | 6 (Bag 14) |, |
@@ -439,8 +440,10 @@ spools.
 
 ## Wiring
 
-**See firmware/WIRING.md** (2026-07-08) for the full architecture: 12 V PD-trigger input,
-dual-buck belly tray (5.1 V Pi rail + 5 V motor rail), what crosses each joint, Pi 5
+**See firmware/WIRING.md** (2026-07-08; power review 2026-07-16) for the full
+architecture: 15 V PD-trigger input from a 45-65 W brick (12 V = 27 W fallback),
+dual-buck belly tray (5.1 V Pi rail + 5 V motor rail), hard current limiting (CC pot +
+TT-branch polyfuse), the brownout test protocol, what crosses each joint, Pi 5
 config flags, connector/labeling rules, and the buy-list delta. Short version: only the
 Pi-rail pair crosses tilt; the pan loop carries that pair plus the thin motor-rail/signal
 bundle; DSI and CSI ribbons never leave the head.
@@ -455,9 +458,12 @@ bundle; DSI and CSI ribbons never leave the head.
 2. **4x HC-SR04** (forward + rear obstacle + 2 cliff; zero owned; plain 5V is fine on the
    Arduino I/O plane). TT gearmotors are COVERED (own 3); buy 1 more only for the optional
    twin-drive 4th station.
-3. **Power electronics** (firmware/WIRING.md): a 30W+ USB-C PD brick (the official 27W
-   works), 12V PD trigger, XL4015-class 5A buck, MP1584 mini buck, JST-XH kit + crimper,
-   1 m 18 AWG silicone pair, inline blade-fuse holder (the 5A blade fuse itself is owned).
+3. **Power electronics** (firmware/WIRING.md, re-specced 2026-07-16): a 45-65W USB-C PD
+   brick that advertises 15V (the official 27W is a 12V fallback with firmware
+   co-scheduling load-bearing), 15V PD trigger, XL4015-class 5A buck (CC/CV variant),
+   MP1584 mini buck, 2A-hold polyfuse (MF-R200 class) for the TT branch, JST-XH kit +
+   crimper, 1 m 18 AWG silicone pair plus 24-26 AWG high-flex silicone for the pan-loop
+   runs, inline blade-fuse holder (the 5A blade fuse itself is owned).
 4. **1 m narrow addressable LED strip** (4–5 mm wide, SK6805-2427 / WS2812-2020, ≥160 LED/m),
    one purchase covers the forehead 8-LED segment and the front 7-dot strip. (Alternative:
    widen `led_slot` to ~54x11 and buy two common 8x5050 sticks.)
