@@ -369,21 +369,34 @@ def main():
 
     # ---------------- tilt homing: fins + stop posts (stall at +-33.8 deg) -----
     yt, zt = P["tilt_axis_y"], P["tilt_axis_z"]
+    # Crush-harden 2026-07-16: fins are x-width 5.5 at centers +-29.25 (band |x|
+    # 26.5..32; 0.5 running-clear of the cheek face at |x|=26). Probe the NEW inboard
+    # + outboard extents so a regression to the old 4-wide / |x| 27..31 fin fails
+    # (those probes sat only at |x|=29).
     fin_pts = []
+    y0 = -11.125             # fin box center radius on the clamp tube
     for sxf in (1, -1):
         for ang in (55.0, -55.0):    # fins at +-55 deg from straight-down about X
             a = math.radians(ang)
-            y0 = -11.125             # fin box center radius on the clamp tube
-            fin_pts.append((sxf * 29.0, y0 * math.cos(a) + yt, y0 * math.sin(a) + zt))
+            yc = y0 * math.cos(a) + yt
+            zc = y0 * math.sin(a) + zt
+            for xr in (27.0, 29.25, 31.5):  # inboard / mid / outboard of new band
+                fin_pts.append((sxf * xr, yc, zc))
     fL, fR = M("head_back_frame_L"), M("head_back_frame_R")
-    # user 2026-07-08 (stall homing): 4 radial fins on the head clamp tubes at
-    # +-55 deg; they meet the cheek posts at +-33.8 deg tilt.
-    check("tilt clamp-tube fins x4 (+-55 deg)",
+    # user 2026-07-08 (stall homing) + 2026-07-16 crush-harden: 4 radial fins on
+    # the head clamp tubes at +-55 deg, x-span |26..32|; they meet the cheek posts
+    # at +-33.8 deg tilt. Angular thickness + clock HOLD (stall angle).
+    check("tilt clamp-tube fins x4 (+-55 deg, x 26.5..32)",
           inside(fR, [p for p in fin_pts if p[0] > 0])
           and inside(fL, [p for p in fin_pts if p[0] < 0]))
     # user 2026-07-08: TILT-STOP POSTS r12..17 behind the axle on both cheeks.
+    # Probe mid + the x band the widened fins cover so the post face can't shrink
+    # under the fin landing without failing.
     check("neck cheek stop posts (x +-26, y -32.5)",
-          inside(M("neck_clevis"), [(26.0, yt - 14.5, zt), (-26.0, yt - 14.5, zt)]))
+          inside(M("neck_clevis"),
+                 [(26.0, yt - 14.5, zt), (-26.0, yt - 14.5, zt),
+                  (22.0, yt - 14.5, zt), (30.0, yt - 14.5, zt),
+                  (-22.0, yt - 14.5, zt), (-30.0, yt - 14.5, zt)]))
 
     # ---------------- pan homing: lug az 225 + deck posts az 118/332 -----------
     def raz(az, r=28.0):

@@ -441,6 +441,13 @@ rocks or slips, adjust `wheel_grub_pilot_d` or `axle_flat_depth`, then reprint t
   the clamp-tube supports over the head_back stop fins (55° overhangs feeding a ~0.9 mm
   homing margin; treat the first stall-home angle as calibration). Print the track keepers
   lying on their 13.3×1.9 bar face so the slot-critical 1.9 width is XY-accurate.
+- **Tilt stop faces are sacrificial homing surfaces** (fin/post PLA-on-PLA at +-33.8°;
+  fins crush-hardened 2026-07-16 to x-span |26.5..32|, 1.375x contact width; inboard
+  0.5 running-clear of the cheek face). Home at reduced drive once per boot only (firmware/WIRING.md
+  "Tilt homing + hold"). If home zero drifts after months of boots, inspect the fin
+  faces and post tops. Escalation if bench wear is real: a replaceable stop-cap
+  (printed slip-on pad) on each cheek post -- deliberately not modeled now; keep the
+  post z-faces and the +-33.8° first-contact angle if you add one.
 - Track gauge is still ~184 vs a 205-wide head (~10 mm overhang/side): widen the gauge or
   accept it (tracked elsewhere).
 - If field-servicing the screen without un-gluing the hatch frame matters, notch the frame

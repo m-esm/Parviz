@@ -58,18 +58,20 @@ def build_neck_clevis():
         parts += [cheek, hoop]
         # TILT-STOP POST (homing pass 2026-07-08): a block r 12..17 straight behind the
         # axle (y -35..-30, z zt +-2.5), spanning x 20..32 so the head's +-55 deg stop
-        # fins (x 27..31, build_head_shell) land flat on it at +-33.8 deg. It starts at
-        # r12 because boxes near the axis are angularly fat at the root (the first cut
-        # of this feature contacted the fins at 28.8 deg and failed the +-30 sweep).
-        # A leg drops to the cheek-root block / cheek rear flank for fusion; the block
-        # clears the bearing-seat bore (r12 > seat r6.4), the motor can (z 150.5+ vs
-        # can top 147.4) and the head's clamp tubes (r7).
+        # fins (x 26.5..32 after crush-harden 2026-07-16, build_head_shell; inboard held
+        # by this cheek's |x|=26 face) land flat on it at +-33.8 deg. Contact z-faces
+        # HOLD (first-contact angle is pinned here + by the fins' angular thickness /
+        # clock). It starts at r12 because boxes near the axis are angularly fat at the
+        # root (the first cut of this feature contacted the fins at 28.8 deg and failed
+        # the +-30 sweep). A leg drops to the cheek-root block / cheek rear flank for
+        # fusion; the block clears the bearing-seat bore (r12 > seat r6.4), the motor
+        # can (z 150.5+ vs can top 147.4) and the head's clamp tubes (r7).
         post = box(12.0, 5.0, 5.0)
         post.apply_translation((sx * 26.0, yt - 14.5, zt))
         # LEG 6x5 -> 7x8 (fastening campaign 2026-07-15, audit P2 item 16): this leg eats
         # every stall-homing impact -- the head's fins slam the post at +-33.8 deg on every
         # boot -- through a 6x5 section 22 mm long, in layer shear. Grown INBOARD (x 19..26:
-        # the head's own +-55 deg stop fins live at x 27..31, so the outer face is pinned at
+        # the head's +-55 deg stop fins live at x 26.5..32, so the outer face is pinned at
         # 26) and BACKWARD (y -38..-30: the bracket plate at y -36.5..-32.5 reaches x 23, so
         # the extra depth also welds the leg into the plate over x 19..23 instead of merely
         # touching it, and x 23..26 at y -38..-35 is free air). Section 30 -> 56 mm^2.
