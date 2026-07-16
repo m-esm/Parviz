@@ -94,7 +94,7 @@ then the full per-joint tables.
 |---|---|---|---|
 | neck_clevis → pan_platform (3× M3, root of the whole head stack, NO alignment) | neck.py:202-213, pan.py:98-111 | yes — bench, column-base top | Side-slide hex traps in column base + 2 registration pins |
 | tilt_carrier → neck plate (4× M3x16, 4.0 mm thread in raised pads) | neck.py:146-162, 375-378 | no (buried vs motor can) | Heat-set inserts in pads/column |
-| pan_clips ×3 → deck (carry ALL head uplift in PLA threads) | pan.py:190-193, chassis.py:286-295 | yes — deck underside | Through-bolt + hex trap in deck underside |
+| pan retainer ×6 → deck (carries all head uplift) | pan.py, chassis.py | yes, through the seat-wall mouths before race installation | M3x10 through-bolt + captive hex trap in deck |
 | pedestal pan-motor ears (Ø2.5×16 pilots) | chassis.py:1299-1301 | no | Heat-set from top face |
 | Lower front/rear seam y=+26 (2× M3x12 + counterbore leaves 1.0 wall) | chassis.py:624-658 | yes — open-top tub | Slide-up hex trap in −y pad; widen pad ≥18, root ≥3 |
 | Deck hold-downs 4+4 (6 of them are the panels' ONLY top retention, 5.1 mm thread on scarfed bosses) | chassis.py:576-618, 902-915 | yes — under boss, pre-deck | Slide-in hex nut under each boss |
@@ -144,8 +144,12 @@ Neck/pan/tilt:
 13. **tilt_carrier rear wing 2.15 mm × 20 strip** + connectivity only through an
     x 8.8..17 band of a 4 mm plate (neck.py:349-358) — highest break risk here.
 14. Carrier Ø7 bosses (1.75 wall) on 8 mm cantilever (364-368).
-15. pan_clip uplift tabs 2.6×4.1×14 — three tabs are ALL that stops the top-heavy
-    head lifting the platform; layer-shear direction (pan.py:188).
+15. Historical finding: three uplift tabs, each 2.6x4.1x14, were the sole restraint
+    against lifting the top-heavy head and loaded across print layers. Superseded by
+    the one-piece full-circle retainer ring with six M3 lobes. The design load is about
+    60 N for a 1.5 kg turret at 4g dynamic. At the 2.6 mm radial engagement plane, the
+    continuous lip provides about 293x2.6 = 762 mm2 of shear area, versus
+    3x14x2.6 = 109 mm2 for the former tabs, about 7.0 times more area.
 16. Cheek tilt-stop leg 6×5×22 takes repeated stall-homing impact (neck.py:66-68).
 17. Bearing hoop 3.07 mm radial wall + 0.15 press = split risk (neck.py:53,131);
     same for F688 0.05 press seats (tracks.py:440) — below FDM repeatability:

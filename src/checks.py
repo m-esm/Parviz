@@ -511,6 +511,31 @@ def main():
                                      for s in (-1, 1)]),
           "platform pins locate the column hands-free while screwing")
 
+    # Full-circle pan uplift retainer. The shoulder geometry is unchanged: the
+    # r45.4 lip ID clears the r45.0 top band by 0.4 radially, and its z1-4.0
+    # underside clears the z1-4.4 shoulder by 0.4 axially.
+    ret = M("pan_retainer")
+    lip_pts = []
+    for az in np.linspace(0.0, 2.0 * np.pi, 72, endpoint=False):
+        lip_pts.append((46.7 * math.cos(az), 46.7 * math.sin(az),
+                        P["base_h"] - 2.0))
+    check("pan retainer lip is a continuous full annulus", inside(ret, lip_pts),
+          "72/72 samples at r46.7, z=base_h-2 must hit material")
+    check("pan retainer keeps 0.4 radial and axial shoulder clearances",
+          abs(45.4 - 45.0 - 0.4) < 1e-9
+          and abs((P["base_h"] - 4.0) - (P["base_h"] - 4.4) - 0.4) < 1e-9,
+          "lip ID 90.8 vs band OD 90.0; lip underside vs shoulder")
+    deck = M("chassis_deck_center")
+    trap_ok = []
+    for az, _width, _r0, _r1, screw_r, _run in P["pan_retainer_lobes"]:
+        a = math.radians(az)
+        trap_ok.append(nut_reaches_bore(
+            deck, (screw_r * math.cos(a), screw_r * math.sin(a),
+                   P["pan_retainer_nut_z"]),
+            (-math.cos(a), -math.sin(a), 0.0)))
+    check("pan retainer: all 6 captive nuts reach their bores", all(trap_ok),
+          "radially inward slots meet every screw axis")
+
     # the tail seam that snapped off the first print: it had NO joint at all
     tail = M("chassis_lower_tail")
     sy = P["lower_seam2_y"]

@@ -30,7 +30,7 @@ def m3(qty, length, axis, stack, capture="hex_nut", capture_t=2.4,
 
 
 REQUIRED_STRUCTURAL_JOINTS = (
-    "neck_to_pan", "pan_clips_to_chassis", "lower_tub_front_seam",
+    "neck_to_pan", "pan_retainer_to_chassis", "lower_tub_front_seam",
     "lower_tub_tail_seam", "deck_strip_front_seam", "deck_strip_rear_seam",
     "side_panel_splice", "side_panel_feet", "belly_plate_to_chassis",
     "chassis_base_to_chassis", "head_bezel_to_back", "head_back_panel_to_frames",
@@ -47,6 +47,23 @@ for az in (270.0, 30.0, 150.0):
     _neck_bores.append(ring("neck_clevis",
                             (16.5 * math.cos(a), P["neck_y"] + 16.5 * math.sin(a), 72.0)))
 
+_retainer_bores = []
+_retainer_captures = []
+_retainer_lip = []
+for az, _width, _r0, _r1, screw_r, _run in P["pan_retainer_lobes"]:
+    a = math.radians(az)
+    _retainer_bores.append(ring("pan_retainer",
+                                (screw_r * math.cos(a), screw_r * math.sin(a),
+                                 P["base_h"] - 5.0)))
+    _retainer_captures.append(Probe("chassis_deck_center", "void",
+                                    (screw_r * math.cos(a), screw_r * math.sin(a),
+                                     P["pan_retainer_nut_z"])))
+for az in range(0, 360, 30):
+    a = math.radians(az)
+    _retainer_lip.append(solid("pan_retainer",
+                               (46.7 * math.cos(a), 46.7 * math.sin(a),
+                                P["base_h"] - 2.0)))
+
 
 JOINTS = (
     Joint("neck_to_pan", ("neck_clevis", "pan_platform"), True, (0, 0, -1),
@@ -56,11 +73,16 @@ JOINTS = (
           supporting_probes=(solid("pan_platform", (0, P["neck_y"], P["base_h"] + 0.5)),),
           assembly_step=1),
 
-    Joint("pan_clips_to_chassis", ("pan_clips", "chassis_deck_center"), True,
-          (0, 0, -1), Locator("rebate", 3, 2.6, LOCATING, True),
-          (m3(3, 10.0, (0, 0, -1), 6.0),),
-          supporting_probes=(solid("pan_clips", (0, 53.5, P["base_h"] + 12.0)),),
-          allowed_dof=("yaw",), assembly_step=8),
+    Joint("pan_retainer_to_chassis", ("pan_retainer", "chassis_deck_center"), True,
+          (0, 0, -1), Locator("continuous_rebate", 1, 2.6, LOCATING, True),
+          (Fastener("M3", 6, 10.0, (0, 0, -1), 6.0, "hex_nut", 2.4,
+                    head_access=8.0, bore_probes=tuple(_retainer_bores),
+                    capture_probes=tuple(_retainer_captures)),),
+          insertion=Insertion("pan_retainer", ("pan_platform",), (0, 0, 1), 12.0, 13),
+          seating_probes=tuple(_retainer_lip),
+          supporting_probes=(solid("pan_retainer", (0, 46.7, P["base_h"] - 2.0)),),
+          allowed_dof=("yaw",), assembly_step=8,
+          notes="Drops vertically over the seated platform: lip ID 90.8, top-band OD 90.0. Race, cage, balls, and platform are installed first."),
 
     Joint("lower_tub_front_seam", ("chassis_lower_front", "chassis_lower_rear"), True,
           (0, -1, 0), Locator("pin_pair", 2, 8.0, LOCATING, True),

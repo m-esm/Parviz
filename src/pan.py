@@ -1,4 +1,4 @@
-"""Pan stage: platform, captured-BB lazy-Susan race, uplift clips.
+"""Pan stage: platform, captured-BB lazy-Susan race, uplift retainer.
 
 Split out of the original monolithic build.py (2026-07-10); see
 build.py for the assembly entry point and the overall design notes.
@@ -197,47 +197,39 @@ def build_pan_race():
     return lower, ballring, cage
 
 
-def build_pan_clips():
-    """3 L-clips at 120deg, screwed into deck pockets around the pan seat: each tab reaches
-    over the platform's rim-rebate shoulder to resist UPLIFT (nothing else stops the
-    top-heavy head lifting the platform off the balls). Everything stays AT or BELOW the
-    deck top: the neck column sweeps r ~15..63 above z=base_h when panning, so a clip
-    standing proud there would be sheared off -- that's also why the platform gets a rebate
-    (engagement below the top) instead of the clips overhanging the top surface.
-    Separate screwed parts: drop the balls + platform in first, then the clips.
+def build_pan_retainer():
+    """One-piece full-circle uplift retainer with six screw lobes.
 
-    TAB 2.6 -> 4.0 + ROOT FILLET (fastening campaign 2026-07-15, audit P2 item 15: three
-    2.6 x 4.1 x 14 tabs are ALL that stops the top-heavy head lifting the platform off the
-    balls, and they are loaded in the layer-shear direction). The tab top is pinned at the
-    deck-flush z1 (the neck column sweeps r ~15..63 straight over it), so the thickness had
-    to come from below: build_pan_platform's rim rebate dropped its shoulder 63.0 -> 61.6,
-    the tab underside follows 63.4 -> 62.0 and keeps the same 0.4 running clearance and the
-    same 2.6 mm of shoulder engagement (r 45.4..48). t^2 -> 2.4x the bending strength.
-    The ROOT (y ~49, where the bending moment peaks) additionally gets a 45 deg fillet: the
-    platform is r <= 48, so the band r 48.4..49.5 under the tab is free air and takes a
-    wedge down to the body bottom for nothing. Screw positions UNCHANGED; the deck pocket
-    grows to take the 4 mm tab (chassis side)."""
+    The continuous lip spans r45.4..48.0 and z1-4..z1. Its ID is 90.8, larger
+    than the platform top-band OD of 90.0, so it drops vertically over the seated
+    platform after the race, cage, and balls are installed. The lip keeps 0.4 mm
+    radial and axial running clearances and 2.6 mm shoulder engagement. All lobe
+    tops and screw heads finish below or flush with the deck top because the neck
+    sweeps above them. Prints flat, lip up or down, no supports."""
     z1 = P["base_h"]
-    clips = None
-    for a in (90, 210, 330):
-        # built at azimuth 90 (+Y), then rotated into place about the pan axis
-        body = box(14, 9, 7); body.apply_translation((0, 53.5, z1 - 3.5))       # r 49..58
-        tab = box(14, 4.1, 4.0); tab.apply_translation((0, 47.45, z1 - 2.0))    # r 45.4..49.5
+    lip = sub(cyl(48.0, 4.0, sections=192), cyl(45.4, 6.0, sections=192))
+    lip.apply_translation((0, 0, z1 - 2.0))
+    retainer = lip
+    for a, width, r0, r1, screw_r, _run in P["pan_retainer_lobes"]:
+        # Build each lobe at +Y, then rotate it to its specified azimuth.
+        body = box(width, r1 - r0, 7.0)
+        body.apply_translation((0, (r0 + r1) / 2.0, z1 - 3.5))
         # root fillet, in the (y, z) plane extruded along X: local x -> world y,
         # local y -> world z, local z -> world x (proper rotation, det +1)
         fil = extrude_polygon(sg.Polygon([(48.4, z1 - 4.0), (49.5, z1 - 4.0),
-                                          (49.5, z1 - 7.0)]), 14.0)
+                                          (49.5, z1 - 7.0)]), width)
         T = np.eye(4); T[:3, :3] = np.array([[0, 0, 1.0], [1.0, 0, 0], [0, 1.0, 0]])
-        T[0, 3] = -7.0
+        T[0, 3] = -width / 2.0
         fil.apply_transform(T)
-        c = uni([uni([body, tab]), fil])          # tab underside z1-4.0 = shoulder + 0.4
-        thr = cyl(P["m3_clear_r"], 20); thr.apply_translation((0, 53.5, z1 - 4))
-        c = sub(c, thr)                          # M3 through, into the deck pilot below
-        cb = cyl(3.25, 6.8); cb.apply_translation((0, 53.5, z1))
-        c = sub(c, cb)                           # head cbore z1-3.4: head sits 0.4 sub-flush
-        c.apply_transform(R((a - 90) * DEG, (0, 0, 1)))
-        clips = c if clips is None else uni([clips, c])
-    _color(clips, "pan"); clips.metadata["name"] = "pan_clips"
-    return clips
-
+        lobe = uni([body, fil])
+        thr = cyl(P["m3_clear_r"], 20.0)
+        thr.apply_translation((0, screw_r, z1 - 4.0))
+        lobe = sub(lobe, thr)
+        cb = cyl(3.25, 6.8)
+        cb.apply_translation((0, screw_r, z1))
+        lobe = sub(lobe, cb)                    # head top is 0.4 below deck top
+        lobe.apply_transform(R((a - 90.0) * DEG, (0, 0, 1)))
+        retainer = uni([retainer, lobe])
+    _color(retainer, "pan"); retainer.metadata["name"] = "pan_retainer"
+    return retainer
 

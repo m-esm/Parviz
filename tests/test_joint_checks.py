@@ -3,6 +3,7 @@ import sys
 import unittest
 from unittest import mock
 
+import numpy as np
 import trimesh
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -98,6 +99,19 @@ class MeshMutationTests(unittest.TestCase):
                            "fixed": trimesh.creation.box((20, 20, 1))})
         j = good_joint(insertion=Insertion("moving", ("wall",), (0, 0, 1), 10.0, 11))
         self.assertIn("insertion-path", failed_codes(mesh_results(j, store)))
+
+    def test_broken_retainer_lip_fails_seating_gate(self):
+        good = trimesh.creation.annulus(r_min=4.0, r_max=5.0, height=1.0)
+        broken = trimesh.creation.box((2.0, 2.0, 1.0))
+        fixed = trimesh.creation.box((20.0, 20.0, 1.0))
+        probes = tuple(Probe("moving", "solid",
+                             (4.5 * np.cos(a), 4.5 * np.sin(a), 0.0))
+                       for a in np.linspace(0.0, 2.0 * np.pi, 12, endpoint=False))
+        j = good_joint(seating_probes=probes)
+        self.assertNotIn("seating-1", failed_codes(mesh_results(
+            j, DictStore({"moving": good, "fixed": fixed}))))
+        codes = failed_codes(mesh_results(j, DictStore({"moving": broken, "fixed": fixed})))
+        self.assertTrue(any(code.startswith("seating-") for code in codes))
 
 
 if __name__ == "__main__":

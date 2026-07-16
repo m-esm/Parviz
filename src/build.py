@@ -33,7 +33,7 @@ from screen import load_screen, screen_pose
 from tracks import _spr_cz, build_tracks
 from motors import antenna_motor, motor_28byj, motor_tt
 import refparts
-from pan import build_pan_clips, build_pan_platform, build_pan_race
+from pan import build_pan_platform, build_pan_race, build_pan_retainer
 from neck import build_neck_clevis, build_tilt_carrier, build_trim_neckfoot
 from head import (build_ant_drive, build_antennas, build_arms, build_cam_pod, build_hatch_frame,
                   build_ear_jacks, build_head_parts, build_head_rails, build_led_strip,
@@ -307,8 +307,8 @@ def build():
     add(lower_race, np.eye(4), "pan_race.stl")
     add(balls, np.eye(4))
     add(cage, np.eye(4), "pan_cage.stl")             # BB spacer cage (drops in with the balls)
-    # uplift retention: 3 L-clips screwed to the deck, tabs over the platform's rim rebate
-    add(build_pan_clips(), np.eye(4), "pan_clips.stl")
+    # uplift retention: full-circle lip with six deck screw lobes
+    add(build_pan_retainer(), np.eye(4), "pan_retainer.stl")
 
     # --- HEAD (tilt + pan): split into front bezel + back cover + rear service door ---
     for hp in build_head_parts():                    # bezel_L/R + back_L/R + door

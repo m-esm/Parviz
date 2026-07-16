@@ -13,7 +13,7 @@ MAINTENANCE/DFA PASS 2026-07-08** (workflow-reviewed, all gates green): tilt-mot
 cage, pan/tilt stall-homing hard stops, microSD wall slot + `sd_plug`, located side-panel
 joints, and the 12V dual-buck power tray (firmware/WIRING.md).
 `src/build.py` builds the whole robot around the combined screen+Pi reference mesh; 10 watertight
-per-part STLs (chassis, track_L, track_R, neck_clevis, pan_platform, pan_race, pan_clips,
+per-part STLs (chassis, track_L, track_R, neck_clevis, pan_platform, pan_race, pan_retainer,
 head_bezel, head_back, cam_cover) plus placeholder sub-parts (worm_wheel, tilt_worm, pan_balls,
 motor_*, drive_L/R). A 6-agent research pass drove the mechanism decisions now in geometry:
 **pan = 28BYJ direct D-hub on a captured-BB lazy-Susan race**; **tilt = self-locking single-start
@@ -556,10 +556,10 @@ collapsible per-group toggle-alls.
   `chassis_base`, `chassis_deck`, `belly_plate`, `track_L/R`,
   `drivewheels_L/R` (as track_wheels_*), `track_keeper_L/R` (pod_rail_L/R DELETED
   2026-07-14, beam integral to the side panels), `neck_clevis`, `tilt_carrier`, `pan_platform`, `pan_race`,
-  `pan_clips`, `pan_cage`, `head_bezel`, `head_back`, `head_door`, `screen_tray`,
+  `pan_retainer`, `pan_cage`, `head_bezel`, `head_back`, `head_door`, `screen_tray`,
   `cam_cover`, `sd_plug`, plus the real generated `worm_wheel`/`tilt_worm` (docs/WORM.md).
   `pan_balls`/`motor_*`/`drive_*` are bought-part placeholders. track_L/R (links +
-  wheels), track_keeper_* (2 bars) and pan_clips (3 clips) are multi-body by design.
+  wheels) and track_keeper_* (2 bars) are multi-body by design. `pan_retainer` is one body.
 - **HORIZONTAL screw holes print as TEARDROPS (`geo.teardrop`, 2026-07-13 DFAM):** a bore
   whose axis is parallel to the bed (e.g. the seam-join M3 through-hole + head counterbore
   in the lower-tub floor pads, printed seam-up) has a hanging roof that sags/needs support.

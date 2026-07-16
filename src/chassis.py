@@ -294,46 +294,45 @@ def build_chassis_core():
     # driver + pan-motor stage as one service tray.)
     body = sub(body, cbl)
 
-    # pan-clip pockets: 3 at 120deg around the seat rim, floors 7 below the deck top so the
-    # clips finish FLUSH (see build_pan_clips for why nothing may stand proud of the deck).
+    # Pan-retainer pockets: six around the seat rim, floors 7 below the deck top so
+    # every lobe finishes flush. The 300 degree station is reduced to clear the
+    # y=-52 rear deck seam by 1.0 mm; dimensions share PARAMS with pan.py.
     #
-    # M3 THROUGH-BOLT + CAPTIVE HEX NUT (2026-07-15, FASTENING_AUDIT P1). These three
-    # screws were Ø2.5 thread-form pilots, and they are the ONLY thing resisting the
-    # top-heavy head lifting the pan platform off its balls -- the single worst
-    # self-tap in the chassis. The nut sits at pan_clip_nut_z, its slot running
+    # M3 through-bolts use captive hex nuts. Each nut sits at pan_retainer_nut_z,
+    # with its slot running
     # RADIALLY INWARD to a mouth in the seat wall (r 49): that is the only open face
     # anywhere near this station, and it is a good one -- the annulus r 44.5..49 /
     # z 51..56 outside the race ring is free air, so the nuts slide in with tweezers
     # through the Ø98 seat opening. ORDER: nuts in BEFORE the race ring + balls.
-    # Uplift pulls each nut UP onto its slot roof, so the 3.6 mm of deck between the
-    # nut top and the pocket floor works in pure COMPRESSION against the clip's seat.
-    # Screw stays M3x10: build_pan_clips' head cbore puts the head bottom at z 62.6,
-    # so the tip lands at 52.6 = the nut's bottom face. pan.py needs no change.
-    for a in (90, 210, 330):
+    # Uplift pulls each nut up onto its slot roof, so the 3.6 mm of deck between the
+    # nut top and pocket floor works in compression against the lobe seat.
+    for a, width, r0, r1, screw_r, nut_run in P["pan_retainer_lobes"]:
         # pocket inner edge at r48 -- INSIDE the round seat wall (circle is at y 48.5 when
         # x = +-7), else slivers of deck survive between the straight edge and the circle
         # exactly where the clip tab corners land
-        pk = box(14.4, 10.2, 8.0); pk.apply_translation((0, 53.1, z1 - 3.0))    # z 59..67
+        pk = box(width + 0.4, r1 - r0 + 1.2, 8.0)
+        pk.apply_translation((0, (r0 + r1) / 2.0 - 0.1, z1 - 3.0))
         pk.apply_transform(R((a - 90) * DEG, (0, 0, 1)))
         body = sub(body, pk)
         thr = cyl(P["m3_clear_r"], 8.0)                                         # z 51.5..59.5
-        thr.apply_translation((0, 53.5, z1 - 10.5))
+        thr.apply_translation((0, screw_r, z1 - 10.5))
         thr.apply_transform(R((a - 90) * DEG, (0, 0, 1)))
         body = sub(body, thr)
-        nsl = geo.nut_slot((0, 53.5, P["pan_clip_nut_z"]), screw_axis="z",
+        nsl = geo.nut_slot((0, screw_r, P["pan_retainer_nut_z"]), screw_axis="z",
                            open_dir=(0, -1, 0), size="M3",
-                           length=P["pan_clip_nut_run"])
+                           length=nut_run)
         # SEAT RELIEF (2026-07-15): geo.nut_slot() backstops at EXACTLY ac/2 behind the
         # axis, so only a max-material nut (ac 6.35) reaches the bore dead-centre -- a
         # real DIN 934 M3 runs 6.14..6.35 across corners, i.e. up to 0.21 short. Back
-        # the seat off pan_clip_nut_seat_clear: the nut self-centres on the screw as it
+        # the seat off pan_retainer_nut_seat_clear: the nut self-centres on the screw as it
         # draws in, so the seat only has to stop it near enough to be hands-free. This
         # also clears the checks.nut_reaches_bore probe, whose axis-aligned 0.5 cube
         # over-reaches a ROTATED seat plane by up to 0.104 (az 210/330 here).
         # NOTE for a central fix: this belongs in geo.nut_slot() as a `seat_clear` arg.
-        sc = P["pan_clip_nut_seat_clear"]
+        sc = P["pan_retainer_nut_seat_clear"]
         rel = box(geo.NUT["M3"][0] + 0.2, sc, geo.NUT["M3"][1] + 0.2)
-        rel.apply_translation((0, 53.5 + M3_AC / 2 + sc / 2, P["pan_clip_nut_z"]))
+        rel.apply_translation((0, screw_r + M3_AC / 2 + sc / 2,
+                               P["pan_retainer_nut_z"]))
         nsl = uni([nsl, rel])
         nsl.apply_transform(R((a - 90) * DEG, (0, 0, 1)))
         body = sub(body, nsl)

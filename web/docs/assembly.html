@@ -362,7 +362,7 @@ settled below). "Need" is per robot.</p>
 <tbody>
 <tr>
 <td>M3 screws + hex nuts</td>
-<td>captive-nut joints everywhere; incl. M3x35 x8 bezel↔back. <strong>2026-07-15 fastening campaign: ~+55 M3 hex nuts</strong> as the thread-form pilots that failed the first print became real captive traps (head +32, chassis +24 incl. tail seam/deck/TT-upper/y26, neck +7 root &amp; carrier &amp; ULN). Screw length changes: y=26 seam M3x12 → <strong>M3x20</strong>, neck→platform M3x12 → <strong>M3x14</strong></td>
+<td>captive-nut joints everywhere; incl. M3x35 x8 bezel↔back and <strong>6x M3x10 + 6 M3 nuts for the pan retainer</strong>. <strong>2026-07-15 fastening campaign: ~+58 M3 hex nuts</strong> as failed thread-form pilots became captive traps. Screw length changes: y=26 seam M3x12 → <strong>M3x20</strong>, neck→platform M3x12 → <strong>M3x14</strong></td>
 <td>lots</td>
 <td>540pc M3 stainless kit + 175pc M3 30–50 mm kit + 600pc M2-M5 kit + 1263pc M2-M4 kit (all Tray 1)</td>
 <td>, (kits cover it)</td>
@@ -464,8 +464,8 @@ tracks, bezel, neck, pan parts, cosmetics -- can stay PLA. The black CR-PETG spo
   OPTIONAL, all fittings modeled), 5 dished road wheels/side
   (30 wide) on M4x40 bolt-axles off the pod-rail wheel beams</li>
 <li><code>pan_platform</code>: disc that yaws on the base (central shaft bore + off-axis cable pass)</li>
-<li><code>pan_race</code> / <code>pan_balls</code> / <code>pan_clips</code> / <code>pan_cage</code>: captured-BB lazy-Susan race, retaining
-  clips, and the BB spacer cage (18x 6 mm BBs; <code>pan_balls</code> is a placeholder for the bought
+<li><code>pan_race</code> / <code>pan_balls</code> / <code>pan_retainer</code> / <code>pan_cage</code>: captured-BB lazy-Susan race, full-circle
+  uplift retainer, and the BB spacer cage (18x 6 mm BBs; <code>pan_balls</code> is a placeholder for the bought
   BBs; the cage keeps them spaced so a turret lift doesn't scatter them)</li>
 <li><code>neck_clevis</code>: rounded column + two cheeks that rise into the head and drive the tilt axle;
   vertical cable channel</li>
@@ -774,13 +774,17 @@ tray killed the 88.5 mm blind channels, 2026-07-08.)</p>
 <li><strong>Pan race.</strong> Grease the <code>pan_race</code> lower groove, seat it on the deck floor, lay the
    <code>pan_cage</code> ring over it, and drop the <strong>18× 6 mm BBs</strong> through the cage pockets into
    the groove with tweezers. The cage keeps them spaced; any later turret lift leaves all
-   18 sitting evenly in the groove instead of bunching and rolling out.</li>
+   18 sitting evenly in the groove instead of bunching and rolling out. Load all six
+   retainer nuts through the inward-opening seat-wall slots before seating the race,
+   since the platform and retainer close that access.</li>
 <li><strong>Lower sub-assembly A</strong> (neck+platform) onto the BBs so the platform's upper groove
    captures them and its integral 16T pinion drops into mesh with the motor's 32T gear
    (fast-pan 2026-07-12: fit the 32T on the motor D-flats BEFORE this step). Screw
-   the 3 <code>pan_clips</code> into the deck pockets (driver clear 6.17 mm from above); their tabs
-   reach over the platform rim rebate to hold the top-heavy head down. Check the platform
-   spins free.</li>
+   drop <code>pan_retainer</code> straight down over the seated platform. Its 90.8 mm lip ID clears
+   the platform's 90.0 mm top-band OD throughout the insertion path. Seat all six lobes
+   in their deck pockets and drive 6x M3x10 into the captive nuts. The continuous lip
+   reaches over the platform rim rebate to hold the top-heavy head down. Check the
+   platform spins free.</li>
 </ol>
 <h3 id="tilt-joint-head-all-on-the-pan-group">Tilt joint + head (all on the pan group)</h3>
 <ol start="10">
@@ -864,8 +868,9 @@ tray killed the 88.5 mm blind channels, 2026-07-08.)</p>
 <ul>
 <li>Body↔pod join + TT screws (step 3) <strong>before</strong> ULN #1 (step 6): the board blocks cavity access.</li>
 <li>Neck↔platform bolt-up (sub-assembly A) <strong>before</strong> seating on the balls, counterbores face down.</li>
-<li>BBs + cage (step 8) <strong>before</strong> the platform (step 9); power tray + ballast (step 7)
-  <strong>before</strong> the belly plate closes the floor.</li>
+<li>Six retainer nuts <strong>before</strong> the race, cage, and BBs (step 8); race, cage, and BBs
+  <strong>before</strong> the platform; platform <strong>before</strong> the drop-on retainer ring (step 9).
+  Power tray + ballast (step 7) stay <strong>before</strong> the belly plate closes the floor.</li>
 </ul>
 <h3 id="nasty-but-possible-steps-measured">Nasty-but-possible steps (measured)</h3>
 <ul>

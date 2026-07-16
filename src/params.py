@@ -646,20 +646,25 @@ P = {
                             # TT gearboxes (track_raise, top z 45.5) now own that zone;
                             # bosses ride the rear wall instead (sensor hole z16, trim
                             # pins outer-face only, motor tabs x +-55.6 -- all clear)
-    # PAN-CLIP captive nuts (2026-07-15, FASTENING_AUDIT P1): the 3 clip screws were
-    # Ø2.5 thread-form pilots and they are the ONLY thing resisting head uplift on the
-    # pan platform. Nut centre 54.0 -> nut 52.6..55.4: bottom clears the seat floor (51)
-    # so the slot's mouth lands in the OPEN seat wall (r 49), top leaves 3.6 mm of deck
-    # to the clip pocket floor (59) working in compression. The M3x10's tip lands at
-    # 52.6 = the nut's bottom face (build_pan_clips seats the head at z 62.6).
-    "pan_clip_nut_z": 54.0,
+    # PAN RETAINER captive nuts. The full-circle lip uses six deck lobes. Five use the
+    # original 14 x 9 body at screw radius 53.5. The 300 degree lobe is reduced to
+    # 10 x 7 at screw radius 52 so its worst corner remains 1.0 clear of the y=-52
+    # rear deck seam. Tuple fields: azimuth, tangential width, inner radius, outer
+    # radius, screw radius, nut-slot run.
+    "pan_retainer_lobes": ((30.0, 14.0, 49.0, 58.0, 53.5, 9.0),
+                            (90.0, 14.0, 49.0, 58.0, 53.5, 9.0),
+                            (150.0, 14.0, 49.0, 58.0, 53.5, 9.0),
+                            (210.0, 14.0, 49.0, 58.0, 53.5, 9.0),
+                            (300.0, 10.0, 49.0, 56.0, 52.0, 7.5),
+                            (330.0, 14.0, 49.0, 58.0, 53.5, 9.0)),
+    "pan_retainer_nut_z": 54.0,
     # run: seat at r 56.675 (= 53.5 + M3 ac/2) out to r 47.675 -- 1.3 past the seat
     # wall at r 49, so the mouth is fully open into the r 44.5..49 annulus.
-    "pan_clip_nut_run": 9.0,
+    "pan_retainer_nut_run": 9.0,
     # seat relief: nut_slot() backstops at exactly ac/2, which only a MAX-material nut
     # (ac 6.35) can reach; a real DIN 934 M3 is 6.14..6.35 across corners. 0.4 lets any
     # nut reach the bore (it self-centres on the screw as it draws in).
-    "pan_clip_nut_seat_clear": 0.4,
+    "pan_retainer_nut_seat_clear": 0.4,
     "chassis_split_boss_r": 4.0,
     "deck_nut_z": 43.0,          # captive M3 nut centre in each deck hold-down boss
                                  # (2026-07-15, FASTENING_AUDIT P1: all 8 were thread-
@@ -784,7 +789,7 @@ P = {
     # run 7.0: seat at ear +-3.175 OUTBOARD (3.3 mm of the 48x48 body beyond it), mouth
     # 3.8 the other way -- past the can bore wall, so the nut loads through the bore.
     "ped_ear_nut_run": 7.0,
-    "ped_ear_nut_seat_clear": 0.4,      # see pan_clip_nut_seat_clear
+    "ped_ear_nut_seat_clear": 0.4,      # see pan_retainer_nut_seat_clear
     "ped_relief": 0.8,            # pedestal top dropped 0.8 outside pads + collar footing
     "ped_collar_od": 32.0,        # collar OD; ID = the Ø29 can bore (can Ø28.25 registers)
     "ped_collar_h": 1.5,          # collar top 41.25: wraps the can's last 0.5 + boss root
@@ -1448,4 +1453,3 @@ P = {
 }
 
 EXPORT = os.environ.get("EXPORT") == "1"
-

@@ -51,7 +51,7 @@ def export_stl(mesh, path):
     open edges) -- which make the printed mesh non-watertight and ray-thickness
     numbers on it meaningless. Repair = a manifold3d ROUND-TRIP: it merges the
     junctions without moving a vertex (verified volume delta 0.0%, bbox identical).
-    Multi-body-by-design meshes (track strips/keepers, pan_clips) are watertight per
+    Multi-body-by-design meshes (track strips/keepers) are watertight per
     body and pass through untouched (repair only runs on a non-watertight mesh).
     Guards: repair must not change printed geometry (volume < 0.1%, bbox < 0.01 mm)
     and the written mesh MUST be watertight -- regressions fail loudly at export.
@@ -320,5 +320,4 @@ def frustum(r_bottom, r_top, h, sections=96):
 
 def R_x(ang):
     return R(ang, (1, 0, 0))
-
 

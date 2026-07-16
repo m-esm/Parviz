@@ -55,7 +55,7 @@ settled below). "Need" is per robot.
 
 | Part | Spec | Need | Owned | Buy |
 |---|---|---|---|---|
-| M3 screws + hex nuts | captive-nut joints everywhere; incl. M3x35 x8 bezel↔back. **2026-07-15 fastening campaign: ~+55 M3 hex nuts** as the thread-form pilots that failed the first print became real captive traps (head +32, chassis +24 incl. tail seam/deck/TT-upper/y26, neck +7 root & carrier & ULN). Screw length changes: y=26 seam M3x12 → **M3x20**, neck→platform M3x12 → **M3x14** | lots | 540pc M3 stainless kit + 175pc M3 30–50 mm kit + 600pc M2-M5 kit + 1263pc M2-M4 kit (all Tray 1) | , (kits cover it) |
+| M3 screws + hex nuts | captive-nut joints everywhere; incl. M3x35 x8 bezel↔back and **6x M3x10 + 6 M3 nuts for the pan retainer**. **2026-07-15 fastening campaign: ~+58 M3 hex nuts** as failed thread-form pilots became captive traps. Screw length changes: y=26 seam M3x12 → **M3x20**, neck→platform M3x12 → **M3x14** | lots | 540pc M3 stainless kit + 175pc M3 30–50 mm kit + 600pc M2-M5 kit + 1263pc M2-M4 kit (all Tray 1) | , (kits cover it) |
 | M2/M3 brass heat-set inserts | **16 total, and a soldering-iron insert tip.** Used ONLY where a captive nut was probed and measurably does not fit: **4x M2** track master-link keepers (below), **8x M2** cliff HC-SR04 (a 3.8 mm skin at 33.7 deg has no room behind), **2x M2** PD-trigger (edge-on into wall layers = the weakest thread orientation), **2x M3** rear panel L-feet (boxed on all four axes by the BME board, the tail pad, the TT gearbox and the glacis: 5.70 window vs 6.80 needed). Everywhere else the campaign uses a real captive nut -- probing DISPROVED the audit's insert calls twice (tilt_carrier, pedestal ears). All VERIFY_ON_ARRIVAL: vendor OD/length varies, re-key `keeper_insert_*` / `foot_insert_*` before printing | 12x M2 + 2x M3 (+2 spare) | 0 | **16 inserts + 1 insert tip** |
 | M2 brass heat-set inserts (detail) | **track master-link keepers** (2/master x2 = 4). The captive M2 nut does NOT fit: the pocket is boxed between the jaw slot's tension wall and the neighbour A-knuckle = 5.50 mm usable vs 5.82 needed across-corners (measured, tracks agent). Inserts need 5.40. This is the one repeatedly-serviced M2-in-PLA joint, so self-tapping was never going to survive the service cycles | 4 | none | **4x M2 brass heat-set + a soldering-iron insert tip** — VERIFY_ON_ARRIVAL: vendor OD/length varies, re-key `keeper_insert_{d,l}` before printing masters |
 | M5 penny washers | tilt worm thrust seat (OD 15, ID 5.3, t 1.0): closes 2.0 mm of worm float (≈3° tilt slop) to 0.1. A direct shoulder is impossible — any ID under the Ø10.55 crest blocks cartridge extraction | 2 | check the owned washer assortment | 2x M5 penny washer (OD ~15) |
@@ -93,8 +93,8 @@ tracks, bezel, neck, pan parts, cosmetics -- can stay PLA. The black CR-PETG spo
   OPTIONAL, all fittings modeled), 5 dished road wheels/side
   (30 wide) on M4x40 bolt-axles off the pod-rail wheel beams
 - `pan_platform`: disc that yaws on the base (central shaft bore + off-axis cable pass)
-- `pan_race` / `pan_balls` / `pan_clips` / `pan_cage`: captured-BB lazy-Susan race, retaining
-  clips, and the BB spacer cage (18x 6 mm BBs; `pan_balls` is a placeholder for the bought
+- `pan_race` / `pan_balls` / `pan_retainer` / `pan_cage`: captured-BB lazy-Susan race, full-circle
+  uplift retainer, and the BB spacer cage (18x 6 mm BBs; `pan_balls` is a placeholder for the bought
   BBs; the cage keeps them spaced so a turret lift doesn't scatter them)
 - `neck_clevis`: rounded column + two cheeks that rise into the head and drive the tilt axle;
   vertical cable channel
@@ -283,13 +283,17 @@ tray killed the 88.5 mm blind channels, 2026-07-08.)
 8. **Pan race.** Grease the `pan_race` lower groove, seat it on the deck floor, lay the
    `pan_cage` ring over it, and drop the **18× 6 mm BBs** through the cage pockets into
    the groove with tweezers. The cage keeps them spaced; any later turret lift leaves all
-   18 sitting evenly in the groove instead of bunching and rolling out.
+   18 sitting evenly in the groove instead of bunching and rolling out. Load all six
+   retainer nuts through the inward-opening seat-wall slots before seating the race,
+   since the platform and retainer close that access.
 9. **Lower sub-assembly A** (neck+platform) onto the BBs so the platform's upper groove
    captures them and its integral 16T pinion drops into mesh with the motor's 32T gear
    (fast-pan 2026-07-12: fit the 32T on the motor D-flats BEFORE this step). Screw
-   the 3 `pan_clips` into the deck pockets (driver clear 6.17 mm from above); their tabs
-   reach over the platform rim rebate to hold the top-heavy head down. Check the platform
-   spins free.
+   drop `pan_retainer` straight down over the seated platform. Its 90.8 mm lip ID clears
+   the platform's 90.0 mm top-band OD throughout the insertion path. Seat all six lobes
+   in their deck pockets and drive 6x M3x10 into the captive nuts. The continuous lip
+   reaches over the platform rim rebate to hold the top-heavy head down. Check the
+   platform spins free.
 
 ### Tilt joint + head (all on the pan group)
 
@@ -374,8 +378,9 @@ tray killed the 88.5 mm blind channels, 2026-07-08.)
 
 - Body↔pod join + TT screws (step 3) **before** ULN #1 (step 6): the board blocks cavity access.
 - Neck↔platform bolt-up (sub-assembly A) **before** seating on the balls, counterbores face down.
-- BBs + cage (step 8) **before** the platform (step 9); power tray + ballast (step 7)
-  **before** the belly plate closes the floor.
+- Six retainer nuts **before** the race, cage, and BBs (step 8); race, cage, and BBs
+  **before** the platform; platform **before** the drop-on retainer ring (step 9).
+  Power tray + ballast (step 7) stay **before** the belly plate closes the floor.
 
 ### Nasty-but-possible steps (measured)
 
