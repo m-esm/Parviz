@@ -25,7 +25,7 @@ import trimesh
 from trimesh.transformations import rotation_matrix as R
 
 from stlpaths import webpath, stlp
-from params import DEG, EXPORT, P, TAU
+from params import DEG, EXPORT, P, TAU, tilt_worm_grub_datums
 from geo import _T, _color, box, cyl, dbore_neg, export_stl, inter, sub, uni
 from gears import (gear_disc, load_gear_stl, pan_gear_mesh_deg, pan_real_ok, worm,
                    worm_cd, worm_real_ok)
@@ -236,6 +236,24 @@ def build():
     # shaft (stage-4 defect D3: 17.4 mm3 of shaft shoulder buried in the worm core).
     db.apply_translation((0, 0.5, 0))
     wm = sub(wm, db)
+    # FORWARD (+Y) axial retention: an M3x3 cup-point grub enters radially from +X
+    # through this O2.5 pilot and bears on the shaft flat. The pilot Y is the midpoint
+    # of the shaft-flat band that actually overlaps the worm, derived in params rather
+    # than copied from the current pose. Cut after the D-bore for both real and placeholder
+    # worms. This is a low-load retention grub, like the head axle-clamp grubs that survived
+    # the fastening campaign, not a structural joint, so the O2.5 thread-form pilot ban does
+    # not apply. The roughly 10 N worm thrust is reacted by the flat and grub preload.
+    # M3x3 seats with its top at r 4.5, below the r 5.275 crest envelope, so it adds no
+    # radial envelope. The worm prints on end; this small horizontal round bore bridges fine
+    # under the CLAUDE.md teardrop rule, so no teardrop is needed.
+    grub_y, _shaft_flat_band, _worm_band, _wheel_face_band = tilt_worm_grub_datums()
+    pilot_inner_x = P["motor_shaft_flat"] / 2 - 0.3
+    pilot_outer_x = P["worm_crest_r"] + 1.0
+    pilot = cyl(P["worm_grub_pilot_d"] / 2,
+                pilot_outer_x - pilot_inner_x, axis="x")
+    pilot.apply_translation(((pilot_inner_x + pilot_outer_x) / 2,
+                             grub_y - yc, 0))
+    wm = sub(wm, pilot)
     _color(wm, "motor"); wm.metadata["name"] = "tilt_worm"
     wm.apply_translation((wx, yc, wz))
     add(wm, M_pan, "tilt_worm.stl")

@@ -56,6 +56,7 @@ settled below). "Need" is per robot.
 | Part | Spec | Need | Owned | Buy |
 |---|---|---|---|---|
 | M3 screws + hex nuts | captive-nut joints everywhere; incl. M3x35 x8 bezel↔back. **2026-07-15 fastening campaign: ~+55 M3 hex nuts** as the thread-form pilots that failed the first print became real captive traps (head +32, chassis +24 incl. tail seam/deck/TT-upper/y26, neck +7 root & carrier & ULN). Screw length changes: y=26 seam M3x12 → **M3x20**, neck→platform M3x12 → **M3x14** | lots | 540pc M3 stainless kit + 175pc M3 30–50 mm kit + 600pc M2-M5 kit + 1263pc M2-M4 kit (all Tray 1) | , (kits cover it) |
+| M3x3 cup-point grub | tilt-worm forward axial retention; seats through the O2.5 radial hub pilot onto a 28BYJ shaft flat | 1 | 0 (screw kits do not list grubs) | **1** |
 | M2/M3 brass heat-set inserts | **16 total, and a soldering-iron insert tip.** Used ONLY where a captive nut was probed and measurably does not fit: **4x M2** track master-link keepers (below), **8x M2** cliff HC-SR04 (a 3.8 mm skin at 33.7 deg has no room behind), **2x M2** PD-trigger (edge-on into wall layers = the weakest thread orientation), **2x M3** rear panel L-feet (boxed on all four axes by the BME board, the tail pad, the TT gearbox and the glacis: 5.70 window vs 6.80 needed). Everywhere else the campaign uses a real captive nut -- probing DISPROVED the audit's insert calls twice (tilt_carrier, pedestal ears). All VERIFY_ON_ARRIVAL: vendor OD/length varies, re-key `keeper_insert_*` / `foot_insert_*` before printing | 12x M2 + 2x M3 (+2 spare) | 0 | **16 inserts + 1 insert tip** |
 | M2 brass heat-set inserts (detail) | **track master-link keepers** (2/master x2 = 4). The captive M2 nut does NOT fit: the pocket is boxed between the jaw slot's tension wall and the neighbour A-knuckle = 5.50 mm usable vs 5.82 needed across-corners (measured, tracks agent). Inserts need 5.40. This is the one repeatedly-serviced M2-in-PLA joint, so self-tapping was never going to survive the service cycles | 4 | none | **4x M2 brass heat-set + a soldering-iron insert tip** — VERIFY_ON_ARRIVAL: vendor OD/length varies, re-key `keeper_insert_{d,l}` before printing masters |
 | M5 penny washers | tilt worm thrust seat (OD 15, ID 5.3, t 1.0): closes 2.0 mm of worm float (≈3° tilt slop) to 0.1. A direct shoulder is impossible — any ID under the Ø10.55 crest blocks cartridge extraction | 2 | check the owned washer assortment | 2x M5 penny washer (OD ~15) |
@@ -220,7 +221,10 @@ tray killed the 88.5 mm blind channels, 2026-07-08.)
   plate's Ø29.1 bore and each ear hole lands on a Ø3.8 pin atop the plate's D-posts
   (2026-07-16: the real motor is 9 mm shorter than the old placeholder modeled, leaving
   only 0.2 mm in front of the ears -- the old 2x M4 ear bolts are geometrically impossible
-  and are GONE from the BOM). Press the worm onto the D-shaft. Hold the motor against the
+  and are GONE from the BOM). Press the worm onto the D-shaft. Clock the O2.5 radial
+  pilot over either D-flat, fit the M3x3 cup-point grub, and seat it gently with its tip
+  on the flat. This is low-load axial retention, not a structural clamp. The grub stays
+  in the worm and travels with the cartridge during rearward extraction. Hold the motor against the
   posts while inserting (step 11); driving the carrier's 4x M3x16 captures the ear bar
   between the post fronts and the neck's pocket-front wall (0.25 mm float, pins lock
   rotation). It comes OUT the same way for a motor swap, no head teardown.

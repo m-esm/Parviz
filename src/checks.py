@@ -31,7 +31,7 @@ import trimesh  # noqa: E402
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import geo  # noqa: E402
-from params import P  # noqa: E402
+from params import P, tilt_worm_grub_datums  # noqa: E402
 from stlpaths import stlp, webpath  # noqa: E402
 
 _results = []
@@ -121,6 +121,16 @@ def main():
     cd = P["worm_pitch_r"] + P["worm_module"] * P["worm_wheel_teeth"] / 2
     check("worm CD 11.9 (pitch r 4.4 + m1.25 12T wheel)", abs(cd - 11.9) < 1e-9, "%.3f" % cd)
 
+    # user 2026-07-16: the tilt-worm M3 retention grub must land in dead thread,
+    # inside both the shaft-flat band and worm span, never in the wheel face band.
+    grub_y, shaft_flat_band, worm_band, wheel_face_band = tilt_worm_grub_datums()
+    grub_datum_ok = (shaft_flat_band[0] < grub_y < shaft_flat_band[1]
+                     and worm_band[0] < grub_y < worm_band[1]
+                     and not wheel_face_band[0] <= grub_y <= wheel_face_band[1])
+    check("tilt-worm grub Y is on shaft flat and dead worm thread", grub_datum_ok,
+          "y %.3f, flat %.3f..%.3f, worm %.3f..%.3f, wheel %.3f..%.3f"
+          % ((grub_y,) + shaft_flat_band + worm_band + wheel_face_band))
+
     # user 2026-07-11 (mid-drive stretch): the raised tank loop closes at EXACTLY
     # track_links x track_pitch -- track_wheelbase is the solved value.
     from tracks import _track_link_poses, _track_zc  # noqa: E402  (cheap import)
@@ -154,6 +164,20 @@ def main():
     # HC-SR04 up front + rear obstacle = 4 sensor placeholders in the scene.
     check("4x HC-SR04 sensor nodes in scene",
           {"sensor_us", "sensor_us_rear", "sensor_cliff", "sensor_cliff_rear"} <= nodes)
+
+    # user 2026-07-16: exported tilt_worm has the +X radial O2.5 grub pilot.
+    # Use manifold-cube void/material probes, not trimesh.contains ray parity.
+    tw = M("tilt_worm")
+    worm_z = P["tilt_axis_z"] - (P["worm_pitch_r"]
+                                  + P["worm_module"] * P["worm_wheel_teeth"] / 2)
+    pilot_probe_x = 4.0  # +X mouth in the threaded wall, outside the O7 solid core
+    pilot_void = _void_cube(tw, (pilot_probe_x, grub_y, worm_z), 0.35)
+    beside_solid = all(not _void_cube(tw, (pilot_probe_x, grub_y,
+                                           worm_z + dz), 0.15)
+                       for dz in (-1.45, 1.45))
+    check("tilt_worm exported STL has +X O2.5 grub pilot",
+          pilot_void and beside_solid,
+          "mouth void at y %.3f with solid at z +/-1.45" % grub_y)
 
     # user 2026-07-13 (split the rear housing for faster printing): chassis_lower_rear
     # peels its feature-dense rear end into a bolt-on chassis_lower_tail at lower_seam2_y.

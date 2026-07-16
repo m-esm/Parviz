@@ -305,6 +305,9 @@ P = {
     "worm_wheel_w": 7.0,    # face width
     "worm_wheel_x": 0.0,    # wheel centered on the head midplane (spacer tubes reach both bearings)
     "worm_od": 10.0,        # placeholder-worm visual OD (real generated worm OD is 10.55)
+    "worm_crest_r": 5.275,  # real generated worm crest envelope, must not grow for retention
+    "worm_grub_pilot_d": 2.5,   # M3 low-load thread-form pilot from the +X hub side
+    "worm_grub_len": 3.0,       # M3x3 cup-point grub, top seats at r 4.5
     "worm_pitch_r": 4.4,    # REAL worm pitch radius (docs/WORM.md): module 1.25 + the Ø7
                             # solid core force pitch r 4.4 -> CD 11.9 (the old worm_od*0.4
                             # guess gave 11.5, which left the wheel ~no addendum room)
@@ -1449,3 +1452,19 @@ P = {
 
 EXPORT = os.environ.get("EXPORT") == "1"
 
+
+def tilt_worm_grub_datums():
+    """Shared world-Y datums for the tilt-worm shaft-flat retention grub."""
+    face_y = P["tilt_axis_y"] - P["worm_len"] / 2 - 10.0
+    worm_center_y = face_y + 4.0 + P["worm_len"] / 2
+    worm_band = (worm_center_y - P["worm_len"] / 2,
+                 worm_center_y + P["worm_len"] / 2)
+    shaft_base_y = face_y - 2.0
+    shaft_flat_band = (shaft_base_y + P["motor_shaft_len"] - P["motor_flat_len"],
+                       shaft_base_y + P["motor_shaft_len"])
+    usable_flat_band = (max(worm_band[0], shaft_flat_band[0]),
+                        min(worm_band[1], shaft_flat_band[1]))
+    grub_y = sum(usable_flat_band) / 2.0
+    wheel_face_band = (P["tilt_axis_y"] - P["worm_wheel_w"] / 2,
+                       P["tilt_axis_y"] + P["worm_wheel_w"] / 2)
+    return grub_y, shaft_flat_band, worm_band, wheel_face_band

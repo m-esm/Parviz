@@ -167,8 +167,9 @@ Tracks:
 ## P3 — misc / retention & registration
 
 - pan_race: nothing stops ring rotation but friction → 2 anti-rotation nubs if it spins.
-- tilt_worm on D-shaft: no axial retention vs ~10 N worm thrust → front washer
-  trapped by the carrier plate bore lip (28BYJ shaft has no circlip groove).
+- tilt_worm on D-shaft: rearward retention = M5 penny washer trapped by the carrier
+  plate bore lip (done 2026-07-15); forward retention = M3x3 cup-point grub through
+  the worm hub onto the shaft flat (2026-07-16).
 - pan_gears 32T: no axial retainer (gravity) — fine, monitor.
 - M4 nut slide-up slots: nuts drop out when flipping the panel → crush-rib nib in
   each slot mouth. Bench note: nuts in BEFORE panel mounts (slots blind after).

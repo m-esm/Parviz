@@ -193,11 +193,10 @@ def build_neck_clevis():
     # -31.6 and fronts at -30.6 = 0.1 running clearance to the worm. Thrust path is then
     # worm crest -> steel washer -> a r 6.1..8.0 annulus of plate, not a point on a bore
     # edge. The `sh` bore below opens its ID; the boss is buried 1.0 into the plate to fuse.
-    # NOTE (report): this closes the REARWARD direction only. FORWARD (+Y) retention has no
-    # geometric home -- probed, the cooler's stall keep-out reaches y -17.26 at the groove
-    # bottom vs the worm's front face at -17.5, i.e. 0.24 mm, and the wheel owns the space
-    # above -- so the worm walking off the shaft must be answered on the HUB (retaining
-    # compound on the D-bore, or a grub boss in tools/gears), not here.
+    # NOTE (report): this closes the REARWARD direction. FORWARD (+Y) retention is the
+    # worm-hub M3x3 cup-point grub seated through an O2.5 radial pilot onto the shaft flat.
+    # It travels with the removable motor cartridge, so the cooler's 0.24 mm front keep-out
+    # remains untouched and no in-situ tool access is required.
     tboss = cyl(8.0, 1.9, axis="y")
     tboss.apply_translation((wx, -32.55, wz))            # y -33.5..-31.6
     neck = uni([neck, tboss])
@@ -565,5 +564,4 @@ def build_tilt_carrier():
     _color(plate, "neck")
     plate.metadata["name"] = "tilt_carrier"
     return plate
-
 

@@ -93,6 +93,10 @@ Exceptions must be narrow and carry the physical reason, approving date, measure
 replacement check. Bought bearings, intentionally rotating joints, snap fits, and low-load
 electronics posts can need different constraints; they do not get an unmeasured blanket waiver.
 
+Tilt drivetrain note: the tilt worm is torque-keyed by the 28BYJ double-D shaft, retained
+rearward by the plate-seated M5 penny washer, and retained forward by an M3x3 cup-point grub
+through the worm hub onto a shaft flat. The grub is bench-set and extracts with the cartridge.
+
 ## Report interpretation
 
 `web/joint_report.json` contains a schema version, summary, and one result per joint/check with
