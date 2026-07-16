@@ -213,20 +213,66 @@ def build_head_shell():
         t = cyl(7.0, 72.0, axis="x")
         t.apply_translation((sx * 63.0, yt, zt))     # spans |x| 27..99: through the pivot boss
         bosses.append(t)                             # into the side wall
-    # TILT HARD-STOP FINS (homing pass 2026-07-08): 4 radial fins on the clamp tubes
-    # (x +-27..31, rooted r5.5 into the Ø14 tubes, tips r16.75), clocked +-55 deg off the
-    # straight-down (-Y) direction. They meet the neck's stop posts (build_neck_clevis,
-    # r 12..17 behind the axle) at +-33.8 deg tilt (shapely-computed on the real rotated
-    # rectangles; the +-30 sweep poses keep a 3.8 deg gap): the worm self-locks so the
-    # head HOLDS pose unpowered, but the controller still loses step count at power-off,
-    # so firmware stall-homes tilt against a stop at boot (28BYJ stall through the 12:1
-    # worm is ~0.2 Nm at the axle, fine for PLA flats).
-    # Fins live inside the motor-bay void (|x| < 33) and clear the cheek hoops (x <= 26),
-    # the grub-driver lines at x +-30 (fins never reach the y = yt plane) and the worm.
+    # TILT HARD-STOP FINS (homing pass 2026-07-08; crush-harden 2026-07-16): 4 radial
+    # fins on the clamp tubes (rooted r5.5 into the O14 tubes, tips r16.75), clocked
+    # +-55 deg off straight-down (-Y). They meet the neck's stop posts
+    # (build_neck_clevis, r 12..17 behind the axle) at +-33.8 deg tilt
+    # (shapely-computed on the real rotated rectangles; the +-30 sweep poses keep a
+    # 3.8 deg gap). Contact PLANES are pinned by angular thickness 4.0 + the +-55
+    # clock -- DO NOT change those (or the post z-faces); growing contact AREA is
+    # only along X, inside the post's x 20..32 band.
+    # X span 4 -> 5.5 (band |x| 26.5..32.0): 1.375x face area vs the old |x| 27..31.
+    # Target was ~25..32, but the cheek solid + O19.2 hoop end at |x|=26
+    # (clevis_half 22, cheek_t 8); probing fin-only vs neck_clevis: band 26..32 is
+    # boolean-clean but its inboard face lands EXACTLY on the cheek face plane, a
+    # zero-gap sliding rub (see fin_cx note below), and 25..32 collides ~122 mm3.
+    # So the inboard edge stops at 26.5, 0.5 running-clear of the cheek.
+    # O14 clamp tube spans |x| 27..99 so |x| 27..32 is fully rooted; the inboard
+    # 0.5 mm (|x| 26.5..27) is a stub off the tube end -- short enough that a
+    # root web is unnecessary (and a web into |x|<26 collides). Clamp blocks sit
+    # outboard at |x| 34..44 (2 mm past the fin tip). 0.5 mm 45deg edge bevels on
+    # the local-z faces keep FDM corner bulge from taking first contact ahead of
+    # the flat.
+    # HOLD tradeoff (PARAMS worm_starts=3, 2026-07-12): the 3-start worm BACK-DRIVES
+    # -- the head does NOT hold unpowered. Firmware stall-homes tilt against these
+    # stops at boot (half current / half rate; see firmware/WIRING.md) and must
+    # energize-hold or park at the balance point; 28BYJ stall through the 4:1 is
+    # still PLA-safe at reduced home current. Software-limit travel to +-30 so the
+    # stops stay homing-only surfaces.
+    # Fins run 0.5 clear of the cheek face at |x|=26, clear the
+    # grub-driver lines at x +-30 (fins never reach the y = yt plane) and the worm.
+    fin_w = 5.5            # x width (was 4.0); post covers x 20..32; capped by cheek
+    fin_cx = 29.25         # band |x| 26.5..32.0 per side (was 27..31): 0.5 RUNNING
+                           # CLEARANCE to the cheek face at |x|=26 -- an inboard edge
+                           # AT 26.0 is a zero-gap face-on-face rub over the whole
+                           # tilt travel (rotation about X never changes x, so the
+                           # coplanar faces slide on each other on a real print)
+    fin_radial = 11.25
+    fin_t = 4.0            # angular thickness -- pins +-33.8; do not change
+    fin_root_r = 5.5
+    fin_bev = 0.5          # 45deg contact-face edge bevel (FDM corner bulge)
     for sx in (-1, 1):
         for ang in (-55.0, 55.0):
-            fin = box(4.0, 11.25, 4.0)
-            fin.apply_translation((sx * 29.0, -(5.5 + 11.25 / 2), 0))
+            fin = box(fin_w, fin_radial, fin_t)
+            # 45deg edge bevels on both local-z faces (the stall contact faces).
+            # Rotated-cube cutters nibble each long edge; short radial-end edges
+            # get the same treatment so the whole landing perimeter is relieved.
+            if fin_bev > 0:
+                for zs in (-1.0, 1.0):
+                    for xs in (-1.0, 1.0):
+                        ch = box(fin_bev * 2.0, fin_radial + 2.0, fin_bev * 2.0)
+                        ch.apply_transform(R(45.0 * DEG, (0, 1, 0)))
+                        ch.apply_translation((xs * fin_w / 2.0, 0.0,
+                                              zs * fin_t / 2.0))
+                        fin = sub(fin, ch)
+                    for ys in (-1.0, 1.0):
+                        ch = box(fin_w + 2.0, fin_bev * 2.0, fin_bev * 2.0)
+                        ch.apply_transform(R(45.0 * DEG, (1, 0, 0)))
+                        ch.apply_translation((0.0, ys * fin_radial / 2.0,
+                                              zs * fin_t / 2.0))
+                        fin = sub(fin, ch)
+            fin.apply_translation((sx * fin_cx,
+                                   -(fin_root_r + fin_radial / 2.0), 0.0))
             fin.apply_transform(R(ang * DEG, (1, 0, 0)))
             fin.apply_translation((0, yt, zt))
             bosses.append(fin)

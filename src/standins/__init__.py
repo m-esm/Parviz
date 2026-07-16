@@ -84,10 +84,10 @@ The parts:
                     and parks the droop-prone poles where nothing ever touches. That
                     answers the old "printed spheres come out scarred" objection
                     instead of dodging it. pan_cage IS used again. Print 0.1 mm layers.
-  hw_tilt_axle x1   Ø4.8 x 209 rod + the 1.0 D-flat, PRINT-COMPENSATED (bore-0.2, the
-                    seam-dowel convention): Ø5.000 nominal could not enter the Ø5.000
-                    steel 695. The D-key ledge references the AXIS, not the rod
-                    surface, so key clearance is unchanged at 0.05. Prints lying along
+  hw_tilt_axle x1   Ø4.8 x 209 rod + center-only drive flat, PRINT-COMPENSATED
+                    (bore-0.2, the seam-dowel convention): Ø5.000 nominal could not
+                    enter the Ø5.000 steel 695. Both bearing journals stay round.
+                    Prints lying along
                     Y, flat UP -- layers then run PARALLEL to the axis, so bending is
                     bead-axial: this is the STRONG orientation, not the weak one.
   hw_seam_dowel x5  Ø3.9x12 + 0.5x45 lead-ins (a square lip shaves swarf into a blind
@@ -130,8 +130,8 @@ re-derives them at the bench:
     lines -- fine at this robot's ~1 N/wheel, but don't drive it off a desk on plastic
     axles.
   * hw_tilt_axle: tilt homing is USABLE, not "soft and drifty" -- wind-up is ~1.3-1.5
-    deg at the 0.1 N-m stall, the same order as the design's own D-key backlash (which
-    the steel rod has too), and stall homing repeats it so it largely calibrates out.
+    deg at the 0.1 N-m stall. Grub-on-flat backlash is bench-only, and stall homing
+    repeats the total wind-up so it largely calibrates out.
     The real cost is CREEP: 1-3 deg of droop over hours off the balance point. Park at
     the balance point (already the firmware rule).
   * hw_f688_bushing is a plain bearing, ~50x a ball bearing's rolling resistance --

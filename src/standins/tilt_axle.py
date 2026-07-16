@@ -2,8 +2,8 @@
 docstring for the programme; the derivation that sets THIS part's numbers is here.
 
 WHAT THIS SHAFT ACTUALLY DOES (probed, tools -> see the module notes below):
-  x  -18..+18   worm_wheel hub + spacer tubes ride it (bore Ø5.2); the D-KEY ledge
-                bears on the flat over the hub band x 3.5..9.
+  x  -18..+18   worm_wheel hub + spacer tubes ride it (round bore Ø5.2); an M3x4
+                radial grub bears on the center-only flat at x 7.25.
   x  +-17..21   695-2RS inner races -- REAL STEEL, bore Ø5.000 (-0/-0.008). Owned
                 x30, so this is the one interface the stand-in cannot negotiate with.
   x  +-34..44   head pinch-clamp blocks (bore Ø5.1 + a 1.0 slit and an M3 cross bolt).
@@ -21,12 +21,10 @@ That is the seam-dowel convention from the package docstring (bore-0.2 nominal, 
 near zero-to-slip after both errors"), applied to the tightest bore this rod sees.
 Undersize is also the recoverable direction: you can sand a shaft down, you cannot grow it.
 
-THE FLAT PLANE IS HELD AT z=+1.5 EXACTLY, decoupled from the OD. The worm wheel's D-key
-ledge is referenced to the AXIS (ledge face at +1.55 = flat at 1.5 + 0.05 clearance), not
-to the rod surface, so shrinking the OD does not touch the key interface -- it only makes
-the flat 0.9 deep instead of 1.0 and 3.75 wide instead of 4.0. build.py's placeholder and
-docs/ASSEMBLY.md's metal spec ("only the ~6 mm under the hub needs a clean 1.0 +-0.1")
-are both unaffected. Probed D-key clearance is unchanged at 0.050 mm.
+THE FLAT PLANE IS HELD AT z=+1.5 EXACTLY, decoupled from the printed OD. The metal
+spec is 1.0 deep and 4.0 across-flats. On this Ø4.8 stand-in it is 0.9 deep, but the
+plane remains at the grub's drive datum. Its assembly span x 1.5..11 is center-only,
+so both 695 journals and both head-clamp lands are uninterrupted round cylinders.
 
 PRINT ORIENTATION -- the current choice is right, and NOT for the documented reason.
   * HORIZONTAL (kept): rod along Y, FLAT UP. The task brief called this "layer lines
@@ -39,17 +37,15 @@ PRINT ORIENTATION -- the current choice is right, and NOT for the documented rea
     bending stress becomes pure interlayer tension -- that is the weak orientation, not
     the horizontal one. It is also unprintable: a 42:1 aspect-ratio tower resonates with
     the toolhead and snaps, and there is no bed contact worth the name.
-  * FLAT-DOWN (rejected, sharper reason than the old docstring's): the flat only spans
-    x -15..+104.5. The -X 695 land at x=-19 is OUTSIDE it, so a precision bearing surface
-    would print in mid-air 0.9 above the bed. Elephant's foot would also land on the flat
-    itself -- the one plane the D-key references.
+  * FLAT-DOWN (rejected): elephant's foot would land on the drive datum and the round
+    journals would begin above the bed. Flat-up keeps the filed-face analogue clean.
   * SPLIT into co-axial segments (rejected): the only zero-load split stations are |x|>44
     (outboard of the clamps), so a 3-piece split at +-50 would keep every joint out of
     the loaded span -- it is not unsound. It just buys nothing: the 209 mm one-piece
     already arranges diagonally on the 180 bed (footprint ~153 mm square) and slices
     clean, while a split adds two glue joints, two alignment errors and a compliance
     where the design wants a single stiff rod. Splitting mid-span (the obvious 2-piece)
-    would put a joint at the worm-wheel D-key inside the constant-moment span: strictly worse.
+    would put a joint at the wheel drive interface inside the constant-moment span: worse.
 
 STIFFENER / HOLLOW-CORE -- EVALUATED AND REJECTED ON PHYSICS, not just on stock.
   1. It solves a problem this part does not have. The head load is SYMMETRIC (head CoM
@@ -64,7 +60,7 @@ STIFFENER / HOLLOW-CORE -- EVALUATED AND REJECTED ON PHYSICS, not just on stock.
      flat's x-asymmetry rolls the head ~0.05 deg. Bending is a non-issue; stiffening it
      buys nothing.
   2. It cannot fix the thing that IS soft. The limiter is TORSION: torque enters at the
-     D-key (x 3.5..9) and leaves at the clamps (x +-34..44), so ~45 mm of PLA winds up
+     wheel drive (x 3.5..9) and leaves at the clamps (x +-34..44), so ~45 mm of PLA winds up
      ~1.3-1.5 deg at the ~0.1 Nm stall (GJ = 79,000 N mm2 vs steel's ~4.8e6). A slip-fit
      steel core does NOT carry torque: torque would have to get INTO the core and back
      OUT, and a smooth round rod in a round hole just slips. Coupling it needs keying at
@@ -87,8 +83,8 @@ toughness would buy impact margin the part does not need: the homing stall is ~0
 TILT-HOMING VERDICT (quantified, replaces the old "expect soft, drifty tilt homing"):
 USABLE. Stall homing drives the head's fins into the cheek posts and calls that zero, so
 the ~1.3-1.5 deg of wind-up is present at every homing event alike and largely calibrates
-out; it is also the same order as the design's OWN D-key backlash (~1.5 deg at the +0.05
-ledge fit), which the metal rod has too. What the plastic adds on top is CREEP: PLA under
+out. Grub-on-flat backlash is a bench measurement for both plastic and metal. What the
+plastic adds on top is CREEP: PLA under
 the ~12-45 mNm standing imbalance keeps winding, so expect the head to droop a further
 1-3 deg over hours of holding an off-balance pose. Park at the balance point for long idles
 (already the firmware rule, CLAUDE.md "Tilt holding") and re-zero after a long hold. Do NOT
@@ -105,14 +101,13 @@ NAME = "hw_tilt_axle"
 # Modelled OD. NOT P["axle_d"]: that is the 5.000 METAL nominal, and a printed peg grows
 # 0.1-0.2 onto it. 0.2 under = the seam-dowel convention (see the module docstring).
 AXLE_PRINT_D = 4.8
-FLAT_Z = 1.5        # flat FACE plane, off the axis -- the D-key datum. Held, not derived
-                    # from the OD (the wheel ledge sits at +1.55 = this + 0.05 clearance).
+FLAT_Z = P["axle_d"] / 2.0 - P["axle_flat_depth"]
 END_CHAMFER = 0.6   # 45 deg lead-in: a printed end face carries elephant's foot, and this
                     # rod has to thread two steel races, two pinch bores and two walls.
 
 
 def build():
-    """Ø4.8 print-compensated rod + the 1.0-deep D-flat held on its z=+1.5 datum, posed
+    """Ø4.8 print-compensated rod + center-only flat held on its z=+1.5 datum, posed
     lying along Y with the flat UP (see the module docstring for why that orientation)."""
     r = AXLE_PRINT_D / 2.0
     L = P["head_w"] + 4.0                     # 209: interface dim, unchanged (checks.py)
@@ -133,9 +128,11 @@ def build():
     rod.apply_transform(R(TAU / 4, (1, 0, 0)))             # +Z rod -> +Y rod
     rod.apply_translation((0, L / 2.0, 0))                 # centre on the origin
 
-    # D-KEY FLAT: same cutter as build.py's placeholder with the axis swapped x->y. Spans
-    # y -15..+108 (i.e. from the +Y insertion end past centre), face on the z=+1.5 datum.
-    flat = box(8.0, 123.0, 1.4)
-    flat.apply_translation((0, 46.5, FLAT_Z + 0.7))
+    # CENTER-ONLY FLAT: assembly +X maps to print-frame -Y after the rotation above.
+    # The short span covers the wheel grub and leaves both bearing journals fully round.
+    flat_len = P["axle_flat_x1"] - P["axle_flat_x0"]
+    flat = box(8.0, flat_len, 1.4)
+    flat.apply_translation((0, -(P["axle_flat_x0"] + P["axle_flat_x1"]) / 2,
+                            FLAT_Z + 0.7))
     rod = sub(rod, flat)
     return _zmin0(rod)

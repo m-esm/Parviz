@@ -159,8 +159,10 @@ WHITELIST = {
     # lies on the bed and the slicer tip-rounds the top one -- cosmetic on a greased
     # drive gear. The 0.6 crest end chamfers (cooler pass) already broke the sharpest
     # corners. Measured p1 0.25-0.27.
-    "tilt_worm.stl": (0.2, "3-start thread run-out feathers at the trim faces (unloaded "
-                           "dead-thread ends, prints vertical) + crest grazing rays"),
+    "tilt_worm.stl": (0.1, "3-start thread run-out feathers at the trim faces plus the "
+                           "O2.5 grub-pilot/thread intersection ring in unloaded dead "
+                           "thread; manifold probes verify the pilot void and solid O7 "
+                           "core beside it; prints vertical"),
     # REAL 12T helical wheel (same regen): thin samples sit at r ~7.5 from the axle
     # axis (the pitch circle) ON the x +-3.5 face planes (probed 2026-07-13: min spot
     # (3.5, -17.91, 160.48), r 7.48) = the tooth FACE-EDGE FEATHERS where the 22.8 deg

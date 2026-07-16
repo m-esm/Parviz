@@ -178,8 +178,9 @@ Tracks:
 ## P3 — misc / retention & registration
 
 - pan_race: nothing stops ring rotation but friction → 2 anti-rotation nubs if it spins.
-- tilt_worm on D-shaft: no axial retention vs ~10 N worm thrust → front washer
-  trapped by the carrier plate bore lip (28BYJ shaft has no circlip groove).
+- tilt_worm on D-shaft: rearward retention = M5 penny washer trapped by the carrier
+  plate bore lip (done 2026-07-15); forward retention = M3x3 cup-point grub through
+  the worm hub onto the shaft flat (2026-07-16).
 - pan_gears 32T: no axial retainer (gravity) — fine, monitor.
 - M4 nut slide-up slots: nuts drop out when flipping the panel → crush-rib nib in
   each slot mouth. Bench note: nuts in BEFORE panel mounts (slots blind after).
@@ -188,7 +189,10 @@ Tracks:
 - trim_neckfoot Ø3 pin sockets 3.5 blind → deepen; fascia/rear trim pins 2.5
   engagement → deepen to 5 or add snap barbs.
 - 695-2RS hoop press: coupon first; fallback Ø13.05 bore + printed cap/circlip.
-- worm_wheel D-key +0.05: coupon first; keep a fallback oversize variant.
+- 695-2RS axle journals: fully round at both seats; the center-only flat must not enter |x| 20..24.
+- worm_wheel drive: M3x4 cup-point grub through a radial O2.5 pilot onto the center-only
+  axle flat. Retention-grub exemption: threads hold preload and the tip-on-flat contact
+  carries torque. Coupon first; reversal backlash remains a bench measurement.
 - led_strip recess: no retention modeled — note glue in ASSEMBLY.md or add a lip.
 - Stand-ins historical note: the M8 press-nut/tension defect was resolved 2026-07-16
   with real printed threads plus an outer jam nut on every tower; seam dowel

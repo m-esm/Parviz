@@ -9,7 +9,7 @@ simplified). Screen upright on the front, neck tilt gives the look up/down.
 
 Status: **FIX CAMPAIGN COMPLETE (stages 1-5 + independent verification, see docs/FIXES.md);
 MAINTENANCE/DFA PASS 2026-07-08** (workflow-reviewed, all gates green): tilt-motor cartridge
-(`tilt_carrier`), D-keyed worm wheel on a flatted axle, track master links + keepers, pan BB
+(`tilt_carrier`), grub-on-flat worm wheel with round bearing journals, track master links + keepers, pan BB
 cage, pan/tilt stall-homing hard stops, microSD wall slot + `sd_plug`, located side-panel
 joints, and the 12V dual-buck power tray (firmware/WIRING.md).
 `src/build.py` builds the whole robot around the combined screen+Pi reference mesh; 10 watertight
@@ -293,7 +293,7 @@ tank chassis        DRIVE base: central body (build_base) + track_L/track_R (bui
   crossings); the board doubles as the tilt counterweight. Only round wires (Pi power) cross the
   joints. Tradeoff: heavier head + higher CoM → ballast the base low.
 - **Cable path:** the axle is SOLID (the old Ø2.5 weight-relief bore left a 0.25 wall under the
-  D-key flat, review 2026-07-08; nothing routed through it anyway). The route: base USB-C wall
+  1.0 axle flat, review 2026-07-08; nothing routed through it anyway). The route: base USB-C wall
   port → base cavity (pan **service loop**) → 16×8 obround pass in the platform → neck channel →
   out the column top → into the head through the bottom-rear slot with a tilt drape (±30° is
   easy). Pan is ±90°, so a service loop beats a slip ring, it carries the full Pi rail silently
@@ -402,9 +402,10 @@ gate's exclude set is empty then). ULN2003 keeps its placeholder (no mesh downlo
   lazy-Susan BB race (see Mechanical intent). **Homing:** stall against the deck stop posts at
   ±93.3° (lug az 225 on the platform underside, posts az 118/332), back off, call it ±90.
 - **Tilt (3-START worm since 2026-07-12, CARTRIDGE):** the worm sits on the motor's D-shaft
-  (shaft +Y, right-angle to the axle), meshing a 12T `worm_wheel` **D-keyed to the flatted Ø5
-  axle** (hub ledge on a filed 1.0-deep flat, 2026-07-08; the old M3 grub was blind and
-  friction-only). The 3-start worm (4:1, lead ~23°) BACK-DRIVES -- the old single-start
+  (shaft +Y, right-angle to the axle), meshing a 12T `worm_wheel` with a **round Ø5.2 bore
+  and radial M3x4 cup-point grub onto a center-only Ø5 axle flat**. The grub is accessible
+  from the open rear bay before the head is hung. Its tip-on-flat contact carries drive torque;
+  threads retain preload. The 3-start worm (4:1, lead ~23°) BACK-DRIVES -- the old single-start
   self-locking is gone, see the fast pan/tilt pass + the tilt-holding decision below. Motor +
   worm ride the removable **`tilt_carrier`** (ears drop onto the plate's pin-posts on the
   bench -- 2026-07-16 sandwich retention, see the phantom-tier note above -- 4× M3×16 from the open
@@ -416,10 +417,11 @@ gate's exclude set is empty then). ULN2003 keeps its placeholder (no mesh downlo
   retired 2026-07-13.) A dead 28BYJ swaps without touching the head. **Homing:** stall the
   head's ±55° clamp-tube fins against the cheek posts at ±33.8°. Real generated teeth per
   docs/WORM.md.
-- **Axle + bearings:** Ø5 SOLID rod (flat filed 1.0 deep from the insertion end to ~15 past
-  center; a tube dies under the flat -- 0.25 wall; D-key ledge fit +0.05, coupon first, the
-  old +0.15 was ±4.4° of head backlash; the +X 695 inner race rides the D-profile, fine
-  since the spacer tubes clamp it) on **695-2RS bearings (5×13×4, owned ×30)** pressed into
+- **Axle + bearings:** Ø5 SOLID rod with a center-only 1.0 deep flat at x +1.5..+11
+  (9.5 mm long, 4.0 across-flats). Both 695 journals at |x| 20..24 and both clamp lands
+  remain fully round; the wheel's round bore slides over either end. A tube still dies under
+  the flat with only 0.25 wall. Grub-on-flat backlash is bench-only, coupon first. The axle runs
+  on **695-2RS bearings (5×13×4, owned ×30)** pressed into
   the neck cheeks. Head clamps the axle ends (grub screws at x=±30, kept: they give
   continuous tilt-zero trim).
 - **ULN2003 mounts / motor pockets:** the base has a pan-motor pad + ULN standoffs; the tilt

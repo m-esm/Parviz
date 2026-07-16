@@ -19,6 +19,7 @@ pairwise booleans. Whole suite runs in well under 90 s.
 Python 3.9; trimesh + numpy. Run: python3 src/checks.py
 """
 import math
+import json
 import os
 import sys
 import warnings
@@ -31,7 +32,7 @@ import trimesh  # noqa: E402
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import geo  # noqa: E402
-from params import P  # noqa: E402
+from params import P, tilt_worm_grub_datums  # noqa: E402
 from stlpaths import stlp, webpath  # noqa: E402
 
 _results = []
@@ -86,6 +87,16 @@ def _void_cube(mesh, pt, s=0.5):
     c.apply_translation(np.asarray(pt, float))
     try:
         return geo.inter(mesh, c).volume < 1e-9
+    except Exception:
+        return False
+
+
+def _solid_cube(mesh, pt, s=0.25):
+    """Solid probe paired with _void_cube, using the same manifold oracle."""
+    c = geo.box(s, s, s)
+    c.apply_translation(np.asarray(pt, float))
+    try:
+        return geo.inter(mesh, c).volume > 0.8 * s ** 3
     except Exception:
         return False
 
@@ -157,6 +168,67 @@ def main():
     cd = P["worm_pitch_r"] + P["worm_module"] * P["worm_wheel_teeth"] / 2
     check("worm CD 11.9 (pitch r 4.4 + m1.25 12T wheel)", abs(cd - 11.9) < 1e-9, "%.3f" % cd)
 
+    # 2026-07-16 fallback drop-in: the committed 1-start sidecar must track every
+    # cartridge-critical PARAMS dimension even while the 3-start pair is active.
+    fallback_meta_path = stlp("worm_real_meta_1s.json")
+    try:
+        with open(fallback_meta_path) as f:
+            fallback_meta = json.load(f)
+    except (OSError, ValueError):
+        fallback_meta = {}
+    fallback_expect = {
+        "starts": 1, "module": P["worm_module"],
+        "wheel_teeth": P["worm_wheel_teeth"],
+        "worm_pitch_r": P["worm_pitch_r"], "face_w": P["worm_wheel_w"],
+        "worm_len": P["worm_len"],
+    }
+    fallback_ok = all(k in fallback_meta
+                      and abs(float(fallback_meta[k]) - float(v)) < 1e-9
+                      for k, v in fallback_expect.items())
+    check("single-start fallback sidecar matches active cartridge PARAMS", fallback_ok,
+          fallback_meta_path)
+
+    # user 2026-07-16: the tilt-worm M3 retention grub must land in dead thread,
+    # inside both the shaft-flat band and worm span, never in the wheel face band.
+    grub_y, shaft_flat_band, worm_band, wheel_face_band = tilt_worm_grub_datums()
+    grub_datum_ok = (shaft_flat_band[0] < grub_y < shaft_flat_band[1]
+                     and worm_band[0] < grub_y < worm_band[1]
+                     and not wheel_face_band[0] <= grub_y <= wheel_face_band[1])
+    check("tilt-worm grub Y is on shaft flat and dead worm thread", grub_datum_ok,
+          "y %.3f, flat %.3f..%.3f, worm %.3f..%.3f, wheel %.3f..%.3f"
+          % ((grub_y,) + shaft_flat_band + worm_band + wheel_face_band))
+
+    # 2026-07-16 tilt axle respec: a round wheel bore plus radial grub replaces the
+    # chordal ledge, so neither bearing journal needs a runway flat.
+    flat_span_ok = (P["axle_flat_x0"] <= P["wheel_hub_x0"]
+                    and P["axle_flat_x1"] >= P["wheel_hub_x1"]
+                    and P["axle_flat_x0"] < P["wheel_grub_x"] < P["axle_flat_x1"]
+                    and P["wheel_grub_x"] > P["worm_crest_r"]
+                    and abs(P["wheel_grub_len"]
+                            - (5.5 - (P["axle_d"] / 2 - P["axle_flat_depth"]))) < 1e-9
+                    and P["axle_flat_x1"] < 20.0
+                    and P["axle_flat_x0"] > -20.0)
+    check("tilt axle flat covers hub/grub and misses both 695 journals", flat_span_ok,
+          "flat %.2f..%.2f, hub %.2f..%.2f, grub %.2f"
+          % (P["axle_flat_x0"], P["axle_flat_x1"], P["wheel_hub_x0"],
+             P["wheel_hub_x1"], P["wheel_grub_x"]))
+
+    ww = M("worm_wheel")
+    wy, wz = P["tilt_axis_y"], P["tilt_axis_z"]
+    old_ledge_void = _void_cube(ww, (6.25, wy, wz + 2.0), 0.2)
+    pilot_void = _void_cube(ww, (P["wheel_grub_x"], wy - 5.25, wz), 0.2)
+    pilot_side_solid = _solid_cube(ww, (P["wheel_grub_x"] - 1.8,
+                                        wy - 5.25, wz), 0.2)
+    hub_vertices = ww.vertices[(ww.vertices[:, 0] >= P["wheel_hub_x0"] + 0.2)
+                               & (ww.vertices[:, 0] <= P["wheel_hub_x1"] - 0.2)]
+    hub_rmax = np.sqrt((hub_vertices[:, 1] - wy) ** 2
+                       + (hub_vertices[:, 2] - wz) ** 2).max()
+    check("worm wheel round bore has no old D-key ledge", old_ledge_void)
+    check("worm wheel -Y radial grub pilot exists with hub wall beside it",
+          pilot_void and pilot_side_solid)
+    check("worm wheel hub radial envelope remains r5.5", abs(hub_rmax - 5.5) < 0.03,
+          "rmax %.3f" % hub_rmax)
+
     # user 2026-07-11 (mid-drive stretch): the raised tank loop closes at EXACTLY
     # track_links x track_pitch -- track_wheelbase is the solved value.
     from tracks import _track_link_poses, _track_zc  # noqa: E402  (cheap import)
@@ -190,6 +262,20 @@ def main():
     # HC-SR04 up front + rear obstacle = 4 sensor placeholders in the scene.
     check("4x HC-SR04 sensor nodes in scene",
           {"sensor_us", "sensor_us_rear", "sensor_cliff", "sensor_cliff_rear"} <= nodes)
+
+    # user 2026-07-16: exported tilt_worm has the +X radial O2.5 grub pilot.
+    # Use manifold-cube void/material probes, not trimesh.contains ray parity.
+    tw = M("tilt_worm")
+    worm_z = P["tilt_axis_z"] - (P["worm_pitch_r"]
+                                  + P["worm_module"] * P["worm_wheel_teeth"] / 2)
+    pilot_probe_x = 4.0  # +X mouth in the threaded wall, outside the O7 solid core
+    pilot_void = _void_cube(tw, (pilot_probe_x, grub_y, worm_z), 0.35)
+    beside_solid = all(not _void_cube(tw, (pilot_probe_x, grub_y,
+                                           worm_z + dz), 0.15)
+                       for dz in (-1.45, 1.45))
+    check("tilt_worm exported STL has +X O2.5 grub pilot",
+          pilot_void and beside_solid,
+          "mouth void at y %.3f with solid at z +/-1.45" % grub_y)
 
     # user 2026-07-13 (split the rear housing for faster printing): chassis_lower_rear
     # peels its feature-dense rear end into a bolt-on chassis_lower_tail at lower_seam2_y.
@@ -310,7 +396,6 @@ def main():
     # every GLB scene node must match a category regex in the viewer's TREE. The
     # regexes are parsed straight out of web/viewer_glb.html so viewer and gate
     # cannot drift; a new part therefore needs its TREE entry the same turn.
-    import json
     import re
     import struct
     with open(webpath("viewer_glb.html")) as f:
@@ -382,12 +467,19 @@ def main():
 
     # ---------------- tilt homing: fins + stop posts (stall at +-33.8 deg) -----
     yt, zt = P["tilt_axis_y"], P["tilt_axis_z"]
+    # Crush-harden 2026-07-16: fins are x-width 5.5 at centers +-29.25 (band |x|
+    # 26.5..32; 0.5 running-clear of the cheek face at |x|=26). Probe the NEW inboard
+    # + outboard extents so a regression to the old 4-wide / |x| 27..31 fin fails
+    # (those probes sat only at |x|=29).
     fin_pts = []
+    y0 = -11.125             # fin box center radius on the clamp tube
     for sxf in (1, -1):
         for ang in (55.0, -55.0):    # fins at +-55 deg from straight-down about X
             a = math.radians(ang)
-            y0 = -11.125             # fin box center radius on the clamp tube
-            fin_pts.append((sxf * 29.0, y0 * math.cos(a) + yt, y0 * math.sin(a) + zt))
+            yc = y0 * math.cos(a) + yt
+            zc = y0 * math.sin(a) + zt
+            for xr in (27.0, 29.25, 31.5):  # inboard / mid / outboard of new band
+                fin_pts.append((sxf * xr, yc, zc))
     fL, fR = M("head_back_frame_L"), M("head_back_frame_R")
     clamp_len = 8.0 + geo.nut_ac("M3") / 2.0
     clamp_nibs = [nib_retention(mesh,
@@ -399,14 +491,20 @@ def main():
           all(v[0] for v in clamp_nibs),
           "; ".join("%.4f/%.4f mouth %.6f" % (v[1][0], v[1][1], v[2])
                     for v in clamp_nibs))
-    # user 2026-07-08 (stall homing): 4 radial fins on the head clamp tubes at
-    # +-55 deg; they meet the cheek posts at +-33.8 deg tilt.
-    check("tilt clamp-tube fins x4 (+-55 deg)",
+    # user 2026-07-08 (stall homing) + 2026-07-16 crush-harden: 4 radial fins on
+    # the head clamp tubes at +-55 deg, x-span |26..32|; they meet the cheek posts
+    # at +-33.8 deg tilt. Angular thickness + clock HOLD (stall angle).
+    check("tilt clamp-tube fins x4 (+-55 deg, x 26.5..32)",
           inside(fR, [p for p in fin_pts if p[0] > 0])
           and inside(fL, [p for p in fin_pts if p[0] < 0]))
     # user 2026-07-08: TILT-STOP POSTS r12..17 behind the axle on both cheeks.
+    # Probe mid + the x band the widened fins cover so the post face can't shrink
+    # under the fin landing without failing.
     check("neck cheek stop posts (x +-26, y -32.5)",
-          inside(M("neck_clevis"), [(26.0, yt - 14.5, zt), (-26.0, yt - 14.5, zt)]))
+          inside(M("neck_clevis"),
+                 [(26.0, yt - 14.5, zt), (-26.0, yt - 14.5, zt),
+                  (22.0, yt - 14.5, zt), (30.0, yt - 14.5, zt),
+                  (-22.0, yt - 14.5, zt), (-30.0, yt - 14.5, zt)]))
 
     # ---------------- pan homing: lug az 225 + deck posts az 118/332 -----------
     def raz(az, r=28.0):
@@ -572,6 +670,7 @@ def main():
     # a print-oriented plastic stand-in in stl/hardware/ (src/standins.py), and
     # key interface dims match the placeholders they substitute.
     from standins import STANDINS
+    from standins.tilt_axle import AXLE_PRINT_D
     hw_ok, hw_detail = True, ""
     for nm in STANDINS:
         pth = stlp(nm + ".stl")
@@ -603,6 +702,13 @@ def main():
               and np.allclose(ext("hw_coupon_695"), (5.5, 100.0, 20.0), atol=0.1)
               and np.allclose(ext("hw_coupon_f688"), (125.0, 25.0, 30.0), atol=0.1))
               # disc overlaps the tower nut cage by 5.2 mm^3
+        hwa = M("hw_tilt_axle")
+        flat_z = AXLE_PRINT_D / 2.0 + (P["axle_d"] / 2.0 - P["axle_flat_depth"])
+        journals_round = all(_solid_cube(hwa, (0, sy, flat_z + 0.2), 0.2)
+                             for sy in (-22.0, 22.0))
+        flat_at_hub = _void_cube(hwa, (0, -P["wheel_grub_x"], flat_z + 0.2), 0.2)
+        check("stand-in axle has round 695 journals and center-only hub flat",
+              journals_round and flat_at_hub)
 
     # ---------------- FASTENING CAMPAIGN (2026-07-15) --------------------------
     # docs/FASTENING_AUDIT.md. The first print failed because captive traps could

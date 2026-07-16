@@ -374,6 +374,32 @@ rib meets the flat trim faces (machined worms carry the same edge unless a run-o
 relief is cut) + crest grazing rays; unloaded dead-thread ends, prints vertical
 (bottom wedge on the bed, top wedge tip-rounded by the slicer) -- dispositioned as
 a documented whitelist floor of 0.2 in src/wallcheck.py, not a generator defect.</p>
+<h2 id="fallback-single-start-pair-self-locking">Fallback single-start pair (self-locking)</h2>
+<p>The 3-start pair remains the default because it delivers about 22.5 deg/s, but its
+tilt torque margin is only about 1.3x and its 23 deg lead back-drives. The assumed
+residual imbalance is about 25 mNm, while the physical head could exceed 100 mNm.
+The committed 1-start pair restores mechanical self-locking and is a drop-in for the
+same cartridge, center distance and axle. Physics decides between them on the bench.</p>
+<p>Regenerate and verify the fallback from the repository root with:</p>
+<pre><code class="language-bash">STARTS=1 OUT_SUFFIX=_1s tools/gears/.venv/bin/python tools/gears/gen_worm_drive.py
+STARTS=1 OUT_SUFFIX=_1s PYTHONPATH=tools/gears tools/gears/.venv/bin/python tools/gears/verify_mesh.py
+STARTS=1 OUT_SUFFIX=_1s PYTHONPATH=tools/gears tools/gears/.venv/bin/python tools/gears/probe_worm_sweep.py
+</code></pre>
+<p>The sidecar records starts 1, module 1.25, 12 wheel teeth, worm pitch radius 4.4,
+face width 7.0 and worm length 13.0. The 2026-07-16 verification reported both
+meshes watertight and volumetric, correct-hand minimum 0.0000 mm3 at 10.5 deg,
+wrong-hand minimum 0.7457 mm3, and contact onset at CD-0.10 with 0.0026 mm3.
+The assembly-pose probe found a 9/121-step zero window centered at <strong>25.50 deg</strong>.
+The correct coupled direction, sign -1, stayed at <strong>0.0000 mm3</strong> penetration over
+49 steps and one full worm revolution. Sign +1 deliberately fails because it is
+the wrong kinematic direction.</p>
+<p>To swap, set only <code>PARAMS["worm_starts"] = 1</code>, rebuild, and print only
+<code>tilt_worm.stl</code> and <code>worm_wheel.stl</code>. The cartridge, center distance and axle stay
+unchanged. Tilt speed drops from 22.5 to about 7.5 deg/s and the ratio changes from
+4:1 to 12:1, restoring self-locking. The starts-keyed filenames and matching meta
+honesty gate prevent stale geometry from loading. With a stalled or dead motor,
+drive the head fully up before pulling the cartridge, the old extraction rule for
+the self-locking pair applies again.</p>
 <h2 id="pan-spur-pair-2026-07-13">Pan spur pair (2026-07-13)</h2>
 <p><code>tools/gears/gen_pan_spurs.py</code>: m 0.8, PA 20 deg, <strong>32T</strong> (width 5.0, D-bore cut in
 build.py on the motor shaft flats) + <strong>16T</strong> (width 5.5, fused into the pan_platform

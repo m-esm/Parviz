@@ -3,11 +3,11 @@
 Current assembly notes for the tracked desk-pi prototype. The task #28 insertion/torque-path
 audit (2026-07-07) verified a complete install order exists (see "Assembly order (verified)"
 below). The 2026-07-08 maintenance pass then killed the worst service traps: tilt motor is a
-rear-access cartridge (`tilt_carrier`), the worm wheel is D-keyed to a flatted axle (no blind
-grub), tracks close with a master link (no loop-flexing), the pan race got a BB cage, both
+rear-access cartridge (`tilt_carrier`), the worm wheel uses an accessible radial grub on a
+center-only axle flat, tracks close with a master link (no loop-flexing), the pan race got a BB cage, both
 joints got stall-homing hard stops, the microSD swaps through a plugged left-wall slot, the
 positively located side-panel joints, and power is a 12 V PD-trigger + dual-buck belly tray
-(firmware/WIRING.md). Not print-final: still open is a D-key fit coupon for the axle flat.
+(firmware/WIRING.md). Grub-on-flat backlash remains a bench measurement covered by the coupon below.
 
 ## Bill of materials
 
@@ -49,7 +49,7 @@ settled below). "Need" is per robot.
 | 6 mm airsoft BBs | pan race, Ø80 circle, `pan_race_n`=18. Printed-race acceptance test: assembly step 9 (reject -> commercial ring below) | 18 | 0 | **smallest bag (100+)** |
 | Metric O-ring 6.0 x 1.0 | antenna gland and positive park grooves; NBR or silicone, silicone preferred for low breakaway; VERIFY_ON_BENCH | 2 | 0 | **2** |
 | Commercial thin-section lazy-Susan / 4-point turntable bearing | **OPTIONAL print-3 upgrade** for the printed PLA race (buy only if step 9 acceptance fails). Pitch circle as close to Ø80 as available (typical cheap: 70 mm or 3" Al/steel lazy-Susan rings, or a thin-section slewing ring with **ID >= 68** so the cable pass and 16T pinion hub stay clear). Height budget = current printed stack seat floor -> platform underside (`_pan_stack` in `src/pan.py`): `pan_race_ring_t` 5.0 + air gap (`ball_d` - 2 * `pan_groove_engage`) 2.4 = **7.4 mm** (absolute: seat_floor = base_h - pan_plate_t - 7.4, plate_bot = base_h - pan_plate_t; with base_h 66 / pan_plate_t 7.6 that is z 51.0..58.4). Dims VERIFY_ON_ARRIVAL; fitting needs re-cut deck seat + platform underside (not modeled now; see step 9 upgrade path) | 1 | 0 | **only if printed race fails acceptance** |
-| Ø5 SOLID rod | tilt axle, ~100 mm silver steel (**NOT tube**: a 1.0 flat on a Ø5/Ø2.5 tube leaves a 0.25 wall). **File a 1.0-deep flat** from the insertion end to ~15 past center (D-key for the worm wheel's hub ledge); only the ~6 mm under the hub needs a clean 1.0 ±0.1 depth. The flat crosses the +X 695 seat, so that inner race rides a D-profile (fine, the spacer tubes clamp it). Print a D-bore coupon first, starting at **+0.05** clearance (+0.15 measured as ±4.4° of head backlash) | 1 | 0 | **1** |
+| Ø5 SOLID rod | tilt axle, **209 mm** silver steel (**NOT tube**: a 1.0 flat on a Ø5/Ø2.5 tube leaves a 0.25 wall). File one **9.5 mm long x 1.0 ±0.1 mm deep center-only flat**, axle x +1.5..+11.0. Its center is **98.25 mm from the +X rod end**. Finished across-flats is 4.0 mm: a 4.1 GO slot must pass and a 3.9 NO-GO slot must not. Both 695 journals at |x| 20..24 and both head-clamp lands remain fully round | 1 | 0 | **1** |
 | M8x**70** bolts + NYLOC nuts | END BOLT-AXLES: head = outboard hubcap, smooth journal through both F688s, thread begins at x=78 and crosses the tower clamp stack. M8x60 is too short to reach the NYLOC insert. | 4+4 | 0 | **4x M8x70 + 4 NYLOC** |
 | M8 JAM NUTS + washers | **Required and modeled:** one AF13 jam nut bears on each tower's outboard face; the washer and NYLOC bear inboard. This closes the previous 17.4 mm air gap, clamps the tension slot/tower, and leaves the idler free on the smooth journal. The printed export likewise contains 8 total M8 nuts. | 4+4 washers | 0 | **4x M8 jam nut + 4 washers** |
 | 12x28x1.0 steel strip | Front tension-slot nut bearing insert, cut square from mild-steel stock. Presses flush into the x62 face recess; captured ends spread sustained clamp load into the tower shoulders. This mitigates PLA creep but is not a positive axle lock | 2 | 0 | **2x** |
@@ -61,6 +61,8 @@ settled below). "Need" is per robot.
 |---|---|---|---|---|
 | M3 screws + hex nuts | captive-nut joints everywhere; incl. M3x35 x8 bezel↔back and **6x M3x10 + 6 M3 nuts for the pan retainer**. **2026-07-15 fastening campaign: ~+58 M3 hex nuts** as failed thread-form pilots became captive traps. Screw length changes: y=26 seam M3x12 → **M3x20**, neck→platform M3x12 → **M3x14** | lots | 540pc M3 stainless kit + 175pc M3 30–50 mm kit + 600pc M2-M5 kit + 1263pc M2-M4 kit (all Tray 1) | , (kits cover it) |
 | M3×10 countersunk screws + M3 hex nuts | track hold-down shoes, 2 per shoe × 4. Heads recess flush in the z 10.4 running face; nuts slide up into the wheel beam at z 18.0. M3x10 (not x12): the beam clearance bore is capped at z 21.0 to keep 0.8 of wall under the sprocket journal. The front `spr_y2` pair is fittings-ready and only required when twin drive is populated | 8+8 (4+4 for rear-only drive) | covered by M3 kits | , |
+| M3x3 cup-point grub | tilt-worm forward axial retention; seats through the O2.5 radial hub pilot onto a 28BYJ shaft flat | 1 | 0 (screw kits do not list grubs) | **1** |
+| M3x4 cup-point grub | worm-wheel drive; radial O2.5 hub pilot, cup tip preloaded on the center-only axle flat, head flush with the Ø11 hub OD | 1 | 0 (buy with the M3x3 grub above) | **1** |
 | M2/M3 brass heat-set inserts | **16 total, and a soldering-iron insert tip.** Used ONLY where a captive nut was probed and measurably does not fit: **4x M2** track master-link keepers (below), **8x M2** cliff HC-SR04 (a 3.8 mm skin at 33.7 deg has no room behind), **2x M2** PD-trigger (edge-on into wall layers = the weakest thread orientation), **2x M3** rear panel L-feet (boxed on all four axes by the BME board, the tail pad, the TT gearbox and the glacis: 5.70 window vs 6.80 needed). Everywhere else the campaign uses a real captive nut -- probing DISPROVED the audit's insert calls twice (tilt_carrier, pedestal ears). All VERIFY_ON_ARRIVAL: vendor OD/length varies, re-key `keeper_insert_*` / `foot_insert_*` before printing | 12x M2 + 2x M3 (+2 spare) | 0 | **16 inserts + 1 insert tip** |
 | M2 brass heat-set inserts (detail) | **track master-link keepers** (2/master x2 = 4). The captive M2 nut does NOT fit: the pocket is boxed between the jaw slot's tension wall and the neighbour A-knuckle = 5.50 mm usable vs 5.82 needed across-corners (measured, tracks agent). Inserts need 5.40. This is the one repeatedly-serviced M2-in-PLA joint, so self-tapping was never going to survive the service cycles | 4 | none | **4x M2 brass heat-set + a soldering-iron insert tip**. VERIFY_ON_ARRIVAL: vendor OD/length varies, re-key `keeper_insert_{d,l}` before printing masters |
 | M5 penny washers | tilt worm thrust seat (OD 15, ID 5.3, t 1.0): closes 2.0 mm of worm float (≈3° tilt slop) to 0.1. A direct shoulder is impossible because any ID under the Ø10.55 crest blocks cartridge extraction | 2 | check the owned washer assortment | 2x M5 penny washer (OD ~15) |
@@ -120,8 +122,8 @@ tracks, bezel, neck, pan parts, cosmetics -- can stay PLA. The black CR-PETG spo
   4x M3x16 clamp it to the neck bracket from the open rear bay
 - `track_keeper_L/R`: master-link keeper bars (2 bars + side tabs per pod, 1x M2 each);
   the master link body prints as link 0 inside each `track_L/R`
-- `worm_wheel` / `tilt_worm`: real generated teeth (docs/WORM.md); the wheel hub now carries
-  the D-key ledge (regen includes it via the build's hub union)
+- `worm_wheel` / `tilt_worm`: real generated teeth (docs/WORM.md); the wheel has a round
+  Ø5.2 bore and an accessible radial O2.5 pilot for its M3x4 tip-on-flat drive grub
 - Cosmetic / design-ref set (render-only today, print with the head): side rails, forehead
   `led_strip`, `camera_pod` eye shell, rear `trim_hatch_frame`, chassis
   `trim_fascia` + `trim_rear`, and the placeholder gripper arms (mechanism TBD)
@@ -152,7 +154,7 @@ compensation, which looks perfect in CAD:
 | `hw_m8_washer` | 4 | Ø14.4 washers | **flatted to AF13**: a round Ø14.4 disc overlaps the tower nut cage by 5.2 mm³ (its old seat was deleted by running-gear v2). A printed wave washer was rejected -- it creeps by the mechanism it would compensate |
 | `hw_f688_bushing` | 8 | F688ZZ bearings | **v1 could not spin** (all three fits closed nominal-to-nominal). Now bore Ø8.6, body Ø15.2 + its own crush ribs at Ø16.0, flange Ø17.9, 3 axial grease grooves. **Grease is required -- it is the service life, not a nicety** |
 | `hw_pan_ring` | 20 | 18x Ø6 BBs | **v1 could not move** -- the torus slid at ~96 mNm vs the pan's ~15-17 mNm. Now 18 barrel rollers + 2 spares: Ø5.9 sphere, flats on the SPIN POLES, printed axis-up / installed axis-radial. **pan_cage is used again.** Print at 0.1 mm layers |
-| `hw_tilt_axle` | 1 | Ø5 silver-steel rod | **v1 could not be assembled** (Ø5.000 into a Ø5.000 STEEL 695 bore = +0.000). Now Ø4.8 print-compensated, D-key ledge referenced to the AXIS so key clearance is unchanged |
+| `hw_tilt_axle` | 1 | Ø5 silver-steel rod | **v1 could not be assembled** (Ø5.000 into a Ø5.000 STEEL 695 bore = +0.000). Now Ø4.8 print-compensated with a center-only flat; both bearing journals stay round |
 | `hw_seam_dowel` | 5 | Ø4x12 dowels | Ø3.9 (not Ø4.0 -- a printed dowel is the other half of the tolerance stack) + lead-in chamfers |
 | `hw_foot_pin` | 2 | Ø3x8 trim_neckfoot pins | **Ø3x8, not x6** -- the 2026-07-15 socket deepening (5.0 socket + 3.0 collar = flush) |
 
@@ -164,8 +166,8 @@ Limits to respect on plastic (full rationale in `src/standins/__init__.py`):
   on it (~400 N strip vs a metal M4's ~2 kN).
 - PLA creeps, so preload decays over hours -- but with real threads that decay is
   bounded and recoverable: re-snug, nothing degrades permanently.
-- Tilt homing is **usable** (~1.3-1.5 deg wind-up, the same order as the design's own
-  D-key backlash, and stall homing calibrates it out). Park at the balance point --
+- Tilt homing is **usable** (~1.3-1.5 deg wind-up, and stall homing calibrates it out).
+  Grub-on-flat backlash remains bench-only. Park at the balance point --
   the real cost is 1-3 deg of creep droop over hours.
 - The dry pan **slews, but slowly and near the limit**, and may need a nudge from
   rest. Grease both grooves. Don't time the dry pan and call it a gear-ratio verdict.
@@ -195,7 +197,7 @@ not. Printing a seat before its part has arrived is how reprints happen.
 | M8 shank / Ø8 journals | actual shank Ø | tower Ø8.4 through holes + F688 8 mm bores (a fat zinc bolt binds) |
 | F688ZZ | flange Ø (18) + width (5) + OD (16) | idler Ø15.95 press seats + Ø18.5x1.0 flange recesses |
 | Narrow LED strip | strip width + dot pitch | 42x5x1.5 `led_slot` + the 36x2.5 front lip (widen `led_slot` to ~54x11 only if forced onto 8x5050 sticks) |
-| Ø5 rod | actual Ø (silver steel is -0/-0.01; generic rod varies) | 695-2RS 5 mm bore slip fit, head clamp bores, and the D-key coupon clearance (+0.05 start) |
+| Ø5 rod | actual Ø (silver steel is -0/-0.01; generic rod varies) | 695-2RS 5 mm bore slip fit, head clamp bores, and the 4.0 across-flats filed datum |
 | XH connectors | crimped-head width | 16x8 platform obround + neck channel passes (sized for a 5-pos XH head) |
 
 ## Assembly order (verified)
@@ -218,14 +220,19 @@ tray killed the 88.5 mm blind channels, 2026-07-08.)
   bolt-up is impossible after the platform is on the balls. Torque path: screws clamp
   neck to platform; the platform's integral 16T pinion takes the drive from the pan
   motor's 32T gear (fast-pan 2:1 gear-up 2026-07-12; the old on-axis D-bore is gone).
-- **B. Tilt axle cartridge.** Slide the `worm_wheel` (+ its two spacer tubes) onto the Ø5
-  axle, hub ledge riding the axle's filed flat (D-key: positive torque, nothing to grub).
-  Verify the fit on a printed coupon first: a loose flat is backlash.
+- **B. Tilt axle prep.** File the center-only flat on the Ø5 rod (span and depth in the
+  BOM row above) and verify it with the axle flat + wheel grub coupon below. The wheel and
+  its spacer tubes are NOT mounted on the bench: a mid-span wheel cannot pass a 695 bore,
+  so they thread onto the axle inside the clevis gap at step 10. The tip-on-flat contact
+  is the positive torque path; the threads hold preload.
 - **C. Tilt-motor cartridge.** Drop the tilt 28BYJ onto `tilt_carrier`: the can passes the
   plate's Ø29.1 bore and each ear hole lands on a Ø3.8 pin atop the plate's D-posts
   (2026-07-16: the real motor is 9 mm shorter than the old placeholder modeled, leaving
   only 0.2 mm in front of the ears -- the old 2x M4 ear bolts are geometrically impossible
-  and are GONE from the BOM). Press the worm onto the D-shaft. Hold the motor against the
+  and are GONE from the BOM). Press the worm onto the D-shaft. Clock the O2.5 radial
+  pilot over either D-flat, fit the M3x3 cup-point grub, and seat it gently with its tip
+  on the flat. This is low-load axial retention, not a structural clamp. The grub stays
+  in the worm and travels with the cartridge during rearward extraction. Hold the motor against the
   posts while inserting (step 11); driving the carrier's 4x M3x16 captures the ear bar
   between the post fronts and the neck's pocket-front wall (0.25 mm float, pins lock
   rotation). It comes OUT the same way for a motor swap, no head teardown.
@@ -374,8 +381,12 @@ tray killed the 88.5 mm blind channels, 2026-07-08.)
 
 10. **Bearings + axle cartridge.** Press a 695-2RS into each neck cheek from the clevis gap
     (seats open flush to the inner face; a light lead-in helps start the press). Insert
-    sub-assembly B through one cheek bearing → the gap (wheel meshes the worm) → the far
-    bearing.
+    the prepped axle (B) through one cheek bearing, thread the `worm_wheel` and its two
+    spacer tubes onto the leading end inside the gap (wheel meshes the worm), then drive
+    the axle on into the far bearing. The round wheel bore and tubes pass freely over the
+    round journals. With the
+    head not yet hung, use the open rear bay to center the wheel, clock the filed flat to the
+    -Y hub pilot, and seat the M3x4 grub flush. Loosen this grub before pulling the axle.
 11. **Insert the tilt cartridge.** Slide sub-assembly C (carrier + motor + worm) in from
     the open rear bay: the worm passes the bracket plate's Ø12.2 bore, its tail lands in
     the open-top cradle groove, the can registers in the Ø29 pocket, the motor's ear bar
@@ -489,7 +500,7 @@ tray killed the 88.5 mm blind channels, 2026-07-08.)
 - **Head-clamp grubs (step 12):** 1.5 mm hex key driven blind UP through the motor bay,
   4.0 mm clearance. Kept deliberately: the grubs give continuous tilt-zero trim.
 
-(2026-07-08 passes retired the old tilt-motor-ear reach, the worm-wheel bench grub, the
+(2026-07-08 passes retired the old tilt-motor-ear reach, the inaccessible wheel grub, the
 last-track-pin loop flex, and the 4× 88.5 mm blind screen-standoff screws -- the worst
 step in the build is now four short bench screws plus four visible wall screws.)
 
@@ -694,15 +705,58 @@ One step looser will creep. If two adjacent steps pass, choose the looser one. R
 protocol for every filament brand or material change. Results do not transfer between
 spools.
 
+### Axle flat + wheel grub coupon
+
+Print the `worm_wheel`, or a short hub coupon with the same Ø11 outside diameter, round
+Ø5.2 bore and radial Ø2.5 pilot. Also print a simple fork gauge with two open slots:
+**4.1 mm GO** and **3.9 mm NO-GO**. This gauge is documented rather than exported as a
+stand-in because adding a new export, plate entry and invariant is more than the roughly
+40-line trivial-part threshold.
+
+1. File a 9.5 mm long flat to 1.0 ±0.1 mm depth. The 4.1 GO slot passes over the
+   across-flats dimension; the 3.9 NO-GO slot does not.
+2. Slide the round hub over an untouched round journal and center its pilot over the flat.
+3. Seat an M3x4 cup-point grub flush with the hub OD. Confirm its cup lands on the flat.
+4. Hold the axle and reverse wheel torque by hand. Confirm no hub rock and record backlash feel.
+5. Loosen the grub and confirm the hub again slides over both round journal sections.
+
+Grub-on-flat backlash versus the retired chordal D-key is **bench-only**. If the coupon
+rocks or slips, adjust `wheel_grub_pilot_d` or `axle_flat_depth`, then reprint the coupon.
+
+### Tilt torque + holding bench coupon
+
+Run this protocol on the complete physical head before choosing the production worm pair:
+
+1. Measure residual imbalance about the axle with a spring scale at a measured lever
+   arm at tilt 0, +15, -15, +30 and -30 deg. Record the worst value in mNm.
+2. De-energize at +30, -30 and 0 deg. Watch each position for 10 minutes and record
+   any nod or drift.
+3. Slew under the real head load at full speed in both directions through the full
+   -30 to +30 deg working range. Record stalls, missed steps or hesitation.
+4. Energize-hold off balance for 10 minutes. Record coil current and motor temperature.
+
+Decision rule: if worst imbalance exceeds about 50 mNm, any de-energized nod is not
+acceptable to firmware parking, or the loaded slew stalls, swap to the committed
+single-start fallback pair. It is a drop-in, see docs/WORM.md. A spring-ball neutral
+detent on the wheel hub remains the print-3 option and is deliberately not modeled,
+per the 2026-07-13 decision. Prove the need on the physical head first.
+
 ### Recommendations (bigger than this pass)
 
-- Print a D-bore coupon and dial the axle-flat clearance (modeled at +0.05; +0.15 measured
-  as ±4.4° of head backlash) before committing the filed axle.
+- Print the axle-flat + wheel-grub coupon above and bench-check tip seating, hub rock and
+  reversal backlash before committing the filed axle.
 - Print supports: paint a support enforcer under the neck's two tilt-stop posts (x 20..32,
   z 150..156 -- their outboard halves start mid-air with the neck on its back) and extend
   the clamp-tube supports over the head_back stop fins (55° overhangs feeding a ~0.9 mm
   homing margin; treat the first stall-home angle as calibration). Print the track keepers
   lying on their 13.3×1.9 bar face so the slot-critical 1.9 width is XY-accurate.
+- **Tilt stop faces are sacrificial homing surfaces** (fin/post PLA-on-PLA at +-33.8°;
+  fins crush-hardened 2026-07-16 to x-span |26.5..32|, 1.375x contact width; inboard
+  0.5 running-clear of the cheek face). Home at reduced drive once per boot only (firmware/WIRING.md
+  "Tilt homing + hold"). If home zero drifts after months of boots, inspect the fin
+  faces and post tops. Escalation if bench wear is real: a replaceable stop-cap
+  (printed slip-on pad) on each cheek post -- deliberately not modeled now; keep the
+  post z-faces and the +-33.8° first-contact angle if you add one.
 - Track gauge is still ~184 vs a 205-wide head (~10 mm overhang/side): widen the gauge or
   accept it (tracked elsewhere).
 - If field-servicing the screen without un-gluing the hatch frame matters, notch the frame

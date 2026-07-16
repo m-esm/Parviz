@@ -120,9 +120,16 @@ and cross-pin bore, while the interference and fit gates own the 0.25 mm radial 
 
 `track_shoes_to_side_panels` covers the four repeated hold-down joints. Each shoe seats
 flat against the wheel-beam underside, but location comes from two separated Ø3 pins in
-Ø3.4 bores. Two M3×12 countersunk screws rise from the running face into captive M3 nuts
-at z 18.5. The mounted shoe closes the slide-up nut mouths, and upward track load bears
+Ø3.4 bores. Two M3×10 countersunk screws rise from the running face into captive M3 nuts
+at z 18.0. The mounted shoe closes the slide-up nut mouths, and upward track load bears
 directly into the beam rather than loading the screws in tension.
+
+Tilt drivetrain note: the tilt worm is torque-keyed by the 28BYJ double-D shaft, retained
+rearward by the plate-seated M5 penny washer, and retained forward by an M3x3 cup-point grub
+through the worm hub onto a shaft flat. The grub is bench-set and extracts with the cartridge.
+The worm wheel has a round Ø5.2 bore and slides over either fully round 695 journal. Its
+radial M3x4 cup-point grub is preloaded onto the axle's x +1.5..+11 center-only flat. The
+flat carries reversal torque; the grub threads only retain preload. Loosen it before axle removal.
 
 ## Report interpretation
 

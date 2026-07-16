@@ -227,6 +227,36 @@ instead. Mind the address map above when adding devices; note TCS3400 squats 0x2
   under the deck (service = lift the deck). Measure the delivered board first
   (VERIFY_ON_ARRIVAL); reprint is one small flat plate.
 
+## Tilt homing + hold (firmware rules)
+
+The head's clamp-tube fins stall against the neck cheek posts at +-33.8 deg (hard
+stops; PLA-on-PLA). Contact planes are the post z-faces and the fins' angular faces
+-- the 2026-07-16 crush-harden only grew the contact AREA along X (fins |x| 26.5..32,
+1.375x width; inboard 0.5 running-clear of the cheek face), not the first-contact angle. Treat
+the stops as sacrificial homing surfaces, not as day-to-day travel limits.
+
+Rules for the tilt axis (pan is analogous against its deck posts at +-93.3):
+
+1. **Stall-home at reduced drive only.** Half-stepping (or the coarsest microstep
+   that still self-starts), lowest reliable coil current, and <= half the normal
+   step rate. Full-current full-speed rams crush the small PLA patches and the
+   home zero drifts.
+2. **Home once per boot, not per move.** After stall, back off ~2 deg and set
+   zero there. Do not re-seek the hard stop on every motion.
+3. **Software-limit travel to +-30 deg.** That leaves the ~3.8 deg gap to the
+   hard stops so they are homing-only. Never run a full-speed trajectory into
+   the posts.
+4. **Hold / park.** The 3-start worm (PARAMS `worm_starts`=3) back-drives --
+   its lead is about 23 deg, so there is no unpowered self-lock. ALWAYS
+   energize-hold whenever the head sits off its balance point. Park at the
+   balance point before long idle and before power-off. Detent plus gear friction
+   gives only about 27-54 mNm at the axle, so an unpowered off-balance head may
+   nod. If the docs/ASSEMBLY.md bench coupon fails its decision rule, the committed
+   single-start pair in docs/WORM.md restores mechanical self-locking.
+5. **Wear.** If home zero drifts over months, inspect the fin faces and the post
+   tops on the bench. Escalation path: a replaceable stop-cap on the posts
+   (print-3 option, deliberately not modeled now) -- see docs/ASSEMBLY.md.
+
 ## Bringup order (first power)
 
 Do this in sequence; the trimpot access constraint above makes the order load-bearing.

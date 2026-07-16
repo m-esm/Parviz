@@ -25,10 +25,10 @@ import trimesh
 from trimesh.transformations import rotation_matrix as R
 
 from stlpaths import webpath, stlp
-from params import DEG, EXPORT, P, TAU
+from params import DEG, EXPORT, P, TAU, tilt_worm_grub_datums
 from geo import _T, _color, box, cyl, dbore_neg, export_stl, inter, sub, uni
 from gears import (gear_disc, load_gear_stl, pan_gear_mesh_deg, pan_real_ok, worm,
-                   worm_cd, worm_real_ok)
+                   worm_cd, worm_mesh_clock_deg, worm_real_names, worm_real_ok)
 from screen import load_screen, screen_pose
 from tracks import _spr_cz, build_tracks
 from motors import antenna_motor, motor_28byj, motor_tt
@@ -148,9 +148,9 @@ def build():
     wz = zt - cd
     wheel_r = P["worm_module"] * P["worm_wheel_teeth"] / 2
     # worm wheel keyed to the axle -> turns WITH the head (M_head). Width 7 centered on x=0,
-    # D-KEYED hub (maintenance pass 2026-07-08: a key ledge in the hub bore rides a flat
-    # filed on the Ø5 axle -- positive torque, no slip; replaces the old M3 grub, which was
-    # BLIND once the cartridge sat in the cheeks and relied on point friction), and spacer
+    # round-bore hub with a radial M3 grub preloaded onto a center-only axle flat. The flat,
+    # not thread friction, carries drive torque while both 695 journals stay fully round.
+    # The pilot faces the open rear bay for access before the head is hung. Spacer
     # TUBES out to both 695 inner races: they react the ~10 N worm thrust / 3.7 N wheel
     # axial load (they also locate the wheel axially, so no extra retainer is needed).
     # REAL generated teeth (docs/WORM.md): 12T involute helical wheel + 3-START worm
@@ -158,8 +158,8 @@ def build():
     # the SELF-LOCKING LOSS tradeoff), verified meshing at CD 11.9: 0.000 mm3 static AND
     # over a coupled full-worm-rev sweep (tools/gears/probe_worm_sweep.py).
     # PLACEHOLDER_GEARS=1 restores the readable gear_disc/worm placeholders;
-    # worm_real_ok() compares the generator's meta sidecar (stl/neck/worm_real_meta.json)
-    # to PARAMS, so ANY params change without a regen also falls back -- same honesty
+    # worm_real_ok() compares the starts-keyed generator meta sidecar to PARAMS,
+    # so ANY params change without a regen also falls back -- same honesty
     # convention as the antenna gears (which replaced the old hard-coded starts != 1).
     placeholder_gears = (os.environ.get("PLACEHOLDER_GEARS") == "1"
                          or not worm_real_ok())
@@ -169,43 +169,35 @@ def build():
     else:
         # toothed blank only: axis X, bore Ø5.2, width 7, centered at origin -- exactly where
         # gear_disc built; the hub/tube union, bore re-cut and grub pilot below apply unchanged.
-        wheel = load_gear_stl("worm_wheel_real.stl")
+        wheel_name, worm_name, _meta_name = worm_real_names()
+        wheel = load_gear_stl(wheel_name)
         # cosmetic mesh clocking: at the assembly's relative pose (wheel midplane crosses the
-        # worm at worm-local y +6) the 3-start blank's zero-interference window centers at
-        # 17.88 deg (tools/gears/probe_worm_sweep.py; 17.75 before the worm_len-13 regen,
-        # 24.5 for the old single-start pair).
-        # M_head then adds tilt_deg about the SAME axis, so pre-rotate by (17.88 - tilt)
+        # worm at worm-local y +6), tools/gears/probe_worm_sweep.py measured starts-keyed
+        # zero-interference window centers of 17.88 deg (3-start) and 25.50 deg (1-start).
+        # M_head then adds tilt_deg about the SAME axis, so pre-rotate by (clock - tilt)
         # mod one tooth pitch (30) and the teeth visually mesh at ANY preview/sweep pose.
-        # Physically meaningless (the wheel is 30-deg tooth-periodic); the grub pilot
-        # below stays clocked +Z regardless.
-        wheel.apply_transform(R(((17.88 - tilt_deg) % 30.0) * DEG, (1, 0, 0)))
-    hub = cyl(5.5, 5.5, axis="x"); hub.apply_translation((6.25, 0, 0))          # x 3.5..9
+        # Physically meaningless (the wheel is 30-deg tooth-periodic). The wheel pilot
+        # is cut after this transform, so its -Y clock stays deterministic.
+        wheel.apply_transform(R(((worm_mesh_clock_deg() - tilt_deg) % 30.0) * DEG,
+                                (1, 0, 0)))
+    hub_len = P["wheel_hub_x1"] - P["wheel_hub_x0"]
+    hub = cyl(5.5, hub_len, axis="x")
+    hub.apply_translation(((P["wheel_hub_x0"] + P["wheel_hub_x1"]) / 2, 0, 0))
     tub_p = cyl(4.0, 9.0, axis="x"); tub_p.apply_translation((13.5, 0, 0))      # hub -> +X race
     tub_m = cyl(4.0, 14.5, axis="x"); tub_m.apply_translation((-10.75, 0, 0))   # wheel -> -X race
     wheel = uni([wheel, hub, tub_p, tub_m])
     wheel = sub(wheel, cyl(P["axle_d"] / 2 + 0.1, 40, axis="x"))                # Ø5.2 over the axle
-    # D-KEY LEDGE in the hub bore (x 3.5..9, the plain hub zone -- never through a tooth
-    # root): a chord segment whose flat face sits 1.55 off the axis = a 1.0-deep flat on
-    # the Ø5 axle (flat at 1.5) + 0.05 clearance (review: the first cut's +0.15 was
-    # +-4.4 deg of head backlash -- worse than the grub it replaced; coupon from +0.05
-    # and open only if the axle won't slide). Both ledge ends get 45 deg lead-in ramps:
-    # printed axle-vertical, a square ledge end is a floating internal shelf whose
-    # drooped loops land exactly on the sliding surface, and the ramp doubles as the
-    # axle-flat lead-in. AXLE SPEC (docs/ASSEMBLY.md): SOLID rod only (a tube leaves
-    # 0.25 wall under the flat); flat runs from the INSERTION end to ~15 past center
-    # (a keyed bore needs its channel from the rod's leading end); only the ~6 mm under
-    # the hub needs a clean 1.0 +-0.1 depth. The flat crossing the +X 695 seat means
-    # that inner race rides a D-profile -- fine, the race is clamped by the tubes.
-    half = box(6.0, 6.0, 2.0)
-    half.apply_translation((0, 0, 1.55 + 1.0))           # halfspace z >= 1.55 (the flat plane)
-    ledge = inter(cyl(2.7, 5.5, axis="x"), half)         # r2.7: 0.1 into the bore wall, fuses
-    for se in (-1, 1):                                   # 45 deg end ramps (see above)
-        wdg = box(2.0, 7.0, 2.0)
-        wdg.apply_transform(R(TAU / 8, (0, 1, 0)))
-        wdg.apply_translation((se * 2.75, 0, 1.55))
-        ledge = sub(ledge, wdg)
-    ledge.apply_translation((6.25, 0, 0))
-    wheel = uni([wheel, ledge])
+    # Radial O2.5 pilot enters from -Y and reaches the round O5.2 bore. M3x4 seats
+    # flush at hub r5.5 and its cup tip lands on the axle flat at r1.5. It is exempt
+    # from the structural thread-form ban: this is the retention-grub class used by
+    # the head clamps. Threads hold preload; the tip-on-flat contact carries torque.
+    pilot_inner_y = P["axle_d"] / 2 + 0.05
+    pilot_outer_y = 5.5 + 0.5
+    pilot = cyl(P["wheel_grub_pilot_d"] / 2,
+                pilot_outer_y - pilot_inner_y, axis="y")
+    pilot.apply_translation((P["wheel_grub_x"],
+                             -(pilot_inner_y + pilot_outer_y) / 2, 0))
+    wheel = sub(wheel, pilot)
     _color(wheel, "fork"); wheel.metadata["name"] = "worm_wheel"
     wheel.apply_translation((wx, yt, zt))
     add(wheel, M_head, "worm_wheel.stl")
@@ -223,12 +215,12 @@ def build():
     if placeholder_gears:
         wm = worm(P["worm_od"] / 2, P["worm_len"], starts=P["worm_starts"], axis="y")
     else:
-        # real 3-start RH worm (docs/WORM.md): axis Y, OD 10.55, solid core Ø7, thread
+        # real starts-keyed RH worm (docs/WORM.md): axis Y, OD 10.55, solid core Ø7, thread
         # span exactly +-6.5 about origin, 0.6 crest chamfer at both ends (cooler pass).
         # The Ø7 core takes the full-depth double-D bore in SOLID stock (probed: bore
         # surface 100% inside the solid over the thread span; round wall 0.915 mm, flat
         # wall 1.88 -- thin but the D-flats carry the torque).
-        wm = load_gear_stl("tilt_worm_real.stl")
+        wm = load_gear_stl(worm_name)
     db = dbore_neg(P["worm_len"] + 1.2, axis="y")
     # NO extra clocking: after the motor's two rotations below (shaft +Z -> +Y, then rolled so
     # the offset points up) the shaft flats face +-X, and dbore_neg(axis="y") already cuts its
@@ -236,6 +228,24 @@ def build():
     # shaft (stage-4 defect D3: 17.4 mm3 of shaft shoulder buried in the worm core).
     db.apply_translation((0, 0.5, 0))
     wm = sub(wm, db)
+    # FORWARD (+Y) axial retention: an M3x3 cup-point grub enters radially from +X
+    # through this O2.5 pilot and bears on the shaft flat. The pilot Y is the midpoint
+    # of the shaft-flat band that actually overlaps the worm, derived in params rather
+    # than copied from the current pose. Cut after the D-bore for both real and placeholder
+    # worms. This is a low-load retention grub, like the head axle-clamp grubs that survived
+    # the fastening campaign, not a structural joint, so the O2.5 thread-form pilot ban does
+    # not apply. The roughly 10 N worm thrust is reacted by the flat and grub preload.
+    # M3x3 seats with its top at r 4.5, below the r 5.275 crest envelope, so it adds no
+    # radial envelope. The worm prints on end; this small horizontal round bore bridges fine
+    # under the CLAUDE.md teardrop rule, so no teardrop is needed.
+    grub_y, _shaft_flat_band, _worm_band, _wheel_face_band = tilt_worm_grub_datums()
+    pilot_inner_x = P["motor_shaft_flat"] / 2 - 0.3
+    pilot_outer_x = P["worm_crest_r"] + 1.0
+    pilot = cyl(P["worm_grub_pilot_d"] / 2,
+                pilot_outer_x - pilot_inner_x, axis="x")
+    pilot.apply_translation(((pilot_inner_x + pilot_outer_x) / 2,
+                             grub_y - yc, 0))
+    wm = sub(wm, pilot)
     _color(wm, "motor"); wm.metadata["name"] = "tilt_worm"
     wm.apply_translation((wx, yc, wz))
     add(wm, M_pan, "tilt_worm.stl")
@@ -414,16 +424,17 @@ def build():
     _color(cover, "back"); cover.metadata["name"] = "cam_cover"
     add(cover, M_head, "cam_cover.stl")
 
-    # HOLLOW Ø5 tilt axle: clamped to the head (turns with it), rotates in the neck-cheek 695
-    # bearings, driven in the middle by the worm wheel. Hollow -> Pi power wires cross on-axis.
     # SOLID Ø5 axle (review 2026-07-08: was hollow Ø2.5 "weight relief", but the D-flat
     # leaves a 0.25 wall on a tube -- the spec is now solid rod, so the model matches).
     axle = cyl(P["axle_d"] / 2, P["head_w"] + 4, axis="x")
-    # D-KEY FLAT (matches the worm wheel's hub ledge): 1.0 deep (flat face z=+1.5), from
-    # the +X insertion end to 15 past center, so the wheel's key ledge rides the flat as
-    # the axle slides in. Clocked +Z at neutral; axle and wheel both ride M_head.
-    flat = box(123.0, 8.0, 1.4)
-    flat.apply_translation((46.5, 0, 1.5 + 0.7))
+    # CENTER-ONLY FLAT: 1.0 deep, x 1.5..11.0, clocked -Y at neutral so the model shows
+    # the wheel's -Y radial grub actually landing on it (the physical clock is set at
+    # assembly). Both 695 seats at |x| 20..24 and both clamp lands stay round.
+    flat_len = P["axle_flat_x1"] - P["axle_flat_x0"]
+    flat_face = P["axle_d"] / 2 - P["axle_flat_depth"]
+    flat = box(flat_len, 1.4, 8.0)
+    flat.apply_translation(((P["axle_flat_x0"] + P["axle_flat_x1"]) / 2,
+                            -(flat_face + 0.7), 0))
     axle = sub(axle, flat)
     _color(axle, "axle"); axle.metadata["name"] = "tilt_axle"
     axle.apply_translation((0, yt, zt))
