@@ -313,10 +313,17 @@ settled below). "Need" is per robot.</p>
 </tr>
 <tr>
 <td>6 mm airsoft BBs</td>
-<td>pan race, Ø80 circle, <code>pan_race_n</code>=18</td>
+<td>pan race, Ø80 circle, <code>pan_race_n</code>=18. Printed-race acceptance test: assembly step 9 (reject -&gt; commercial ring below)</td>
 <td>18</td>
 <td>0</td>
 <td><strong>smallest bag (100+)</strong></td>
+</tr>
+<tr>
+<td>Commercial thin-section lazy-Susan / 4-point turntable bearing</td>
+<td><strong>OPTIONAL print-3 upgrade</strong> for the printed PLA race (buy only if step 9 acceptance fails). Pitch circle as close to Ø80 as available (typical cheap: 70 mm or 3" Al/steel lazy-Susan rings, or a thin-section slewing ring with <strong>ID &gt;= 68</strong> so the cable pass and 16T pinion hub stay clear). Height budget = current printed stack seat floor -&gt; platform underside (<code>_pan_stack</code> in <code>src/pan.py</code>): <code>pan_race_ring_t</code> 5.0 + air gap (<code>ball_d</code> - 2 * <code>pan_groove_engage</code>) 2.4 = <strong>7.4 mm</strong> (absolute: seat_floor = base_h - pan_plate_t - 7.4, plate_bot = base_h - pan_plate_t; with base_h 66 / pan_plate_t 7.6 that is z 51.0..58.4). Dims VERIFY_ON_ARRIVAL; fitting needs re-cut deck seat + platform underside (not modeled now; see step 9 upgrade path)</td>
+<td>1</td>
+<td>0</td>
+<td><strong>only if printed race fails acceptance</strong></td>
 </tr>
 <tr>
 <td>Ø5 SOLID rod</td>
@@ -795,6 +802,31 @@ tray killed the 88.5 mm blind channels, 2026-07-08.)</p>
    reaches over the platform rim rebate to hold the top-heavy head down. Check the
    platform spins free.</li>
 </ol>
+<p><strong>Printed race acceptance</strong> (do this after the head is fitted, step 12+, so the race
+   sees the real top-heavy load). Bench physics, not CAD: ~8 N/ball Hertz on PLA
+   cold-flows and abrades; the 0.2 mm groove clearance sits inside FDM scatter, so a
+   given print may rattle or pinch and will worsen with wear. The post-gear-up torque
+   budget is ~15 mNm at the platform vs ~7 mNm assumed race friction (little headroom).</p>
+<ul>
+<li><strong>Measure breakaway torque:</strong> push sideways at a known lever (e.g. a kitchen gram
+     scale against the head side at a measured radius from the pan axis). Torque =
+     force × radius. Example: 10 gf at a 100 mm lever ≈ 10 mNm.</li>
+<li><strong>ACCEPT</strong> at &lt;= 10 mNm breakaway.</li>
+<li><strong>REJECT</strong> above 10 mNm, or if the platform rattles axially more than perceptibly,
+     or if breakaway grows noticeably after a few hundred sweeps. Then fit the
+     commercial ring (BOM "Bearings, race, axles"; print-3 option below).</li>
+<li><strong>Derate (between accept and upgrade):</strong> at 7-10 mNm of friction the pan still
+     slews but acceleration roughly halves (net accel torque 15 - 10 = 5 mNm vs the
+     budgeted ~8); a 180 deg sweep stretches from about 2 s toward 3 s. Below ~5 mNm
+     friction, nothing changes vs budget. Above ~12 mNm, stall-homing detection gets
+     unreliable and the commercial-ring upgrade is mandatory (do not ship on the
+     printed race).</li>
+<li><strong>Upgrade path (print-3, NOT modeled now):</strong> fitting the commercial ring means
+     re-cutting the deck seat and the platform underside for the ring's races (a
+     variant of <code>chassis_deck_center</code> and <code>pan_platform</code>). Frozen shells stay clean
+     (separate-by-stability rule); model against the bearing actually bought, dims
+     VERIFY_ON_ARRIVAL. Until then the printed race + BBs is the default path.</li>
+</ul>
 <h3 id="tilt-joint-head-all-on-the-pan-group">Tilt joint + head (all on the pan group)</h3>
 <ol start="10">
 <li><strong>Bearings + axle cartridge.</strong> Press a 695-2RS into each neck cheek from the clevis gap

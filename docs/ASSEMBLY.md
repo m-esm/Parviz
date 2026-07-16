@@ -45,7 +45,8 @@ settled below). "Need" is per robot.
 |---|---|---|---|---|
 | 695-2RS | 5x13x4, tilt-axle cheeks | 2 | 30 (Bag 13) |, |
 | F688ZZ flanged | 8x16x5, flange Ø18; END idlers (both loop ends are free idlers since the 2026-07-11 mid-drive), **2 per wheel x 4 wheels** (one pressed at each face, Ø15.95 through-seat + Ø18.5x1.0 flange recess both sides). The Bag 13 "Miniature Ball Bearings" were checked as a candidate 2026-07-13: label reads **10pcs MR105 ZZ** (5x10x4, unflanged) -- wrong part | 8 | 0 | **8** |
-| 6 mm airsoft BBs | pan race, Ø80 circle, `pan_race_n`=18 | 18 | 0 | **smallest bag (100+)** |
+| 6 mm airsoft BBs | pan race, Ø80 circle, `pan_race_n`=18. Printed-race acceptance test: assembly step 9 (reject -> commercial ring below) | 18 | 0 | **smallest bag (100+)** |
+| Commercial thin-section lazy-Susan / 4-point turntable bearing | **OPTIONAL print-3 upgrade** for the printed PLA race (buy only if step 9 acceptance fails). Pitch circle as close to Ø80 as available (typical cheap: 70 mm or 3" Al/steel lazy-Susan rings, or a thin-section slewing ring with **ID >= 68** so the cable pass and 16T pinion hub stay clear). Height budget = current printed stack seat floor -> platform underside (`_pan_stack` in `src/pan.py`): `pan_race_ring_t` 5.0 + air gap (`ball_d` - 2 * `pan_groove_engage`) 2.4 = **7.4 mm** (absolute: seat_floor = base_h - pan_plate_t - 7.4, plate_bot = base_h - pan_plate_t; with base_h 66 / pan_plate_t 7.6 that is z 51.0..58.4). Dims VERIFY_ON_ARRIVAL; fitting needs re-cut deck seat + platform underside (not modeled now; see step 9 upgrade path) | 1 | 0 | **only if printed race fails acceptance** |
 | Ø5 SOLID rod | tilt axle, ~100 mm silver steel (**NOT tube**: a 1.0 flat on a Ø5/Ø2.5 tube leaves a 0.25 wall). **File a 1.0-deep flat** from the insertion end to ~15 past center (D-key for the worm wheel's hub ledge); only the ~6 mm under the hub needs a clean 1.0 ±0.1 depth. The flat crosses the +X 695 seat, so that inner race rides a D-profile (fine, the spacer tubes clamp it). Print a D-bore coupon first, starting at **+0.05** clearance (+0.15 measured as ±4.4° of head backlash) | 1 | 0 | **1** |
 | M8x**70** bolts + NYLOC nuts | END BOLT-AXLES: head = outboard hubcap, smooth journal through both F688s, thread begins at x=78 and crosses the tower clamp stack. M8x60 is too short to reach the NYLOC insert. | 4+4 | 0 | **4x M8x70 + 4 NYLOC** |
 | M8 JAM NUTS + washers | **Required and modeled:** one AF13 jam nut bears on each tower's outboard face; the washer and NYLOC bear inboard. This closes the previous 17.4 mm air gap, clamps the tension slot/tower, and leaves the idler free on the smooth journal. The printed export likewise contains 8 total M8 nuts. | 4+4 washers | 0 | **4x M8 jam nut + 4 washers** |
@@ -303,6 +304,31 @@ tray killed the 88.5 mm blind channels, 2026-07-08.)
    in their deck pockets and drive 6x M3x10 into the captive nuts. The continuous lip
    reaches over the platform rim rebate to hold the top-heavy head down. Check the
    platform spins free.
+
+   **Printed race acceptance** (do this after the head is fitted, step 12+, so the race
+   sees the real top-heavy load). Bench physics, not CAD: ~8 N/ball Hertz on PLA
+   cold-flows and abrades; the 0.2 mm groove clearance sits inside FDM scatter, so a
+   given print may rattle or pinch and will worsen with wear. The post-gear-up torque
+   budget is ~15 mNm at the platform vs ~7 mNm assumed race friction (little headroom).
+
+   - **Measure breakaway torque:** push sideways at a known lever (e.g. a kitchen gram
+     scale against the head side at a measured radius from the pan axis). Torque =
+     force × radius. Example: 10 gf at a 100 mm lever ≈ 10 mNm.
+   - **ACCEPT** at <= 10 mNm breakaway.
+   - **REJECT** above 10 mNm, or if the platform rattles axially more than perceptibly,
+     or if breakaway grows noticeably after a few hundred sweeps. Then fit the
+     commercial ring (BOM "Bearings, race, axles"; print-3 option below).
+   - **Derate (between accept and upgrade):** at 7-10 mNm of friction the pan still
+     slews but acceleration roughly halves (net accel torque 15 - 10 = 5 mNm vs the
+     budgeted ~8); a 180 deg sweep stretches from about 2 s toward 3 s. Below ~5 mNm
+     friction, nothing changes vs budget. Above ~12 mNm, stall-homing detection gets
+     unreliable and the commercial-ring upgrade is mandatory (do not ship on the
+     printed race).
+   - **Upgrade path (print-3, NOT modeled now):** fitting the commercial ring means
+     re-cutting the deck seat and the platform underside for the ring's races (a
+     variant of `chassis_deck_center` and `pan_platform`). Frozen shells stay clean
+     (separate-by-stability rule); model against the bearing actually bought, dims
+     VERIFY_ON_ARRIVAL. Until then the printed race + BBs is the default path.
 
 ### Tilt joint + head (all on the pan group)
 
