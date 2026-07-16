@@ -491,6 +491,19 @@ def main():
     check("antenna rack teeth on the mast (-Y face)",
           bool(hits.any() and (~hits).any() and not above.any()),
           "%d/%d tooth hits in band, none above rack top" % (int(hits.sum()), len(zs)))
+    # user 2026-07-16: modeled O-ring gland and two positive parks, with the station
+    # spacing derived from ant_travel. Probe the actual exported head frame and mast STLs.
+    park_z = (P["ant_gland_z"], P["ant_gland_z"] - P["ant_travel"])
+    check("antenna park-groove spacing equals ant_travel and upper park matches gland",
+          abs(park_z[0] - P["ant_gland_z"]) < 1e-9
+          and abs((park_z[0] - park_z[1]) - P["ant_travel"]) < 1e-9)
+    gland_void = all(_void_cube(M("head_back_frame_R"),
+                               (P["ant_x"] + 3.85, P["ant_y"], z), 0.18)
+                     for z in (P["ant_gland_z"] - 0.4, P["ant_gland_z"] + 0.4))
+    groove_void = all(_void_cube(ant, (-P["ant_x"] + 3.05, P["ant_y"], z), 0.12)
+                      for z in park_z)
+    check("antenna gland and both park grooves exist in exported STLs",
+          gland_void and groove_void)
 
     # ---------------- belly power tray ------------------------------------------
     # user 2026-07-08 (power decision, firmware/WIRING.md): the belly plate

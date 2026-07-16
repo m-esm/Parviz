@@ -1271,7 +1271,7 @@
       "ok": true
     },
     {
-      "detail": "13086 faces, 108734.9 mm3",
+      "detail": "13980 faces, 108712.6 mm3",
       "gate": "load-body-2",
       "joint": "head_back_panel_to_frames",
       "measurements": {},
@@ -1373,7 +1373,7 @@
       "ok": true
     },
     {
-      "detail": "13746 faces, 109583.1 mm3",
+      "detail": "14640 faces, 109560.8 mm3",
       "gate": "load-body-1",
       "joint": "head_back_frame_seam",
       "measurements": {},

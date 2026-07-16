@@ -46,6 +46,7 @@ settled below). "Need" is per robot.
 | 695-2RS | 5x13x4, tilt-axle cheeks | 2 | 30 (Bag 13) |, |
 | F688ZZ flanged | 8x16x5, flange Ø18; END idlers (both loop ends are free idlers since the 2026-07-11 mid-drive), **2 per wheel x 4 wheels** (one pressed at each face, Ø15.95 through-seat + Ø18.5x1.0 flange recess both sides). The Bag 13 "Miniature Ball Bearings" were checked as a candidate 2026-07-13: label reads **10pcs MR105 ZZ** (5x10x4, unflanged) -- wrong part | 8 | 0 | **8** |
 | 6 mm airsoft BBs | pan race, Ø80 circle, `pan_race_n`=18 | 18 | 0 | **smallest bag (100+)** |
+| Metric O-ring 6.0 x 1.0 | antenna gland and positive park grooves; NBR or silicone, silicone preferred for low breakaway; VERIFY_ON_BENCH | 2 | 0 | **2** |
 | Ø5 SOLID rod | tilt axle, ~100 mm silver steel (**NOT tube**: a 1.0 flat on a Ø5/Ø2.5 tube leaves a 0.25 wall). **File a 1.0-deep flat** from the insertion end to ~15 past center (D-key for the worm wheel's hub ledge); only the ~6 mm under the hub needs a clean 1.0 ±0.1 depth. The flat crosses the +X 695 seat, so that inner race rides a D-profile (fine, the spacer tubes clamp it). Print a D-bore coupon first, starting at **+0.05** clearance (+0.15 measured as ±4.4° of head backlash) | 1 | 0 | **1** |
 | M8x**70** bolts + NYLOC nuts | END BOLT-AXLES: head = outboard hubcap, smooth journal through both F688s, thread begins at x=78 and crosses the tower clamp stack. M8x60 is too short to reach the NYLOC insert. | 4+4 | 0 | **4x M8x70 + 4 NYLOC** |
 | M8 JAM NUTS + washers | **Required and modeled:** one AF13 jam nut bears on each tower's outboard face; the washer and NYLOC bear inboard. This closes the previous 17.4 mm air gap, clamps the tension slot/tower, and leaves the idler free on the smooth journal. The printed export likewise contains 8 total M8 nuts. | 4+4 washers | 0 | **4x M8 jam nut + 4 washers** |
@@ -340,15 +341,26 @@ tray killed the 88.5 mm blind channels, 2026-07-08.)
     roughly neutral tilt: at the ±33.8° stalls the tilt drivetrain reaches into the pod's
     internal cavity.
 
-15b. **Antenna drives.** Slip a friction O-ring into each top-wall guide bore, drop each
+15b. **Antenna drives.** Push one metric O-ring 6.0 x 1.0 into each modeled top-wall
+    gland, then drop each
     mast in from above (rack facing the pinion slot), then hang `ant_bracket` on the back
     wall (spine + locating shoulders and 4x M3). Insert each printed `ant_output_*`
     half-shaft/pinion through its Ø4.2 bushings, fit `ant_idler_axle_*` and the compound
     `ant_idler_gear_*`, press `ant_motor_gear_*` onto the motor double-D, and bolt each 28BYJ nose-through
     its face plate (2x M3 into the vertical-ear pilots, shaft inboard). Each mast has its
     OWN motor + ULN2003 (independent control); wire both to the Pi in the head. Homing:
-    drive down until stall (tip cap on the boss). BUY: 2x O-ring sized for the Ø7 guide.
+    leave park at the lowest step rate for maximum torque, then ramp. BUY: 2x metric
+    O-ring 6.0 x 1.0, NBR or silicone; silicone is preferred for low breakaway.
     All 30T/12T/27T m0.8 gears, axles, shafts, and rack teeth are exported printable parts.
+
+    **BENCH BREAKAWAY PROTOCOL:** assemble one mast and ring with NO gears fitted. Measure
+    axial breakaway with a 0-1 N spring gauge, or hang calibrated 10/20/30 g weights from
+    the mast tip. Sliding breakaway target: <=0.15 N (~15 g). Park-groove breakaway target:
+    0.2-0.3 N (20-30 g). If outside the window, silicone grease lowers sliding friction;
+    a 6.0 x 0.8 ring gives a lighter section/squeeze variant; or reprint the cheap vertical
+    mast with `ant_park_groove_depth` adjusted by +/-0.1 mm. Groove depth is the park-force
+    tuning knob. Final friction and breakaway are bench validation. CAD fixes only the
+    geometry and the acceptable window.
 
 ### Cables (per docs/CABLE-CHECK.md + firmware/WIRING.md)
 

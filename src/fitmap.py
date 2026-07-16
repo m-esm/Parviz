@@ -58,6 +58,10 @@ def _fit_report(geo):
         frozenset(("ant_bracket", "head_back")),     # bracket spine on the back wall
         frozenset(("ant_output_L", "antenna_L")),    # involute rack/pinion mesh
         frozenset(("ant_output_R", "antenna_R")),
+        frozenset(("ant_oring_L", "antenna_L")),
+        frozenset(("ant_oring_R", "antenna_R")),
+        frozenset(("ant_oring_L", "head_back")),
+        frozenset(("ant_oring_R", "head_back")),
         frozenset(("ant_motor_gear_L", "motor_ant_L")), # keyed 28BYJ D-shaft socket
         frozenset(("ant_motor_gear_R", "motor_ant_R")),
         frozenset(("worm_wheel", "tilt_worm")),      # gear mesh

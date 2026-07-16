@@ -1173,10 +1173,16 @@ P = {
     # planes |x| 22 / 14) -> a Ø4 HALF-shaft (|x| 6..88) -> a 27T m0.8 pinion (pitch
     # Ø21.6) at |x| 84 meshing the rack molded on its mast's -Y face. Two motors =
     # each antenna individually controllable (user); two more ULN2003s (own 9, now
-    # 4 used). Speed: ~15 RPM usable x 6.25 x 67.9 mm/rev ~= 104 mm/s -> 50 in ~0.5 s;
-    # force ~0.3 N per rack (20 mN.m / 6.25 / r10.8) -- masts stay light (<10 g) and
-    # slide free. Back-drive: gear-up means masts sag de-energized; a friction O-ring
-    # in each top guide bore parks them (docs/ASSEMBLY.md).
+    # 4 used). Speed: ~104 mm/s is the theoretical no-load ceiling. Under load, with
+    # the acceleration ramp from pull-in rates, backlash take-up across three meshes,
+    # mesh + O-ring friction, and pull-out torque derating, plan on ~40 mm/s average:
+    # 50 mm in ~1.2-1.5 s. VERIFY_ON_BENCH. Rack force is ~0.3 N at 15 RPM, but ~0.5 N
+    # at pull-in rates (34 mN.m / 6.25 / r10.8); this low-rate force sizes park
+    # breakaway. Positive mast grooves now hold back-drive sag: the O-ring must expand
+    # radially 0.45 over a groove shoulder to leave park. Sliding friction only damps
+    # mid-travel. Targets: sliding breakaway <=0.15 N; park breakaway 0.2-0.3 N (>=2x
+    # mast weight plus vibration margin, <=60% of ~0.5 N low-rate force).
+    # VERIFY_ON_BENCH. Firmware leaves park at the lowest step rate (max torque), then ramps.
     # PLACEMENT (probe-driven): masts sit at y -31 BEHIND the tilt clamp tubes (Ø14 at
     # y -18/z 153, spanning to |x| 99 -- a y -24 mast ran through them at full
     # retract); the screen tray's rail+pillar bands own |x| 56..68 z<196 and the tilt
@@ -1187,6 +1193,13 @@ P = {
     "ant_x": 85.0, "ant_y": -31.0,  # mast axes (mirrored +-)
     "ant_mast_d": 6.5,      # mast shaft Ø (slides in Ø7 top-wall bore, 0.25/side)
     "ant_travel": 50.0,     # max extension past the head top surface
+    "ant_gland_z": 240.0,   # O-ring gland center in the 238..242 top wall band; VERIFY_ON_BENCH
+    "ant_gland_d": 8.3,     # gland bore: gives light 5-10% radial squeeze; VERIFY_ON_BENCH
+    "ant_gland_w": 1.4,     # axial gland width captures a 1.0 mm section; VERIFY_ON_BENCH
+    "ant_oring": "metric 6.0 x 1.0",  # ID 6.0, CS 1.0; ~8% stretch on Ø6.5 mast;
+                            # sliding friction only, positive grooves hold park; VERIFY_ON_BENCH
+    "ant_park_groove_depth": 0.45,  # radial re-expansion shoulder, tuning knob; VERIFY_ON_BENCH
+    "ant_park_groove_minor_r": 0.7, # round-bottom groove is its own lead chamfer; VERIFY_ON_BENCH
     "ant_mast_z": (147.0, 242.5),   # retracted shaft span: top = body_z_top + 0.5 (cap rests
                             # on the top-wall boss); tracks the 2026-07-11 forehead raise.
                             # Rack (150..214) still meshes the z-205 pinion at +50 extension
