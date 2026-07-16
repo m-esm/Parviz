@@ -137,7 +137,7 @@ def _keel(x0, x1, py, kind):
     return m
 
 
-def _track_link(open_a=False, open_b=False, press_a=False):
+def _track_link(open_a=False, open_b=False, press_a=False, pip_bore_d=None):
     """One articulated track link (local frame: own pin axis = X axis, next pin at y=+pitch,
     OUTER face toward -z). Pad web + grouser + interleaved pin knuckles + 45deg keels under
     every knuckle band (print-in-place strips 2026-07-12: grouser-down is self-supporting)
@@ -149,6 +149,11 @@ def _track_link(open_a=False, open_b=False, press_a=False):
     the neighbor's rod. open_a: strip-FIRST link -- no integral pin, old Ø2.2 A bores for
     a Ø1.75 filament boundary pin. open_b: strip-LAST link -- far bores revert to Ø2.2
     (the next strip's first link + filament pin land there). Master = both open + jaw.
+
+    pip_bore_d: optional override for the print-in-place far-bore diameter on closed-B
+    links (default P["track_bore_pip_d"]=2.7). Production loop and strip exports leave
+    this None. The coupon plate's tighter-gap strip passes 2.56 (0.28 radial) so wear
+    can be A/B tested without touching the 64-link geometry or probe_track_pip gates.
 
     press_a (2026-07-15 fastening audit P2-22): the boundary filament pins had ZERO
     axial retention -- Ø2.2 bores at BOTH ends of a Ø1.75 pin, i.e. 0.45 of slop and
@@ -199,7 +204,10 @@ def _track_link(open_a=False, open_b=False, press_a=False):
         else:
             d = cyl(P["track_pin_bore_d"] / 2, tw + 4, axis="x")
         link = sub(link, d)                            # boundary A bores (filament pin)
-    far_d = P["track_pin_bore_d"] if open_b else P["track_bore_pip_d"]
+    if open_b:
+        far_d = P["track_pin_bore_d"]
+    else:
+        far_d = P["track_bore_pip_d"] if pip_bore_d is None else pip_bore_d
     d = cyl(far_d / 2, tw + 4, axis="x"); d.apply_translation((0, pitch, 0))
     link = sub(link, d)
     for ye in (3.4, 6.6):                              # inner-face draft: 45deg chamfer, web ends
@@ -709,10 +717,18 @@ def build_tracks():
     # 0.35 PIP hinge gaps shut. export-only ghosts (scene=False): the loop's per-link
     # scene nodes above carry the viewer. Links are x-mirror-symmetric, so L and R
     # strips are identical meshes under both names.
-    def _strip_mesh(s_n, tag):
+    def _strip_mesh(s_n, tag, pip_bore_d=None):
+        # pip_bore_d override rebuilds first/mid/last for coupon-only tighter-gap
+        # variants. Production strips leave it None and reuse the shared meshes.
+        if pip_bore_d is None:
+            f0, m0, l0 = first, mid, last
+        else:
+            f0 = _track_link(open_a=True, press_a=True, pip_bore_d=pip_bore_d)
+            m0 = _track_link(pip_bore_d=pip_bore_d)
+            l0 = _track_link(open_b=True, pip_bore_d=pip_bore_d)
         row = []
         for j in range(s_n):
-            v = first if j == 0 else last if j == s_n - 1 else mid
+            v = f0 if j == 0 else l0 if j == s_n - 1 else m0
             c = v.copy()
             c.apply_translation((0, j * P["track_pitch"], 0))
             row.append(c)
@@ -729,15 +745,22 @@ def build_tracks():
             gh.metadata["export"] = f"track_strip_{side}{si}.stl"
             gh.metadata["scene"] = False
             out.append(gh)
-    # TEST COUPON (2026-07-13): a 5-link print-in-place strip -- one open-A first
-    # link, three integral-pin mids, one open-far last, same variants and keels as
-    # the production strips, concatenated NEVER unioned -- so the 0.35 PIP hinge
-    # gap, the keeled grouser-down pose and every boundary bore get validated in
-    # ~48 min of plastic (sliced) before the 6.8 h strip plates. tools/export_bambu.py puts
-    # it on its own "Track coupon" plate with a loose master + keeper bars.
+    # TEST COUPON (2026-07-13; tight-gap variant 2026-07-16 K5): TWO 5-link
+    # print-in-place strips + (on the Bambu plate) a loose master + keeper bars.
+    # Production strip uses track_bore_pip_d=2.7 (0.35 radial). The second strip
+    # uses Ø2.56 (0.28 radial) so the powered coupon can A/B wear life. Neither
+    # strip is in the scene; the 64-link loop and probe_track_pip.py stay on 2.7.
+    # Concatenated NEVER unioned -- PIP gaps must stay free bodies.
     cp = _strip_mesh(5, "coupon")
     cp.metadata["name"] = "__export__track_coupon"
     cp.metadata["export"] = "track_coupon.stl"
     cp.metadata["scene"] = False
     out.append(cp)
+    # COUPON TIGHT-GAP: bore Ø2.56 = 0.28 radial on the Ø2.0 integral pin.
+    # Export-only; labeled by filename + exporter unit name (not embossed).
+    cp_t = _strip_mesh(5, "coupon_tight", pip_bore_d=2.56)
+    cp_t.metadata["name"] = "__export__track_coupon_tight"
+    cp_t.metadata["export"] = "track_coupon_tight.stl"
+    cp_t.metadata["scene"] = False
+    out.append(cp_t)
     return out

@@ -412,10 +412,11 @@ gate's exclude set is empty then). ULN2003 keeps its placeholder (no mesh downlo
 flanged bearings 8×16×5 (2 per end idler ×4; the owned Bag 13 "Miniature Ball Bearings" are
 labeled 10pcs MR105 ZZ = 5×10×4, wrong part), 4× M8×60 + NYLOC nuts + washers (end bolt-axles;
 SETTLED: the Bag 13 "Machine Bolts" bag label reads **30PCS M3-30** -- no M8 owned), 10× M4×40
-(road-wheel bolt-axles, partially threaded preferred; 40 mm exceeds the owned kits -- M4 NUTS
-are covered, the 600pc kit lists 40), 4× HC-SR04 (forward + rear obstacle + 2 cliff; NONE
-owned), 6 mm airsoft BBs (pan race), Ø5 SOLID rod for the tilt axle (gets a filed D-flat; no
-tube -- the old wishlist "Ø5 tube" entry is stale), the power set from firmware/WIRING.md
+(road-wheel bolt-axles: HARD plain-shank 34.0..35.5 mm on M4x40, REJECT full-thread and
+stock DIN 931; 40 mm exceeds the owned kits -- M4 NUTS are covered, the 600pc kit lists 40),
+4× HC-SR04 (forward + rear obstacle + 2 cliff; NONE owned), 6 mm airsoft BBs (pan race),
+Ø5 SOLID rod for the tilt axle (gets a filed D-flat; no tube -- the old wishlist "Ø5 tube"
+entry is stale), the power set from firmware/WIRING.md
 (30W+ PD brick, 12V PD trigger, XL4015 5A buck, MP1584 mini buck, JST-XH kit + crimper,
 18 AWG pair, inline blade-fuse HOLDER -- the 5A blade fuse itself is OWNED in the ATC/ATO
 assortment; the owned LM2596/selectable bucks are 2-3 A class, no Pi-rail substitute, though

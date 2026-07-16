@@ -67,7 +67,7 @@ settled below). "Need" is per robot.
 | Track hinge pins | Ø1.75 filament, Ø2.2 boundary bores only (2026-07-12 print-in-place strips: the 59 in-strip joints/side ride INTEGRAL printed Ø2.0 pins). Per pod: 3 strip-to-strip + 2 at the master (its far-end pin + the jaw closure pin) = **10 pins x ~46 mm** ≈ 0.5 m, cut from an owned spool (the black CR-PETG is tougher than PLA for pins) | 10 | spooled (Tray 1) |, |
 | Ø4 dowel pins | body-to-pod join (2 per side), Ø4x12: modeled (wall slip holes + rail press sockets) | 4 | 0 | **4** |
 | HC-SR04 ultrasonic | x4: forward + REAR obstacle (front/rear walls, inside the twin grille rings) + front/rear cliff (flush in the deck slopes, boards behind the 5-thick skin). **Inventory has ZERO** (checked 2026-07-10) | 4 | 0 | **4** |
-| M4x40 + nuts | road-wheel bolt-axles (2026-07-10 fix: wheels were mounted to nothing): head = outer hubcap, shank in the Ø4.2 wheel bore, nut captive in the rail wheel-beam slot. Prefer partially threaded (shank bearing surface); 40 mm exceeds the owned kits | 10+10 | nuts: OWNED (the 600pc M2-M5 kit lists **M4 nuts x40**, settled 2026-07-13); bolts: 0 | **10x M4x40** |
+| M4x40 + nuts | road-wheel bolt-axles (head = outer hubcap, shank in Ø4.2 wheel bore, nut captive in the beam slide-up slot). **HARD SHANK SPEC (2026-07-16 K1):** under-head length 40 mm; **plain journal 34.0..35.5 mm** (covers full 30.0 wheel hub + 1.0 beam-to-wheel gap + beam path to the nut outboard face at 33.95 under-head; thread must NOT enter the wheel bore; threaded tail must still engage the M4 nut with ≥2 turns of M4×0.7 = 1.4 mm). **REJECT** full-thread M4x40 kits (thread chews the Ø4.2 bore or clamps the wheel). **REJECT** stock DIN 931 / ISO 4014 M4x40 (nominal plain ~18..20 mm starts thread inside the wheel). **REJECT** Ø5 shoulder screws (wheel bore Ø4.2 and beam bore Ø4.4 cannot accept Ø5). **ACCEPT:** partially-threaded M4x40 with measured plain shank in 34.0..35.5 mm; or the printed `hw_m4_bolt` stand-in (JOURNAL_L=34.7 / THREAD_L=5.3) until metal arrives. M4 nuts OWNED | 10+10 | nuts: OWNED (the 600pc M2-M5 kit lists **M4 nuts x40**, settled 2026-07-13); bolts: 0 | **10x M4x40 per hard shank spec** |
 
 ### Printed parts (watertight; tank base + split head)
 
@@ -142,7 +142,7 @@ compensation, which looks perfect in CAD:
 
 | Stand-in | Qty | Replaces | Notes |
 |---|---|---|---|
-| `hw_m4_bolt` | 10 | M4x40 bolt-axles | real SHOULDER bolt: plain Ø3.9 journal + M4x1.0 threaded tail. The shoulder is the axial stop, so the wheel stays free however hard it is done up. Ø10.4 thumb head. **A stock DIN 931 M4x40 would start thread INSIDE the wheel (~18 shoulder vs the ~35 the stack wants) -- the printed part is better than the metal it replaces** |
+| `hw_m4_bolt` | 10 | M4x40 bolt-axles | real SHOULDER bolt: plain Ø3.9 journal **34.7 mm** + M4x1.0 threaded tail **5.3 mm** (verified 2026-07-16 K1 against the live stack: wheel 30.0 + gap 1.0 + beam-to-nut-outboard 33.95 under-head; purchase window plain 34.0..35.5). The shoulder is the axial stop, so the wheel stays free however hard it is done up. Ø10.4 thumb head. **Stock DIN 931 M4x40 is REJECTED** (~20 plain starts thread inside the wheel); full-thread kits and Ø5 shoulder screws also rejected (see BOM row) |
 | `hw_m4_nut` | 10 | (owned steel M4 nuts) | AF7 hex, real M4x1.0 internal thread + lead-in per face. AF and 3.2 thickness are the SLOT's (it is cut for an AF7 hex ACROSS CORNERS -- that is what centres it on the bore) |
 | `hw_m8_bolt` | 4 | M8x70 end bolt-axles | knurled Ø22 thumb head, smooth Ø8.0 journal under the bushings AND through the tension slot, M8x1.25 thread only where the nut runs |
 | `hw_m8_nut` | 8 | 4 inner M8 nuts + 4 outer jam nuts | AF13, real M8x1.25 thread, 6.0 tall + countersinks. The pair clamps each tower; no NYLOC analogue exists in PLA, so re-snug after creep |
@@ -424,29 +424,106 @@ tray killed the 88.5 mm blind channels, 2026-07-08.)
 last-track-pin loop flex, and the 4× 88.5 mm blind screen-standoff screws -- the worst
 step in the build is now four short bench screws plus four visible wall screws.)
 
-### Track coupon protocol (plate 20, ~48 min -- print BEFORE any strip plate)
+### Track coupon protocol (Track coupon plate -- print BEFORE any strip plate)
 
-Plate 20 is a 5-link print-in-place coupon (open-A first link, 3 integral-pin mids,
-open-far last, keels on) + 1 loose master link + both keeper bars. Measure on it:
+The Track coupon plate carries **two** 5-link print-in-place strips + 1 loose master
+link + both keeper bars (~1 h sliced in PETG):
+
+| Unit (exporter name) | PIP far-bore | Radial gap on Ø2.0 pin | Role |
+|---|---|---|---|
+| `track_coupon_strip_d2.7` | Ø2.7 (`track_bore_pip_d`) | 0.35 mm | Production geometry (matches the 64-link loop) |
+| `track_coupon_strip_d2.56` | Ø2.56 (coupon-only) | 0.28 mm | Tighter-gap A/B wear candidate |
+
+Each strip is open-A first link, 3 integral-pin mids, open-far last, keels on.
+Production loop geometry, `tools/probe_track_pip.py`, and the long strip plates stay
+on Ø2.7 only; the Ø2.56 strip exists solely on this coupon plate
+(`stl/base/track_coupon_tight.stl`, written under `EXPORT=1`).
+
+#### Static checks (both strips)
 
 1. Every PIP hinge frees after break-in flexing -- no fused knuckles.
 2. Hinge radial slop: pull the 5-link strip taut and measure total stretch vs 40.0
-   nominal; that gives real per-joint slack. Scale x59 and check it still fits the
-   6.5 mm front slot travel via delta_L / 1.84.
-3. Ø2.0 integral pins unbroken after 20 full +-35 deg articulations.
+   nominal; that gives real per-joint slack. Scale ×59 and check it still fits the
+   **6.5 mm** front idler outboard tension travel via `delta_L / 1.84`
+   (dL/d(idler_y) on the raised loop). Accept if scaled stretch ≤ 6.5 × 1.84 ≈ 12.0 mm
+   of full-loop elongation budget; reject if a single 5-link strip already exceeds
+   ~1.0 mm total stretch after static break-in (that scales past the tension budget).
+3. Ø2.0 integral pins unbroken after 20 full ±35 deg articulations.
 4. Keel faces clean (no sag scars), grousers flat.
 5. Ø2.2 boundary bores accept Ø1.75 filament.
-6. Master jaw drops onto the end pin; keepers slide and seat; M2 pilots hold.
+6. Master jaw drops onto the end pin; keepers slide and seat; M2 insert pilots hold.
 
-Any fail: adjust `track_bore_pip_d` / `track_pin_print_d` and reprint the COUPON,
-not a strip.
+Any static fail: adjust `track_bore_pip_d` / `track_pin_print_d` and reprint the
+COUPON, not a strip. Prefer the Ø2.56 strip only if it frees cleanly and beats the
+Ø2.7 strip on the powered stage below; otherwise keep production at 2.7.
+
+#### Powered coupon (deciding bench test for mid-drive reliability)
+
+After both strips pass the static checks, run a **powered coupon** on the production
+(Ø2.7) strip first; optionally repeat on the Ø2.56 strip for A/B wear data.
+
+**Setup (concrete):**
+
+1. Mount a real mid-drive sprocket (printed `drivewheels_*` sprocket) on a TT
+   gearmotor shaft, fixed to a bench block so the sprocket axis is horizontal.
+2. Pin the 5-link coupon into a short loop segment against the sprocket ground-run
+   mesh (use Ø1.75 filament at the open ends, or clamp the strip as a weighted flat
+   run over the sprocket with ≥200 g hanging on the free end so pins stay seated in
+   the conjugate pockets). A hold-down shoe or a wooden block with a 0.9 mm gap over
+   the link crowns is enough to keep the mesh from lifting.
+3. Drive the TT through the chassis MX1588 (or a bench H-bridge) at the firmware
+   **80% PWM cap** (never 100%: 27 W budget rule). Forward 60 s, reverse 60 s, then
+   continuous forward for the break-in block.
+
+**Break-in:** 30 minutes continuous at 80% PWM, or **5000 sprocket revolutions**,
+whichever comes first. (At ~120:1 TT gearing and ~200 RPM motor free speed under
+light load, 30 min is on the order of several thousand pin engagements; count revs
+with a mark on the sprocket if you can.)
+
+**Re-measure after break-in (same gauges as static):**
+
+| Metric | Accept | Reject |
+|---|---|---|
+| Per-joint bore ovalization (major − minor of each PIP B bore) | ≤ 0.10 mm | > 0.15 mm on any joint (pins are hammering the bore oval) |
+| 5-link strip free length stretch vs 40.0 nominal | ≤ 0.8 mm total | > 1.0 mm total (scales ×59 → > ~12 mm loop elongation, past the **6.5 mm** outboard tension travel via /1.84) |
+| Skip / lift under reverse at mesh | no tooth skip | any skip (erodes the **2.14 mm** rigid-chain skip barrier measured by `tools/probe_track_pip.py`; shoes only leave 0.9 mm of lift room) |
+| Integral pin integrity | no cracks | any pin crack or break (a broken pin scraps a whole 16-link production strip) |
+
+**This powered coupon is the deciding bench test for mid-drive reliability** under
+representative load and reverse mesh. Do not commit the 6.8 h strip plates until the
+Ø2.7 strip passes. If Ø2.7 fails ovalization/elongation but Ø2.56 passes, consider
+adopting 2.56 into production (update `track_bore_pip_d`, re-run probe + coupon) only
+after a second powered coupon confirms it.
 
 Mid-drive engagement is quantified, not assumed: the conjugate 14T mesh has contact
-ratio CR 1.48 and the rigid-chain pitch-ratchet barrier measured by
-`tools/probe_track_pip.py` is 2.14 mm. Fixed road-wheel bolt-axles cap lift to about
-0.1 mm at their stations, while each hold-down shoe caps the sprocket mesh window to
-0.9 mm. The powered coupon remains the deciding bench test for mid-drive reliability
-under reverse load and skid turns.
+ratio CR 1.48 and the rigid-chain pitch-ratchet barrier from `tools/probe_track_pip.py`
+is **2.14 mm**. Fixed road-wheel bolt-axles cap lift to about 0.1 mm at their stations;
+each hold-down shoe caps the sprocket mesh window to 0.9 mm.
+
+#### Links / strips / masters are CONSUMABLES
+
+PIP hinges are fatigue/wear items: integral Ø2.0 pins hammer Ø2.7 bores oval, designed
+slack grows past the ~8 mm tension budget, the 2.14 mm skip barrier erodes, and a
+broken integral pin scraps a whole 16-link strip. **Expected wear life is unknown
+until the powered coupon above has real numbers** (log hours and km of desk travel
+when you have them).
+
+**Replacement procedure:**
+
+1. Open the master link: remove the 2 keeper M2 screws, slide the keeper bars out,
+   swing the C-jaw off the closure pin.
+2. Count links from the master along the loop to the damaged strip segment
+   (production layout per side: strips of 16+16+16+15 + 1 master).
+3. Drop out the worn strip at its two filament boundary pins (or cut a fused pin if a
+   mid-strip pin failed), seat the spare strip, re-pin the boundaries with Ø1.75
+   filament (press tip into the Ø1.6 step).
+4. Re-close the master, refit keepers + M2s, re-tension the front M8 until the mesh
+   bites without top-run flogging.
+
+**Print one spare production strip per side with the first batch** (same PETG spool as
+the loop; the 16-link size covers the three long segments; also keep one 15-link if
+you can spare the plate). Masters and keepers are also consumables on the same
+service path (2 M2s + jaw wear).
 
 ### Recommendations (bigger than this pass)
 
@@ -474,7 +551,11 @@ bundle; DSI and CSI ribbons never leave the head.
 
 1. **8x F688ZZ flanged bearings** (8x16x5, flange Ø18): most specific part, slowest to source;
    the end-idler seats are modeled around them (2 per wheel x 4 since the mid-drive).
-1b. **10x M4x40** (road-wheel bolt-axles; partially threaded preferred; M4 nuts are owned)
+1b. **10x M4x40** road-wheel bolt-axles to the **hard shank spec**: under-head 40 mm,
+    **plain journal 34.0..35.5 mm** measured with calipers before accepting the bag.
+    REJECT full-thread kits and stock DIN 931 / ISO 4014 M4x40 (~20 mm plain). REJECT
+    Ø5 shoulder screws (bores are Ø4.2 / Ø4.4). M4 nuts are owned. Until metal arrives,
+    print `hw_m4_bolt` (JOURNAL_L=34.7).
     + **4x M8x70 + 4 jam nuts + 4 NYLOC nuts + 4 washers** (end bolt-axles; Bag 13
     has no M8).
 2. **4x HC-SR04** (forward + rear obstacle + 2 cliff; zero owned; plain 5V is fine on the

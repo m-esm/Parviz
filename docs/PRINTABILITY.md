@@ -8,7 +8,7 @@ STLs directly.
 
 - 74 canonical STL artifacts generated. All are watertight volumes.
 - Intentional multi-body exports are limited to PIP track strips, wheel kits, the three
-  pan clips, two keeper bars, and the track coupon.
+  pan clips, two keeper bars, and the track coupon pair (production Ø2.7 + tight Ø2.56).
 - The Bambu project contains 148 printable bodies on 22 category-named plates.
 - Every brim-grown footprint fits the 256 mm bed.
 - Every plate was sliced independently by Bambu Studio CLI with `Success.`.
@@ -41,7 +41,7 @@ Select the following plates and change their filament preset before printing:
 | Antennas | PETG preferred for gears, axles and rack; PLA acceptable for bracket/masts | PETG survives repeated tooth contact and journal motion better. Grease journals lightly. |
 | Worm drive | PETG | Repeated sliding contact and motor heat. Print at fine layers. |
 | Track gear and Track links | PETG | Impact, hinge fatigue, idler tension and tooth wear. |
-| Track coupon | Same PETG spool intended for the final tracks | The coupon is the calibration gate for PIP gaps, master keeper and filament pins. |
+| Track coupon | Same PETG spool intended for the final tracks | Two 5-link PIP strips (Ø2.7 production + Ø2.56 tight-gap) + master + keepers: static PIP gate, then the powered coupon (docs/ASSEMBLY.md) before any strip plate. |
 | Hardware stand-ins | PETG preferred | These are temporary functional substitutes; metal remains the final hardware. |
 
 For Generic PETG on textured PEI, start near 250 °C nozzle / 80 °C bed, dry the spool,
@@ -71,8 +71,11 @@ manifest so it cannot be missed.
 
 ## Before committing to long prints
 
-1. Print the `Track coupon` plate in the final track material.
-2. Flex all five PIP joints. They must break free without tearing the integral pins.
+1. Print the `Track coupon` plate in the final track material (two 5-link strips:
+   production Ø2.7 + tight Ø2.56, plus master + keepers).
+2. Flex all five PIP joints on each strip. They must break free without tearing the
+   integral pins. Run the powered coupon protocol in `docs/ASSEMBLY.md` before any
+   strip plate.
 3. Test the master link, both keeper bars, M2 inserts and Ø1.75 filament boundary pin.
 4. Print one antenna motor gear and confirm the double-D socket on the actual 28BYJ shaft.
 5. Print one compound idler/output pair and verify free rotation on the Ø3.9 axle in the

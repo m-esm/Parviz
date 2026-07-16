@@ -18,8 +18,9 @@ Output: exports/bambu.3mf (THE canonical name, always reused/overwritten -- user
                      wheels, 2 keeper bars (wheel beams are integral to side panels)
   Track links        8 PRINT-IN-PLACE strips (4/side: 16+16+16+15 links, integral
                      Ø2.0 pins, keeled, support OFF) + 2 master links
-  Track coupon       5-link PIP test strip + 1 master + 2 keeper bars (~48 min sliced):
-                     print + measure THIS before the 6.8 h strip plates
+  Track coupon       TWO 5-link PIP strips (production Ø2.7 bore + tighter Ø2.56
+                     bore) + 1 master + 2 keeper bars (~1 h sliced): print + measure
+                     + power-run THIS before the 6.8 h strip plates
 
 A category that overflows the 256x256 bed spills to "Cat 1 of N", "Cat 2 of N".
 ONE file, many plates: swap the spool / pick per-plate settings in Studio per plate.
@@ -266,20 +267,29 @@ def strip_units():
 
 
 def coupon_units():
-    """TEST COUPON plate (2026-07-13): a 5-link print-in-place strip + ONE loose
-    master link + its two keeper bars -- the complete joint set (integral-pin PIP
-    hinge, keels, open boundary bores, C-jaw + keeper slide) in ~48 min of plastic,
-    to be printed and measured BEFORE committing to the 6.8 h strip plates. Strip
-    rides stl/base/track_coupon.stl (EXPORT=1 ghost, concatenated like the big
-    strips, grouser-down SUPPORT OFF); master + keepers generate live exactly like
-    the strip-plate master spares / keeper STLs (grouser-up NOSUP, keepers rolled
-    onto the wide face)."""
-    m = trimesh.load(os.path.join(ROOT, "stl", "base", "track_coupon.stl"))
-    n = len(m.split(only_watertight=False))
-    if n != 5:
-        sys.exit(f"FAIL: track_coupon has {n} bodies, expected 5 "
-                 "(PIP gap fused, or a link split?)")
-    out = [("track_coupon_strip", m, NOSUP)]
+    """TEST COUPON plate (2026-07-13; tight-gap variant 2026-07-16 K5): TWO 5-link
+    print-in-place strips + ONE loose master link + its two keeper bars.
+
+    Strip A (`track_coupon.stl`): production PIP bore Ø2.7 (0.35 radial on the
+    Ø2.0 integral pin) -- same geometry as the 64-link loop.
+    Strip B (`track_coupon_tight.stl`): tighter bore Ø2.56 (0.28 radial) for the
+    powered wear A/B test. Export-only; production loop / probe_track_pip.py
+    still gate the Ø2.7 geometry only.
+
+    Each strip is concatenated NEVER unioned (5 free bodies; PIP gaps stay open),
+    grouser-down SUPPORT OFF. Master + keepers generate live like the strip-plate
+    spares (grouser-up NOSUP, keepers rolled onto the wide face). Body-count
+    assertions: 5 per strip STL (not 10 fused into one file)."""
+    out = []
+    for fname, unit in (("track_coupon.stl", "track_coupon_strip_d2.7"),
+                        ("track_coupon_tight.stl", "track_coupon_strip_d2.56")):
+        path = os.path.join(ROOT, "stl", "base", fname)
+        m = trimesh.load(path)
+        n = len(m.split(only_watertight=False))
+        if n != 5:
+            sys.exit(f"FAIL: {fname} has {n} bodies, expected 5 "
+                     "(PIP gap fused, or a link split?)")
+        out.append((unit, m, NOSUP))
     body, keepers = tracks._track_master_link()
     body.apply_transform(R(X, 180))                    # grouser-up like the spares
     out.append(("track_master_link", body, NOSUP))
