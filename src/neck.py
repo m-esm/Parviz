@@ -253,17 +253,27 @@ def build_neck_clevis():
         neck = sub(neck, nut_slot((wx + cpx, -37.9, cpz), screw_axis="y",
                                   open_dir=(np.sign(cpx), 0, 0), size="M3", length=14.0))
     # Ø29 CAN POCKET behind the plate (the motor body was buried in solid neck material):
-    # clears the Ø28.25 can + Ø27.25 gearbox stack; separate relief for the blue wiring box.
+    # clears the Ø28.25 can (which, since the 2026-07-16 phantom-tier fix, registers here
+    # over its FULL length -- its top face IS the gear face at face_y - 2); separate
+    # relief for the blue wiring box. Pocket depth kept at 32.5 although the shorter can
+    # rear now ends at -55.3: the extra void is the insertion runway.
     pocket = cyl(29.0 / 2, 32.5, axis="y")
     pocket.apply_translation((wx, face_y - 2 - 32.5 / 2 + 0.2, can_z))
     neck = sub(neck, pocket)
-    wrelief = box(17.0, 19.0, 10.0)
-    wrelief.apply_translation((wx, face_y - 21.4, can_z - 16.1))
+    # wiring-box channel: the seated box now spans y -55.3..-38.6 (it rode the can 9
+    # forward) but it still TRAVELS the old band on insertion, so the relief EXTENDS
+    # forward rather than moves: y -65.4..-37.4 covers travel + seat (+0.9 front air).
+    wrelief = box(17.0, 28.0, 10.0)
+    wrelief.apply_translation((wx, face_y - 16.9, can_z - 16.1))
     neck = sub(neck, wrelief)
-    # ear-bar relief: the motor's 43 mm ear bar sits 9.5 behind the gear face and was clipping
-    # the cheek's lower-rear corner; slot it clear (also gives M4 nut access)
-    erelief = box(46.0, 4.0, 10.0)
-    erelief.apply_translation((wx, face_y - 11.5, can_z))
+    # ear-bar channel (2026-07-16, was a 4-deep slot at y -48..-44 for the phantom-tier
+    # bar position): the real motor's 43 mm ear bar seats at y -37.5..-36.5, 0.2 behind
+    # the pocket-front wall, and must SLIDE there from the rear bay -- so the old slot
+    # extends forward to the pocket front plane (-36.3). Probed: the only material in
+    # the swept prism was two cheek-root corner wedges (x +-13.9..21.8, y -44.0..-36.4,
+    # z 129.2..137.2, 266 mm3 each); behind -48 the band was already open.
+    erelief = box(46.0, 11.7, 10.0)
+    erelief.apply_translation((wx, face_y - 7.65, can_z))
     neck = sub(neck, erelief)
     # worm-thread envelope relief: Ø11.8 bore (thread tip r 5.275 + 0.625 running clearance)
     # about the worm axis over the REAR thread span (y -34..-21) -- splits the riser top
@@ -464,14 +474,17 @@ def build_trim_neckfoot():
 def build_tilt_carrier():
     """Removable TILT-MOTOR CARTRIDGE carrier (maintenance pass 2026-07-08). The 28BYJ is
     the likeliest part to die, and replacing it used to mean un-hanging the head and then
-    reaching ear screws with 2.1 mm of driver room. Now: the motor's M4 ears bolt to THIS
-    plate on the bench (open access), the worm goes on the D-shaft, and the loaded carrier
-    inserts from the open rear bay: the can registers in the neck's Ø29 pocket (the mesh
-    lead-in; worm CD is held by pocket + tail cradle, same registers the WORM.md mesh was
-    verified against), the worm passes the plate's Ø12.2 bore, and 4x M3x16 drive from the
-    rear through Ø9/Ø8 bosses into CAPTIVE HEX NUTS in the neck (fastening campaign
-    2026-07-15: the upper pair's nuts side-slide into blocks behind the bracket plate,
-    the lower pair's into the column itself; nothing self-taps). Extraction reverses it.
+    reaching ear screws with 2.1 mm of driver room. Now: the motor drops onto the plate's
+    ear-pin D-posts on the bench (2026-07-16 phantom-tier fix -- see the post note below;
+    the old M4 ear bolts are geometrically impossible with the real, 9-shorter motor), the
+    worm goes on the D-shaft, and the loaded carrier inserts from the open rear bay: the
+    can registers in the neck's Ø29 pocket (the mesh lead-in; worm CD is held by pocket +
+    tail cradle, same registers the WORM.md mesh was verified against), the worm passes
+    the plate's Ø12.2 bore, and 4x M3x16 drive from the rear through Ø9/Ø8 bosses into
+    CAPTIVE HEX NUTS in the neck (fastening campaign 2026-07-15: the upper pair's nuts
+    side-slide into blocks behind the bracket plate, the lower pair's into the column
+    itself; nothing self-taps). Clamping the carrier also captures the motor's ear bar
+    between the post fronts and the neck's pocket-front wall. Extraction reverses it.
     CAVEAT (review 2026-07-08): sliding the worm out spins the free wheel (worm-as-rack)
     only while the head can rotate: clearing the mesh needs ~6.0 mm of axial travel =
     ~46 deg of head nod, but the fin hard stops allow only ~34 deg down from neutral --
@@ -517,6 +530,28 @@ def build_tilt_carrier():
         b = cyl(br, bl, axis="y")
         b.apply_translation((bx, -46.55 + bl / 2, bz))
         plate = uni([plate, b])
+    # EAR STANDOFF POSTS + LOCATING PINS (2026-07-16, phantom-tier fix): the real
+    # 28BYJ's ear bar sits at y -37.5..-36.5, i.e. 9 mm AHEAD of this plate, with only
+    # 0.2 mm between the ear front and the neck's pocket-front wall -- geometrically
+    # nothing can clamp on the ear front, so the old M4 "bench nut" ear bolts are GONE.
+    # Retention is a SANDWICH instead: each ear hole drops onto a Ø3.8 pin on a D-post
+    # rising from the plate front (post front 0.05 off the ear rear, exactly the old
+    # ear-to-plate convention), and once the cartridge's 4x M3x16 clamp the plate to
+    # the neck, the ear bar is captured between the post fronts (-37.55) and the neck
+    # wall (-36.3): 0.25 total axial float, pins lock rotation, the Ø29.1 plate bore +
+    # the neck's Ø29 pocket own radial. On the bench the motor rides the pins/bore
+    # loosely -- hold it while inserting; the clamp captures it. The posts are D-cut
+    # 0.3 clear of the can and travel inside the neck's ear-bar channel (1.25/0.75 x/z
+    # clearance) during insertion.
+    for dxe in (-P["motor_ear_cc"] / 2, P["motor_ear_cc"] / 2):
+        post = cyl(4.25, 10.0, axis="y")                 # y -47.55..-37.55 (1.0 buried
+        post.apply_translation((dxe, -42.55, can_z))     # in the plate: face-tangent
+        canrel = cyl(P["motor_can_d"] / 2 + 0.3, 12.0, axis="y")   # bodies won't fuse)
+        canrel.apply_translation((0, -42.55, can_z))
+        post = sub(post, canrel)                         # D-post: 0.3 off the can wall
+        pin = cyl(1.9, 1.5, axis="y")                    # 0.5 buried in the post;
+        pin.apply_translation((dxe, -37.3, can_z))       # tip -36.55: 0.95 in the ear,
+        plate = uni([plate, post, pin])                  # 0.25 shy of the neck wall
     bore = cyl(14.55, 8.0, axis="y")                     # can pass Ø29.1 (can Ø28.25)
     bore.apply_translation((0, cy, can_z))
     plate = sub(plate, bore)
@@ -527,10 +562,6 @@ def build_tilt_carrier():
         mc = cyl(1.75, 18.0, axis="y")                   # M3 clearance, carrier + boss
         mc.apply_translation((bx, -43.0, bz))
         plate = sub(plate, mc)
-    for dxe in (-P["motor_ear_cc"] / 2, P["motor_ear_cc"] / 2):
-        eh = cyl(2.1, 8.0, axis="y")                     # M4 ear holes (bench nuts)
-        eh.apply_translation((dxe, cy, can_z))
-        plate = sub(plate, eh)
     _color(plate, "neck")
     plate.metadata["name"] = "tilt_carrier"
     return plate

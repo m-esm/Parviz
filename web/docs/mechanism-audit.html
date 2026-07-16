@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0d0f13">
+<title>Mechanism audit · desk-pi</title>
+<style>
+  :root{
+    --ink:#e9edf1; --ink-dim:#9aa4b0; --ink-faint:#69727e;
+    --panel:rgba(20,23,28,.66); --hair:rgba(255,255,255,.09);
+    --accent:#5cc7d4; --accent-soft:rgba(92,199,212,.16);
+    --orange:#e87422;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html{scroll-padding-top:56px}
+  body{margin:0;min-height:100vh;color:var(--ink);
+    font:14.5px/1.65 system-ui,-apple-system,Segoe UI,sans-serif;
+    background:radial-gradient(125% 100% at 50% -10%, #2b313b 0%, #191d23 46%, #0d0f13 100%);
+    background-attachment:fixed}
+  main{max-width:880px;margin:0 auto;padding:68px 22px 80px}
+  h1,h2,h3,h4{line-height:1.2;letter-spacing:-.02em;scroll-margin-top:56px}
+  h1{font-size:31px;font-weight:750;margin:8px 0 8px}
+  h2{font-size:19px;margin:34px 0 10px;padding-top:18px;border-top:1px solid var(--hair)}
+  h3{font-size:15.5px;margin:24px 0 8px;color:var(--ink)}
+  p{margin:11px 0;color:var(--ink-dim)}
+  li{color:var(--ink-dim);margin:4px 0}
+  strong{color:var(--ink)}
+  a{color:var(--accent);text-decoration:none}
+  a:hover{text-decoration:underline}
+  code{font:12.5px var(--mono);background:rgba(255,255,255,.07);padding:1.5px 5px;border-radius:5px;color:var(--ink)}
+  pre{background:rgba(0,0,0,.38);border:1px solid var(--hair);border-radius:12px;
+    padding:14px 16px;overflow-x:auto}
+  pre code{background:transparent;padding:0;color:var(--ink-dim)}
+  .tbl{overflow-x:auto;margin:14px 0;border:1px solid var(--hair);border-radius:12px}
+  table{border-collapse:collapse;width:100%;font-size:13px}
+  th,td{padding:8px 12px;text-align:left;vertical-align:top;border-bottom:1px solid var(--hair)}
+  th{font:600 10.5px/1.3 var(--mono);letter-spacing:.1em;text-transform:uppercase;
+    color:var(--ink-faint);background:rgba(255,255,255,.03)}
+  tr:last-child td{border-bottom:0}
+  td{color:var(--ink-dim)}
+  td:first-child{color:var(--ink)}
+  blockquote{margin:12px 0;padding:2px 16px;border-left:3px solid var(--orange);
+    background:rgba(232,116,34,.10);border-radius:0 10px 10px 0}
+  hr{border:0;border-top:1px solid var(--hair);margin:26px 0}
+  /* mono instrument labels: ORANGE = identity/structure (the robot's paint),
+     CYAN = interactive/measurement (the tool's voice) */
+  .crumb{font:700 9.5px/1 var(--mono);letter-spacing:.24em;color:var(--orange);text-transform:uppercase}
+
+  /* ---- hub hero: identity thesis + real render + measured spec strip ---- */
+  .hub main{max-width:980px}
+  .hero-wrap{display:grid;grid-template-columns:1.05fr .95fr;gap:30px;align-items:center;margin:6px 0 4px}
+  @media(max-width:760px){.hero-wrap{grid-template-columns:1fr;gap:18px}}
+  .hero-wrap h1{font-size:40px;line-height:1.03;margin:12px 0 14px;letter-spacing:-.03em}
+  .hero-wrap h1 .accent{color:var(--orange)}
+  .lede{font-size:15.5px;color:var(--ink-dim);line-height:1.62;max-width:48ch}
+  .hero-img{width:100%;border-radius:16px;border:1px solid var(--hair);display:block;
+    box-shadow:0 22px 55px -26px rgba(0,0,0,.65)}
+  .specs{display:flex;flex-wrap:wrap;margin:24px 0 8px;border:1px solid var(--hair);
+    border-radius:14px;overflow:hidden;background:var(--panel)}
+  .spec{flex:1 1 120px;padding:13px 17px;border-right:1px solid var(--hair)}
+  .spec:last-child{border-right:0}
+  .spec b{display:block;font:750 18px/1.05 var(--mono);color:var(--ink);letter-spacing:-.02em}
+  .spec b em{font-style:normal;color:var(--orange)}
+  .spec span{display:block;margin-top:5px;font:600 9px/1.3 var(--mono);letter-spacing:.13em;
+    text-transform:uppercase;color:var(--ink-faint)}
+
+  /* ---- section eyebrow + cards ---- */
+  .hub h2{border-top:0;padding-top:0;font:700 12px/1 var(--mono);letter-spacing:.16em;
+    text-transform:uppercase;color:var(--ink-dim);margin:36px 0 13px;
+    display:flex;align-items:center;gap:11px}
+  .hub h2::before{content:"";width:15px;height:2px;background:var(--orange);border-radius:2px}
+  .hub h2 .n{margin-left:auto;color:var(--ink-faint);font-weight:600;letter-spacing:.1em}
+  .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;margin:0 0 8px}
+  .card{position:relative;display:block;padding:15px 17px 16px;background:var(--panel);
+    border:1px solid var(--hair);border-radius:14px;overflow:hidden;
+    transition:border-color .14s,transform .14s,background .14s}
+  .card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--orange);
+    transform:scaleY(0);transform-origin:top;transition:transform .16s}
+  .card:hover{border-color:rgba(92,199,212,.42);text-decoration:none;transform:translateY(-2px);
+    background:rgba(30,34,40,.72)}
+  .card:hover::before{transform:scaleY(1)}
+  .card b{display:block;font-size:14.5px;color:var(--ink);margin-bottom:5px;letter-spacing:-.01em}
+  .card span{font-size:12px;color:var(--ink-dim);line-height:1.55;display:block}
+  .card .go{margin-top:11px;font:700 9px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;
+    color:var(--accent);opacity:0;transform:translateX(-3px);transition:opacity .14s,transform .14s}
+  .card:hover .go{opacity:1;transform:none}
+  @media (prefers-reduced-motion: reduce){
+    .card,.card::before,.card .go{transition:none}
+    .card:hover{transform:none}
+  }
+
+  #topnav{position:fixed;top:0;left:0;right:0;z-index:30;display:flex;align-items:center;
+    gap:2px;height:42px;padding:0 14px 0 16px;
+    background:rgba(13,15,19,.82);border-bottom:1px solid var(--hair);
+    backdrop-filter:blur(18px) saturate(1.25);-webkit-backdrop-filter:blur(18px) saturate(1.25);
+    white-space:nowrap}
+  @media (max-width:700px){#topnav a.pl{display:none}#topnav .brand span{display:none}}
+  #topnav a,#topnav .dd button{font:600 11px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;
+    color:var(--ink-dim);text-decoration:none;padding:7px 10px;border-radius:8px;
+    background:transparent;border:0;cursor:pointer;transition:color .12s,background .12s}
+  #topnav a:hover,#topnav .dd button:hover{color:var(--ink);background:rgba(255,255,255,.06)}
+  #topnav a.on,#topnav .dd button.on{color:var(--accent);background:var(--accent-soft)}
+  #topnav .brand{font:700 12px/1 var(--mono);letter-spacing:.18em;color:var(--ink);
+    margin-right:10px;display:flex;align-items:baseline;gap:7px}
+  #topnav .brand span{font:600 9px/1 var(--mono);letter-spacing:.14em;color:var(--ink-faint)}
+  #topnav .gh{margin-left:auto;color:var(--ink-faint)}
+  #topnav .dd{position:relative}
+  #topnav .dd .menu{display:none;position:absolute;top:calc(100% + 4px);left:0;min-width:180px;
+    padding:5px;background:rgba(20,23,28,.96);border:1px solid var(--hair);border-radius:12px;
+    box-shadow:0 14px 38px rgba(0,0,0,.55);
+    backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+  #topnav .dd:hover .menu,#topnav .dd:focus-within .menu{display:block}
+  #topnav .dd .menu a{display:block;padding:8px 10px}
+</style>
+</head>
+<body>
+<nav id="topnav">
+  <a class="brand" href="../viewer_glb.html">PARVIZ<span>desk-pi</span></a>
+  <a href="../viewer_glb.html">Viewer</a>
+  <a class="pl" href="../docs/electronics.html">Electronics</a><a class="pl" href="../docs/assembly.html">Assembly</a><a class="pl" href="../docs/wiring.html">Wiring &amp; power</a>
+  <div class="dd"><button class="on" aria-haspopup="true">Docs &#9662;</button>
+    <div class="menu"><a href="../docs/index.html">All docs</a><a href="../docs/electronics.html">Electronics</a><a href="../docs/assembly.html">Assembly</a><a href="../docs/joints.html">Joint contracts</a><a href="../docs/mechanism-audit.html">Mechanism audit</a><a href="../docs/wiring.html">Wiring &amp; power</a><a href="../docs/printability.html">Printability</a><a href="../docs/fixes.html">Fix ledger</a><a href="../docs/worm.html">Worm drive</a><a href="../docs/arm-mech.html">Arm mechanism</a><a href="../docs/cable-check.html">Cable check</a><a href="../docs/reference-audit.html">Reference audit</a><a href="../docs/awareness.html">Awareness</a><a href="../docs/software.html">Software</a></div></div>
+  <a class="gh" href="https://github.com/m-esm/parviz" title="source">GitHub</a>
+</nav>
+<main>
+<div class="crumb">Parviz · Build docs</div><h1 id="mechanism-audit">Mechanism audit</h1>
+<p>Verified 2026-07-16 against freshly generated STL and GLB geometry. A render is not
+accepted as proof: each row names the geometric or executable evidence that protects it.</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Group</th>
+<th>Interfaces checked</th>
+<th>Result and evidence</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Track links and master links</td>
+<td>64-link loop, six hinge pairings, ±35° articulation, PIP pins, boundary pins, keeper retention</td>
+<td>PASS. <code>tools/probe_track_pip.py</code>: all 6 pairs × 30 angles clean, 0.349 mm minimum clearance. The master joint contract verifies locator, M2 insert retention, insertion and load path.</td>
+</tr>
+<tr>
+<td>Sprockets, idlers and road wheels</td>
+<td>Conjugate link action, keel channels, F688 seats, M8 tension stack, M4 shoulder axles</td>
+<td>PASS. 18-phase × 5-link sweep has 0.0000 mm³ penetration and a 2.14 mm skip barrier. M8x70 spans jam nut, tower, washer and inner nut. The M4 shoulder prevents wheel clamping.</td>
+</tr>
+<tr>
+<td>Chassis and side panels</td>
+<td>Tub seams, panel splice/feet, deck seams, belly plate, equipment base and pedestal</td>
+<td>PASS. Joint gates cover registration before screws, stacks, capture and driver access. Invariants probe dowels/tongues, nut paths and supporting material. Wheel beams and towers are integral to the panels.</td>
+</tr>
+<tr>
+<td>Pan bearing and drive</td>
+<td>18-ball cage/race, three clips, platform locator, 32T:16T involute pair and hard stops</td>
+<td>PASS. Real-gear metadata matches parameters and the generated pair has a 0.0000 mm³ coupled sweep. All pan extremes through ±90° pass interference checks.</td>
+</tr>
+<tr>
+<td>Tilt axle and worm</td>
+<td>695 seats, D-key, thrust stack, carrier registration, 3-start worm/12T wheel and stops</td>
+<td>PASS. <code>tools/gears/probe_worm_sweep.py</code> reports 0.0000 mm³ on the coupled motion. The carrier joint verifies four M3 fasteners, locator, insertion and load path. All tilt extremes through ±30° pass. The printed axle remains an interim substitute for steel.</td>
+</tr>
+<tr>
+<td>Head, screen and door</td>
+<td>Bezel/back seams, panel rebates, tray rails/pillars, camera cover, hooks and snap tongues</td>
+<td>PASS. Head contracts verify locators, nuts, stacks, access and material. Invariants probe hooks, freed tongues, screen pattern and service openings. Open the door near neutral tilt.</td>
+</tr>
+<tr>
+<td>Antenna drives</td>
+<td>Motor double-D, two compound stages, idler journal, fused output/pinion, rack, bracket and guide</td>
+<td>PASS after repair. Disconnected preview discs became eight separately exported involute parts. Every part is one watertight body. Both static trains have 0.0000 mm³ tooth interference; an 11-position coupled sweep covers the full 50 mm travel below 0.02 mm³.</td>
+</tr>
+<tr>
+<td>Plastic hardware stand-ins</td>
+<td>M4/M8 threads, shoulders, F688 bushings, pan rollers, axle and dowels</td>
+<td>PASS as interim hardware. ISO forms, clearances, grooves/crush ribs and shoulders are covered by <code>tests/test_hardware_standins.py</code>. Metal remains preferred for strength, wear and creep.</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="whole-assembly-evidence">Whole-assembly evidence</h2>
+<ul>
+<li><code>make gate-tests</code>: 20 tests pass.</li>
+<li><code>make invariants</code>: 62/62 invariants pass.</li>
+<li><code>make jointcheck</code>: 261/261 gates pass across 18 structural joints.</li>
+<li><code>make wallcheck</code>: all 66 exported parts meet the wall gate or a documented gear/thread edge floor.</li>
+<li>Neutral assembly: no unapproved overlap above 0.01 mm³.</li>
+<li>Motion envelope: all 14 isolated poses pass, including ±90° pan × ±30° tilt corners.</li>
+<li>Fit map: 140 close pairs and 12 press fits; every touching pair is expected.</li>
+<li>Stability: 52.8° worst tip angle and 82× fast-pan overturning margin.</li>
+</ul>
+<p>Optional arms are excluded deliberately. <code>ARMS=1</code> enables visual placeholders only;
+<code>docs/ARM-MECH.md</code> is a future design brief, not a verified printable actuator.</p>
+</main>
+</body>
+</html>

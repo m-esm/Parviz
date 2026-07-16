@@ -121,7 +121,7 @@
   <a href="../viewer_glb.html">Viewer</a>
   <a class="pl on" href="../docs/electronics.html">Electronics</a><a class="pl" href="../docs/assembly.html">Assembly</a><a class="pl" href="../docs/wiring.html">Wiring &amp; power</a>
   <div class="dd"><button aria-haspopup="true">Docs &#9662;</button>
-    <div class="menu"><a href="../docs/index.html">All docs</a><a href="../docs/electronics.html">Electronics</a><a href="../docs/assembly.html">Assembly</a><a href="../docs/wiring.html">Wiring &amp; power</a><a href="../docs/printability.html">Printability</a><a href="../docs/fixes.html">Fix ledger</a><a href="../docs/worm.html">Worm drive</a><a href="../docs/arm-mech.html">Arm mechanism</a><a href="../docs/cable-check.html">Cable check</a><a href="../docs/reference-audit.html">Reference audit</a><a href="../docs/awareness.html">Awareness</a><a href="../docs/software.html">Software</a></div></div>
+    <div class="menu"><a href="../docs/index.html">All docs</a><a href="../docs/electronics.html">Electronics</a><a href="../docs/assembly.html">Assembly</a><a href="../docs/joints.html">Joint contracts</a><a href="../docs/mechanism-audit.html">Mechanism audit</a><a href="../docs/wiring.html">Wiring &amp; power</a><a href="../docs/printability.html">Printability</a><a href="../docs/fixes.html">Fix ledger</a><a href="../docs/worm.html">Worm drive</a><a href="../docs/arm-mech.html">Arm mechanism</a><a href="../docs/cable-check.html">Cable check</a><a href="../docs/reference-audit.html">Reference audit</a><a href="../docs/awareness.html">Awareness</a><a href="../docs/software.html">Software</a></div></div>
   <a class="gh" href="https://github.com/m-esm/parviz" title="source">GitHub</a>
 </nav>
 <main>
@@ -147,7 +147,15 @@ some Thingiverse "models" are low-poly illustrations, not mechanical CAD.</p>
 their box/cylinder placeholders in <code>web/assembly.glb</code>, so the viewer shows the
 real part geometry. <code>src/refparts.py</code> poses each real mesh onto the placeholder's
 oriented bounding box by a 24-orientation best-fit, so it lands at the exact
-placeholder location and orientation. They are bought parts, never printed, and
+placeholder location and orientation. <strong>Exception (2026-07-16): the 28BYJ-48 is
+registered deterministically instead</strong> -- the OBB best-fit is blind to its
+eccentric shaft and parked every real stepper ~15 mm off its gear axis, so
+refparts recovers the placeholder's exact pose (Kabsch over the vertex
+correspondence) and applies a fixed measured native-to-local transform; the
+shaft now lands on the pan/tilt/antenna gear axes within the mesh's own 0.125 mm
+eccentricity slop (guarded by <code>tests/test_refparts_28byj.py</code>). The same pass
+deleted the placeholder's phantom 9 mm gearbox tier (see CLAUDE.md) so the real
+motor's shaft actually reaches its gears. They are bought parts, never printed, and
 skipped by the boolean interference/fit gates (like the non-watertight screen
 mesh). <code>PLACEHOLDER_PARTS=1 make build</code> restores the analytic placeholders and
 their full gate coverage. The ULN2003 has no downloaded mesh (see below), so it

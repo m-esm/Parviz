@@ -1,78 +1,92 @@
-# Printability audit, styling / cosmetic parts (design-styling campaign)
+# Printability audit
 
-Audit of the cosmetic parts added in the design-styling pass, measured from
-`web/assembly.glb` (trimesh: extents, body splits, cross-sections) and cross-checked against
-the builders in `src/build.py`. Rules basis: FDM on a 0.4 mm nozzle (Bambu A1 class),
-Arachne floors: **>= 0.6 mm for detail that must survive slicing, >= 0.8 mm structural walls,
-~0.4 mm absolute single-wall floor**. Read-only audit; no geometry changed.
+Current audit for the exported Parviz parts, verified 2026-07-16 on a Bambu A1-class
+256 × 256 mm bed with a 0.4 mm nozzle. Source geometry remains parametric; do not repair
+STLs directly.
 
-Preview pose note: GLB extents below the head are world-posed (pan 22 / tilt -12); the
-per-part dimensions quoted are the as-modeled local sizes from `build.py`.
+## Release verdict
 
-## Verdict table
+- 74 canonical STL artifacts generated. All are watertight volumes.
+- Intentional multi-body exports are limited to PIP track strips, wheel kits, the three
+  pan clips, two keeper bars, and the track coupon.
+- The Bambu project contains 148 printable bodies on 22 category-named plates.
+- Every brim-grown footprint fits the 256 mm bed.
+- Every plate was sliced independently by Bambu Studio CLI with `Success.`.
+- All 66 gated printed part types meet the 0.8 mm percentile wall requirement or a
+  documented tooth/thread-edge floor.
 
-| Part | Material / color | Min feature found | Print orientation | Supports | Verdict |
-|---|---|---|---|---|---|
-| trim_rail_L/R | orange PLA | 5.0 thick pad, r8 corners | flat back face down | no | **OK** |
-| trim_hatch_frame | orange PLA | 3.0 thick, band 13.0 (corner min 13.0 measured) | flat on back face | no | **OK** (brim; large 160x105 thin ring, warp watch) |
-| trim_fascia (ring + 6 fins) | orange PLA | fins 3 x 2 x 16; ring band 4.0 x 2.5 | flat, proud-face up | no | **FAIL, 7 disconnected bodies** (fins never touch the ring; ring x +-30, fins at x 33.5..48.5) |
-| trim_rear | orange PLA | band 4.0 wide x 2.5 thick (corner min 4.0 measured) | flat on back face | no | **OK** |
-| camera_pod | black PLA | **~0.05 mm wall** at bore-flare cusp | face down (flare then self-supports at 45) | no | **FAIL, knife-edge cusps**: flared bore opens to Ø19 at the face vs pod height 18 (measured: bore edge z +-8.95 vs face +-9.0 at 0.3 mm depth; wall 0.75 at 1.0 mm depth) |
-| antenna_stub | black PLA | knurl grooves 1.4 wide x 0.7 deep (resolve fine, > 0.6); Ø13 shaft | axis vertical, collar down | no (brim on Ø16 collar) | **OK** (cosmetic nit: dome is a subdivisions=2 icosphere, visibly faceted at Ø13) |
-| led_strip (8 dots + base) | white PLA | base plate **0.8 thick**; dots Ø2.4 x ~1.5 proud | base down, dots up | no | **Marginal**, one connected body (dots are unioned to the base, not loose), Ø2.4 bumps print as 2-perimeter towers; the 0.8 base is 4 layers and fragile to handle |
-| led_front (7 dots + base) | white PLA | base **1.0 thick**; dots Ø2.6 x ~1.5 proud | base down, dots up | no | **Marginal**, same pattern as led_strip, slightly better base |
-| lamp_L/R | amber PLA (or painted) | 12 x 7 x 2.0 chip, r2.5 | flat face down | no | **OK** (tiny; print with the white plate and swap color, or tint) |
-| sensor_us | bought (HC-SR04) | n/a | n/a | n/a | **Bought part**, placeholder only, skip print |
-| sensor_rear | bought (recommended) | Ø14 x 9 cylinder | (face down if printed) | no | **Buy, don't print**: it plays a speaker/buzzer; a Ø12-14 piezo buzzer or speaker grommet is the real part. A printed silver-painted plug is trivial if wanted |
-| arm_L/R | charcoal PLA | limbs 9 wide; claw ring wall 8; finger pads 13 x 6.5 x 7; standoff tube Ø16 x 23.5 | side-lying (arm plane on bed) | **yes (tree)** | **Marginal**, single connected body, but limb/disc/claw widths (9/10/13) share a center plane so no face is flat; side-lying floats the limbs ~2 mm and stands the tube 23.5 up. Placeholder per build.py; split at joints at the mechanism pass |
-| chassis hex grille (on chassis) | charcoal PLA | **web 0.74 mm** between hex vertex tips | prints with chassis (wall vertical) | no | **Marginal**, hexes are vertex-facing in X, so the web narrows to 0.736 at the tips (not the assumed 1.2); blind pockets also have a 3.0 flat ceiling bridge (fine) |
-| drivewheels: sprocket x2 | grey PETG | teeth ~5 x 3 x 8 (fine) but **zero-overlap root joint** | gear face down, hub up (one-sided hub self-supports) | no | **FAIL, all 12 teeth are detached bodies**: tooth boxes sit at radius 15.8..18.8 with the root cylinder at r 15.8 exactly, line contact only (16-body split confirms; `gear_disc` defect, worm_wheel has it too) |
-| drivewheels: idler x2 | grey PETG | wall 7.7 (Ø31.4 over Ø15.95 bore); flange recess 18.5 x 1.05 | axis vertical, flange recess up | no | **OK** (F688ZZ seat prints round when vertical) |
-| drivewheels: road wheels x4 | grey PETG | Ø22 x 30 **solid, no bore** | axis vertical | no | **FAIL (incomplete)**, 11.4 cm3 solid cylinder with no axle bore or bearing seat; unbuildable as running gear until the axle scheme is modeled |
+Run the complete proof with:
 
-## Fix list (marginal / fail, with the specific change)
+```bash
+make export
+make slicecheck
+make wallcheck
+make jointcheck
+```
 
-1. **camera_pod cusps (FAIL).** The 45-deg flare from the Ø8 csk over `cam_pod_t + 0.5 = 5.5` mm
-   opens to Ø19 at the face; `cam_pod_h = 18` clips it top and bottom, leaving ~0.05 mm knife
-   edges at the front lip. Fix either: `cam_pod_h` 18 -> **22.0** (1.5 mm wall each side, keeps the
-   45-deg flare), or drop the flare to 40 deg/side (opening Ø17.2, still > the 37.5-deg FoV half
-   angle) *and* `cam_pod_h` -> 20. Side walls at the face are 2.5 (fine) either way.
-2. **trim_fascia fins detached (FAIL).** The 6 fins (x +-33.5..48.5) never touch the ring
-   (x +-30). Add a backing web per side tying fin bases to the ring: a `box(21.5, 1.2, 16)` at
-   y = fw..fw+1.2 spanning x 28..49.5 (mirrored), unioned before the `uni(fins)`. The web hides
-   behind the 2-mm-proud fins and overlaps the ring band. Alternative: emboss the fins into the
-   chassis wall and drop them from the orange part.
-3. **sprocket teeth detached (FAIL).** In `gear_disc`, the tooth prism spans exactly
-   `root_r..root_r + tooth_h`: line contact with the root cylinder, so slicers/split see 12 loose
-   teeth. Fix in `gear_disc`: make the tooth box `tooth_h + 1.0` tall and translate to
-   `pitch_r - 0.5` so each tooth sinks 1 mm into the root. Fixes the sprocket now and the
-   worm_wheel placeholder for free (same 13-body split).
-4. **road wheels solid (FAIL, incomplete model).** Add the axle scheme before printing: at
-   minimum a Ø8.3 through-bore for a stub axle, or F688ZZ seats (Ø15.95 x 5 + flange recess)
-   matching the idler if they should free-wheel. Blocked on the mechanism decision, not on print.
-5. **hex grille web 0.74 mm (marginal).** Rotate each `hex_prism` 30 deg about its own axis
-   (flats facing +-X) before placing: web becomes a uniform `4.2 - 3.0 = 1.2` mm and the pocket
-   roof becomes a 60-deg self-supporting vertex instead of a 3 mm flat bridge. One-line change at
-   the `hex_prism(3.0, 4.0)` call.
-6. **led_strip base 0.8 (marginal).** Thicken the base 0.8 -> **1.2** (recess is 1.5 deep; dots
-   still clear to 0.3 proud). Print both LED bars at 0.12 mm layers. Longer term the honest part
-   is a real WS2812 stick behind a white/clear printed window; the current bars are dummies.
-7. **arm_L/R (marginal, placeholder).** Printable today side-lying with tree support (support
-   scars land on the inboard face, hidden). At the arm mechanism pass, split at the joint discs
-   so each link prints flat per the gear/pin FDM rule; don't invest before then.
-8. **(Out of scope, print-blocking, found in passing.)** `chassis` splits into 3 bodies: the two
-   2 x 28 x 28 idler tension plates at x +-86.3 / y 60 float disconnected from the body. They are
-   outside the +-60 chassis walls, in the pod envelope; they need a bridge to the chassis arm or
-   to be their own parts before `chassis.stl` is printable.
+`make slicecheck` deliberately gives every plate a fresh worker. Repeated Bambu Studio CLI
+launches in one process retain native state on macOS and previously killed the audit after a
+few plates without producing a verdict.
 
-## Plate grouping
+## Material and plate policy
 
-| Plate | Filament | Parts | Notes |
-|---|---|---|---|
-| A, orange | orange PLA | trim_rail_L, trim_rail_R, trim_hatch_frame, trim_fascia (post-fix 2), trim_rear | all flat-back, no support; hatch frame centered on the bed with an 8 mm brim |
-| B, black/charcoal | black PLA | camera_pod (post-fix 1), antenna_stub, arm_L, arm_R (or hold arms for the mechanism pass) | antenna brim; arms tree support only |
-| C, white + amber | white PLA (+ amber for lamps) | led_strip, led_front, lamp_L, lamp_R | 0.12 mm layers for the dot bars; lamps are a 2-part color swap or print natural and tint |
-| D, running gear | grey PETG | sprocket x2 (post-fix 3), idler x2, road wheels x4 (post-fix 4) | PETG for creep under track tension; sprockets gear-face down, wheels axis-vertical |
+The canonical project is one multi-plate `exports/bambu.3mf`, as requested. Bambu stores one
+global filament profile for this hand-generated project, so it opens with Generic PLA settings.
+Select the following plates and change their filament preset before printing:
 
-Bought, not printed: sensor_us (HC-SR04), sensor_rear (Ø12-14 piezo buzzer/speaker),
-WS2812 stick if fix 6's window route is taken.
+| Plates | Material | Reason |
+|---|---|---|
+| Chassis, Neck and pan | PLA acceptable; PETG preferred for load parts | Large structural shells and bearing retention benefit from creep resistance. |
+| Head | PETG for back frames/panels, screen tray and door; PLA acceptable for bezel/cosmetics | The enclosed Pi can heat the tray and rear shell above comfortable PLA creep temperatures. |
+| Antennas | PETG preferred for gears, axles and rack; PLA acceptable for bracket/masts | PETG survives repeated tooth contact and journal motion better. Grease journals lightly. |
+| Worm drive | PETG | Repeated sliding contact and motor heat. Print at fine layers. |
+| Track gear and Track links | PETG | Impact, hinge fatigue, idler tension and tooth wear. |
+| Track coupon | Same PETG spool intended for the final tracks | The coupon is the calibration gate for PIP gaps, master keeper and filament pins. |
+| Hardware stand-ins | PETG preferred | These are temporary functional substitutes; metal remains the final hardware. |
+
+For Generic PETG on textured PEI, start near 250 °C nozzle / 80 °C bed, dry the spool,
+and retain the encoded brim/support choices. The exporter prints the material warning in its
+manifest so it cannot be missed.
+
+## Orientation audit
+
+| Group | Encoded orientation | Support decision |
+|---|---|---|
+| Open chassis shells | Open side upward; seam and nut access remain exposed | Tree support only where specified; six walls on structural shells. |
+| Deck plates | Cosmetic top face toward the bed | Structural tree support for underside bosses. |
+| Side panels | Upright on their integral rib feet | Tree support catches boss bottoms; wheel beams remain round and accessible. |
+| Head bezel | Glass face toward the bed | Tree support; aperture and pockets open upward. |
+| Head-back frames | Front face toward the bed | No back-wall ceiling remains after the four-piece split. |
+| Head-back panels | Outer flat wall toward the bed | Rebates, nut mouths and locating pockets face upward. |
+| Screen tray | Mount plate toward the bed, pillars upward | Structural tree support. |
+| Antenna gears | Gear axis vertical, face on bed | Support disabled to protect tooth and bore surfaces. |
+| Antenna output shafts | Axis vertical with the lower gear providing the footprint | Support disabled; auto brim stabilizes the 82 mm print. |
+| Antenna masts | Laid horizontally with rack upward | Tree support under the cylindrical mast; rack teeth stay unscarred. |
+| Pan race/cage/clips | Flat as modeled | Minimal support; bearing surfaces remain horizontal. |
+| Worm pair | Gear face / worm shaft end on bed | Fine contact surfaces; tree support enabled conservatively. |
+| Running-gear wheels | Axis vertical; data-driven flip puts the large disc down | Support disabled so D-bores and bearing seats are not scarred. |
+| PIP track strips | Grouser-down on keel feet | Support disabled. Integral hinge gaps must remain free. |
+| Track keepers | Rolled onto their wide faces | Support disabled. |
+| Long printed tilt axle | Horizontal and 45° diagonal across the bed | Support disabled; metal Ø5 rod is preferred in the final build. |
+
+## Before committing to long prints
+
+1. Print the `Track coupon` plate in the final track material.
+2. Flex all five PIP joints. They must break free without tearing the integral pins.
+3. Test the master link, both keeper bars, M2 inserts and Ø1.75 filament boundary pin.
+4. Print one antenna motor gear and confirm the double-D socket on the actual 28BYJ shaft.
+5. Print one compound idler/output pair and verify free rotation on the Ø3.9 axle in the
+   Ø4.2 bracket journal after elephant-foot cleanup.
+6. Print the tilt D-key coupon documented in `docs/ASSEMBLY.md` before the full axle stack.
+7. Measure bought bearings, motors and boards before printing dependent seats. Typical/vendor
+   dimensions in CAD are not a substitute for calipers.
+
+## Known limits
+
+- Successful slicing does not prove a tall narrow part will survive vibration. Keep the encoded
+  brims, clean the plate, and slow the first layer for shafts and masts.
+- Plastic bolt, nut, bearing and axle stand-ins are for dry assembly and low-load testing. PLA/PETG
+  creep and wear remain fundamentally worse than metal.
+- The optional arms are visual placeholders and are excluded from the printable mechanism audit.
+- Auto support is intentionally disabled on PIP tracks, gears, bearing seats and journals because
+  support scars would destroy the working surface. Do not globally enable support on those plates.

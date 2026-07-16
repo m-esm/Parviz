@@ -36,7 +36,26 @@ def main():
         sys.exit("FAIL: BambuStudio.app not found (needed for the slice check)")
     if not os.path.exists(PROJECT):
         sys.exit("FAIL: exports/bambu.3mf missing -- run tools/export_bambu.py first")
-    plates = [int(a) for a in sys.argv[1:]] or list(range(1, plate_count() + 1))
+    requested = [int(a) for a in sys.argv[1:]]
+    # BambuStudio retains native state/helper processes between repeated CLI launches
+    # on macOS and the old one-Python-process loop was killed after a few plates.  Give
+    # every plate a fresh Python parent as well as a fresh Studio process.  This mirrors
+    # the motion-sweep isolation in assembly_check.py and makes `make slicecheck` reliable.
+    if not requested and os.environ.get("SLICE_CHECK_LEAF") != "1":
+        bad = 0
+        for p in range(1, plate_count() + 1):
+            env = dict(os.environ); env["SLICE_CHECK_LEAF"] = "1"
+            r = subprocess.run([sys.executable, __file__, str(p)], cwd=ROOT, env=env,
+                               capture_output=True, text=True)
+            print(r.stdout, end="")
+            if r.stderr:
+                print(r.stderr, end="", file=sys.stderr)
+            bad += r.returncode != 0
+        if bad:
+            sys.exit(f"FAIL: {bad} isolated plate slice(s) failed")
+        print(f"PASS: all {plate_count()} plate(s) slice clean in isolated workers")
+        return
+    plates = requested or list(range(1, plate_count() + 1))
     bad = 0
     with tempfile.TemporaryDirectory() as td:
         for p in plates:

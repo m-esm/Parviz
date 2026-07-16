@@ -5,6 +5,10 @@ build.py for the assembly entry point and the overall design notes.
 """
 import numpy as np
 import trimesh
+import gc
+import os
+import sys
+from scipy.spatial import cKDTree
 from stlpaths import webpath, stlp
 
 
@@ -52,10 +56,10 @@ def _fit_report(geo):
         frozenset(("chassis_deck",)),
         # drivetrain seats / meshes (mirrors assembly_check WHITELIST)
         frozenset(("ant_bracket", "head_back")),     # bracket spine on the back wall
-        frozenset(("ant_gears_L", "antenna_L")),     # rack/pinion placeholder mesh
-        frozenset(("ant_gears_R", "antenna_R")),
-        frozenset(("ant_gears_L", "motor_ant_L")),   # G1 on each 28BYJ D-shaft
-        frozenset(("ant_gears_R", "motor_ant_R")),
+        frozenset(("ant_output_L", "antenna_L")),    # involute rack/pinion mesh
+        frozenset(("ant_output_R", "antenna_R")),
+        frozenset(("ant_motor_gear_L", "motor_ant_L")), # keyed 28BYJ D-shaft socket
+        frozenset(("ant_motor_gear_R", "motor_ant_R")),
         frozenset(("worm_wheel", "tilt_worm")),      # gear mesh
         frozenset(("worm_wheel", "neck_clevis")),    # spacer tubes in the bearing seats
         frozenset(("pan_platform", "pan_balls")),    # captured-BB groove (upper race)
@@ -132,35 +136,56 @@ def _fit_report(geo):
                 continue                                     # AABBs > 2.5 mm apart: not a fit
             small, big = (a, b) if a.area <= b.area else (b, a)
             try:
-                pts, _ = trimesh.sample.sample_surface(small, 2600)
-                d = trimesh.proximity.signed_distance(big, pts)   # >0 = inside big (press)
-                k = int(np.argmax(d))
-                if d[k] < -2.0:
+                # Low-memory surface-to-surface proximity. trimesh's signed_distance
+                # builds native rtrees on these very large meshes and the OS killed the
+                # process before a report was written. Deterministic surface samples +
+                # cKDTree bound memory; exact interference remains assembly_check's job.
+                rng = np.random.default_rng(i * 1009 + j)
+                pts, _ = trimesh.sample.sample_surface(small, 1400, seed=rng)
+                ref, _ = trimesh.sample.sample_surface(big, 9000, seed=rng)
+                dist, _nearest = cKDTree(ref).query(pts, k=1)
+                k = int(np.argmin(dist))
+                if dist[k] > 2.0:
                     continue                                 # nothing within 2 mm: skip
                 _vol = 0.0
-                if d[k] > 0.005:                             # boolean-confirm presses: the
+                if dist[k] < 0.35:                            # boolean-confirm possible press
                     try:                                     # sampler glitches at corners,
                         _iv = trimesh.boolean.intersection([a, b], engine="manifold")
                         _vol = float(_iv.volume) if _iv is not None and len(_iv.faces) else 0.0
                     except Exception:
                         _vol = -1.0                          # unknown -- keep the press flag
-                sel = np.where(d > -0.6)[0]                  # contact patch: samples < 0.6 off
+                is_press = _vol > 0.01 or _vol < 0.0
+                signed_mm = -0.001 if is_press else float(dist[k])
+                sel = np.where(dist < 0.6)[0]
                 if len(sel) > 260:
                     sel = np.random.default_rng(0).choice(sel, 260, replace=False)
                 patch = [[round(float(pts[q][0]), 2), round(float(pts[q][1]), 2),
-                          round(float(pts[q][2]), 2), round(float(-d[q]), 3)] for q in sel]
+                          round(float(pts[q][2]), 2), round(float(dist[q]), 3)] for q in sel]
                 _pair = frozenset((_SPLIT_ALIAS.get(names[i], names[i]),
                                    _SPLIT_ALIAS.get(names[j], names[j])))
                 rows.append(dict(a=names[i], b=names[j],
                                  expected=_pair in _FIT_CONTACT_OK,
-                                 mm=round(float(-d[k]), 3),  # +clearance / -press depth
-                                 press=bool(d[k] > 0.005 and _vol != 0.0),
+                                 mm=round(signed_mm, 3),
+                                 press=is_press,
                                  vol=round(_vol, 2),
                                  designed=_pair in _FIT_DESIGNED,
                                  at=[round(float(x), 2) for x in pts[k]],
                                  patch=patch))
             except Exception:
                 continue
+            finally:
+                # ProximityQuery builds an rtree/triangle cache on `big`. Across the
+                # full assembly those native caches accumulated until the FITS build
+                # was killed without writing a report. No pair reuses query state in
+                # a useful way, so release it immediately and keep peak memory bounded.
+                try:
+                    small._cache.clear()
+                    big._cache.clear()
+                except Exception:
+                    pass
+                if "pts" in locals():
+                    del pts
+                gc.collect()
     rows.sort(key=lambda r: (-1e3 - r["mm"]) if r["press"] else r["mm"])
     _json.dump(rows, open(webpath("fit_report.json"), "w"), indent=1)
     print("wrote fit_report.json (%d close pairs; %d press fits)"
@@ -179,3 +204,20 @@ def _fit_report(geo):
     return not bad
 
 
+def _load_glb(path):
+    """Load posed world meshes from a GLB for the low-memory standalone fit pass."""
+    scene = trimesh.load(path, force="scene")
+    out = {}
+    for node in scene.graph.nodes_geometry:
+        transform, geom_name = scene.graph[node]
+        mesh = scene.geometry[geom_name].copy()
+        mesh.apply_transform(transform)
+        out[node] = mesh
+    return out
+
+
+if __name__ == "__main__":
+    path = sys.argv[1] if len(sys.argv) > 1 else webpath("assembly.glb")
+    print("fitmap: standalone analysis of %s" % path, flush=True)
+    ok = _fit_report(_load_glb(path))
+    sys.exit(0 if ok else 1)

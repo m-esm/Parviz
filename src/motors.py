@@ -3,7 +3,9 @@
 Split out of the original monolithic build.py (2026-07-10); see
 build.py for the assembly entry point and the overall design notes.
 """
-from params import P
+import numpy as np
+from trimesh.transformations import rotation_matrix as R
+from params import P, TAU
 from geo import _color, box, cyl, sub, uni
 
 
@@ -43,18 +45,25 @@ def motor_tt(name):
 
 
 def motor_28byj(name):
-    """28BYJ-48 stepper, dimensionally correct: can + gearbox + offset double-D shaft + two
-    ears (holes on a can diameter) + wiring box. Shaft along +Z, shaft base at z=top.
+    """28BYJ-48 stepper, dimensionally correct: can + offset double-D shaft + two ears
+    (holes on a can diameter) + wiring box. Shaft along +Z, shaft base at z=top.
 
     The output shaft is offset motor_shaft_off in +X; the two ear holes lie on the Y axis
     (perpendicular to the offset), 35 mm apart, centered on the CAN axis -> to land the shaft
     on a target axis you position the CAN, not the ears (see build()).
+
+    2026-07-16 (user: "motors mounted wrongly to the gears"): the old placeholder stacked
+    a phantom 9 mm "gearbox" tier between the can face and the shaft (motor_gear_h) --
+    fiction; the real 28BYJ-48 gearbox lives INSIDE the 18.8 can and the shaft protrudes
+    straight from the top plate (~28.6 total, confirmed by the reference mesh + datasheet).
+    Every gear had been positioned to the phantom shaft plane, so the real motor's shaft
+    could not reach it. The shaft-base planes (and every gear keyed to them) stayed put;
+    the CANS moved 9 mm toward their gears via the derived can-bottom formulas.
     """
     r = P["motor_can_d"] / 2
     off = P["motor_shaft_off"]
     can = cyl(r, P["motor_body_h"]); can.apply_translation((0, 0, P["motor_body_h"] / 2))
-    gh, top = P["motor_gear_h"], P["motor_body_h"] + P["motor_gear_h"]
-    gear = cyl(r - 0.5, gh); gear.apply_translation((0, 0, P["motor_body_h"] + gh / 2))
+    top = P["motor_body_h"]
     boss = cyl(P["motor_boss_d"] / 2, 1.45); boss.apply_translation((off, 0, top + 0.72))
 
     # double-D output shaft: round Ø motor_shaft_d, flats motor_shaft_flat apart over top 6 mm
@@ -76,9 +85,31 @@ def motor_28byj(name):
     wbox = box(6.0, P["motor_wbox_w"], P["motor_wbox_h"])
     wbox.apply_translation((-(r + 2), 0, P["motor_wbox_h"] / 2))
 
-    m = uni([can, gear, boss, shaft, ear, wbox])
+    m = uni([can, boss, shaft, ear, wbox])
     _color(m, "motor")
     m.metadata["name"] = name
     return m
 
+
+def antenna_motor(side_sign, name):
+    """Pose one antenna 28BYJ with its shaft inboard on the declared gear axis.
+
+    `side_sign` is -1 left / +1 right.  The first rotation points local +Z inboard.
+    The second must use the OPPOSITE sign so the eccentric local +X shaft offset rolls
+    toward -Y.  The can is then translated forward by exactly that offset, leaving the
+    shaft at ant_motor_y.  Using the same sign for both rotations double-added the
+    eccentricity and mounted every antenna motor 15.75 mm ahead of G1.
+    """
+    if side_sign not in (-1, 1):
+        raise ValueError("side_sign must be -1 or +1")
+    m = motor_28byj(name)
+    m.apply_transform(R(-side_sign * TAU / 4, (0, 1, 0)))  # shaft points inboard
+    m.apply_transform(R(side_sign * TAU / 4, (1, 0, 0)))   # eccentric offset -> -Y
+    # can bottom at |x| 44.5 = the fixed shaft-base plane 25.7 + the real can height
+    # (was 53.5 with the phantom gearbox tier; the shaft/flat band |x| 15.95..21.95
+    # and the G1 gear keyed to it did NOT move -- see motor_28byj's 2026-07-16 note).
+    m.apply_translation((side_sign * (25.7 + P["motor_body_h"]),
+                         P["ant_motor_y"] + P["motor_shaft_off"],
+                         P["ant_motor_z"]))
+    return m
 

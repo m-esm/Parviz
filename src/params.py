@@ -150,11 +150,11 @@ P = {
     # bosses. Screw heads land at z 212, which is 2.5 ABOVE the trim_hatch_frame's top
     # (203.5) and well above the door outline (188.2) and louvres (187) -- so they stay on
     # fixed, visible wall and are not buried under the glued-on orange frame.
-    "ant_mount_x": (26.0, 62.0),   # 4 points/head. x 26 threads the gap between the
-                                   # gearbox (x 25.7..34.7) and the G1 gear plane (x 22);
-                                   # x 62 sits between the motor can (to 53.5) and the
-                                   # outer arm (76.75). Both clear the y -48.1..-44.1
-                                   # half-shaft (the bosses live at y <= -54).
+    "ant_mount_x": (26.0, 62.0),   # 4 points/head. x 26 threads past the G1 gear plane
+                                   # (x 22) and the can front (26.7); x 62 sits between
+                                   # the motor can (to 44.5 since the 2026-07-16 phantom-
+                                   # tier fix) and the outer arm (76.75). Both clear the
+                                   # y -48.1..-44.1 half-shaft (bosses live at y <= -54).
     "ant_mount_z": 212.0,
     "ant_mount_boss": (10.0, 12.0),   # boss (X, Z): 2.15 webs beside the 5.7 nut slot,
                                       # 2.825 under the seat
@@ -163,9 +163,10 @@ P = {
                                       # tip 2.0 past the nut
     # Motor FACE PLATE: 1.2 -> 2.5 (audit P0-4; these plates already printed SEVERED once,
     # see the 2026-07-10 connectivity audit). It grows OUTBOARD only: its inboard face is
-    # the datum the 28BYJ's 1.0-thick ear flange (x 34.7..35.7) bolts to, and 36.0 also
-    # lifts that placeholder gap 0.2 -> 0.3 (the CSG-robustness floor).
-    "ant_plate_x": 36.0,      # face-plate inboard face (was 35.9)
+    # the datum the 28BYJ's 1.0-thick ear flange (x 25.7..26.7 since the 2026-07-16
+    # phantom-tier fix moved the can 9 inboard-shorter) bolts to, keeping the 0.3
+    # ear-to-plate gap (the CSG-robustness floor).
+    "ant_plate_x": 27.0,      # face-plate inboard face (36.0 - 9 on 2026-07-16)
     "ant_plate_t": 2.5,       # ... thickness (was 1.2)
     # EAR BOLTS: 2x M3x10 per motor through the ear + plate into a captive nut on the
     # OPEN OUTBOARD face (replaces two vestigial Ø2.5 self-tap pilots in a 1.2 plate).
@@ -176,7 +177,7 @@ P = {
     # 0.8 to the can and 1.725 of pad beyond the hex corner.
     "ant_ear_pad": (9.0, 7.5, 6.0),   # (Y, Z, X-depth off the plate's outboard face)
     "ant_ear_pad_off": 1.15,          # radial push away from the can
-    "ant_ear_nut_x": 41.0,            # nut mid-plane (trap x 39.6..42.4)
+    "ant_ear_nut_x": 32.0,            # nut mid-plane (trap x 30.6..33.4; -9 2026-07-16)
 
     # --- head_back PANEL <-> FRAME joint (2026-07-15 FASTENING AUDIT P1 + P2-8) ---
     # Was: 6x M3 into Ø2.5 self-tap pilots through 9-wide tabs that the corner curve clips
@@ -766,25 +767,27 @@ P = {
                                  # edge (slant length 36.06): bore rim keeps 1.3 to
                                  # the wall-top corner, board top keeps 0.7 under the
                                  # pocket ceiling (z 62.5, top skin 3.5)
-    # Pan-motor seat detailing (re-derived for base_h 66: can bottom 26.45, ear-bar
-    # underside = pedestal top = 44.25, can top 45.25, gear face 54.25): the 7-wide x
-    # 1-thick ear bar clamps on two DEFINED pads instead of the whole 48x48 top, and the
-    # can's top band registers in a collar ring right under the Ø27.25 gear stack.
+    # Pan-motor seat detailing (re-keyed 2026-07-16 with the phantom gearbox tier gone:
+    # can bottom 21.95, ear-bar underside = pedestal top = 39.75, can top = gear face
+    # 40.75): the 7-wide x 1-thick ear bar clamps on two DEFINED pads instead of the
+    # whole 48x48 top, and the can's top band registers in the collar ring right under
+    # the 32T pan gear.
     "ped_pad_wxy": (9.0, 10.0),   # ear seat pads (X x Y) centered on the +-17.5 ear holes
     # PAN-MOTOR EAR captive nuts (2026-07-15, FASTENING_AUDIT P1 -- they were Ø2.5x16
     # thread-form pilots; the audit assumed no nut face was reachable and specced a
     # heat-set insert, but probing disproved that, same as the tilt_carrier).
-    # Nut centre 25.4 -> nut 24.0..26.8: 3.95 mm of pad above it in compression under
-    # the motor's ear bar (top at ear_z 30.75), and an M3x8 driven from the ear bar
-    # tips out at 23.75, i.e. dead through the nut into the bore's tip relief.
-    "ped_ear_nut_z": 25.4,
+    # Nut centre 34.4 -> nut 33.0..35.8: 3.95 mm of pad above it in compression under
+    # the motor's ear bar (top at ear_z 39.75), and an M3x8 driven from the ear bar
+    # tips out at 32.75, i.e. dead through the nut into the bore's tip relief.
+    # (25.4 -> 34.4 on 2026-07-16: the whole nut stack rode the +9 ear_z shift.)
+    "ped_ear_nut_z": 34.4,
     # run 7.0: seat at ear +-3.175 OUTBOARD (3.3 mm of the 48x48 body beyond it), mouth
     # 3.8 the other way -- past the can bore wall, so the nut loads through the bore.
     "ped_ear_nut_run": 7.0,
     "ped_ear_nut_seat_clear": 0.4,      # see pan_clip_nut_seat_clear
     "ped_relief": 0.8,            # pedestal top dropped 0.8 outside pads + collar footing
     "ped_collar_od": 32.0,        # collar OD; ID = the Ø29 can bore (can Ø28.25 registers)
-    "ped_collar_h": 1.5,          # collar top 45.75: wraps the can's last 1.0 + gear root
+    "ped_collar_h": 1.5,          # collar top 41.25: wraps the can's last 0.5 + boss root
     # 2nd ULN2003 standoff set (tilt driver's base-side mount option; it can also take the
     # MX1588 track driver). The task-suggested mirror (-38,+-20) fails: board 35x32 at
     # (-38,+-20) spans x -55.5..-20.5 and overlaps the 48x48 pedestal (x -31.9..16.1,
@@ -1049,8 +1052,10 @@ P = {
     # --- 28BYJ-48 5V geared stepper (owned x6, + ULN2003 x9). Dims from the beckdac SCARA
     #     SCAD model, cross-checked vs the Mouser datasheet (real, not eyeballed). ---
     "motor_can_d": 28.25,   # can (body) diameter
-    "motor_body_h": 18.8,   # can height
-    "motor_gear_h": 9.0,    # gearbox stack proud of the can face (approx)
+    "motor_body_h": 18.8,   # can height (the gearbox is INSIDE the can; the old
+    #                         "motor_gear_h" 9.0 phantom tier above the can face was
+    #                         deleted 2026-07-16 -- the shaft protrudes straight from
+    #                         the top plate, per the reference mesh + datasheet)
     "motor_shaft_off": 7.875,   # output shaft offset from the can axis (the 28BYJ-48 quirk)
     "motor_shaft_d": 4.93,  # round part of the D-shaft (nominal 5)
     "motor_shaft_flat": 3.0,    # across-flats of the double-D (torque key)

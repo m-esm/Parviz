@@ -31,7 +31,7 @@ from gears import (gear_disc, load_gear_stl, pan_gear_mesh_deg, pan_real_ok, wor
                    worm_cd, worm_real_ok)
 from screen import load_screen, screen_pose
 from tracks import _spr_cz, build_tracks
-from motors import motor_28byj, motor_tt
+from motors import antenna_motor, motor_28byj, motor_tt
 import refparts
 from pan import build_pan_clips, build_pan_platform, build_pan_race
 from neck import build_neck_clevis, build_tilt_carrier, build_trim_neckfoot
@@ -245,7 +245,7 @@ def build():
     mt = motor_28byj("motor_tilt")
     mt.apply_transform(R(-TAU / 4, (1, 0, 0)))       # shaft +Z -> +Y
     mt.apply_transform(R(-TAU / 4, (0, 1, 0)))       # roll: shaft offset +X -> +Z
-    mt.apply_translation((wx, face_y - 2 - (P["motor_body_h"] + P["motor_gear_h"]),
+    mt.apply_translation((wx, face_y - 2 - P["motor_body_h"],
                           wz - P["motor_shaft_off"]))
     add(mt, M_pan)
     # removable cartridge carrier: the motor's ears bolt to it on the bench; 4x M3 from the
@@ -266,7 +266,9 @@ def build():
     sx_, sy_ = cd_pan * np.cos(paz), cd_pan * np.sin(paz)                  # shaft (-19.2, 0)
     gz0, gz1 = P["pan_gear_z"]
     gf_pan = gz0 - 3.75 - 0.5        # gear face 40.75: flats (gf+3.75..gf+9.75) cover 45..50
-    zsh = gf_pan - (P["motor_body_h"] + P["motor_gear_h"])                 # can bottom 12.95
+    zsh = gf_pan - P["motor_body_h"]                 # can bottom 21.95 (2026-07-16: the
+    #                                                  phantom gearbox tier is gone; the
+    #                                                  can top IS the gear face 40.75)
     mp = motor_28byj("motor_pan")
     mp.apply_transform(R(-TAU / 4, (0, 0, 1)))       # offset +X -> -Y; ears -> X; wbox -> +Y
     mp.apply_translation((sx_, sy_ + P["motor_shaft_off"], zsh))
@@ -332,14 +334,10 @@ def build():
         add(mast, M_ant, f"{mast.metadata['name']}.stl")
         pose_groups["head"].append(mast.metadata["name"])   # add() saw M_ant, not M_head
     for pc in build_ant_drive():
-        add(pc, M_head, "ant_bracket.stl" if pc.metadata["name"] == "ant_bracket" else None)
+        add(pc, M_head, f"{pc.metadata['name']}.stl")
     for sxa, side in ((-1, "L"), (1, "R")):          # one stepper PER MAST (user:
-        ma = motor_28byj(f"motor_ant_{side}")        # independently controllable):
-        ma.apply_transform(R(-sxa * TAU / 4, (0, 1, 0)))   # shaft points inboard,
-        ma.apply_transform(R(-sxa * TAU / 4, (1, 0, 0)))   # offset rolled to -Y,
-        ma.apply_translation((sxa * 53.5,            # ears vertical
-                              P["ant_motor_y"] + P["motor_shaft_off"],
-                              P["ant_motor_z"]))
+        ma = antenna_motor(sxa, f"motor_ant_{side}") # independently controllable;
+                                                        # shaft inboard, ears vertical
         add(ma, M_head)
     add(build_hatch_frame(), M_head)                 # rear orange hatch frame (design ref)
     add(build_cam_pod(), M_head)                     # raised camera eye-pod (design ref)

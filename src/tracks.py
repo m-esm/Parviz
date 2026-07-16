@@ -640,8 +640,8 @@ def build_tracks():
             nt.apply_translation((sx * 75.85, ry, rwz))
             hw.append((f"wheel_nut_{bi}", nt))
         for ey_, bnm in ((wb / 2, "end_bolt_front"), (-wb / 2, "end_bolt_rear")):
-            sh8 = cyl(4.0, 60.4, axis="x")             # M8 END BOLT-AXLES: shank x 58..
-            sh8.apply_translation((sx * 88.2, ey_, za))    # 118.4 through bearings +
+            sh8 = cyl(4.0, 70.0, axis="x")             # M8x70: x 48.4..118.4
+            sh8.apply_translation((sx * 83.4, ey_, za))    # through bearings + tower
             hd8 = cyl(6.5, 5.3, axis="x")              # pylon, head = outboard hubcap
             hd8.apply_translation((sx * 121.05, ey_, za))
             ws8 = cyl(7.2, 1.5, axis="x")              # Ø14.4 washer on the pylon
@@ -656,7 +656,14 @@ def build_tracks():
             # on the tower face, and the front cage spans the whole tension stroke -- so
             # a bare track module tensions with zero hull pieces on the bench.
             nt8.apply_translation((sx * 58.0, ey_, za))
-            hw.append((bnm, trimesh.util.concatenate([sh8, hd8, ws8, nt8])))
+            # OUTBOARD JAM NUT closes the axle clamp stack. It bears on the tower's
+            # x=70 face while the inner nut/washer bears on x=62, so tightening clamps
+            # the tower instead of dragging the idler across the former 17.4 mm air gap.
+            jam8 = cyl(7.2, 6.0, axis="x", sections=6)
+            if ey_ > 0:
+                jam8.apply_transform(R_x(TAU / 12))
+            jam8.apply_translation((sx * 73.0, ey_, za))
+            hw.append((bnm, trimesh.util.concatenate([sh8, hd8, ws8, nt8, jam8])))
             # F688ZZ placeholders (2026-07-11, user: "bolt not properly connected
             # to the idler" -- the Ø8 shank floated in the Ø16 seat where the
             # bought bearings live): one flanged ring per idler face (ring Ø8.1/
@@ -735,5 +742,3 @@ def build_tracks():
     cp.metadata["scene"] = False
     out.append(cp)
     return out
-
-

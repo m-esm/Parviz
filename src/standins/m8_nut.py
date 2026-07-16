@@ -79,7 +79,7 @@ from threads import thread_solid
 
 from ._common import _zmin0
 
-COUNT = 4
+COUNT = 8             # 4 inner cage nuts + 4 outboard tower-clamping jam nuts
 NAME = "hw_m8_nut"
 
 AF = 13.0          # across-flats: the cage window (13.40 gap) was cut for exactly this

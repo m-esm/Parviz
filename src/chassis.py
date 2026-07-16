@@ -1795,7 +1795,7 @@ def build_pan_pedestal():
     the neck motor mount is built in chassis_lower_* -- separate it, bolt+nuts to
     the belly plate"). The exact hull pedestal geometry, re-rooted on the belly
     plate's plug top (z 10) instead of the hull floor (z 12): rounded 48x48 body
-    to the ear-bar underside (ear_z 30.75), Ø29 through can-drop bore, +Y wiring-
+    to the ear-bar underside (ear_z 39.75), Ø29 through can-drop bore, +Y wiring-
     box relief, M3 ear pilots, the 0.8 seat-pad relief (two ear pads + collar
     footing), the Ø32/Ø29 can-locating collar (ear-bar + wbox notches), and the
     deck-cable-pass corner cut. NEW: 4 corner feet with side-slide M3 hex-nut
@@ -1807,11 +1807,11 @@ def build_pan_pedestal():
     z0 = P["chassis_clear"]
     zb = z0 + 3.0 + 0.05                              # plug top 10 + 0.05 seat air
     mx, my = _ped_c()
-    zsh = (P["pan_gear_z"][0] - 4.25) - (P["motor_body_h"] + P["motor_gear_h"])
-    ear_z = zsh + P["motor_body_h"] - 1.0             # ear-bar underside (30.75)
+    zsh = (P["pan_gear_z"][0] - 4.25) - P["motor_body_h"]     # can bottom 21.95
+    ear_z = zsh + P["motor_body_h"] - 1.0             # ear-bar underside (39.75)
     ped = rounded_box(48, 48, ear_z - zb, 6.0)
     ped.apply_translation((mx, my, zb))
-    # Ø29 can relief: THROUGH bore now (the can bottom hovers ~2.9 over the plug)
+    # Ø29 can relief: THROUGH bore now (the can bottom hovers ~11.9 over the plug)
     canb = cyl(29.0 / 2, ear_z + 2 - zb + 2)
     canb.apply_translation((mx, my, (zb + ear_z + 2) / 2))
     ped = sub(ped, canb)

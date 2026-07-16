@@ -98,9 +98,19 @@ make viewer      # http://localhost:8770/viewer_glb.html (live-reloads on rebuil
 make shot        # headless renders -> .claude/renders/ (viewer must be running)
 make check       # pairwise interference gate on the current assembly
 make check-sweep # interference gate across the pan x tilt pose grid
+make jointcheck  # declared mating geometry, fasteners, access, and assembly paths
+make gate-tests  # prove the joint gates reject deliberately broken fixtures
 ```
 
 `EXPORT=1 python3 src/build.py` writes the per-part STLs under `stl/{base,neck,head}/`.
+
+Before producing print files, run `make assembly-release`. It regenerates the geometry,
+runs the invariant, joint-contract, wall, static/swept interference, and fit gates in a
+fixed order, rebuilds the printable files, headless-slices every Bambu plate, and renders
+the docs. The explicit ordering prevents a parallel Make invocation from checking stale
+STLs or a GLB while another target is rewriting it. Joint declarations and maintenance
+rules live in [docs/JOINTS.md](docs/JOINTS.md); the machine-readable result is written to
+`web/joint_report.json`.
 
 **Assembly** is a verified 18-step order, from an insertion-path and torque-path audit, in
 [docs/ASSEMBLY.md](docs/ASSEMBLY.md), including the full BOM cross-checked against on-hand
@@ -153,7 +163,7 @@ Runs on Raspberry Pi 5 (2GB), Raspberry Pi OS trixie, Camera Module 3 (imx708). 
 | `web/` | `viewer_glb.html` + committed `assembly.glb` (a fresh clone shows the robot) |
 | `tools/gears/` | Worm/wheel tooth generator + mesh verifier (runs in a py3.10 venv) |
 | `software/` | Face, stepper, and camera code for the Pi |
-| `docs/` | [ASSEMBLY](docs/ASSEMBLY.md) (BOM + order), [WORM](docs/WORM.md), [ARM-MECH](docs/ARM-MECH.md), [PRINTABILITY](docs/PRINTABILITY.md), [CABLE-CHECK](docs/CABLE-CHECK.md), [FIXES](docs/FIXES.md) |
+| `docs/` | [ASSEMBLY](docs/ASSEMBLY.md) (BOM + order), [JOINTS](docs/JOINTS.md) (machine-checked interface contracts), [WORM](docs/WORM.md), [PRINTABILITY](docs/PRINTABILITY.md), [FIXES](docs/FIXES.md) |
 | `reference/` | Bought/borrowed CAD: touchscreen, camera, tank track, TT motor, display style |
 
 ## Design references & credits

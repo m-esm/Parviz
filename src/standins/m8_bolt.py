@@ -47,11 +47,10 @@ Probed CLEAR -- first contact with the track links is at O32, so O22 keeps 5.0 m
 radial margin at the nominal loop position.
 
 The head does NOT clamp: its inboard face keeps a 1.0 gap to the wheel face (117.4). It
-is a retainer, not a clamp face -- the idler has to spin. That gap is deliberate and is
-also the reason this bolt CANNOT preload the track; see the report / the package
-LOAD LIMITS. The thread makes the BOLT-TO-NUT joint real; it does not close the 17.4 mm
-hole in the middle of the clamp stack (tower outboard face 70.0 -> inner bushing 87.4),
-which is a design gap that bites the metal M8 just as hard as the printed one.
+is a retainer, not a clamp face -- the idler has to spin. Tower preload comes from the
+two-nut stack instead: an outboard jam nut bears at x=70 and the inner nut/washer bears
+at x=62. The extended thread crosses both nuts and the tower, so the bolt is fixed to
+the tension slot while the idler remains free on its smooth journal.
 
 PRINT: head-down, thread up, axis VERTICAL (mandatory -- a vertical thread is a spiral
 of ~30 deg overhangs and is fully self-supporting; laid down it smears). NOSUP. The
@@ -83,15 +82,15 @@ NAME = "hw_m8_bolt"
 # --- stations, world x on the R side (probed; see the docstring diagram) ---
 _X_HEAD_OUT = 126.4
 _X_HEAD_IN = 118.4      # 1.0 running gap to the wheel/bushing face at 117.4
-_X_TOWER_IN = 62.0      # thread starts here: inboard of the O8.4 tension slot
+_X_THREAD_OUT = 78.0    # thread starts 8 mm outboard of the tower for the jam nut
 _X_TIP = 48.4           # full engagement of an 8.0-thick NYLOC bearing at 60.5
 
 SHANK_D = 8.0           # the agreed interface: f688_bushing bore O8.3 runs on this,
                         # and the towers' O8.4 slot/bore slides on it
 HEAD_D = 22.0           # 5.0 radial margin to the track links (first contact O32)
 HEAD_H = _X_HEAD_OUT - _X_HEAD_IN               # 8.0
-JOURNAL_L = _X_HEAD_IN - _X_TOWER_IN            # 56.4 -- smooth, no thread
-THREAD_L = _X_TOWER_IN - _X_TIP                 # 13.6
+JOURNAL_L = _X_HEAD_IN - _X_THREAD_OUT           # 40.4 -- smooth under both bushings
+THREAD_L = _X_THREAD_OUT - _X_TIP                # 29.6 -- jam nut + tower + inner nut
 
 _KNURL_N = 20           # flutes: vertical in the print orientation, zero overhang
 _KNURL_R = 1.1
@@ -99,8 +98,8 @@ _TIP_CHAM = 1.0         # lead-in so the nut starts square
 
 
 def build():
-    """Head-down M8x70: knurled thumb head z 0..8, smooth O8 journal to z 64.4,
-    real ISO M8 coarse thread z 64.4..78.0, chamfered tip."""
+    """Head-down M8x70: knurled thumb head z 0..8, smooth O8 bearing journal,
+    then ISO M8 coarse thread through the jam-nut/tower/inner-nut clamp stack."""
     hd = cyl(HEAD_D / 2, HEAD_H)
     hd.apply_translation((0, 0, HEAD_H / 2))
     for k in range(_KNURL_N):                    # scalloped grip, cut from the rim

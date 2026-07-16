@@ -179,8 +179,9 @@ Tracks:
 - 695-2RS hoop press: coupon first; fallback Ø13.05 bore + printed cap/circlip.
 - worm_wheel D-key +0.05: coupon first; keep a fallback oversize variant.
 - led_strip recess: no retention modeled — note glue in ASSEMBLY.md or add a lip.
-- Stand-ins: M8 plastic press nuts cannot hold tension preload (expect track sag
-  in dry assembly, by design); seam dowel Ø4.0-in-Ø4.0 is jam-or-rattle → hole +0.1.
+- Stand-ins historical note: the M8 press-nut/tension defect was resolved 2026-07-16
+  with real printed threads plus an outer jam nut on every tower; seam dowel
+  Ø4.0-in-Ø4.0 remains jam-or-rattle → hole +0.1.
 - Stale comments: tracks.py:461, 516-518 (deleted pod rails / nut ducts),
   chassis.py:706 (slot depth overstated).
 

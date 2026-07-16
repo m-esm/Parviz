@@ -2,7 +2,7 @@
 # and web/assembly.glb. Run `make help`. See the 3d-print-modeling skill for the loop.
 PORT ?= 8770         # dedicated to desk-pi; 8765 collides with the finnish-doors serve.py
 
-.PHONY: help install build viewer shot watch check check-sweep fits export stls slicecheck wallcheck invariants tipover docs all
+.PHONY: help install build viewer shot watch check check-sweep fits export stls slicecheck wallcheck invariants jointcheck gate-tests tipover docs all assembly-release
 
 help:                ## List targets
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
@@ -31,7 +31,8 @@ check-sweep:         ## Interference gate across the pan x tilt pose grid (rebui
 	python3 src/assembly_check.py --sweep
 
 fits:                ## Fit/pressure map -> web/fit_report.json + NEUTRAL-pose assembly.glb
-	FITS=1 PAN=0 TILT=0 ANT=0 python3 src/build.py
+	PAN=0 TILT=0 ANT=0 python3 src/build.py
+	python3 src/fitmap.py web/assembly.glb
 	@echo "viewer now shows the neutral pose matching the fit patches; 'make build' restores the preview pose"
 
 export:              ## Regenerate STLs + sliceable Bambu .3mf plates -> exports/ (settings baked in)
@@ -50,20 +51,36 @@ wallcheck: stls      ## Wall-thickness gate on the printed STL set (ray thicknes
 invariants: stls     ## Design-invariant gate: user-approved features asserted vs STLs/GLB/PARAMS (src/checks.py)
 	python3 src/checks.py
 
+jointcheck: stls     ## Assembly-joint contract gate -> web/joint_report.json (fresh exported geometry)
+	python3 src/joint_checks.py --report web/joint_report.json
+
+gate-tests:          ## Mutation/unit tests proving assembly gates reject known-bad joints
+	python3 -m unittest discover -s tests -p 'test_*.py'
+
 tipover:             ## Mass/CoM/stability report: tip angles, accel limits, fast-pan swing (INFILL=0.5 = conservative)
 	python3 tools/tipover.py
 
 docs:                ## Render project markdown docs -> web/docs/*.html (linked from the viewer top nav)
 	python3 tools/build_docs.py
 
-all:                 ## Full pipeline: build GLB, interference gate, design invariants, then export STLs + .3mf plates
-	python3 src/build.py
-	python3 src/assembly_check.py web/assembly.glb
+all: assembly-release ## Full verified release pipeline (alias for assembly-release)
+
+# Keep this as an explicit recipe, not an unordered prerequisite list. Several gates
+# consume generated files and `fits` deliberately writes a neutral-pose assembly.glb;
+# an invocation using `make -j` must not race a reader against either writer.
+assembly-release:    ## Fresh geometry, all assembly gates, export, slice check, and docs
+	$(MAKE) gate-tests
 	EXPORT=1 python3 src/build.py
 	python3 src/checks.py
+	python3 src/joint_checks.py --report web/joint_report.json
 	python3 src/wallcheck.py
+	python3 src/assembly_check.py web/assembly.glb
+	python3 src/assembly_check.py --sweep
+	FITS=1 PAN=0 TILT=0 ANT=0 python3 src/build.py
+	EXPORT=1 python3 src/build.py
+	python3 tools/export_bambu.py
+	python3 tools/slice_check.py
 	python3 tools/build_docs.py
-	$(MAKE) export
 
 pages:               ## Force a Pages deploy now (normally AUTOMATIC: pushing web/ to main triggers .github/workflows/pages.yml)
 	gh workflow run pages.yml

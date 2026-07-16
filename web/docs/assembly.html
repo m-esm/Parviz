@@ -121,7 +121,7 @@
   <a href="../viewer_glb.html">Viewer</a>
   <a class="pl" href="../docs/electronics.html">Electronics</a><a class="pl on" href="../docs/assembly.html">Assembly</a><a class="pl" href="../docs/wiring.html">Wiring &amp; power</a>
   <div class="dd"><button aria-haspopup="true">Docs &#9662;</button>
-    <div class="menu"><a href="../docs/index.html">All docs</a><a href="../docs/electronics.html">Electronics</a><a href="../docs/assembly.html">Assembly</a><a href="../docs/wiring.html">Wiring &amp; power</a><a href="../docs/printability.html">Printability</a><a href="../docs/fixes.html">Fix ledger</a><a href="../docs/worm.html">Worm drive</a><a href="../docs/arm-mech.html">Arm mechanism</a><a href="../docs/cable-check.html">Cable check</a><a href="../docs/reference-audit.html">Reference audit</a><a href="../docs/awareness.html">Awareness</a><a href="../docs/software.html">Software</a></div></div>
+    <div class="menu"><a href="../docs/index.html">All docs</a><a href="../docs/electronics.html">Electronics</a><a href="../docs/assembly.html">Assembly</a><a href="../docs/joints.html">Joint contracts</a><a href="../docs/mechanism-audit.html">Mechanism audit</a><a href="../docs/wiring.html">Wiring &amp; power</a><a href="../docs/printability.html">Printability</a><a href="../docs/fixes.html">Fix ledger</a><a href="../docs/worm.html">Worm drive</a><a href="../docs/arm-mech.html">Arm mechanism</a><a href="../docs/cable-check.html">Cable check</a><a href="../docs/reference-audit.html">Reference audit</a><a href="../docs/awareness.html">Awareness</a><a href="../docs/software.html">Software</a></div></div>
   <a class="gh" href="https://github.com/m-esm/parviz" title="source">GitHub</a>
 </nav>
 <main>
@@ -132,7 +132,7 @@ below). The 2026-07-08 maintenance pass then killed the worst service traps: til
 rear-access cartridge (<code>tilt_carrier</code>), the worm wheel is D-keyed to a flatted axle (no blind
 grub), tracks close with a master link (no loop-flexing), the pan race got a BB cage, both
 joints got stall-homing hard stops, the microSD swaps through a plugged left-wall slot, the
-pod rails thread-form (no buried nuts), and power is a 12 V PD-trigger + dual-buck belly tray
+positively located side-panel joints, and power is a 12 V PD-trigger + dual-buck belly tray
 (firmware/WIRING.md). Not print-final: still open is a D-key fit coupon for the axle flat.</p>
 <h2 id="bill-of-materials">Bill of materials</h2>
 <p>Owned quantities cross-checked against a personal parts inventory (2026-07-07; re-audited
@@ -327,17 +327,17 @@ settled below). "Need" is per robot.</p>
 </tr>
 <tr>
 <td>M8x<strong>70</strong> bolts + NYLOC nuts</td>
-<td>END BOLT-AXLES (2026-07-11: plain stubs had no retention): head = outboard hubcap, shank through the F688 pair + pylon, nut inboard; front nuts CLAMP the tension slots (no set screws). <strong>LENGTH CORRECTED 2026-07-16 (was M8x60): the modeled stack gives ~57.9 of grip, so a 60 shank engages the nut over only ~2.1-2.5 mm = ~2 turns, and an 8.0 NYLOC's nylon insert sits PAST the end of the bolt -- i.e. "NYLOC required" bought a lock the geometry could not reach.</strong> Bad practice in steel; a creep concentrator in PLA. +4 washers</td>
+<td>END BOLT-AXLES: head = outboard hubcap, smooth journal through both F688s, thread begins at x=78 and crosses the tower clamp stack. M8x60 is too short to reach the NYLOC insert.</td>
 <td>4+4</td>
-<td>0 -- <strong>SETTLED 2026-07-13: the Bag 13 "Machine Bolts" bag label reads 30PCS M3-30</strong> (plain M3x30 pan heads), no M8 anywhere in inventory</td>
-<td><strong>4x M8x70 + 4 NYLOC + 4 washers</strong></td>
+<td>0</td>
+<td><strong>4x M8x70 + 4 NYLOC</strong></td>
 </tr>
 <tr>
-<td>M8 JAM NUTS (<strong>pending a decision, see below</strong>)</td>
-<td><strong>OPEN DEFECT, affects the METAL build identically (2026-07-16):</strong> the end-axle clamp stack has <strong>17.4 mm of AIR</strong> in it -- the tower's outboard face ends at x 70.0, the idler's inner bushing starts at x 87.4, and nothing sits between the nut face and the head face to squeeze. Tightening the nut closes that air first: the idler slides inboard, <strong>jams on the tower and seizes</strong>. So the front axles cannot tension the track <em>at all</em>, in plastic or steel -- the printed thread is not the limitation. Fix (probed to clear at Ø13 through Ø22 across the full -2..+6.5 travel, both ends): a <strong>jam nut on the tower's OUTBOARD face</strong>, clamping the bolt to the tower and leaving the idler free on its journal. Needs the thread run extended to reach x 78 (one constant in <code>src/standins/m8_bolt.py</code>) and the same on the metal bolt. NOT APPLIED: it changes the tensioner architecture.</td>
-<td>4</td>
+<td>M8 JAM NUTS + washers</td>
+<td><strong>Required and modeled:</strong> one AF13 jam nut bears on each tower's outboard face; the washer and NYLOC bear inboard. This closes the previous 17.4 mm air gap, clamps the tension slot/tower, and leaves the idler free on the smooth journal. The printed export likewise contains 8 total M8 nuts.</td>
+<td>4+4 washers</td>
 <td>0</td>
-<td><strong>4x M8 jam nut</strong> if adopted</td>
+<td><strong>4x M8 jam nut + 4 washers</strong></td>
 </tr>
 <tr>
 <td>608zz</td>
@@ -450,8 +450,8 @@ tracks, bezel, neck, pan parts, cosmetics -- can stay PLA. The black CR-PETG spo
 (Tray 1) covers the PETG set.</p>
 <ul>
 <li><code>chassis_lower_front</code> / <code>chassis_lower_rear</code>: the open-top tub, split at y=+26 for
-  print speed; join with 2x M3x12 (axis Y, heads in the front pads, thread-form rear)</li>
-<li>2x Ø4 dowels in the floor pads at x +-61, then the deck + pod rails bridge it</li>
+  print speed; join with 2x M3x20 (axis Y, heads in the front pads, captive nuts rear)</li>
+<li>2x Ø4 dowels in the floor pads at x +-61; the deck and bolted side panels bridge it</li>
 <li><code>chassis_deck_front</code> / <code>chassis_deck_center</code> / <code>chassis_deck_rear</code>: the pan deck in
   three plates (seams y 66/-52, half-laps + 2x M3 down through each strip into shelf
   pilots); the center carries the whole pan seat + its own 4 hold-downs; the corner
@@ -459,7 +459,7 @@ tracks, bezel, neck, pan parts, cosmetics -- can stay PLA. The black CR-PETG spo
 <li><code>track_L</code> / <code>track_R</code>: tank track pods: 64 links/side (4 print-in-place strips +
   master; integral Ø2.0 pins in-strip, Ø1.75 filament pins at the 5 boundaries), 12T
   pin-pocket sprocket (real circular pin seats since 2026-07-10, r 1.15 on the 19.32
-  pin circle), 2 end idlers on 2x F688ZZ each (30 wide; front tensions in its deck pylon),
+  pin circle), 2 end idlers on 2x F688ZZ each (30 wide; front tensions in its panel tower),
   TWO ground-run drive sprockets (spr_y rear + spr_y2 front; the front motor is
   OPTIONAL, all fittings modeled), 5 dished road wheels/side
   (30 wide) on M4x40 bolt-axles off the pod-rail wheel beams</li>
@@ -481,15 +481,15 @@ tracks, bezel, neck, pan parts, cosmetics -- can stay PLA. The black CR-PETG spo
 <li><code>cam_cover</code>: camera board cover and cable trap</li>
 <li><code>sd_plug</code>: friction plug for the microSD service slot (left wall + trim_rail_L); pull it,
   reach the card with straight forceps down the eject axis (~61 mm, sight line clear)</li>
-<li><code>tilt_carrier</code>: removable tilt-motor cartridge plate; motor ears bolt to it on the bench,
+<li><code>tilt_carrier</code>: removable tilt-motor cartridge plate; the motor's ears drop onto its
+  pin-topped D-posts on the bench (2026-07-16 sandwich retention, see step C),
   4x M3x16 clamp it to the neck bracket from the open rear bay</li>
 <li><code>track_keeper_L/R</code>: master-link keeper bars (2 bars + side tabs per pod, 1x M2 each);
   the master link body prints as link 0 inside each <code>track_L/R</code></li>
 <li><code>worm_wheel</code> / <code>tilt_worm</code>: real generated teeth (docs/WORM.md); the wheel hub now carries
   the D-key ledge (regen includes it via the build's hub union)</li>
 <li>Cosmetic / design-ref set (render-only today, print with the head): side rails, forehead
-  <code>led_strip</code>, <code>antenna_stub</code> (pure print, no hardware, a real telescopic antenna is owned
-  in Bag 15 if ever wanted), <code>camera_pod</code> eye shell, rear <code>trim_hatch_frame</code>, chassis
+  <code>led_strip</code>, <code>camera_pod</code> eye shell, rear <code>trim_hatch_frame</code>, chassis
   <code>trim_fascia</code> + <code>trim_rear</code>, and the placeholder gripper arms (mechanism TBD)</li>
 </ul>
 <h3 id="plastic-hardware-stand-ins-interim-plate-hardware-stand-ins">Plastic hardware stand-ins (interim, plate "Hardware stand-ins")</h3>
@@ -537,9 +537,9 @@ geometry -- never copy the metal part's numbers or the CAD placeholder's.</p>
 </tr>
 <tr>
 <td><code>hw_m8_nut</code></td>
-<td>4</td>
-<td>M8 NYLOC</td>
-<td>AF13, real M8x1.25 thread, 6.0 tall (cage max = 4.2 turns) + countersinks. No NYLOC analogue exists in PLA and none is modeled -- moot, the cage grips the flats</td>
+<td>8</td>
+<td>4 inner M8 nuts + 4 outer jam nuts</td>
+<td>AF13, real M8x1.25 thread, 6.0 tall + countersinks. The pair clamps each tower; no NYLOC analogue exists in PLA, so re-snug after creep</td>
 </tr>
 <tr>
 <td><code>hw_m8_washer</code></td>
@@ -581,8 +581,8 @@ geometry -- never copy the metal part's numbers or the CAD placeholder's.</p>
 </table></div>
 <p>Limits to respect on plastic (full rationale in <code>src/standins/__init__.py</code>):</p>
 <ul>
-<li><strong>The track still cannot be tensioned -- but that is a GEOMETRY defect that hits
-  the metal build identically, not a plastic one.</strong> See the M8 jam-nut row above.</li>
+<li><strong>The track tensioner now has a real clamp stack:</strong> outer jam nut, tower, washer,
+  inner nut. The idler stays free on the smooth journal while the tower is clamped.</li>
 <li><strong>M4 is a real fastener now</strong>: it screws, tightens and re-uses. Snug it; don't lean
   on it (~400 N strip vs a metal M4's ~2 kN).</li>
 <li>PLA creeps, so preload decays over hours -- but with real threads that decay is
@@ -656,14 +656,14 @@ not. Printing a seat before its part has arrived is how reprints happen.</p>
 <td>forehead cam pod is CM3-sized; re-fit pass needed before swapping the eye</td>
 </tr>
 <tr>
-<td>M8x60 + NYLOC</td>
-<td>nut across-flats (13.0 nom) + nut height, washer OD</td>
-<td>prow-cheek nut channels (walls 13.8 apart grip the flats) + Ø14.4 washer slice</td>
+<td>M8x70 + jam nut + NYLOC</td>
+<td>nut across-flats (13.0 nom), nut height, washer OD, and usable thread span</td>
+<td>panel-tower clamp stack + Ø14.4 flatted washer seat</td>
 </tr>
 <tr>
-<td>M8 shank / Ø8 stubs</td>
+<td>M8 shank / Ø8 journals</td>
 <td>actual shank Ø</td>
-<td>pylon Ø8.4 through holes + F688 8 mm bores (a fat zinc bolt binds)</td>
+<td>tower Ø8.4 through holes + F688 8 mm bores (a fat zinc bolt binds)</td>
 </tr>
 <tr>
 <td>F688ZZ</td>
@@ -707,25 +707,31 @@ tray killed the 88.5 mm blind channels, 2026-07-08.)</p>
 <li><strong>B. Tilt axle cartridge.</strong> Slide the <code>worm_wheel</code> (+ its two spacer tubes) onto the Ø5
   axle, hub ledge riding the axle's filed flat (D-key: positive torque, nothing to grub).
   Verify the fit on a printed coupon first: a loose flat is backlash.</li>
-<li><strong>C. Tilt-motor cartridge.</strong> Bolt the tilt 28BYJ's ears to <code>tilt_carrier</code> (2x M4 + nuts,
-  open bench access) and press the worm onto the D-shaft. The loaded carrier inserts later
-  from the rear bay (step 11) and comes OUT the same way for a motor swap, no head teardown.</li>
+<li><strong>C. Tilt-motor cartridge.</strong> Drop the tilt 28BYJ onto <code>tilt_carrier</code>: the can passes the
+  plate's Ø29.1 bore and each ear hole lands on a Ø3.8 pin atop the plate's D-posts
+  (2026-07-16: the real motor is 9 mm shorter than the old placeholder modeled, leaving
+  only 0.2 mm in front of the ears -- the old 2x M4 ear bolts are geometrically impossible
+  and are GONE from the BOM). Press the worm onto the D-shaft. Hold the motor against the
+  posts while inserting (step 11); driving the carrier's 4x M3x16 captures the ear bar
+  between the post fronts and the neck's pocket-front wall (0.25 mm float, pins lock
+  rotation). It comes OUT the same way for a motor swap, no head teardown.</li>
 </ul>
 <h3 id="chassis-drive-fixed-frame">Chassis + drive (fixed frame)</h3>
 <ol>
 <li><strong>Print + prep the chassis.</strong> Confirm the deck pan-seat, the pedestal, and both TT
    motor pockets are clean.</li>
-<li><strong>Body↔pod join (rails), BEFORE ULN #1.</strong> Press the Ø4×12 dowels into each rail's blind
-   sockets, seat <code>pod_rail_L/R</code> on the body walls (dowels into the wall slip holes), and
-   drive the 2× M3×12 per side from INSIDE the cavity, thread-forming into the rail blocks'
-   blind Ø2.5 pilots. These four screws ARE the body↔pod join -- there is no second screw
-   set. ULN #1 mounts later because its board covers this cavity-side access.</li>
+<li><strong>Fit the four structural side panels.</strong> The old separate <code>pod_rail_L/R</code> parts and their
+   dowel joint are retired. Each panel carries its wheel beam and end tower as one print.
+   Seat the front/rear splice tongue and locating pads, install its two M3 screws into
+   captive nuts, then bolt the panel feet to the lower tub. The tongue and separated feet
+   hold alignment before tightening.</li>
 <li><strong>TT motors.</strong> Set each TT gearmotor: shaft +X into the sprocket hub's double-D socket,
    front tab into the rear-wall pocket, nub into the wall pocket, 2× M3 through the
    gearbox + wall with the nut floating in the pod gap.</li>
 <li><strong>Track running gear.</strong> Press an F688ZZ into EACH face of all four end idlers (Ø15.95
    seat + Ø18.5 flange recess both sides). Each end wheel: M8 bolt from outboard
-   through the bearings and the pylon, washer + NYLOC nut inboard, started ON THE
+   through the bearings, add the OUTBOARD jam nut against the tower, then the flatted
+   washer + NYLOC nut inboard, started ON THE
    BENCH with the deck upside down. Orient each nut HEX FLATS FORE-AFT: as the deck
    drops onto the tub the nut descends into its prow-cheek NUT CHANNEL (y-walls 13.8
    apart), which grips the flats -- all torquing happens from the outboard head, no
@@ -784,9 +790,12 @@ tray killed the 88.5 mm blind channels, 2026-07-08.)</p>
     bearing.</li>
 <li><strong>Insert the tilt cartridge.</strong> Slide sub-assembly C (carrier + motor + worm) in from
     the open rear bay: the worm passes the bracket plate's Ø12.2 bore, its tail lands in
-    the open-top cradle groove, the can registers in the Ø29 pocket, and the carrier's 4
-    bosses land on the plate/column rear faces. Drive 4× M3×16 from the rear into the
-    thread-form pilots. (Extraction reverses this and is UNCONDITIONAL since the 2026-07-12
+    the open-top cradle groove, the can registers in the Ø29 pocket, the motor's ear bar
+    rides the neck's ear-bar channel to 0.2 behind the pocket-front wall, and the
+    carrier's 4 bosses land on the plate/column rear faces. Drive 4× M3×16 from the rear
+    into the captive nuts in the neck blocks -- this also captures the ear bar between
+    the carrier's D-posts and the neck wall (hold the motor against its pins until the
+    first screws bite). (Extraction reverses this and is UNCONDITIONAL since the 2026-07-12
     3-start worm: the mesh back-drives, so with a dead motor just hand-nod the head while
     pulling and the worm screws itself out. The old rule -- drive the head fully UP first
     because the single-start pull needed ~46° of nod against ~34° of stop travel -- is
@@ -822,13 +831,13 @@ tray killed the 88.5 mm blind channels, 2026-07-08.)</p>
 </ol>
 <p>15b. <strong>Antenna drives.</strong> Slip a friction O-ring into each top-wall guide bore, drop each
     mast in from above (rack facing the pinion slot), then hang <code>ant_bracket</code> on the back
-    wall (spine + 2 pilots), slide the Ø4 half-shafts through their bushings with the
-    pinion + G4 gears, seat the idler shafts + G2/G3, and bolt each 28BYJ nose-through
+    wall (spine + locating shoulders and 4x M3). Insert each printed <code>ant_output_*</code>
+    half-shaft/pinion through its Ø4.2 bushings, fit <code>ant_idler_axle_*</code> and the compound
+    <code>ant_idler_gear_*</code>, press <code>ant_motor_gear_*</code> onto the motor double-D, and bolt each 28BYJ nose-through
     its face plate (2x M3 into the vertical-ear pilots, shaft inboard). Each mast has its
     OWN motor + ULN2003 (independent control); wire both to the Pi in the head. Homing:
-    drive down until stall (tip cap on the boss). BUY: 2x Ø4 steel rod ~90 mm, 2x O-ring
-    (Ø7 bore seat), plus the 30T/12T/27T m0.8 spur set per side (or print them with the
-    worm-gear pipeline, docs/WORM.md).</p>
+    drive down until stall (tip cap on the boss). BUY: 2x O-ring sized for the Ø7 guide.
+    All 30T/12T/27T m0.8 gears, axles, shafts, and rack teeth are exported printable parts.</p>
 <h3 id="cables-per-docscable-checkmd-firmwarewiringmd">Cables (per docs/CABLE-CHECK.md + firmware/WIRING.md)</h3>
 <ol start="16">
 <li>Wall PD brick → rear PD trigger (12 V) → belly tray bucks. The Pi-rail pair (18 AWG,
@@ -843,7 +852,7 @@ tray killed the 88.5 mm blind channels, 2026-07-08.)</p>
 <ol start="17">
 <li>Press-and-glue the pin-located cosmetic parts: <code>trim_rail_L/R</code>, <code>trim_hatch_frame</code>
     (<strong>after</strong> the screen, its band overlaps the 4 driver-channel mouths, up to 2.3 mm),
-    <code>camera_pod</code>, <code>antenna_stub</code>, and the chassis <code>trim_fascia</code> / <code>trim_rear</code> / <code>sensor_rear</code>
+    <code>camera_pod</code>, and the chassis <code>trim_fascia</code> / <code>trim_rear</code> / <code>sensor_rear</code>
     grille cap. Fit fascia electronics if used: HC-SR04P barrels through the Ø16 passes, amber
     corner lamps, front LED strip, rear buzzer/speaker.</li>
 <li><strong>Final check + homing.</strong> Power on; firmware stall-homes pan against its ±93.3° deck
@@ -906,7 +915,7 @@ bundle; DSI and CSI ribbons never leave the head.</p>
 <li><strong>8x F688ZZ flanged bearings</strong> (8x16x5, flange Ø18): most specific part, slowest to source;
    the end-idler seats are modeled around them (2 per wheel x 4 since the mid-drive).
 1b. <strong>10x M4x40</strong> (road-wheel bolt-axles; partially threaded preferred; M4 nuts are owned)<ul>
-<li><strong>4x M8x60 + 4 NYLOC nuts + 4 washers</strong> (end bolt-axles; SETTLED 2026-07-13, Bag 13
+<li><strong>4x M8x70 + 4 jam nuts + 4 NYLOC nuts + 4 washers</strong> (end bolt-axles; Bag 13
 has no M8).</li>
 </ul>
 </li>
@@ -919,7 +928,8 @@ has no M8).</li>
 <li><strong>1 m narrow addressable LED strip</strong> (4–5 mm wide, SK6805-2427 / WS2812-2020, ≥160 LED/m),
    one purchase covers the forehead 8-LED segment and the front 7-dot strip. (Alternative:
    widen <code>led_slot</code> to ~54x11 and buy two common 8x5050 sticks.)</li>
-<li><strong>Ø5 SOLID rod ~100 mm</strong> (tilt axle; NOT tube) + <strong>Ø4x12 dowels x4</strong> (body-to-pod join).</li>
+<li><strong>Ø5 SOLID rod ~100 mm</strong> (tilt axle; NOT tube) + <strong>Ø4x12 dowels</strong> for the remaining
+   registered shell/seam joints. The retired body-to-pod rail joint no longer consumes four.</li>
 <li><strong>6 mm airsoft BBs</strong> (bag of 100+; need 18): cheap, everywhere.</li>
 <li>Optional: <strong>MAX98357A I2S amp</strong> x1 (pairs with the owned 8Ω speaker), <strong>amber LEDs</strong> x2–5.</li>
 </ol>

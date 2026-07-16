@@ -54,8 +54,9 @@ The parts:
                     under both bushings AND through the tension slot, ISO M8x1.25
                     thread only where the nut runs. Modelled at the length the metal
                     part SHOULD be -- see BUY M8x70 below.
-  hw_m8_nut    x4   AF13 hex, real M8x1.25 internal thread, 6.0 tall (= the cage max,
-                    4.2 turns) + Ø9.0 countersinks both faces. No NYLOC analogue
+  hw_m8_nut    x8   AF13 hex, real M8x1.25 internal thread, 6.0 tall: 4 inner cage
+                    nuts plus 4 outboard jam nuts that clamp the tower. Ø9.0
+                    countersinks both faces. No NYLOC analogue
                     exists in PLA and none is modeled: a deliberately-tight last
                     thread does not spring back, the bolt just shaves it. Moot here --
                     the cage grips the flats, so the nut cannot rotate anyway.
@@ -106,20 +107,11 @@ printable teeth; that station stays parked).
 
 LOAD LIMITS -- what these CANNOT do. Verdicts kept with the parts so nobody
 re-derives them at the bench:
-  * THE THREADS HOLD; THE TRACK STILL CANNOT BE TENSIONED -- and the cause is
-    GEOMETRY, NOT PLASTIC (2026-07-16). The M8 pair now carries preload on thread
-    FORM, not a creeping interference, so the old "plastic M8 nuts cannot hold
-    preload" is obsolete AT THE THREAD. But the clamp stack is OPEN: the tower's
-    outboard face ends at x 70.0 and the idler's inner bushing starts at x 87.4 --
-    17.4 mm of AIR, with nothing between the nut face and the head face to squeeze.
-    Tightening closes that air first: the idler slides inboard, jams on the tower and
-    SEIZES. THE METAL M8x60 HAS EXACTLY THE SAME DEFECT. So "expect track sag" still
-    stands, for a new reason. Fix (probed to fit, Ø13 through Ø22 across all travel,
-    both ends): a JAM NUT on the tower's OUTBOARD face, clamping the bolt to the
-    tower, leaving the idler free on the journal -- 4 extra M8 nuts, works in metal
-    and plastic, and it makes the slot a genuine clamped tensioner. Needs the thread
-    run extended to reach x 78. NOT applied: it changes the tensioner architecture and
-    the metal BOM.
+  * THE M8 TENSIONER NOW HAS A CLOSED CLAMP STACK. Four additional AF13 jam nuts sit
+    on the tower OUTBOARD faces; the existing nut/washer pairs remain inboard. The
+    M8x70 thread starts at x=78 and crosses jam nut -> tower -> washer -> inner nut,
+    clamping the tower while the idler remains free on the smooth journal across the
+    former 17.4 mm air gap. Printed and metal builds use the same architecture.
   * BUY M8x70, NOT M8x60. The modeled stack gives ~57.9 of grip; a 60 shank leaves
     ~2.1-2.5 mm of engagement = ~2 turns, and an 8.0 NYLOC's nylon insert sits PAST
     the end of the bolt, so ASSEMBLY.md's "NYLOC required" buys a lock the geometry

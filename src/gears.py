@@ -11,6 +11,8 @@ from trimesh.transformations import rotation_matrix as R
 from stlpaths import webpath, stlp
 from params import EXPORT, P, TAU
 from geo import box, cyl, uni
+from geo import extrude_polygon, sub
+from shapely.geometry import Polygon
 
 
 def worm_cd():
@@ -44,6 +46,56 @@ def gear_disc(pitch_r, teeth, width, tooth_h, axis="x"):
             t.apply_transform(R(a, (0, 0, 1)))
         parts.append(t)
     return uni(parts)
+
+
+def involute_spur(teeth, module, width, axis="x", bore_d=0.0,
+                  pressure_angle=20.0, backlash=0.20):
+    """Printable full-depth involute spur gear, tooth-centred on the profile +X axis.
+
+    This is the runtime counterpart of tools/gears/gen_pan_spurs.py, used for the
+    antenna cartridges whose old `gear_disc` objects were disconnected placeholders.
+    """
+    pa = np.radians(pressure_angle)
+    rp = module * teeth / 2.0
+    rb = rp * np.cos(pa)
+    rt = rp + module
+    rr = rp - 1.25 * module
+    tooth_t = np.pi * module / 2.0 - backlash / 2.0
+
+    def inv(phi):
+        return np.tan(phi) - phi
+
+    def half_angle(r):
+        phi = np.arccos(np.clip(rb / r, -1, 1))
+        return tooth_t / (2 * rp) + inv(pa) - inv(phi)
+
+    psi_base = tooth_t / (2 * rp) + inv(pa)
+    pitch = TAU / teeth
+    rlo = max(rr, rb)
+    polar = []
+    for k in range(teeth):
+        c = k * pitch
+        polar.append((rr, c - psi_base))
+        for r in np.linspace(rlo, rt, 14):
+            polar.append((r, c - half_angle(max(r, rb))))
+        ht = half_angle(rt)
+        for a in np.linspace(-ht, ht, 5)[1:-1]:
+            polar.append((rt, c + a))
+        for r in np.linspace(rt, rlo, 14):
+            polar.append((r, c + half_angle(max(r, rb))))
+        polar.append((rr, c + psi_base))
+        for a in np.linspace(psi_base, pitch - psi_base, 7)[1:-1]:
+            polar.append((rr, c + a))
+    pts = [(r * np.cos(a), r * np.sin(a)) for r, a in polar]
+    mesh = extrude_polygon(Polygon(pts), width)
+    mesh.apply_translation((0, 0, -width / 2.0))
+    if bore_d > 0:
+        mesh = sub(mesh, cyl(bore_d / 2.0, width + 2.0))
+    if axis == "x":
+        mesh.apply_transform(R(np.pi / 2, (0, 1, 0)))
+    elif axis == "y":
+        mesh.apply_transform(R(np.pi / 2, (1, 0, 0)))
+    return mesh
 
 
 def worm(pitch_r, length, starts=1, axis="y"):
@@ -136,5 +188,4 @@ def load_gear_stl(name):
     if not m.is_volume:
         raise SystemExit(f"build.py: {path} is not watertight -- regenerate it (docs/WORM.md)")
     return m
-
 

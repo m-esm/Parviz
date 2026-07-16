@@ -57,6 +57,10 @@ HEAD_NODES = {
     "antenna_stub", "trim_hatch_frame", "camera_pod", "arm_L", "arm_R",
     "worm_wheel", "tilt_axle", "cam_cover", "camera_ref", "head_door",
     "sd_plug", "screen_tray", "pi5_cooler",   # COOLER=1 keep-out (default off)
+    "antenna_L", "antenna_R", "ant_bracket",
+    "ant_motor_gear_L", "ant_motor_gear_R",
+    "ant_idler_gear_L", "ant_idler_gear_R",
+    "ant_idler_axle_L", "ant_idler_axle_R", "ant_output_L", "ant_output_R",
 }
 PAN_NODES = {"pan_platform", "neck_clevis", "tilt_worm", "motor_tilt", "tilt_carrier",
              "trim_neckfoot"}
@@ -87,10 +91,10 @@ WHITELIST = {
     frozenset(("pan_gears", "motor_pan")),       # 32T gear on the D-shaft (fast-pan 2:1)
     frozenset(("pan_gears", "pan_platform")),    # 32T <-> integral 16T pinion mesh
                                                  # (placeholder teeth, real pass later)
-    frozenset(("ant_gears_L", "antenna_L")),     # rack/pinion mesh (placeholder teeth,
-    frozenset(("ant_gears_R", "antenna_R")),     #  real generated pass later, cf WORM.md)
-    frozenset(("ant_gears_L", "motor_ant_L")),   # G1 bored onto each 28BYJ D-shaft
-    frozenset(("ant_gears_R", "motor_ant_R")),
+    frozenset(("ant_output_L", "antenna_L")),    # involute rack/pinion working contact
+    frozenset(("ant_output_R", "antenna_R")),
+    frozenset(("ant_motor_gear_L", "motor_ant_L")), # G1 keyed to each 28BYJ D-shaft
+    frozenset(("ant_motor_gear_R", "motor_ant_R")),
     frozenset(("axle_hw_L", "chassis_lower")),   # M4 nuts in the panel beam slots +
     frozenset(("axle_hw_R", "chassis_lower")),   # M8 washers on the panel END TOWERS
                                                  # (pylons deleted 2026-07-14 round 4;
@@ -200,31 +204,45 @@ def build_pose(pan, tilt):
 
 def sweep_check():
     violations = []
-    try:
-        for pan, tilt in SWEEP_POSES:
-            print("sweep: pan=%+d tilt=%+d ... " % (pan, tilt), end="", flush=True)
-            meshes = load_meshes(build_pose(pan, tilt))
-            names = set(meshes)
-            head = sorted(names & HEAD_NODES)
-            pang = sorted(names & PAN_NODES)
-            fixed = sorted(names - HEAD_NODES - PAN_NODES)  # dynamic default
-            ctx = "pan=%+d tilt=%+d" % (pan, tilt)
+    # Run each pose in a fresh process. manifold3d retains native allocations beyond
+    # Python's mesh lifetime; an in-process grid was killed after 1-2 poses and could
+    # never produce a verdict even with explicit gc.collect(). Process isolation makes
+    # peak memory constant and turns a killed worker into a visible failed pose.
+    for pan, tilt in SWEEP_POSES:
+        print("sweep: pan=%+d tilt=%+d ... " % (pan, tilt), end="", flush=True)
+        r = subprocess.run([sys.executable, __file__, "--pose", str(pan), str(tilt)],
+                           cwd=REPO, capture_output=True, text=True)
+        if r.returncode == 0:
+            print("OK")
+        else:
+            msg = (r.stdout + "\n" + r.stderr).strip()[-4000:]
+            print("FAILED")
+            violations.append(("pan=%+d tilt=%+d" % (pan, tilt),
+                               "pose-worker", "mechanism", 0.0, msg))
+    return violations
 
-            n0 = len(violations)
-            check_pairs(meshes, itertools.product(head, fixed),
-                        ctx + " head-vs-fixed", violations)
-            if pan == 0:
-                check_pairs(meshes, itertools.product(head, pang),
-                            ctx + " head-vs-pan", violations)
-            if tilt == 0:
-                check_pairs(meshes, itertools.product(pang, fixed),
-                            ctx + " pan-vs-fixed", violations)
-            print("OK" if len(violations) == n0
-                  else "%d overlap(s)" % (len(violations) - n0))
+
+def pose_check(pan, tilt):
+    try:
+        meshes = load_meshes(build_pose(pan, tilt))
+        names = set(meshes)
+        head = sorted(names & HEAD_NODES)
+        pang = sorted(names & PAN_NODES)
+        fixed = sorted(names - HEAD_NODES - PAN_NODES)
+        ctx = "pan=%+d tilt=%+d" % (pan, tilt)
+        violations = []
+        check_pairs(meshes, itertools.product(head, fixed),
+                    ctx + " head-vs-fixed", violations)
+        if pan == 0:
+            check_pairs(meshes, itertools.product(head, pang),
+                        ctx + " head-vs-pan", violations)
+        if tilt == 0:
+            check_pairs(meshes, itertools.product(pang, fixed),
+                        ctx + " pan-vs-fixed", violations)
+        return violations
     finally:
         if os.path.exists(CHECK_GLB):
             os.remove(CHECK_GLB)
-    return violations
 
 
 def main():
@@ -233,9 +251,14 @@ def main():
                     help="GLB scene to check (default web/assembly.glb)")
     ap.add_argument("--sweep", action="store_true",
                     help="rebuild + probe across the pan x tilt pose grid")
+    ap.add_argument("--pose", nargs=2, type=int, metavar=("PAN", "TILT"),
+                    help=argparse.SUPPRESS)
     args = ap.parse_args()
 
-    violations = sweep_check() if args.sweep else static_check(args.glb)
+    if args.pose:
+        violations = pose_check(*args.pose)
+    else:
+        violations = sweep_check() if args.sweep else static_check(args.glb)
 
     if violations:
         print("\nFAIL: %d un-whitelisted interference(s) > %g mm^3"

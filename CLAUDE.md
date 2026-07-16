@@ -10,7 +10,7 @@ simplified). Screen upright on the front, neck tilt gives the look up/down.
 Status: **FIX CAMPAIGN COMPLETE (stages 1-5 + independent verification, see docs/FIXES.md);
 MAINTENANCE/DFA PASS 2026-07-08** (workflow-reviewed, all gates green): tilt-motor cartridge
 (`tilt_carrier`), D-keyed worm wheel on a flatted axle, track master links + keepers, pan BB
-cage, pan/tilt stall-homing hard stops, microSD wall slot + `sd_plug`, pod-rail thread-form
+cage, pan/tilt stall-homing hard stops, microSD wall slot + `sd_plug`, located side-panel
 joints, and the 12V dual-buck power tray (firmware/WIRING.md).
 `src/build.py` builds the whole robot around the combined screen+Pi reference mesh; 10 watertight
 per-part STLs (chassis, track_L, track_R, neck_clevis, pan_platform, pan_race, pan_clips,
@@ -37,11 +37,13 @@ arm shoulders land on them), forehead LED strip + slot, TWIN DEPLOYABLE ANTENNAS
 a molded m0.8 rack, INDEPENDENTLY driven by its own 28BYJ through a mirrored two-stage
 30:12 gear-up (6.25:1) and a Ø4 half-shaft pinion -- ~104 mm/s, 50 mm max past the head
 top, ~0.5 s full deploy; masts sit behind the tilt clamp tubes, gear tips stay above the
-z 174 drivetrain-sweep ceiling, motor bodies fill the x 25.7..53.5 band between the sweep
+z 174 drivetrain-sweep ceiling, motor bodies fill the x 25.7..44.5 band (2026-07-16
+phantom-tier fix; was ..53.5) between the sweep
 and the screen-tray rails, half-shafts pass over the rails at z 205; the top-wall guide
 bores carry friction O-rings against gear-up back-drive, and ANT=<mm> bakes a preview
-extension while the viewer gets one slider per mast; parts: antenna_L/R + ant_gears_L/R +
-ant_bracket + motor_ant_L/R, gates run at ANT=0/15/50), rear orange `trim_hatch_frame` (bottom band
+extension while the viewer gets one slider per mast; parts: antenna_L/R, ant_motor_gear_L/R,
+ant_idler_gear_L/R, ant_idler_axle_L/R, ant_output_L/R, ant_bracket, and motor_ant_L/R;
+the printable involute train has an exact coupled full-travel mesh test), rear orange `trim_hatch_frame` (bottom band
 notched clear of the neck-slot tilt sweep), the EXTRUDED REAR POD on `head_door`
 (2026-07-10, the user's red-box ref: the back of the head carries a chunky stepped
 "backpack" bump; deepened same day per user "much more depth horizontally". The pod IS
@@ -100,9 +102,14 @@ plate passes under the tie on its flange, with a matching relief cut). Connectiv
 audit (user todo, same day): every part checked for loose internal bodies + assembly
 contact -- the only real find was the ant_bracket motor face plates SEVERED by their
 own Ø28.7 can-pass bores (bottom halves + lower ear pilots printed loose); plates
-deepened to 36 with a wiring-box notch in the rear ligament. ant_gears_L/R being 7
-bodies each is by design (4 placeholder gears + idler shaft + half-shaft + pinion,
-separate physical parts pending the real generated-teeth pass).
+deepened to 36 with a wiring-box notch in the rear ligament. The former disconnected
+`ant_gears_L/R` preview bodies were replaced 2026-07-16 by separately exported involute
+gears, keyed motor hubs, running-clearance journals, fused output shafts, and true racks.
+The antenna 28BYJ pose is centralized in `motors.antenna_motor()`: after pointing +Z
+inboard, its roll sign is opposite the side sign so the eccentric +X shaft offset becomes
+world -Y. The older same-sign roll put both shafts 15.75 mm ahead of G1 and left each wiring
+box colliding 80.15 mm3 with a rear-notched plate. The bracket notch now follows the actual
+front wiring-box envelope; `test_28byj_shafts_land_on_motor_gear_axes` guards both datums.
 
 Latest render review (2026-07-06): `make build` wrote a 20-part `web/assembly.glb`; fresh
 transparent and solid shots were inspected from iso/front/side/top plus two section cuts. The
@@ -149,6 +156,14 @@ make invariants     # design-invariant gate (src/checks.py, IN make all): one
                     #   whatever the LAST export left on disk -- i.e. silently gated STALE
                     #   geometry and reported a pass. Two agents lost work to it. If you add
                     #   an STL-reading gate, give it the `stls` prerequisite.
+make jointcheck     # assembly-joint contract gate (src/joints.py declarations +
+                    #   src/joint_checks.py): positive location, seated fit, fastener
+                    #   stack, nut/insert and tool access, supporting material, and
+                    #   collision-free insertion. Depends on `stls`; writes the complete
+                    #   machine-readable result to web/joint_report.json.
+make gate-tests     # stdlib unittest mutation fixtures: known-bad missing/offset/blocked
+                    #   joint geometry MUST fail its owning gate. Add a failing mutation
+                    #   test whenever a new reusable check is introduced.
 make wallcheck      # min-wall gate over the printed STL set (0.8 mm p1 + documented
                     #   whitelist floors; IN make all since 2026-07-13, all findings
                     #   dispositioned: keepers fixed Ø4.0 cb + 5.7 tab rim 0.85,
@@ -163,7 +178,21 @@ make docs           # render docs/*.md + firmware/WIRING.md + software/README.md
                     #   in sync with nav_html()/NAV_CSS in the builder. shoot.py hides
                     #   #topnav so CAD renders stay chrome-free. Pages deploys web/
                     #   verbatim, so docs ship with the published viewer.
+make assembly-release # canonical print-release pipeline. It explicitly sequences a
+                    #   fresh EXPORT build, invariants/joint/wall/interference/sweep/fit
+                    #   gates, a final export, slicecheck, and docs. Do not rewrite this
+                    #   as unordered prerequisites: `make -j` could race generated-file
+                    #   readers, and `make fits` intentionally changes assembly.glb pose.
 ```
+
+**JOINT CONTRACT RULE:** every interface between assembled printed parts has exactly one
+entry in `src/joints.py`, using the typed contracts in `src/jointspec.py`. Geometry and its
+contract must share named parameters/datums rather than duplicate coordinates. In the same
+turn that a joint changes, update its declaration, focused mutation tests, `docs/JOINTS.md`,
+and the affected step/BOM in `docs/ASSEMBLY.md`. Flat-on-flat plus screws is not a locating
+joint: structural parts must sit in a deterministic seated pose on rails, rebates, tongues,
+or separated pins before a screw is driven. A joint is not approved merely because its final
+pose renders without interference.
 
 Then **downscale and actually Read every PNG** before claiming a change works:
 `sips -Z 1400 .claude/renders/chk_iso.png --out .claude/renders/chk_iso_s.png`.
@@ -317,13 +346,31 @@ Motor choice made against the parts on hand (see a personal parts inventory): th
 **28BYJ-48 5V geared steppers** (×6 in Bags 5 & 14) with **ULN2003 boards** (×9); the 9g servos are
 too weak to swing a 193mm screen head. `motor_28byj()` is now dimensionally correct: **Ø28.25 can,
 18.8 tall, 7.875 mm shaft offset, Ø4.93 double-D shaft with 3.0 mm flats over the top 6 mm**, ears at
-35 mm, wiring box. The governing rule for both joints: **locate the CAN so the offset shaft lands on
-the target axis, don't fight the offset with an eccentric coupler.**
+35 mm, wiring box. **PHANTOM-TIER FIX 2026-07-16 (user: "motors mounted wrongly to the gears"):
+the placeholder used to stack a fictional 9 mm "gearbox" tier (motor_gear_h, deleted) between the
+can face and the shaft -- the real 28BYJ's gearbox is INSIDE the can and the shaft protrudes
+straight from the top plate (~28.6 total, per the reference mesh + datasheet). All gears were keyed
+to the phantom shaft plane, so the real motor could never reach them. Shaft-base planes (and all
+gears) HELD; every CAN moved 9 mm toward its gear via the derived can-bottom formulas: pan can
+bottom 12.95->21.95 (pedestal grew with it, ped_ear_nut_z 25.4->34.4, the collar now truly wraps
+the can top under the 32T gear), tilt can rear -64.3->-55.3 (it registers the neck Ø29 pocket over
+its full length now; the ear bar seats 0.2 behind the pocket-front wall, so the carrier's old M4
+ear bolts were geometrically impossible and became pin-post SANDWICH retention -- see
+build_tilt_carrier; the neck's ear-bar/wiring-box reliefs became full insertion channels), antenna
+cans |x| 53.5->44.5 (ant_plate_x 36->27, ant_ear_nut_x 41->32, plus a r17.5 tilt-axis scallop
+where the moved face plate straddled the clamp-tube boss).** The governing rule for both joints:
+**locate the CAN so the offset shaft lands on the target axis, don't fight the offset with an
+eccentric coupler.**
 
 **Real bought meshes in the assembly (2026-07-13, `src/refparts.py`, default ON):** the
 downloaded Thingiverse meshes (reference/electronics/, see docs/ELECTRONICS.md) for the
 28BYJ, TT gearmotor, HC-SR04 (all 4 sites), Arduino Uno, and Camera Module 3 REPLACE their
-box/cylinder placeholders in the GLB so the viewer shows real geometry. Placement is
+box/cylinder placeholders in the GLB so the viewer shows real geometry. **EXCEPTION
+2026-07-16: the 28BYJ skips the OBB heuristic** -- it is blind to the eccentric shaft and
+parked every real stepper ~15 mm off its gear axis; refparts now recovers the placeholder's
+EXACT pose by Kabsch over the vertex correspondence (posed placeholders are pristine
+rigidly-moved motor_28byj() meshes) and registers the real mesh with a fixed measured
+native->local transform (guarded by tests/test_refparts_28byj.py). Everything else stays
 uniform: `add()` fits each real mesh onto the placeholder's world OBB via a 24-cube-
 orientation best-fit (shape distance, not extent order -- extent order mislabels axes when
 the crude placeholder's proportions differ, e.g. HC-SR04 barrels). Bought parts, never
@@ -342,7 +389,8 @@ gate's exclude set is empty then). ULN2003 keeps its placeholder (no mesh downlo
   axle** (hub ledge on a filed 1.0-deep flat, 2026-07-08; the old M3 grub was blind and
   friction-only). The 3-start worm (4:1, lead ~23°) BACK-DRIVES -- the old single-start
   self-locking is gone, see the fast pan/tilt pass + the tilt-holding decision below. Motor +
-  worm ride the removable **`tilt_carrier`** (ears bolted on the bench, 4× M3×16 from the open
+  worm ride the removable **`tilt_carrier`** (ears drop onto the plate's pin-posts on the
+  bench -- 2026-07-16 sandwich retention, see the phantom-tier note above -- 4× M3×16 from the open
   rear bay; the worm extracts axially through the plate's Ø12.2 bore, spinning the free wheel
   as it goes). Extraction with the head hung is unconditional now: with a dead motor, hand-nod
   the head while pulling -- the back-drivable mesh spins the worm out. (The old rule, DRIVE THE
@@ -383,7 +431,7 @@ bearings under shrink wrap, not plastic rings); still unused in the design.
 **PLASTIC HARDWARE STAND-INS (2026-07-15, user: dry-assemble in plastic till the metal
 arrives):** every buy-list metal row has a print-oriented interim part in
 `src/standins.py` -> `stl/hardware/` (EXPORT=1 writes them; export_bambu packs the
-"Hardware stand-ins" plates): M4x40/M8x60 bolt-axles + press-on nuts (threadless),
+"Hardware stand-ins" plates): M4x40/M8x70 bolt-axles + real printed ISO-thread nuts,
 washers, F688ZZ->flanged plain bushings, pan BBs->a Ø5.8-section torus SLIP RING
 (printed spheres don't print; pan_cage idles till real BBs), the Ø5 D-flat tilt axle
 (lies diagonal, flat UP), seam dowels + neckfoot pins. Export-only (no scene nodes,
@@ -695,7 +743,7 @@ the predicted +8 mm PIP slack needs 4.3 mm; 6.5 = 1.5x margin. Front pylons run
 y 120.5..142.5; tub_nose 20->26 (cheek noses 146, 2 past the deck tips). The
 FRONT M8 nut is captured FLATS +-Z in a closed cheek DUCT (floor ledge z 27.62
 + chamfered roof strip z 41.02, gap 13.4 = AF 13+0.4) -- y-wall grip is
-geometrically impossible over slide travel -- inserted via the pylon notch
+geometrically impossible over slide travel -- inserted via the panel-tower notch
 BEFORE the deck drops (slide inboard along x through the washer slice); the M8
 threads in axially after track closure. Rear cheeks keep the drop-in y-wall
 channel. Full first-chain elongation is ~21.8 mm: tension only to mesh, the
@@ -730,7 +778,7 @@ the robot's weight through the mesh, which preloads engagement closed.
 (user: "two wheels per side not connected to anything" -- the plain Ø8 stubs had no
 axial retention and the idlers showed bare bearing bores outside): each end wheel now
 rides an M8 bolt, head outboard as the hubcap, shank through the F688 pair and the
-pylon, NUT on the pylon's inboard face; on the FRONT pylons the nut clamps the through
+pylon-era geometry, NUT on the tower's inboard face; on the FRONT towers the nut clamps the through
 tension slot = the tensioner (M3 set screws deleted; rear press sockets became Ø8.4
 through holes). (2) SECOND DRIVE STATION per side at spr_y2=+90 (user: "two motors on
 each side, second optional but all fittings ready"): the whole TT feature set loops
@@ -741,7 +789,7 @@ station is empty and the end idler + 57.5 wheel carry the front run). Knock-ons:
 road wheels 6 -> 5 stations (57.5, +-33.5, +-11.5; both sprockets get 28.8+ axle
 gaps), beam gets a second hub notch, the y80 vent left the row for the front nub,
 and ULN2 moved (-38,45) -> (0,80) -- its posts sat inside the flipped TT_L envelope
-and the pedestal blocks every left-side alternative. BOM: 4x M8x60 + NYLOC nuts
+and the pedestal blocks every left-side alternative. BOM: 4x M8x70 + jam nuts + NYLOC nuts
 (SETTLED 2026-07-13: Bag 13 "Machine Bolts" is 30PCS M3-30, no M8 -- buy), M4x40
 12 -> 10, TT motors: 2 required + 2 OPTIONAL for twin drive (own 3 per the
 2026-07-13 re-audit; buy 1 only for the 4th).

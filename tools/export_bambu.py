@@ -15,7 +15,7 @@ Output: exports/bambu.3mf (THE canonical name, always reused/overwritten -- user
   Neck and pan       neck clevis, tilt carrier, pan platform/race/cage/clips
   Worm drive         worm wheel + worm (real generated teeth)
   Track gear         4 sprockets (2 optional-motor spares), 4 end idlers, 10 road
-                     wheels, 2 pod rails, 2 keeper bars
+                     wheels, 2 keeper bars (wheel beams are integral to side panels)
   Track links        8 PRINT-IN-PLACE strips (4/side: 16+16+16+15 links, integral
                      Ø2.0 pins, keeled, support OFF) + 2 master links
   Track coupon       5-link PIP test strip + 1 master + 2 keeper bars (~48 min sliced):
@@ -98,6 +98,14 @@ PARTS = {  # name: (subsystem, [rotations], obj_settings)
     "antenna_L":       ("head", [(X, -90)],  TREE),     # mast flat, rack teeth UP
     "antenna_R":       ("head", [(X, -90)],  TREE),
     "ant_bracket":     ("head", [(X, 90)],   TREE),     # wall-spine face -> bed
+    "ant_motor_gear_L": ("head", [(Y, 90)],  NOSUP),
+    "ant_motor_gear_R": ("head", [(Y, 90)],  NOSUP),
+    "ant_idler_gear_L": ("head", [(Y, 90)],  NOSUP),
+    "ant_idler_gear_R": ("head", [(Y, 90)],  NOSUP),
+    "ant_idler_axle_L": ("head", [(Y, 90)],  NOSUP),
+    "ant_idler_axle_R": ("head", [(Y, 90)],  NOSUP),
+    "ant_output_L":    ("head", [(Y, 90)],   NOSUP),
+    "ant_output_R":    ("head", [(Y, 90)],   NOSUP),
     "head_door":       ("head", [(X, 90)],   TREE),     # flat back on bed, panel up (H 10)
     "screen_tray":     ("head", [(X, -90)],  STRUCT),   # mount plate -> bed, pillars up (H 88)
     "cam_cover":       ("head", [(X, 90)],   TREE),     # flat (H 5.5)
@@ -124,7 +132,11 @@ CATEGORIES = [
     ("Head",         ["head_back_frame_L", "head_back_frame_R", "head_back_panel_L",
                       "head_back_panel_R", "head_bezel_L", "head_bezel_R",
                       "head_door", "screen_tray", "cam_cover", "sd_plug"]),
-    ("Antennas",     ["antenna_L", "antenna_R", "ant_bracket"]),
+    ("Antennas",     ["antenna_L", "antenna_R", "ant_bracket",
+                       "ant_motor_gear_L", "ant_motor_gear_R",
+                       "ant_idler_gear_L", "ant_idler_gear_R",
+                       "ant_idler_axle_L", "ant_idler_axle_R",
+                       "ant_output_L", "ant_output_R"]),
     ("Neck and pan", ["neck_clevis", "tilt_carrier", "pan_platform", "pan_race", "pan_cage", "pan_clips"]),
     ("Worm drive",   ["worm_wheel_real", "tilt_worm_real"]),
     ("Track gear",   ["@drivegear"]),
@@ -339,9 +351,12 @@ def main():
     # = the 2026-07-12 floating-C-jaw failure, the O5x209 axle stood on end).
     # arrange + allow-rotations only yaws parts; deliberate="*" hard-fails if
     # anything gets TILTED. Falls back to the naive layout without BambuStudio.app.
-    from bambu_autopack import packed_plates
     import tempfile
     plates, cli_plates, naive_plates = [], 0, 0
+    use_cli_pack = os.environ.get("BAMBU_AUTOPACK", "0") == "1"
+    packed_plates = None
+    if use_cli_pack:
+        from bambu_autopack import packed_plates
     for cat, members in CATEGORIES:
         items = []
         for m in members:
@@ -355,7 +370,8 @@ def main():
             tmp = os.path.join(td, "cat.3mf")
             write_bambu_3mf(tmp, [{"name": cat, "parts": pl} for pl in packed],
                             dict(PROFILE))
-            res = packed_plates(tmp, deliberate=("*",), brim=brim)
+            res = (packed_plates(tmp, deliberate=("*",), brim=brim)
+                   if packed_plates is not None else None)
         # BEST-OF-BOTH (measured 2026-07-15): Bambu's engine wins on many-small-part
         # categories (stand-ins 2 -> 1 plate, links 3 -> 2) but loses on few-big-part
         # ones (its bed margins/spacing put Chassis 6 -> 7, Head 5 -> 7). Keep
@@ -371,7 +387,10 @@ def main():
         for i, parts in enumerate(cat_plates, 1):
             name = cat if len(cat_plates) == 1 else f"{cat} {i} of {len(cat_plates)}"
             plates.append({"name": name, "parts": parts})
-    if naive_plates:
+    if not use_cli_pack:
+        print("NOTE: deterministic brim-aware shelf packing used. Set BAMBU_AUTOPACK=1 "
+              "to opt into Bambu Studio arrangement.")
+    elif naive_plates:
         print("NOTE: BambuStudio.app not found -- naive shelf-pack layout on "
               "%d plate(s)" % naive_plates)
 
@@ -393,10 +412,8 @@ def main():
         print(f"  {name:28s} {n:5d}  {contents}")
     print(f"  {'':28s} {total:5d}  total printed bodies")
     print("\n  EXCLUDED (bought): 28BYJ x4 / TT x2 / ULN2003 x4, 695-2RS bearings (owned),")
-    print("  antenna m0.8 spur set + Ø4 shafts (buy, or print later with generated teeth")
-    print("  like docs/WORM.md; the placeholder discs are NOT printable teeth),")
     print("  M2/M3 hardware (owned), PD+bucks. The 'Hardware stand-ins' plate carries")
-    print("  PLASTIC INTERIM copies of the buy-list metal (M4x40/M8x60 bolt-axles, nuts,")
+    print("  PLASTIC INTERIM copies of the buy-list metal (M4x40/M8x70 bolt-axles, nuts,")
     print("  washers, F688ZZ->bushings, pan BBs->slip ring, Ø5 tilt axle, dowels) --")
     print("  dry-assembly only, swap for metal on arrival (src/standins.py).")
     print("  FAST PAN/TILT (real teeth 2026-07-13): pan_gears + the platform's integral")
@@ -405,6 +422,8 @@ def main():
     print("  PARAMS worm_starts). build.py falls back to placeholders on any PARAMS vs")
     print("  meta-sidecar mismatch; if this export printed after a params change, re-run")
     print("  the generators per docs/WORM.md first.")
+    print("  ANTENNAS: the m0.8 involute gears, compound idlers, axles, output shafts,")
+    print("  pinions, and true racks are all printable and included on Antennas plates.")
     print("  Design wants PETG for Worm drive + Track plates + load-bearing parts: print those in")
     print("  PETG and set 250C / 80C textured-PEI in Studio. Large-shell orientations set for")
     print("  support-free faces but not visually verified per-part; Auto-orient shells in Studio.")

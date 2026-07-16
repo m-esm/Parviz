@@ -68,6 +68,10 @@ PRINTED = [
     "head_back_panel_L.stl", "head_back_panel_R.stl",
     "head_door.stl", "screen_tray.stl", "cam_cover.stl", "sd_plug.stl",
     "antenna_L.stl", "antenna_R.stl", "ant_bracket.stl",
+    "ant_motor_gear_L.stl", "ant_motor_gear_R.stl",
+    "ant_idler_gear_L.stl", "ant_idler_gear_R.stl",
+    "ant_idler_axle_L.stl", "ant_idler_axle_R.stl",
+    "ant_output_L.stl", "ant_output_R.stl",
     # plastic hardware stand-ins (2026-07-15, src/standins.py): interim prints
     # for the buy-list metal -- gate them like any printed part
     "hw_m4_bolt.stl", "hw_m4_nut.stl", "hw_m8_bolt.stl", "hw_m8_nut.stl",
@@ -155,6 +159,12 @@ WHITELIST = {
     # mesh itself is probe-verified per docs/WORM.md (pan spur section, coupled
     # sweep 0.000 mm3) and runs greased. Not a wall: no load normal to the tip land.
     "pan_gears.stl": (0.75, "real m0.8 tooth tips, mesh probe-verified, greased drive gear"),
+    # The 12T member of each m0.8 antenna compound idler has a theoretical involute
+    # tip land just under two 0.4 mm lines.  The hub, bore wall and gear root all exceed
+    # the global floor; only unloaded tooth tips enter this exception.  Exact coupled
+    # sweeps live in tests/test_antenna_drive.py.
+    "ant_idler_gear_L.stl": (0.70, "m0.8 involute tooth tips; coupled mesh sweep verified"),
+    "ant_idler_gear_R.stl": (0.70, "m0.8 involute tooth tips; coupled mesh sweep verified"),
     # Screen-pocket LOCATOR STEP: the pocket stops 0.11 over the glass by design
     # (2026-07-11 LCD-seated-watertight pass), and the window's bezel_overlap lip
     # corner slivers sample near-zero on the step faces at (x ~+-94, y 31.1).

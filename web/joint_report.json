@@ -1,0 +1,1913 @@
+{
+  "results": [
+    {
+      "detail": "duplicates: ",
+      "gate": "unique-joint-ids",
+      "joint": "__inventory__",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "missing: ",
+      "gate": "structural-inventory-complete",
+      "joint": "__inventory__",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "not in required ledger: ",
+      "gate": "inventory-reviewed",
+      "joint": "__inventory__",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "joint must name both sides",
+      "gate": "part-count",
+      "joint": "neck_to_pan",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "",
+      "gate": "assembly-axis",
+      "joint": "neck_to_pan",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "structural joints require a screw-independent locator",
+      "gate": "self-location",
+      "joint": "neck_to_pan",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "4.50 mm",
+      "gate": "locator-engagement",
+      "joint": "neck_to_pan",
+      "measurements": {
+        "engagement_mm": 4.5
+      },
+      "ok": true
+    },
+    {
+      "detail": "single round pins need a second anti-rotation feature",
+      "gate": "locator-constraints",
+      "joint": "neck_to_pan",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "locating 0.100..0.350 mm",
+      "gate": "fit-class",
+      "joint": "neck_to_pan",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "structural joint requires declared retention",
+      "gate": "fastener-present",
+      "joint": "neck_to_pan",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "M3 x3: 1.60 mm protrusion",
+      "gate": "fastener-1-stack",
+      "joint": "neck_to_pan",
+      "measurements": {
+        "protrusion_mm": 1.6
+      },
+      "ok": true
+    },
+    {
+      "detail": "hex_nut",
+      "gate": "fastener-1-capture",
+      "joint": "neck_to_pan",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "access 8.0, driver diameter 7.0",
+      "gate": "fastener-1-tool-envelope",
+      "joint": "neck_to_pan",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "locator must constrain the seated part before screws",
+      "gate": "pre-fastener-stability",
+      "joint": "neck_to_pan",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "structural joints require material probes around the load path",
+      "gate": "load-path",
+      "joint": "neck_to_pan",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "solid 0.7290 mm3",
+      "gate": "locator-male-1",
+      "joint": "neck_to_pan",
+      "measurements": {
+        "intersection_mm3": 0.7290037078920287
+      },
+      "ok": true
+    },
+    {
+      "detail": "solid 0.7290 mm3",
+      "gate": "locator-male-2",
+      "joint": "neck_to_pan",
+      "measurements": {
+        "intersection_mm3": 0.7290037078920287
+      },
+      "ok": true
+    },
+    {
+      "detail": "10094 faces, 49620.1 mm3",
+      "gate": "load-body-1",
+      "joint": "neck_to_pan",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "not required",
+      "gate": "insertion-path",
+      "joint": "neck_to_pan",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "joint must name both sides",
+      "gate": "part-count",
+      "joint": "pan_clips_to_chassis",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "",
+      "gate": "assembly-axis",
+      "joint": "pan_clips_to_chassis",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "structural joints require a screw-independent locator",
+      "gate": "self-location",
+      "joint": "pan_clips_to_chassis",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "2.60 mm",
+      "gate": "locator-engagement",
+      "joint": "pan_clips_to_chassis",
+      "measurements": {
+        "engagement_mm": 2.6
+      },
+      "ok": true
+    },
+    {
+      "detail": "single round pins need a second anti-rotation feature",
+      "gate": "locator-constraints",
+      "joint": "pan_clips_to_chassis",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "locating 0.100..0.350 mm",
+      "gate": "fit-class",
+      "joint": "pan_clips_to_chassis",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "structural joint requires declared retention",
+      "gate": "fastener-present",
+      "joint": "pan_clips_to_chassis",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "M3 x3: 1.60 mm protrusion",
+      "gate": "fastener-1-stack",
+      "joint": "pan_clips_to_chassis",
+      "measurements": {
+        "protrusion_mm": 1.6
+      },
+      "ok": true
+    },
+    {
+      "detail": "hex_nut",
+      "gate": "fastener-1-capture",
+      "joint": "pan_clips_to_chassis",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "access 8.0, driver diameter 7.0",
+      "gate": "fastener-1-tool-envelope",
+      "joint": "pan_clips_to_chassis",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "locator must constrain the seated part before screws",
+      "gate": "pre-fastener-stability",
+      "joint": "pan_clips_to_chassis",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "structural joints require material probes around the load path",
+      "gate": "load-path",
+      "joint": "pan_clips_to_chassis",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "1674 faces, 2829.8 mm3",
+      "gate": "load-body-1",
+      "joint": "pan_clips_to_chassis",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "not required",
+      "gate": "insertion-path",
+      "joint": "pan_clips_to_chassis",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "joint must name both sides",
+      "gate": "part-count",
+      "joint": "lower_tub_front_seam",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "",
+      "gate": "assembly-axis",
+      "joint": "lower_tub_front_seam",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "structural joints require a screw-independent locator",
+      "gate": "self-location",
+      "joint": "lower_tub_front_seam",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "8.00 mm",
+      "gate": "locator-engagement",
+      "joint": "lower_tub_front_seam",
+      "measurements": {
+        "engagement_mm": 8.0
+      },
+      "ok": true
+    },
+    {
+      "detail": "single round pins need a second anti-rotation feature",
+      "gate": "locator-constraints",
+      "joint": "lower_tub_front_seam",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "locating 0.100..0.350 mm",
+      "gate": "fit-class",
+      "joint": "lower_tub_front_seam",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "structural joint requires declared retention",
+      "gate": "fastener-present",
+      "joint": "lower_tub_front_seam",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "M3 x2: 2.60 mm protrusion",
+      "gate": "fastener-1-stack",
+      "joint": "lower_tub_front_seam",
+      "measurements": {
+        "protrusion_mm": 2.6
+      },
+      "ok": true
+    },
+    {
+      "detail": "hex_nut",
+      "gate": "fastener-1-capture",
+      "joint": "lower_tub_front_seam",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "access 8.0, driver diameter 7.0",
+      "gate": "fastener-1-tool-envelope",
+      "joint": "lower_tub_front_seam",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "locator must constrain the seated part before screws",
+      "gate": "pre-fastener-stability",
+      "joint": "lower_tub_front_seam",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "structural joints require material probes around the load path",
+      "gate": "load-path",
+      "joint": "lower_tub_front_seam",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "8168 faces, 63010.4 mm3",
+      "gate": "load-body-1",
+      "joint": "lower_tub_front_seam",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "not required",
+      "gate": "insertion-path",
+      "joint": "lower_tub_front_seam",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "joint must name both sides",
+      "gate": "part-count",
+      "joint": "lower_tub_tail_seam",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "",
+      "gate": "assembly-axis",
+      "joint": "lower_tub_tail_seam",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "structural joints require a screw-independent locator",
+      "gate": "self-location",
+      "joint": "lower_tub_tail_seam",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "6.00 mm",
+      "gate": "locator-engagement",
+      "joint": "lower_tub_tail_seam",
+      "measurements": {
+        "engagement_mm": 6.0
+      },
+      "ok": true
+    },
+    {
+      "detail": "single round pins need a second anti-rotation feature",
+      "gate": "locator-constraints",
+      "joint": "lower_tub_tail_seam",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "sliding 0.150..0.500 mm",
+      "gate": "fit-class",
+      "joint": "lower_tub_tail_seam",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "structural joint requires declared retention",
+      "gate": "fastener-present",
+      "joint": "lower_tub_tail_seam",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "M3 x2: 2.60 mm protrusion",
+      "gate": "fastener-1-stack",
+      "joint": "lower_tub_tail_seam",
+      "measurements": {
+        "protrusion_mm": 2.6
+      },
+      "ok": true
+    },
+    {
+      "detail": "hex_nut",
+      "gate": "fastener-1-capture",
+      "joint": "lower_tub_tail_seam",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "access 8.0, driver diameter 7.0",
+      "gate": "fastener-1-tool-envelope",
+      "joint": "lower_tub_tail_seam",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "locator must constrain the seated part before screws",
+      "gate": "pre-fastener-stability",
+      "joint": "lower_tub_tail_seam",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "structural joints require material probes around the load path",
+      "gate": "load-path",
+      "joint": "lower_tub_tail_seam",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "7966 faces, 27402.0 mm3",
+      "gate": "load-body-1",
+      "joint": "lower_tub_tail_seam",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "not required",
+      "gate": "insertion-path",
+      "joint": "lower_tub_tail_seam",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "joint must name both sides",
+      "gate": "part-count",
+      "joint": "deck_strip_front_seam",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "",
+      "gate": "assembly-axis",
+      "joint": "deck_strip_front_seam",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "structural joints require a screw-independent locator",
+      "gate": "self-location",
+      "joint": "deck_strip_front_seam",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "4.00 mm",
+      "gate": "locator-engagement",
+      "joint": "deck_strip_front_seam",
+      "measurements": {
+        "engagement_mm": 4.0
+      },
+      "ok": true
+    },
+    {
+      "detail": "single round pins need a second anti-rotation feature",
+      "gate": "locator-constraints",
+      "joint": "deck_strip_front_seam",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "locating 0.100..0.350 mm",
+      "gate": "fit-class",
+      "joint": "deck_strip_front_seam",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "structural joint requires declared retention",
+      "gate": "fastener-present",
+      "joint": "deck_strip_front_seam",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "M3 x2: 2.60 mm protrusion",
+      "gate": "fastener-1-stack",
+      "joint": "deck_strip_front_seam",
+      "measurements": {
+        "protrusion_mm": 2.6
+      },
+      "ok": true
+    },
+    {
+      "detail": "hex_nut",
+      "gate": "fastener-1-capture",
+      "joint": "deck_strip_front_seam",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "access 8.0, driver diameter 7.0",
+      "gate": "fastener-1-tool-envelope",
+      "joint": "deck_strip_front_seam",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "locator must constrain the seated part before screws",
+      "gate": "pre-fastener-stability",
+      "joint": "deck_strip_front_seam",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "structural joints require material probes around the load path",
+      "gate": "load-path",
+      "joint": "deck_strip_front_seam",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "9752 faces, 231226.1 mm3",
+      "gate": "load-body-1",
+      "joint": "deck_strip_front_seam",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "not required",
+      "gate": "insertion-path",
+      "joint": "deck_strip_front_seam",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "joint must name both sides",
+      "gate": "part-count",
+      "joint": "deck_strip_rear_seam",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "",
+      "gate": "assembly-axis",
+      "joint": "deck_strip_rear_seam",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "structural joints require a screw-independent locator",
+      "gate": "self-location",
+      "joint": "deck_strip_rear_seam",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "4.00 mm",
+      "gate": "locator-engagement",
+      "joint": "deck_strip_rear_seam",
+      "measurements": {
+        "engagement_mm": 4.0
+      },
+      "ok": true
+    },
+    {
+      "detail": "single round pins need a second anti-rotation feature",
+      "gate": "locator-constraints",
+      "joint": "deck_strip_rear_seam",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "locating 0.100..0.350 mm",
+      "gate": "fit-class",
+      "joint": "deck_strip_rear_seam",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "structural joint requires declared retention",
+      "gate": "fastener-present",
+      "joint": "deck_strip_rear_seam",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "M3 x2: 2.60 mm protrusion",
+      "gate": "fastener-1-stack",
+      "joint": "deck_strip_rear_seam",
+      "measurements": {
+        "protrusion_mm": 2.6
+      },
+      "ok": true
+    },
+    {
+      "detail": "hex_nut",
+      "gate": "fastener-1-capture",
+      "joint": "deck_strip_rear_seam",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "access 8.0, driver diameter 7.0",
+      "gate": "fastener-1-tool-envelope",
+      "joint": "deck_strip_rear_seam",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "locator must constrain the seated part before screws",
+      "gate": "pre-fastener-stability",
+      "joint": "deck_strip_rear_seam",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "structural joints require material probes around the load path",
+      "gate": "load-path",
+      "joint": "deck_strip_rear_seam",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "9752 faces, 231226.1 mm3",
+      "gate": "load-body-1",
+      "joint": "deck_strip_rear_seam",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "not required",
+      "gate": "insertion-path",
+      "joint": "deck_strip_rear_seam",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "joint must name both sides",
+      "gate": "part-count",
+      "joint": "side_panel_splice",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "",
+      "gate": "assembly-axis",
+      "joint": "side_panel_splice",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "structural joints require a screw-independent locator",
+      "gate": "self-location",
+      "joint": "side_panel_splice",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "5.00 mm",
+      "gate": "locator-engagement",
+      "joint": "side_panel_splice",
+      "measurements": {
+        "engagement_mm": 5.0
+      },
+      "ok": true
+    },
+    {
+      "detail": "single round pins need a second anti-rotation feature",
+      "gate": "locator-constraints",
+      "joint": "side_panel_splice",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "locating 0.100..0.350 mm",
+      "gate": "fit-class",
+      "joint": "side_panel_splice",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "structural joint requires declared retention",
+      "gate": "fastener-present",
+      "joint": "side_panel_splice",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "M3 x2: 2.10 mm protrusion",
+      "gate": "fastener-1-stack",
+      "joint": "side_panel_splice",
+      "measurements": {
+        "protrusion_mm": 2.1
+      },
+      "ok": true
+    },
+    {
+      "detail": "hex_nut",
+      "gate": "fastener-1-capture",
+      "joint": "side_panel_splice",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "access 8.0, driver diameter 7.0",
+      "gate": "fastener-1-tool-envelope",
+      "joint": "side_panel_splice",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "locator must constrain the seated part before screws",
+      "gate": "pre-fastener-stability",
+      "joint": "side_panel_splice",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "structural joints require material probes around the load path",
+      "gate": "load-path",
+      "joint": "side_panel_splice",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "6730 faces, 31506.5 mm3",
+      "gate": "load-body-1",
+      "joint": "side_panel_splice",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "not required",
+      "gate": "insertion-path",
+      "joint": "side_panel_splice",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "joint must name both sides",
+      "gate": "part-count",
+      "joint": "side_panel_feet",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "",
+      "gate": "assembly-axis",
+      "joint": "side_panel_feet",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "structural joints require a screw-independent locator",
+      "gate": "self-location",
+      "joint": "side_panel_feet",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "4.00 mm",
+      "gate": "locator-engagement",
+      "joint": "side_panel_feet",
+      "measurements": {
+        "engagement_mm": 4.0
+      },
+      "ok": true
+    },
+    {
+      "detail": "single round pins need a second anti-rotation feature",
+      "gate": "locator-constraints",
+      "joint": "side_panel_feet",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "locating 0.100..0.350 mm",
+      "gate": "fit-class",
+      "joint": "side_panel_feet",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "structural joint requires declared retention",
+      "gate": "fastener-present",
+      "joint": "side_panel_feet",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "M3 x4: 2.60 mm protrusion",
+      "gate": "fastener-1-stack",
+      "joint": "side_panel_feet",
+      "measurements": {
+        "protrusion_mm": 2.6
+      },
+      "ok": true
+    },
+    {
+      "detail": "hex_nut",
+      "gate": "fastener-1-capture",
+      "joint": "side_panel_feet",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "access 8.0, driver diameter 7.0",
+      "gate": "fastener-1-tool-envelope",
+      "joint": "side_panel_feet",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "locator must constrain the seated part before screws",
+      "gate": "pre-fastener-stability",
+      "joint": "side_panel_feet",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "structural joints require material probes around the load path",
+      "gate": "load-path",
+      "joint": "side_panel_feet",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "9406 faces, 41217.9 mm3",
+      "gate": "load-body-1",
+      "joint": "side_panel_feet",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "not required",
+      "gate": "insertion-path",
+      "joint": "side_panel_feet",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "joint must name both sides",
+      "gate": "part-count",
+      "joint": "belly_plate_to_chassis",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "",
+      "gate": "assembly-axis",
+      "joint": "belly_plate_to_chassis",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "structural joints require a screw-independent locator",
+      "gate": "self-location",
+      "joint": "belly_plate_to_chassis",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "1.50 mm",
+      "gate": "locator-engagement",
+      "joint": "belly_plate_to_chassis",
+      "measurements": {
+        "engagement_mm": 1.5
+      },
+      "ok": true
+    },
+    {
+      "detail": "single round pins need a second anti-rotation feature",
+      "gate": "locator-constraints",
+      "joint": "belly_plate_to_chassis",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "locating 0.100..0.350 mm",
+      "gate": "fit-class",
+      "joint": "belly_plate_to_chassis",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "structural joint requires declared retention",
+      "gate": "fastener-present",
+      "joint": "belly_plate_to_chassis",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "M3 x6: 2.10 mm protrusion",
+      "gate": "fastener-1-stack",
+      "joint": "belly_plate_to_chassis",
+      "measurements": {
+        "protrusion_mm": 2.1
+      },
+      "ok": true
+    },
+    {
+      "detail": "hex_nut",
+      "gate": "fastener-1-capture",
+      "joint": "belly_plate_to_chassis",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "access 8.0, driver diameter 7.0",
+      "gate": "fastener-1-tool-envelope",
+      "joint": "belly_plate_to_chassis",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "locator must constrain the seated part before screws",
+      "gate": "pre-fastener-stability",
+      "joint": "belly_plate_to_chassis",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "structural joints require material probes around the load path",
+      "gate": "load-path",
+      "joint": "belly_plate_to_chassis",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "16104 faces, 39642.1 mm3",
+      "gate": "load-body-1",
+      "joint": "belly_plate_to_chassis",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "not required",
+      "gate": "insertion-path",
+      "joint": "belly_plate_to_chassis",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "joint must name both sides",
+      "gate": "part-count",
+      "joint": "chassis_base_to_chassis",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "",
+      "gate": "assembly-axis",
+      "joint": "chassis_base_to_chassis",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "structural joints require a screw-independent locator",
+      "gate": "self-location",
+      "joint": "chassis_base_to_chassis",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "5.00 mm",
+      "gate": "locator-engagement",
+      "joint": "chassis_base_to_chassis",
+      "measurements": {
+        "engagement_mm": 5.0
+      },
+      "ok": true
+    },
+    {
+      "detail": "single round pins need a second anti-rotation feature",
+      "gate": "locator-constraints",
+      "joint": "chassis_base_to_chassis",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "locating 0.100..0.350 mm",
+      "gate": "fit-class",
+      "joint": "chassis_base_to_chassis",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "structural joint requires declared retention",
+      "gate": "fastener-present",
+      "joint": "chassis_base_to_chassis",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "M3 x4: 2.60 mm protrusion",
+      "gate": "fastener-1-stack",
+      "joint": "chassis_base_to_chassis",
+      "measurements": {
+        "protrusion_mm": 2.6
+      },
+      "ok": true
+    },
+    {
+      "detail": "hex_nut",
+      "gate": "fastener-1-capture",
+      "joint": "chassis_base_to_chassis",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "access 8.0, driver diameter 7.0",
+      "gate": "fastener-1-tool-envelope",
+      "joint": "chassis_base_to_chassis",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "locator must constrain the seated part before screws",
+      "gate": "pre-fastener-stability",
+      "joint": "chassis_base_to_chassis",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "structural joints require material probes around the load path",
+      "gate": "load-path",
+      "joint": "chassis_base_to_chassis",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "6818 faces, 17412.0 mm3",
+      "gate": "load-body-1",
+      "joint": "chassis_base_to_chassis",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "12864 faces, 41103.5 mm3",
+      "gate": "load-body-2",
+      "joint": "chassis_base_to_chassis",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "not required",
+      "gate": "insertion-path",
+      "joint": "chassis_base_to_chassis",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "joint must name both sides",
+      "gate": "part-count",
+      "joint": "head_bezel_to_back",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "",
+      "gate": "assembly-axis",
+      "joint": "head_bezel_to_back",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "structural joints require a screw-independent locator",
+      "gate": "self-location",
+      "joint": "head_bezel_to_back",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "4.50 mm",
+      "gate": "locator-engagement",
+      "joint": "head_bezel_to_back",
+      "measurements": {
+        "engagement_mm": 4.5
+      },
+      "ok": true
+    },
+    {
+      "detail": "single round pins need a second anti-rotation feature",
+      "gate": "locator-constraints",
+      "joint": "head_bezel_to_back",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "locating 0.100..0.350 mm",
+      "gate": "fit-class",
+      "joint": "head_bezel_to_back",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "structural joint requires declared retention",
+      "gate": "fastener-present",
+      "joint": "head_bezel_to_back",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "M3 x8: 3.60 mm protrusion",
+      "gate": "fastener-1-stack",
+      "joint": "head_bezel_to_back",
+      "measurements": {
+        "protrusion_mm": 3.6
+      },
+      "ok": true
+    },
+    {
+      "detail": "hex_nut",
+      "gate": "fastener-1-capture",
+      "joint": "head_bezel_to_back",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "access 8.0, driver diameter 7.0",
+      "gate": "fastener-1-tool-envelope",
+      "joint": "head_bezel_to_back",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "locator must constrain the seated part before screws",
+      "gate": "pre-fastener-stability",
+      "joint": "head_bezel_to_back",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "structural joints require material probes around the load path",
+      "gate": "load-path",
+      "joint": "head_bezel_to_back",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "12692 faces, 64761.4 mm3",
+      "gate": "load-body-1",
+      "joint": "head_bezel_to_back",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "7790 faces, 49262.8 mm3",
+      "gate": "load-body-2",
+      "joint": "head_bezel_to_back",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "not required",
+      "gate": "insertion-path",
+      "joint": "head_bezel_to_back",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "joint must name both sides",
+      "gate": "part-count",
+      "joint": "head_back_panel_to_frames",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "",
+      "gate": "assembly-axis",
+      "joint": "head_back_panel_to_frames",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "structural joints require a screw-independent locator",
+      "gate": "self-location",
+      "joint": "head_back_panel_to_frames",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "1.20 mm",
+      "gate": "locator-engagement",
+      "joint": "head_back_panel_to_frames",
+      "measurements": {
+        "engagement_mm": 1.2
+      },
+      "ok": true
+    },
+    {
+      "detail": "single round pins need a second anti-rotation feature",
+      "gate": "locator-constraints",
+      "joint": "head_back_panel_to_frames",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "locating 0.100..0.350 mm",
+      "gate": "fit-class",
+      "joint": "head_back_panel_to_frames",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "structural joint requires declared retention",
+      "gate": "fastener-present",
+      "joint": "head_back_panel_to_frames",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "M3 x6: 2.60 mm protrusion",
+      "gate": "fastener-1-stack",
+      "joint": "head_back_panel_to_frames",
+      "measurements": {
+        "protrusion_mm": 2.6
+      },
+      "ok": true
+    },
+    {
+      "detail": "hex_nut",
+      "gate": "fastener-1-capture",
+      "joint": "head_back_panel_to_frames",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "access 8.0, driver diameter 7.0",
+      "gate": "fastener-1-tool-envelope",
+      "joint": "head_back_panel_to_frames",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "locator must constrain the seated part before screws",
+      "gate": "pre-fastener-stability",
+      "joint": "head_back_panel_to_frames",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "structural joints require material probes around the load path",
+      "gate": "load-path",
+      "joint": "head_back_panel_to_frames",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "5234 faces, 37290.9 mm3",
+      "gate": "load-body-1",
+      "joint": "head_back_panel_to_frames",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "13018 faces, 108732.1 mm3",
+      "gate": "load-body-2",
+      "joint": "head_back_panel_to_frames",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "not required",
+      "gate": "insertion-path",
+      "joint": "head_back_panel_to_frames",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "joint must name both sides",
+      "gate": "part-count",
+      "joint": "head_back_frame_seam",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "",
+      "gate": "assembly-axis",
+      "joint": "head_back_frame_seam",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "structural joints require a screw-independent locator",
+      "gate": "self-location",
+      "joint": "head_back_frame_seam",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "6.00 mm",
+      "gate": "locator-engagement",
+      "joint": "head_back_frame_seam",
+      "measurements": {
+        "engagement_mm": 6.0
+      },
+      "ok": true
+    },
+    {
+      "detail": "single round pins need a second anti-rotation feature",
+      "gate": "locator-constraints",
+      "joint": "head_back_frame_seam",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "locating 0.100..0.350 mm",
+      "gate": "fit-class",
+      "joint": "head_back_frame_seam",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "structural joint requires declared retention",
+      "gate": "fastener-present",
+      "joint": "head_back_frame_seam",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "M3 x2: 2.60 mm protrusion",
+      "gate": "fastener-1-stack",
+      "joint": "head_back_frame_seam",
+      "measurements": {
+        "protrusion_mm": 2.6
+      },
+      "ok": true
+    },
+    {
+      "detail": "hex_nut",
+      "gate": "fastener-1-capture",
+      "joint": "head_back_frame_seam",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "access 8.0, driver diameter 7.0",
+      "gate": "fastener-1-tool-envelope",
+      "joint": "head_back_frame_seam",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "locator must constrain the seated part before screws",
+      "gate": "pre-fastener-stability",
+      "joint": "head_back_frame_seam",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "structural joints require material probes around the load path",
+      "gate": "load-path",
+      "joint": "head_back_frame_seam",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "13638 faces, 109579.9 mm3",
+      "gate": "load-body-1",
+      "joint": "head_back_frame_seam",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "not required",
+      "gate": "insertion-path",
+      "joint": "head_back_frame_seam",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "joint must name both sides",
+      "gate": "part-count",
+      "joint": "head_bezel_seam",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "",
+      "gate": "assembly-axis",
+      "joint": "head_bezel_seam",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "structural joints require a screw-independent locator",
+      "gate": "self-location",
+      "joint": "head_bezel_seam",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "5.00 mm",
+      "gate": "locator-engagement",
+      "joint": "head_bezel_seam",
+      "measurements": {
+        "engagement_mm": 5.0
+      },
+      "ok": true
+    },
+    {
+      "detail": "single round pins need a second anti-rotation feature",
+      "gate": "locator-constraints",
+      "joint": "head_bezel_seam",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "locating 0.100..0.350 mm",
+      "gate": "fit-class",
+      "joint": "head_bezel_seam",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "structural joint requires declared retention",
+      "gate": "fastener-present",
+      "joint": "head_bezel_seam",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "M3 x2: 2.60 mm protrusion",
+      "gate": "fastener-1-stack",
+      "joint": "head_bezel_seam",
+      "measurements": {
+        "protrusion_mm": 2.6
+      },
+      "ok": true
+    },
+    {
+      "detail": "hex_nut",
+      "gate": "fastener-1-capture",
+      "joint": "head_bezel_seam",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "access 8.0, driver diameter 7.0",
+      "gate": "fastener-1-tool-envelope",
+      "joint": "head_bezel_seam",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "locator must constrain the seated part before screws",
+      "gate": "pre-fastener-stability",
+      "joint": "head_bezel_seam",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "structural joints require material probes around the load path",
+      "gate": "load-path",
+      "joint": "head_bezel_seam",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "12692 faces, 64761.4 mm3",
+      "gate": "load-body-1",
+      "joint": "head_bezel_seam",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "not required",
+      "gate": "insertion-path",
+      "joint": "head_bezel_seam",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "joint must name both sides",
+      "gate": "part-count",
+      "joint": "screen_tray_to_head_back",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "",
+      "gate": "assembly-axis",
+      "joint": "screen_tray_to_head_back",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "structural joints require a screw-independent locator",
+      "gate": "self-location",
+      "joint": "screen_tray_to_head_back",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "1.20 mm",
+      "gate": "locator-engagement",
+      "joint": "screen_tray_to_head_back",
+      "measurements": {
+        "engagement_mm": 1.2
+      },
+      "ok": true
+    },
+    {
+      "detail": "single round pins need a second anti-rotation feature",
+      "gate": "locator-constraints",
+      "joint": "screen_tray_to_head_back",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "locating 0.100..0.350 mm",
+      "gate": "fit-class",
+      "joint": "screen_tray_to_head_back",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "structural joint requires declared retention",
+      "gate": "fastener-present",
+      "joint": "screen_tray_to_head_back",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "M3 x4: 2.60 mm protrusion",
+      "gate": "fastener-1-stack",
+      "joint": "screen_tray_to_head_back",
+      "measurements": {
+        "protrusion_mm": 2.6
+      },
+      "ok": true
+    },
+    {
+      "detail": "hex_nut",
+      "gate": "fastener-1-capture",
+      "joint": "screen_tray_to_head_back",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "access 8.0, driver diameter 7.0",
+      "gate": "fastener-1-tool-envelope",
+      "joint": "screen_tray_to_head_back",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "locator must constrain the seated part before screws",
+      "gate": "pre-fastener-stability",
+      "joint": "screen_tray_to_head_back",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "structural joints require material probes around the load path",
+      "gate": "load-path",
+      "joint": "screen_tray_to_head_back",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "3284 faces, 43559.9 mm3",
+      "gate": "load-body-1",
+      "joint": "screen_tray_to_head_back",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "3284 faces, 43559.9 mm3",
+      "gate": "load-body-2",
+      "joint": "screen_tray_to_head_back",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "not required",
+      "gate": "insertion-path",
+      "joint": "screen_tray_to_head_back",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "joint must name both sides",
+      "gate": "part-count",
+      "joint": "ant_bracket_to_head_back",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "",
+      "gate": "assembly-axis",
+      "joint": "ant_bracket_to_head_back",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "structural joints require a screw-independent locator",
+      "gate": "self-location",
+      "joint": "ant_bracket_to_head_back",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "2.00 mm",
+      "gate": "locator-engagement",
+      "joint": "ant_bracket_to_head_back",
+      "measurements": {
+        "engagement_mm": 2.0
+      },
+      "ok": true
+    },
+    {
+      "detail": "single round pins need a second anti-rotation feature",
+      "gate": "locator-constraints",
+      "joint": "ant_bracket_to_head_back",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "locating 0.100..0.350 mm",
+      "gate": "fit-class",
+      "joint": "ant_bracket_to_head_back",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "structural joint requires declared retention",
+      "gate": "fastener-present",
+      "joint": "ant_bracket_to_head_back",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "M3 x4: 2.60 mm protrusion",
+      "gate": "fastener-1-stack",
+      "joint": "ant_bracket_to_head_back",
+      "measurements": {
+        "protrusion_mm": 2.6
+      },
+      "ok": true
+    },
+    {
+      "detail": "hex_nut",
+      "gate": "fastener-1-capture",
+      "joint": "ant_bracket_to_head_back",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "access 8.0, driver diameter 7.0",
+      "gate": "fastener-1-tool-envelope",
+      "joint": "ant_bracket_to_head_back",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "locator must constrain the seated part before screws",
+      "gate": "pre-fastener-stability",
+      "joint": "ant_bracket_to_head_back",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "structural joints require material probes around the load path",
+      "gate": "load-path",
+      "joint": "ant_bracket_to_head_back",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "10726 faces, 26325.5 mm3",
+      "gate": "load-body-1",
+      "joint": "ant_bracket_to_head_back",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "not required",
+      "gate": "insertion-path",
+      "joint": "ant_bracket_to_head_back",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "joint must name both sides",
+      "gate": "part-count",
+      "joint": "tilt_carrier_to_neck",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "",
+      "gate": "assembly-axis",
+      "joint": "tilt_carrier_to_neck",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "structural joints require a screw-independent locator",
+      "gate": "self-location",
+      "joint": "tilt_carrier_to_neck",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "2.00 mm",
+      "gate": "locator-engagement",
+      "joint": "tilt_carrier_to_neck",
+      "measurements": {
+        "engagement_mm": 2.0
+      },
+      "ok": true
+    },
+    {
+      "detail": "single round pins need a second anti-rotation feature",
+      "gate": "locator-constraints",
+      "joint": "tilt_carrier_to_neck",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "locating 0.100..0.350 mm",
+      "gate": "fit-class",
+      "joint": "tilt_carrier_to_neck",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "structural joint requires declared retention",
+      "gate": "fastener-present",
+      "joint": "tilt_carrier_to_neck",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "M3 x4: 2.60 mm protrusion",
+      "gate": "fastener-1-stack",
+      "joint": "tilt_carrier_to_neck",
+      "measurements": {
+        "protrusion_mm": 2.6
+      },
+      "ok": true
+    },
+    {
+      "detail": "hex_nut",
+      "gate": "fastener-1-capture",
+      "joint": "tilt_carrier_to_neck",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "access 8.0, driver diameter 7.0",
+      "gate": "fastener-1-tool-envelope",
+      "joint": "tilt_carrier_to_neck",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "locator must constrain the seated part before screws",
+      "gate": "pre-fastener-stability",
+      "joint": "tilt_carrier_to_neck",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "structural joints require material probes around the load path",
+      "gate": "load-path",
+      "joint": "tilt_carrier_to_neck",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "3292 faces, 5303.2 mm3",
+      "gate": "load-body-1",
+      "joint": "tilt_carrier_to_neck",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "not required",
+      "gate": "insertion-path",
+      "joint": "tilt_carrier_to_neck",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "joint must name both sides",
+      "gate": "part-count",
+      "joint": "track_master_to_loop",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "",
+      "gate": "assembly-axis",
+      "joint": "track_master_to_loop",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "structural joints require a screw-independent locator",
+      "gate": "self-location",
+      "joint": "track_master_to_loop",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "44.80 mm",
+      "gate": "locator-engagement",
+      "joint": "track_master_to_loop",
+      "measurements": {
+        "engagement_mm": 44.8
+      },
+      "ok": true
+    },
+    {
+      "detail": "single round pins need a second anti-rotation feature",
+      "gate": "locator-constraints",
+      "joint": "track_master_to_loop",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "rotating 0.100..0.400 mm",
+      "gate": "fit-class",
+      "joint": "track_master_to_loop",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "structural joint requires declared retention",
+      "gate": "fastener-present",
+      "joint": "track_master_to_loop",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "M2 x4: 2.40 mm protrusion",
+      "gate": "fastener-1-stack",
+      "joint": "track_master_to_loop",
+      "measurements": {
+        "protrusion_mm": 2.4
+      },
+      "ok": true
+    },
+    {
+      "detail": "heat_set",
+      "gate": "fastener-1-capture",
+      "joint": "track_master_to_loop",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "access 6.0, driver diameter 5.0",
+      "gate": "fastener-1-tool-envelope",
+      "joint": "track_master_to_loop",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "locator must constrain the seated part before screws",
+      "gate": "pre-fastener-stability",
+      "joint": "track_master_to_loop",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "structural joints require material probes around the load path",
+      "gate": "load-path",
+      "joint": "track_master_to_loop",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "129476 faces, 139320.4 mm3",
+      "gate": "load-body-1",
+      "joint": "track_master_to_loop",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "not required",
+      "gate": "insertion-path",
+      "joint": "track_master_to_loop",
+      "measurements": {},
+      "ok": true
+    }
+  ],
+  "schema": 1,
+  "summary": {
+    "failed": 0,
+    "passed": 261,
+    "total": 261
+  }
+}

@@ -13,7 +13,18 @@ world as before, then `fit_real(kind, posed_placeholder)` maps the real mesh
 onto that placeholder's ORIENTED bounding box. One code path, no per-site
 transforms -- the placeholder's own world pose is the ground truth. A per-kind
 `FLIP` fixes the residual 180-deg sign ambiguity of OBB axis matching (dialed
-in visually, then frozen)."""
+in visually, then frozen).
+
+EXCEPTION -- the 28BYJ (2026-07-16, user: "motors mounted wrongly to the
+gears"): the OBB best-fit is blind to the stepper's 7.875 mm ECCENTRIC shaft,
+so it happily parked every real 28BYJ with its shaft ~15 mm off the gear axis
+(pan 32T, tilt worm, both antenna G1s) while the analytic placeholders were
+exactly right. Shaft-on-gear-axis is a hard datum, not a cosmetic fit, so the
+28BYJ skips the heuristic entirely: the posed placeholder is vertex-for-vertex
+a rigidly-transformed `motor_28byj()` (build.py only ever rotates/translates
+it), so Kabsch on corresponding vertices recovers its EXACT world pose, and a
+fixed measured native->local transform registers the real mesh into the
+placeholder's own frame first. Deterministic, zero ambiguity."""
 import os
 
 import numpy as np
@@ -118,6 +129,55 @@ def _cube_rotations():
 _ROT24 = _cube_rotations()
 
 
+# --- deterministic 28BYJ registration (see module docstring EXCEPTION) ---
+# Native frame of the downloaded mesh, measured after _load's bbox-centroid
+# centering: shaft along +X (tip x 14.5) at (y 0, z -9.5); can axis (y 0,
+# z -1.5), can bottom face x -14.5; ears +-Y; wiring box +Z. So the shaft
+# eccentricity points -Z (8.0 vs the 7.875 spec -- 0.125 of viewer-only slop).
+# R(-90 deg about Y) sends shaft +X -> +Z, offset -Z -> +X, wbox +Z -> -X and
+# keeps ears +-Y: exactly motor_28byj's local frame. The translation then puts
+# the native can-bottom center (-14.5, 0, -1.5) at the local origin, where the
+# placeholder's can bottom sits.
+def _byj_native_to_local():
+    T = trimesh.transformations.rotation_matrix(np.radians(-90.0), (0, 1, 0))
+    T[:3, 3] = -T[:3, :3] @ np.array([-14.5, 0.0, -1.5])
+    return T
+
+
+_BYJ_N2L = _byj_native_to_local()
+_byj_local = None                                      # cached pristine motor_28byj()
+
+
+def _pose_28byj(placeholder):
+    """Exact world pose of a posed motor_28byj placeholder, or None.
+
+    build.py never booleans the motor placeholders -- every 28BYJ site is
+    motor_28byj() plus rigid transforms, and trimesh rigid transforms preserve
+    vertex order. Kabsch over the vertex correspondence therefore recovers the
+    rigid transform in closed form. Returns None (caller falls back to the OBB
+    fit) if the vertex sets don't correspond or the residual isn't rigid."""
+    global _byj_local
+    if _byj_local is None:
+        from motors import motor_28byj
+        _byj_local = motor_28byj("_refparts_frame")
+    A = np.asarray(_byj_local.vertices)
+    B = np.asarray(placeholder.vertices)
+    if A.shape != B.shape:
+        return None
+    ca, cb = A.mean(axis=0), B.mean(axis=0)
+    H = (A - ca).T @ (B - cb)
+    U, _, Vt = np.linalg.svd(H)
+    Rm = Vt.T @ U.T
+    if np.linalg.det(Rm) < 0:
+        Vt[-1] *= -1
+        Rm = Vt.T @ U.T
+    T = np.eye(4)
+    T[:3, :3] = Rm
+    T[:3, 3] = cb - Rm @ ca
+    resid = np.abs(A @ Rm.T + T[:3, 3] - B).max()
+    return T if resid < 1e-6 else None
+
+
 def _fit_transform(real, placeholder):
     """Rigid 4x4 registering the real mesh onto the placeholder by discrete
     best-fit: try all 24 cube orientations (in the placeholder's own OBB frame so
@@ -155,7 +215,14 @@ def fit_real(kind, placeholder, name):
     if kind not in _SPEC:
         return None
     real = _load(kind).copy()
-    real.apply_transform(_fit_transform(real, placeholder))
+    T = None
+    if kind == "28byj":                                # hard datum: shaft on gear axis
+        pose = _pose_28byj(placeholder)
+        if pose is not None:
+            T = pose @ _BYJ_N2L
+    if T is None:
+        T = _fit_transform(real, placeholder)
+    real.apply_transform(T)
     if kind in _TOP_ALIGN:
         real.apply_translation((0.0, 0.0,
                                 float(placeholder.bounds[1][2] - real.bounds[1][2])))

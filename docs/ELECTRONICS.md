@@ -24,7 +24,15 @@ some Thingiverse "models" are low-poly illustrations, not mechanical CAD.
 their box/cylinder placeholders in `web/assembly.glb`, so the viewer shows the
 real part geometry. `src/refparts.py` poses each real mesh onto the placeholder's
 oriented bounding box by a 24-orientation best-fit, so it lands at the exact
-placeholder location and orientation. They are bought parts, never printed, and
+placeholder location and orientation. **Exception (2026-07-16): the 28BYJ-48 is
+registered deterministically instead** -- the OBB best-fit is blind to its
+eccentric shaft and parked every real stepper ~15 mm off its gear axis, so
+refparts recovers the placeholder's exact pose (Kabsch over the vertex
+correspondence) and applies a fixed measured native-to-local transform; the
+shaft now lands on the pan/tilt/antenna gear axes within the mesh's own 0.125 mm
+eccentricity slop (guarded by `tests/test_refparts_28byj.py`). The same pass
+deleted the placeholder's phantom 9 mm gearbox tier (see CLAUDE.md) so the real
+motor's shaft actually reaches its gears. They are bought parts, never printed, and
 skipped by the boolean interference/fit gates (like the non-watertight screen
 mesh). `PLACEHOLDER_PARTS=1 make build` restores the analytic placeholders and
 their full gate coverage. The ULN2003 has no downloaded mesh (see below), so it

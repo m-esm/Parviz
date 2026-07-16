@@ -14,7 +14,7 @@ from geo import (NUT, _T, _color, _orient, blind_socket, box,
     cyl, fix_pin, frustum, hex_prism, inter, nut_slot,
     rounded_box, screw_post, sub, teardrop, uni)
 from screen import screen_pose
-from gears import gear_disc
+from gears import gear_disc, involute_spur
 
 
 # ---------------------------------------------------------------------------
@@ -1035,12 +1035,31 @@ def build_antennas():
         ax_ = sxa * P["ant_x"]
         shaft = cyl(P["ant_mast_d"] / 2, z1 - z0)
         shaft.apply_translation((0, 0, (z0 + z1) / 2))
-        teeth = []
+        rack_spine = box(3.0, 0.9, P["ant_rack_top"] - (z0 + 2.0))
+        rack_spine.apply_translation((0, -2.75,
+                                      (P["ant_rack_top"] + z0 + 2.0) / 2))
+        teeth = [rack_spine]
         zt_ = z0 + 3.0
-        while zt_ < P["ant_rack_top"]:               # rack teeth on the -Y face: world
-            t = box(3.0, 1.95, 1.25)                 # y -26.95..-28.9 (root buried 0.3
-            t.apply_translation((0, -3.925, zt_))    # into the shaft, tips at the
-            teeth.append(t)                          # pinion root circle -28.8 + 0.1)
+        # Full-depth 20-degree rack teeth.  The old rectangular bars could not roll
+        # through an involute pinion: their vertical faces collided at entry/exit and
+        # made the exported mast a visual prop.  Root is buried 0.30 into the Ø6.5 mast;
+        # pitch line is one module out and the tip another module out.
+        half_pitch_tooth = (np.pi * P["ant_gear_m"] / 4.0
+                            - 0.20 / 4.0)
+        root_half = half_pitch_tooth + 1.25 * P["ant_gear_m"] * np.tan(np.radians(20))
+        tip_half = max(0.25, half_pitch_tooth - P["ant_gear_m"] * np.tan(np.radians(20)))
+        while zt_ < P["ant_rack_top"]:
+            prof = sg.Polygon([(-2.95, zt_ - root_half),
+                               (-2.95, zt_ + root_half),
+                               (-4.75, zt_ + tip_half),
+                               (-4.75, zt_ - tip_half)])
+            t = extrude_polygon(prof, 3.0)           # (Y,Z) footprint temporarily in XY
+            yz_to_xyz = np.array([[0, 0, 1, -1.5],  # (u=Y,v=Z,w=extrusion)
+                                  [1, 0, 0,  0.0],  # -> (X=w-1.5,Y=u,Z=v)
+                                  [0, 1, 0,  0.0],
+                                  [0, 0, 0,  1.0]])
+            t.apply_transform(yz_to_xyz)
+            teeth.append(t)
             zt_ += pitch
         cap = cyl(P["ant_tip_d"] / 2, P["ant_tip_h"])
         cap.apply_translation((0, 0, z1 + P["ant_tip_h"] / 2))
@@ -1059,15 +1078,13 @@ def build_antennas():
 
 def build_ant_drive():
     """Antenna drive trains, one INDEPENDENT mirrored set per side (see PARAMS): each
-    28BYJ (body |x| 25.7..53.5) gears up 30T:12T twice (planes |x| 22/14) to a Ø4
+    28BYJ (body |x| 25.7..44.5 since the 2026-07-16 phantom-tier fix; the shaft-base
+    plane 25.7 and every gear are unmoved) gears up 30T:12T twice (planes |x| 22/14) to a Ø4
     half-shaft (|x| 6..88) whose 27T pinion meshes its mast's rack. Returns
-    [ant_gears_L/R (placeholder discs+shafts, silver), ant_bracket (one print, both
-    sides + shared wall spine)]. Real generated rack/pinion teeth are a later pass like
-    docs/WORM.md (the placeholder mesh pairs are whitelisted)."""
+    four printable pieces per side: motor gear, compound idler, idler axle, and the
+    output half-shaft/pinion.  All teeth are full-depth involutes; the motor gear has a
+    double-D socket and the two rotating bracket journals have 0.15 mm radial clearance."""
     m_ = P["ant_gear_m"]
-    big_r = m_ * P["ant_gear_big_t"] / 2             # 12.0
-    sml_r = m_ * P["ant_gear_small_t"] / 2           # 4.8
-    pin_r = m_ * P["ant_pinion_t"] / 2               # 10.8
     my_, mz_ = P["ant_motor_y"], P["ant_motor_z"]
     iy_, iz_ = P["ant_idler_y"], P["ant_idler_z"]
     cy_, cz_ = P["ant_cross_y"], P["ant_cross_z"]
@@ -1077,24 +1094,49 @@ def build_ant_drive():
     br = [box(164.0, 2.0, 12.0)]                     # shared wall spine x -82..82
     br[0].apply_translation((0, wall_in + 1.0, 212.0))
     for sxa, side in ((-1, "L"), (1, "R")):
-        gears = []
-        g = gear_disc(big_r, P["ant_gear_big_t"], 5.0, 2.0, axis="x")   # G1, motor
-        g.apply_translation((sxa * x1_, my_, mz_)); gears.append(g)
-        g = gear_disc(sml_r, P["ant_gear_small_t"], 5.0, 2.0, axis="x") # G2, idler
-        g.apply_translation((sxa * x1_, iy_, iz_)); gears.append(g)
-        g = gear_disc(big_r, P["ant_gear_big_t"], 5.0, 2.0, axis="x")   # G3, idler
-        g.apply_translation((sxa * x2_, iy_, iz_)); gears.append(g)
-        g = gear_disc(sml_r, P["ant_gear_small_t"], 5.0, 2.0, axis="x") # G4, half-shaft
-        g.apply_translation((sxa * x2_, cy_, cz_)); gears.append(g)
-        idl = cyl(2.0, 17.0, axis="x"); idl.apply_translation((sxa * 16.5, iy_, iz_))
-        gears.append(idl)                                               # idler |x| 8..25
-        crs = cyl(2.0, 82.0, axis="x"); crs.apply_translation((sxa * 47.0, cy_, cz_))
-        gears.append(crs)                                               # half-shaft 6..88
-        g = gear_disc(pin_r, P["ant_pinion_t"], 6.0, 2.0, axis="x")     # rack pinion
-        g.apply_translation((sxa * 84.0, cy_, cz_)); gears.append(g)
-        gearset = trimesh.util.concatenate(gears)
-        _color(gearset, "motor"); gearset.metadata["name"] = f"ant_gears_{side}"
-        out.append(gearset)
+        # G1: keyed directly to the 28BYJ output shaft.  The extra hub gives the
+        # socket 7 mm engagement rather than relying on a 5 mm gear face alone.
+        motor_g = involute_spur(P["ant_gear_big_t"], m_, 5.0, axis="x")
+        hub = cyl(4.0, 7.0, axis="x")
+        motor_g = sub(uni([motor_g, hub]), geo.dbore_neg(9.0, axis="x", clear=0.12))
+        motor_g.apply_translation((sxa * x1_, my_, mz_))
+        _color(motor_g, "motor"); motor_g.metadata["name"] = f"ant_motor_gear_{side}"
+        out.append(motor_g)
+
+        # G2+G3: a compound idler rotating on a removable Ø3.9 printed axle.  A hub
+        # bridges the two gear planes, so the exported object is one load-bearing body.
+        g2 = involute_spur(P["ant_gear_small_t"], m_, 5.0, axis="x", bore_d=4.30)
+        g2.apply_translation((sxa * x1_, iy_, iz_))
+        g3 = involute_spur(P["ant_gear_big_t"], m_, 5.0, axis="x", bore_d=4.30)
+        g3.apply_translation((sxa * x2_, iy_, iz_))
+        bridge = cyl(3.2, abs(x1_ - x2_) + 5.0, axis="x")
+        bridge = sub(bridge, cyl(2.15, abs(x1_ - x2_) + 7.0, axis="x"))
+        bridge.apply_translation((sxa * (x1_ + x2_) / 2, iy_, iz_))
+        idler = uni([g2, g3, bridge])
+        # Tooth phases were solved against both adjacent fixed-centre gears with an
+        # exact manifold intersection sweep (3-degree coarse, 1-degree confirmation).
+        idler.apply_transform(R(np.radians(27.0), (1, 0, 0),
+                                  point=(sxa * 16.5, iy_, iz_)))
+        _color(idler, "motor"); idler.metadata["name"] = f"ant_idler_gear_{side}"
+        out.append(idler)
+        axle = cyl(1.95, 17.0, axis="x")
+        axle.apply_translation((sxa * 16.5, iy_, iz_))
+        _color(axle, "axle"); axle.metadata["name"] = f"ant_idler_axle_{side}"
+        out.append(axle)
+
+        # G4, cross-shaft and rack pinion are fused into one torque path.  The Ø3.9
+        # journal runs in the bracket's Ø4.2 bores (0.15 radial clearance).
+        g4 = involute_spur(P["ant_gear_small_t"], m_, 5.0, axis="x")
+        g4.apply_translation((sxa * x2_, cy_, cz_))
+        shaft = cyl(1.95, 82.0, axis="x")
+        shaft.apply_translation((sxa * 47.0, cy_, cz_))
+        pinion = involute_spur(P["ant_pinion_t"], m_, 6.0, axis="x")
+        pinion.apply_translation((sxa * 84.0, cy_, cz_))
+        output = uni([g4, shaft, pinion])
+        output.apply_transform(R(np.radians(71.0), (1, 0, 0),
+                                  point=(sxa * 47.0, cy_, cz_)))
+        _color(output, "motor"); output.metadata["name"] = f"ant_output_{side}"
+        out.append(output)
 
         pl = box(2.0, 34.0, 32.0)                    # bushing plate |x| 8.5..10.5:
         pl.apply_translation((sxa * 9.5, wall_in + 18.5, 196.0)); br.append(pl)
@@ -1147,10 +1189,23 @@ def build_ant_drive():
         epb = cyl(14.35, pt_ + 1.0, axis="x")        # Ø28.7 motor-nose clearance bore
         epb.apply_translation((sxa * px_, -30.0, 189.6))
         bracket = sub(bracket, epb)
-        wbx = box(pt_ + 1.0, 7.4, 16.2)              # wiring-box notch in the rear
-        wbx.apply_translation((sxa * px_, -46.3, 189.7))     # ligament (28BYJ box
-        bracket = sub(bracket, wbx)                  # crosses it at z 182..197 only;
-        # the ligament stubs above/below + the front ligament keep the plate one body
+        # The corrected motor roll puts the eccentric shaft at ant_motor_y and therefore
+        # the wiring box on the opposite, FRONT side.  This notch used to be at y=-46.3
+        # in the rear ligament while the real box occupied y=-16.9..-13.0, leaving an
+        # 80.15 mm3 hard collision per motor.  Notch the measured front envelope instead;
+        # the full rear ligament plus the top/bottom front stubs keep the plate one body.
+        wbx = box(pt_ + 1.0, 7.4, 16.2)
+        wbx.apply_translation((sxa * px_, -14.7, 189.7))
+        bracket = sub(bracket, wbx)
+        # TILT-CLAMP-TUBE SCALLOP (2026-07-16 phantom-tier fix): at ant_plate_x 27 the
+        # face plate lands MID-tube (the old x-36 plate sat just past the tube end) and
+        # its bottom-front corner sliced 38 mm3 into the head_back frame's clamp boss,
+        # which reaches r 16.87 about the tilt axis inside the plate band (measured).
+        # Cut an r 17.5 tilt-axis cylinder across plate + pad root; the plate's O28.7
+        # bore band (z >= 175.3) and both ear nut traps (r >= 22.6) are untouched.
+        scal = cyl(17.5, 11.2, axis="x")
+        scal.apply_translation((sxa * 30.5, P["tilt_axis_y"], P["tilt_axis_z"]))
+        bracket = sub(bracket, scal)
         bore = cyl(2.1, 200.0, axis="x")             # half-shaft bushings Ø4.2
         bore.apply_translation((0, cy_, cz_)); bracket = sub(bracket, bore)
         bore = cyl(2.1, 44.0, axis="x")              # idler bushings Ø4.2
@@ -1350,5 +1405,3 @@ def build_arms():
         _color(arm, "arm"); arm.metadata["name"] = nm
         arms.append(arm)
     return arms
-
-
