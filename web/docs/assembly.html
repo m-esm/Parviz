@@ -890,6 +890,24 @@ open-far last, keels on) + 1 loose master link + both keeper bars. Measure on it
 </ol>
 <p>Any fail: adjust <code>track_bore_pip_d</code> / <code>track_pin_print_d</code> and reprint the COUPON,
 not a strip.</p>
+<h3 id="bearing-seat-coupon-protocol-print-before-neck_clevis-and-any-wheel-plate">Bearing-seat coupon protocol (print BEFORE neck_clevis and any wheel plate)</h3>
+<p>Print <code>hw_coupon_695</code> and <code>hw_coupon_f688</code> in the supplied orientations. Their five
+steps are marked by 1..5 tick notches and ascend through 0.075 / 0.100 / 0.125 /
+0.150 / 0.175 mm rib crowns. Press the REAL bearing into the steps in ascending
+order. The correct step is the LOOSEST one where all of these are true:</p>
+<ol>
+<li>Seating needs a firm thumb or arbor push, not a tap-in drop.</li>
+<li>The seated outer race cannot be turned by finger torque.</li>
+<li>The bearing cannot be pushed back out by thumb from behind.</li>
+<li>There is no whitening or cracking at the rib roots.</li>
+<li>For the 695 only, the bearing still spins freely after seating, proving its
+   shields were not crushed.</li>
+</ol>
+<p>One step looser will creep. If two adjacent steps pass, choose the looser one. Re-key
+<code>brg695_rib_proud</code> or <code>idler_rib_proud</code> to the winning crown, run <code>make build</code> and
+<code>make check</code>, and only then print <code>neck_clevis</code> or the wheel plates. Repeat this
+protocol for every filament brand or material change. Results do not transfer between
+spools.</p>
 <h3 id="recommendations-bigger-than-this-pass">Recommendations (bigger than this pass)</h3>
 <ul>
 <li>Print a D-bore coupon and dial the axle-flat clearance (modeled at +0.05; +0.15 measured
