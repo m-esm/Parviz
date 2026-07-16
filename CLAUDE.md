@@ -194,6 +194,15 @@ joint: structural parts must sit in a deterministic seated pose on rails, rebate
 or separated pins before a screw is driven. A joint is not approved merely because its final
 pose renders without interference.
 
+**PAN CD ADJUSTMENT (2026-07-16, task P2):** `chassis_pedestal` now uses a
+locate-then-clamp interface on `belly_plate`. Its two unchanged Ø4 printed pins
+locate Y and rotation in Ø4.2 obround plate slots, while four M3x12 csk passages
+and swept countersinks allow `+-pan_cd_adjust` X travel. The nominal slot centers
+preserve the 19.2 mm m0.8 32T-to-16T center distance. The can relief and deck gear
+pocket sweep with the same travel. Set backlash with a 0.10 to 0.15 mm paper
+feeler before tightening the four captive-nut clamps. Contract:
+`pedestal_to_belly`; its mutation gate covers missing pins and sealed nut traps.
+
 Then **downscale and actually Read every PNG** before claiming a change works:
 `sips -Z 1400 .claude/renders/chk_iso.png --out .claude/renders/chk_iso_s.png`.
 The model is served at `/assembly.glb` (serve.py serves `web/` at root), so shoot.py takes

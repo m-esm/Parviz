@@ -25,6 +25,15 @@ ring installs after the platform: it drops vertically over the r45.0 top band be
 the lip ID is 90.8 mm and the band OD is 90.0 mm. The contract probes the full lip,
 all six screw stations and captures, and this collision-free insertion path.
 
+The pan-motor mounting interface is `pedestal_to_belly`, joining
+`chassis_pedestal` to `belly_plate`. Two printed Ø4 pins run in Ø4.2 obround plate
+slots. They locate Y and rotation while leaving X tunable by
+`+-pan_cd_adjust` to set spur-gear backlash. Four M3x12 countersunk screws pass
+through matching X slots into captive pedestal nuts and clamp the selected
+position. Their countersinks are swept across the full travel, so every screw
+remains flush with the z=7 belly face at any adjustment. Assembly step 7 owns
+the backlash-setting procedure and final clamp.
+
 ## What every declaration owns
 
 Each joint has a stable ID used here, in `docs/ASSEMBLY.md`, and in the report. Its declaration

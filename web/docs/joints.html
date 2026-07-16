@@ -145,6 +145,14 @@ shoulder and six M3x10 through-bolts clamp six deck lobes into captive M3 nuts. 
 ring installs after the platform: it drops vertically over the r45.0 top band because
 the lip ID is 90.8 mm and the band OD is 90.0 mm. The contract probes the full lip,
 all six screw stations and captures, and this collision-free insertion path.</p>
+<p>The pan-motor mounting interface is <code>pedestal_to_belly</code>, joining
+<code>chassis_pedestal</code> to <code>belly_plate</code>. Two printed Ø4 pins run in Ø4.2 obround plate
+slots. They locate Y and rotation while leaving X tunable by
+<code>+-pan_cd_adjust</code> to set spur-gear backlash. Four M3x12 countersunk screws pass
+through matching X slots into captive pedestal nuts and clamp the selected
+position. Their countersinks are swept across the full travel, so every screw
+remains flush with the z=7 belly face at any adjustment. Assembly step 7 owns
+the backlash-setting procedure and final clamp.</p>
 <h2 id="what-every-declaration-owns">What every declaration owns</h2>
 <p>Each joint has a stable ID used here, in <code>docs/ASSEMBLY.md</code>, and in the report. Its declaration
 names:</p>

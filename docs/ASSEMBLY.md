@@ -277,6 +277,15 @@ tray killed the 88.5 mm blind channels, 2026-07-08.)
    pilots (jack aligned with the USB slot), the 5A buck to the belly plate's 40×20 post
    grid, zip the mini buck beside it, and wire per firmware/WIRING.md (leave 60 mm slack
    on every tray run; zip the incoming wall cable to the floor anchors as strain relief).
+   Fit `chassis_pedestal` to the loose belly plate with its two printed pins near
+   mid-slot and start the four M3x12 csk screws into the captive pedestal nuts.
+   Leave them loose enough for X adjustment. The swept countersinks keep every
+   screw flush anywhere in the slot instead of pulling the pedestal back to nominal.
+   **Backlash setting:** mesh the 32T motor gear against the platform's 16T pinion
+   with a 0.10 to 0.15 mm paper feeler between the flanks. Snug all four pedestal
+   screws, remove the feeler, then rotate the platform one full turn by hand and
+   check for tight spots. Re-set if it binds. The target is perceptible but small
+   lash at the teeth.
    Load the low ballast into the rear bay + the belly-plate pockets from BELOW, then bolt
    on `belly_plate` (6× M3 csk, flush at z=7). Ballast must go in before the plate closes
    the floor.

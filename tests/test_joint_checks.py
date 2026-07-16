@@ -11,6 +11,7 @@ sys.path.insert(0, os.path.join(ROOT, "src"))
 
 from joint_checks import MeshStore, analytic_results, fastener_results, inventory_results, mesh_results, probe_result
 from jointspec import Fastener, Fit, Insertion, Joint, Locator, Probe
+from joints import JOINTS
 
 FIT = Fit("locating", 0.1, 0.3)
 
@@ -112,6 +113,20 @@ class MeshMutationTests(unittest.TestCase):
             j, DictStore({"moving": good, "fixed": fixed}))))
         codes = failed_codes(mesh_results(j, DictStore({"moving": broken, "fixed": fixed})))
         self.assertTrue(any(code.startswith("seating-") for code in codes))
+
+    def test_pedestal_joint_rejects_removed_pins_and_sealed_nut_traps(self):
+        joint = next(j for j in JOINTS if j.name == "pedestal_to_belly")
+        empty = trimesh.creation.box((1, 1, 1))
+        empty.apply_translation((500, 500, 500))
+        pin = joint.locator.male_probes[0]
+        self.assertFalse(probe_result(joint.name, pin,
+                                      DictStore({pin.part: empty}), "removed-pin").ok)
+        trap = joint.fasteners[0].capture_probes[0] if joint.fasteners[0].capture_probes else Probe(
+            "chassis_pedestal", "void", joint.locator.male_probes[0].point)
+        sealed = trimesh.creation.box((20, 20, 20))
+        sealed.apply_translation(trap.point)
+        self.assertFalse(probe_result(joint.name, trap,
+                                      DictStore({trap.part: sealed}), "sealed-nut-trap").ok)
 
 
 if __name__ == "__main__":

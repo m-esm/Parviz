@@ -370,6 +370,7 @@ P = {
     "pan_gear_motor_t": 32,     # on the motor D-shaft (drives)
     "pan_gear_pinion_t": 16,    # integral to the platform hub (driven) -> 2:1 UP
     "pan_gear_z": (45.0, 50.0), # tooth band: under the seat floor 51, over the boss 42.2
+    "pan_cd_adjust": 0.4,       # pedestal X travel each way tunes printed spur backlash
     "pan_shaft_azim": 180.0,    # motor-shaft azimuth about the pan axis (deg). 180 = -X:
                             # gear center r19.2 stays >=41 deg from both stop posts
                             # (118/332), the pedestal clears drive_L (x>=-43.2 vs can
@@ -806,7 +807,8 @@ P = {
     # y <= -33; TT cans |x| >= 44.4 at y -23..-10):
     "uln1_c": (27.0, 20.0),   # posts x 9.5..44.5 / y 4..36: 4.7 off the pedestal
                               # foot lug, clear of the drive_R can band (y-sep)
-    "uln2_c": (26.0, -14.0),  # posts x 8.5..43.5 / y -30..2: between pedestal
+    "uln2_c": (26.4, -14.0),  # +0.4 X: the inboard post clears the pedestal at its
+                               # outward pan-CD adjustment extreme (probe-verified)
                               # (+x side) and the power tray (y <= -33); the old
                               # (0, 80) hull-floor spot is outside the opening
                               # and was deleted with the hull posts

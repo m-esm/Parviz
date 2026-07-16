@@ -495,6 +495,21 @@ def main():
               for dx in (-18.0, 18.0) for dy in (-18.0, 18.0)),
           "nut centres on the screw axis at all 4 feet")
 
+    # Task P2: the pedestal pins must remain X slots, not regress to round holes.
+    # Probe the two slot end centers in the pin band, then material 0.9 beyond
+    # each complete slot envelope (travel + hole radius).
+    bp = M("belly_plate")
+    adj = P["pan_cd_adjust"]
+    pin_z = P["chassis_clear"] + 1.0
+    pin_centres = [(mx + dx, my) for dx in (-18.0, 18.0)]
+    slot_void = [(x + sx * adj, y, pin_z)
+                 for x, y in pin_centres for sx in (-1, 1)]
+    slot_solid = [(x + sx * adj, y + sy * (2.1 + 0.9), pin_z)
+                  for x, y in pin_centres for sx in (-1, 1) for sy in (-1, 1)]
+    check("pedestal pin passages retain +-pan_cd_adjust X slots",
+          clear(bp, slot_void) and inside(bp, slot_solid),
+          "slot ends void; plate solid 0.9 mm beyond each O4.2 side wall")
+
     nk = M("neck_clevis")
     root = []
     for az in (270.0, 30.0, 150.0):

@@ -761,7 +761,7 @@
       "ok": true
     },
     {
-      "detail": "11402 faces, 228126.7 mm3",
+      "detail": "11402 faces, 228038.2 mm3",
       "gate": "load-body-1",
       "joint": "deck_strip_front_seam",
       "measurements": {},
@@ -863,7 +863,7 @@
       "ok": true
     },
     {
-      "detail": "11402 faces, 228126.7 mm3",
+      "detail": "11402 faces, 228038.2 mm3",
       "gate": "load-body-1",
       "joint": "deck_strip_rear_seam",
       "measurements": {},
@@ -1169,7 +1169,7 @@
       "ok": true
     },
     {
-      "detail": "16104 faces, 39642.1 mm3",
+      "detail": "25076 faces, 39549.6 mm3",
       "gate": "load-body-1",
       "joint": "belly_plate_to_chassis",
       "measurements": {},
@@ -1179,6 +1179,232 @@
       "detail": "not required",
       "gate": "insertion-path",
       "joint": "belly_plate_to_chassis",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "joint must name both sides",
+      "gate": "part-count",
+      "joint": "pedestal_to_belly",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "",
+      "gate": "assembly-axis",
+      "joint": "pedestal_to_belly",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "structural joints require a screw-independent locator",
+      "gate": "self-location",
+      "joint": "pedestal_to_belly",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "2.45 mm",
+      "gate": "locator-engagement",
+      "joint": "pedestal_to_belly",
+      "measurements": {
+        "engagement_mm": 2.45
+      },
+      "ok": true
+    },
+    {
+      "detail": "single round pins need a second anti-rotation feature",
+      "gate": "locator-constraints",
+      "joint": "pedestal_to_belly",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "sliding 0.150..0.500 mm",
+      "gate": "fit-class",
+      "joint": "pedestal_to_belly",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "structural joint requires declared retention",
+      "gate": "fastener-present",
+      "joint": "pedestal_to_belly",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "M3 x4: 2.60 mm protrusion",
+      "gate": "fastener-1-stack",
+      "joint": "pedestal_to_belly",
+      "measurements": {
+        "protrusion_mm": 2.6
+      },
+      "ok": true
+    },
+    {
+      "detail": "hex_nut",
+      "gate": "fastener-1-capture",
+      "joint": "pedestal_to_belly",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "access 8.0, driver diameter 7.0",
+      "gate": "fastener-1-tool-envelope",
+      "joint": "pedestal_to_belly",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "locator must constrain the seated part before screws",
+      "gate": "pre-fastener-stability",
+      "joint": "pedestal_to_belly",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "structural joints require material probes around the load path",
+      "gate": "load-path",
+      "joint": "pedestal_to_belly",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "solid 0.7290 mm3",
+      "gate": "locator-male-1",
+      "joint": "pedestal_to_belly",
+      "measurements": {
+        "intersection_mm3": 0.7290006179800391
+      },
+      "ok": true
+    },
+    {
+      "detail": "solid 0.7290 mm3",
+      "gate": "locator-male-2",
+      "joint": "pedestal_to_belly",
+      "measurements": {
+        "intersection_mm3": 0.7289993627072855
+      },
+      "ok": true
+    },
+    {
+      "detail": "void 0.0000 mm3",
+      "gate": "locator-female-1",
+      "joint": "pedestal_to_belly",
+      "measurements": {
+        "intersection_mm3": 0.0
+      },
+      "ok": true
+    },
+    {
+      "detail": "void 0.0000 mm3",
+      "gate": "locator-female-2",
+      "joint": "pedestal_to_belly",
+      "measurements": {
+        "intersection_mm3": 0.0
+      },
+      "ok": true
+    },
+    {
+      "detail": "solid 0.7290 mm3",
+      "gate": "seating-1",
+      "joint": "pedestal_to_belly",
+      "measurements": {
+        "intersection_mm3": 0.7289993868471462
+      },
+      "ok": true
+    },
+    {
+      "detail": "4906 faces, 36313.3 mm3",
+      "gate": "load-body-1",
+      "joint": "pedestal_to_belly",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "25076 faces, 39549.6 mm3",
+      "gate": "load-body-2",
+      "joint": "pedestal_to_belly",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "12/12 ring probes hit material",
+      "gate": "fastener-1-bore-1",
+      "joint": "pedestal_to_belly",
+      "measurements": {
+        "hits": 12.0
+      },
+      "ok": true
+    },
+    {
+      "detail": "12/12 ring probes hit material",
+      "gate": "fastener-1-bore-2",
+      "joint": "pedestal_to_belly",
+      "measurements": {
+        "hits": 12.0
+      },
+      "ok": true
+    },
+    {
+      "detail": "12/12 ring probes hit material",
+      "gate": "fastener-1-bore-3",
+      "joint": "pedestal_to_belly",
+      "measurements": {
+        "hits": 12.0
+      },
+      "ok": true
+    },
+    {
+      "detail": "12/12 ring probes hit material",
+      "gate": "fastener-1-bore-4",
+      "joint": "pedestal_to_belly",
+      "measurements": {
+        "hits": 12.0
+      },
+      "ok": true
+    },
+    {
+      "detail": "void 0.0000 mm3",
+      "gate": "fastener-1-capture-1",
+      "joint": "pedestal_to_belly",
+      "measurements": {
+        "intersection_mm3": 0.0
+      },
+      "ok": true
+    },
+    {
+      "detail": "void 0.0000 mm3",
+      "gate": "fastener-1-capture-2",
+      "joint": "pedestal_to_belly",
+      "measurements": {
+        "intersection_mm3": 0.0
+      },
+      "ok": true
+    },
+    {
+      "detail": "void 0.0000 mm3",
+      "gate": "fastener-1-capture-3",
+      "joint": "pedestal_to_belly",
+      "measurements": {
+        "intersection_mm3": 0.0
+      },
+      "ok": true
+    },
+    {
+      "detail": "void 0.0000 mm3",
+      "gate": "fastener-1-capture-4",
+      "joint": "pedestal_to_belly",
+      "measurements": {
+        "intersection_mm3": 0.0
+      },
+      "ok": true
+    },
+    {
+      "detail": "not required",
+      "gate": "insertion-path",
+      "joint": "pedestal_to_belly",
       "measurements": {},
       "ok": true
     },
@@ -2132,7 +2358,7 @@
   "schema": 1,
   "summary": {
     "failed": 0,
-    "passed": 286,
-    "total": 286
+    "passed": 314,
+    "total": 314
   }
 }

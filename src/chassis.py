@@ -193,6 +193,22 @@ def _belly_csk_neg(bx, by):
     return neg
 
 
+def _pedestal_slot_neg(x, y, radius, height, zc, extra_travel=0.0):
+    """Pedestal interface obround, elongated only along the pan CD tuning axis."""
+    travel = P["pan_cd_adjust"] + extra_travel
+    slot = extrude_polygon(sg.LineString([(x - travel, y), (x + travel, y)]).buffer(radius),
+                           height)
+    slot.apply_translation((0, 0, zc - height / 2))
+    return slot
+
+
+def _pedestal_swept_csk_neg(x, y):
+    """Flush countersink envelope across the complete pedestal adjustment travel."""
+    travel = P["pan_cd_adjust"]
+    return uni([_belly_csk_neg(x + dx, y)
+                for dx in np.linspace(-travel, travel, 5)])
+
+
 def build_chassis_core():
     """Tank chassis BODY: hollow rounded box between the tracks. Top = pan-mount plane; houses
     the pan motor + driver + wiring. (Track pods are build_tracks.)"""
@@ -265,7 +281,12 @@ def build_chassis_core():
     # floor annulus (35.5..44.5) stays fully supported; the swinging stop lug bottoms at
     # 51.6, 1.6 over the gear band.
     for cx_, cy_, r_ in ((0.0, 0.0, 15.0), (sxp, syp, 14.5)):
-        cbore = cyl(r_, 30.0); cbore.apply_translation((cx_, cy_, seat_floor - 2))
+        if cx_ == sxp:
+            # Motor gear follows the adjustable pedestal. The pocket sweeps 0.1
+            # beyond full travel so the original 0.7 running clearance stays >=0.6.
+            cbore = _pedestal_slot_neg(cx_, cy_, r_, 30.0, seat_floor - 2, 0.1)
+        else:
+            cbore = cyl(r_, 30.0); cbore.apply_translation((cx_, cy_, seat_floor - 2))
         body = sub(body, cbore)
     # cable pass through the deck: 16x8 obround (5-pos JST-XH head is 14.9 x 5.9) at
     # cable_exit, INSIDE the race ID -- the old Ø12 pass at (0, neck_y) punched through the
@@ -1724,23 +1745,20 @@ def build_belly_plate():
     # --- PAN PEDESTAL interface (round 5, user: pedestal separate, "bolt and
     # nuts" to the plate): 4x M3x12 csk from below (flush at z 7, the belly-screw
     # convention) into captive hex nuts in the pedestal feet, + 2 Ø4.2 holes for
-    # the pedestal's printed registration pins (pan-gear CD is position-critical;
-    # screws clamp, pins locate).
+    # the pedestal's printed registration pins. All six plate passages sweep along
+    # X: pins locate Y + rotation, then the pedestal tunes gear CD before screws clamp.
     mxp, myp = _ped_c()
     # pan-can relief pocket (v2, chassis_clear 10): the can bottom z 12.95 is
     # PINNED by the pan gear band while the plug top rose to z0+3 = 13 -- give
     # the can a O30 x 1.25 pocket (plug keeps 1.75 under it)
-    cpk = cyl(15.0, 1.25)
-    cpk.apply_translation((mxp, myp, z0 + 3.0 - 1.25 / 2))
+    cpk = _pedestal_slot_neg(mxp, myp, 15.0, 1.25, z0 + 3.0 - 1.25 / 2)
     plate = sub(plate, cpk)
     for dx_, dy_ in ((-18.0, -18.0), (18.0, -18.0), (-18.0, 18.0), (18.0, 18.0)):
-        plate = sub(plate, _belly_csk_neg(mxp + dx_, myp + dy_))
-        thr = cyl(1.75, 2.6)                          # csk_neg's clearance stops at
-        thr.apply_translation((mxp + dx_, myp + dy_,  # z 9.2 (hull-pilot handoff);
-                               10.3))                 # bore on through the 3-plug
+        plate = sub(plate, _pedestal_swept_csk_neg(mxp + dx_, myp + dy_))
+        thr = _pedestal_slot_neg(mxp + dx_, myp + dy_, 1.75, 2.6, 10.3)
         plate = sub(plate, thr)
     for dx_ in (-18.0, 18.0):
-        dh = cyl(2.1, 8.0); dh.apply_translation((mxp + dx_, myp, 8.5))
+        dh = _pedestal_slot_neg(mxp + dx_, myp, 2.1, 10.0, 10.0)
         plate = sub(plate, dh)
     # --- ULN2003 standoffs x2 (round 5: BOTH driver boards ride the plate now --
     # they were hull-floor posts rooted on the deleted keep strap / at (0,80)).
@@ -1800,7 +1818,8 @@ def build_pan_pedestal():
     deck-cable-pass corner cut. NEW: 4 corner feet with side-slide M3 hex-nut
     traps (bolts = M3x12 csk from below, flush at the z 7 belly face like every
     belly screw) + 2 printed Ø4 registration pins into plate holes -- the pan
-    gear CD is position-critical, so pins locate and screws only clamp. Service:
+    pins locate Y + rotation while X stays tunable by +-pan_cd_adjust for backlash;
+    the four screws clamp only after setting the mesh. Service:
     drop the belly plate and the pan motor + pedestal + both ULN drivers + the
     power tray leave as ONE tray."""
     z0 = P["chassis_clear"]
