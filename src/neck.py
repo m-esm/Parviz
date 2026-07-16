@@ -166,7 +166,7 @@ def build_neck_clevis():
         seat = cyl(seat_r, P["brg_w"] + 1.5, axis="x")
         seat.apply_translation((sx * (inner_x - 1.0 + (P["brg_w"] + 1.5) / 2), yt, zt))
         neck = sub(neck, seat)
-    rib_r, rib_crown = 0.6, 0.125
+    rib_r, rib_crown = 0.6, P["brg695_rib_proud"]
     for sx in (-1, 1):
         for az in (90, 210, 330):
             d = seat_r - rib_crown + rib_r               # rib axis offset from the tilt axle

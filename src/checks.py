@@ -479,7 +479,9 @@ def main():
               and abs(ext("hw_pan_ring")[2] - 4.9) < 0.1        # flats cut on the spin
               # poles only -- the rolling great circle stays intact
               and abs(ext("hw_foot_pin")[2] - 8.0) < 0.05       # 5.0 socket + 3.0 collar
-              and abs(ext("hw_m8_washer")[1] - 13.0) < 0.05)    # flats: a round Ø14.4
+              and abs(ext("hw_m8_washer")[1] - 13.0) < 0.05     # flats: a round Ø14.4
+              and np.allclose(ext("hw_coupon_695"), (5.5, 100.0, 20.0), atol=0.1)
+              and np.allclose(ext("hw_coupon_f688"), (125.0, 25.0, 30.0), atol=0.1))
               # disc overlaps the tower nut cage by 5.2 mm^3
 
     # ---------------- FASTENING CAMPAIGN (2026-07-15) --------------------------

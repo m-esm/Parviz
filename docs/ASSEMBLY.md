@@ -403,6 +403,26 @@ open-far last, keels on) + 1 loose master link + both keeper bars. Measure on it
 Any fail: adjust `track_bore_pip_d` / `track_pin_print_d` and reprint the COUPON,
 not a strip.
 
+### Bearing-seat coupon protocol (print BEFORE neck_clevis and any wheel plate)
+
+Print `hw_coupon_695` and `hw_coupon_f688` in the supplied orientations. Their five
+steps are marked by 1..5 tick notches and ascend through 0.075 / 0.100 / 0.125 /
+0.150 / 0.175 mm rib crowns. Press the REAL bearing into the steps in ascending
+order. The correct step is the LOOSEST one where all of these are true:
+
+1. Seating needs a firm thumb or arbor push, not a tap-in drop.
+2. The seated outer race cannot be turned by finger torque.
+3. The bearing cannot be pushed back out by thumb from behind.
+4. There is no whitening or cracking at the rib roots.
+5. For the 695 only, the bearing still spins freely after seating, proving its
+   shields were not crushed.
+
+One step looser will creep. If two adjacent steps pass, choose the looser one. Re-key
+`brg695_rib_proud` or `idler_rib_proud` to the winning crown, run `make build` and
+`make check`, and only then print `neck_clevis` or the wheel plates. Repeat this
+protocol for every filament brand or material change. Results do not transfer between
+spools.
+
 ### Recommendations (bigger than this pass)
 
 - Print a D-bore coupon and dial the axle-flat clearance (modeled at +0.05; +0.15 measured

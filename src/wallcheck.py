@@ -77,6 +77,7 @@ PRINTED = [
     "hw_m4_bolt.stl", "hw_m4_nut.stl", "hw_m8_bolt.stl", "hw_m8_nut.stl",
     "hw_m8_washer.stl", "hw_f688_bushing.stl", "hw_pan_ring.stl",
     "hw_tilt_axle.stl", "hw_seam_dowel.stl", "hw_foot_pin.stl",
+    "hw_coupon_695.stl", "hw_coupon_f688.stl",
 ]
 
 # ---------------------------------------------------------------------------
