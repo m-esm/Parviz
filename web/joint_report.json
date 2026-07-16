@@ -128,7 +128,7 @@
       "ok": true
     },
     {
-      "detail": "10094 faces, 49620.1 mm3",
+      "detail": "10102 faces, 49765.5 mm3",
       "gate": "load-body-1",
       "joint": "neck_to_pan",
       "measurements": {},
@@ -761,7 +761,7 @@
       "ok": true
     },
     {
-      "detail": "11402 faces, 228038.2 mm3",
+      "detail": "11438 faces, 228441.0 mm3",
       "gate": "load-body-1",
       "joint": "deck_strip_front_seam",
       "measurements": {},
@@ -863,7 +863,7 @@
       "ok": true
     },
     {
-      "detail": "11402 faces, 228038.2 mm3",
+      "detail": "11438 faces, 228441.0 mm3",
       "gate": "load-body-1",
       "joint": "deck_strip_rear_seam",
       "measurements": {},

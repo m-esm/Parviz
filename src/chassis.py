@@ -253,18 +253,46 @@ def build_chassis_core():
     seat_depth = z1 - seat_floor
     seat = cyl(P["pan_plate_d"] / 2 + 1.0, seat_depth, sections=96)
     seat.apply_translation((0, 0, z1 - seat_depth / 2)); body = sub(body, seat)
-    # PAN HARD STOPS (homing pass 2026-07-08): two posts rise from the seat floor at r28,
-    # azimuth 118 and 332 deg, meeting the platform's underside lug (azimuth 225, see
-    # build_pan_platform). Posts and lug are RADIALLY ALIGNED (rotated about the pan axis,
-    # review fix: the first cut left them axis-aligned, whose corners met at +-91.6 while
-    # the docs promised +-93.3 -- the shapely sim had rotated boxes, the code didn't).
-    # Contact at pan +-93.3: firmware stall-homes at boot, backs off, calls it +-90; the
-    # +-90 sweep poses keep a 3.3 deg gap. Posts stay inside the race-ring ID (corner
-    # r 32.2 < 34), clear of both Ø30 membrane cbores and the deck cable pass. Top at
-    # 58.2 leaves 0.2 running air under the plate bottom (58.4).
-    for az in (118.0, 332.0):
-        post = box(6.0, 6.0, 7.2)
-        post.apply_translation((28.0, 0, seat_floor + 3.6))
+    # PAN HARD STOPS (homing pass 2026-07-08; reinforced 2026-07-16 P4): two posts rise
+    # from the seat floor at r28, azimuth 118 and 332 deg, meeting the platform's
+    # underside lug (azimuth 225, see build_pan_platform). Posts and lug are RADIALLY
+    # ALIGNED (rotated about the pan axis; the first cut left them axis-aligned and
+    # corners met at +-91.6 while the docs promised +-93.3). Contact at pan +-93.3:
+    # firmware stall-homes at boot, backs off, calls it +-90; the +-90 sweep poses keep
+    # a 3.3 deg gap. Radial extent 6 -> 9 (tangential held at 6 so the stall angle is
+    # unchanged); corners r 23.69..32.64 stay inside race ID 34 (1.36 clear), clear of
+    # both under-seat membrane cbores and the deck cable pass. Top at 58.2 leaves 0.2
+    # running air under the plate bottom (58.4). 45 deg root gussets on the radial faces
+    # and the non-contact tangential back (contact face stays clean for the stall hit).
+    stop_r, stop_rad, stop_tan = 28.0, 9.0, 6.0
+    post_h = 7.2
+    g_out, g_in, g_back = 1.2, 3.0, 3.0   # outer limited by race ID (face 32.5, ID 34)
+    # back_sign: local +Y = +azimuth. Post 118 hit from +az (contact +Y, back -Y);
+    # post 332 hit from -az (contact -Y, back +Y).
+    for az, back_sign in ((118.0, -1.0), (332.0, +1.0)):
+        post = box(stop_rad, stop_tan, post_h)
+        post.apply_translation((stop_r, 0, seat_floor + post_h / 2))
+        # radial-face gussets: right triangle in XZ, extruded along local Y (tangential)
+        for s_out, g in ((-1.0, g_in), (+1.0, g_out)):
+            face_x = stop_r + s_out * (stop_rad / 2)
+            tri = sg.Polygon([(0.0, 0.0), (s_out * g, 0.0), (0.0, g)])
+            gus = extrude_polygon(tri, stop_tan)
+            gus.apply_transform(R(TAU / 4, (1, 0, 0)))
+            gus.apply_translation((face_x, stop_tan / 2, seat_floor))
+            post = uni([post, gus])
+        # back-face gusset: right triangle in YZ, extruded along local X (radial)
+        face_y = back_sign * (stop_tan / 2)
+        tri_b = sg.Polygon([(0.0, 0.0), (back_sign * g_back, 0.0), (0.0, g_back)])
+        # poly XY = (y_out, z_up), extrude Z = radial run; map to (x,y,z)
+        gus_b = extrude_polygon(tri_b, stop_rad)
+        # (x=y_out, y=z_up, z=x_run) -> (x_run, y_out, z_up) via (x,y,z)->(z,x,y)
+        T = np.array([[0, 0, 1, 0],
+                      [1, 0, 0, 0],
+                      [0, 1, 0, 0],
+                      [0, 0, 0, 1]], dtype=float)
+        gus_b.apply_transform(T)
+        gus_b.apply_translation((stop_r - stop_rad / 2, face_y, seat_floor))
+        post = uni([post, gus_b])
         post.apply_transform(R(az * DEG, (0, 0, 1)))
         body = uni([body, post])
     # FAST-PAN gear-up (2026-07-12; PARAMS pan_gear_*): shaft/can positions are now derived

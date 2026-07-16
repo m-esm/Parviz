@@ -74,13 +74,28 @@ def build_pan_platform():
     pin.apply_translation((0, 0, (gz0 + gz1) / 2))   # +0.5 width: roots fuse into the shank
     plate = uni([plate, shank, pin])
 
-    # PAN-STOP LUG (homing pass 2026-07-08): hangs from the plate underside at r28,
-    # azimuth 225, down to 0.6 above the seat floor; hits the two deck posts (azimuth
-    # 118/332, build_base) at +-93.3 deg pan. RADIALLY ALIGNED like the posts (review
-    # fix, see build_base). Corners r 23.8..32.2: clear of the ring ID (34), the D-hub
-    # (r7), the cable slot (13+ away) and the neck-bolt cbores (19.9+).
-    lug = box(6.0, 6.0, plate_bot - (seat_floor + 0.6))
-    lug.apply_translation((28.0, 0, (plate_bot + seat_floor + 0.6) / 2))
+    # PAN-STOP LUG (homing pass 2026-07-08; reinforced 2026-07-16 P4): hangs from the
+    # plate underside at r28, azimuth 225, down to 0.6 above the seat floor; hits the
+    # two deck posts (azimuth 118/332, build_chassis_core) at +-93.3 deg pan. RADIALLY
+    # ALIGNED like the posts. Contact faces are the tangential pair (size held at 6 so
+    # the stall angle stays +-93.3); radial extent grew 6 -> 9 for impact area only.
+    # Corners r 23.69..32.64: clear of race ID 34 (1.36), D-hub r7, cable slot, and
+    # neck-bolt cbores. 45 deg root gussets on the radial faces into the plate underside
+    # (tangential faces stay clean for stall contact).
+    stop_r, stop_rad, stop_tan = 28.0, 9.0, 6.0
+    lug_h = plate_bot - (seat_floor + 0.6)
+    lug = box(stop_rad, stop_tan, lug_h)
+    lug.apply_translation((stop_r, 0, (plate_bot + seat_floor + 0.6) / 2))
+    # 45 deg root gussets on radial faces. Outer depth capped at 1.2: the lug hangs
+    # through the race height and must stay inside ring ID r34 (face at 32.5).
+    g_in, g_out = 2.5, 1.2
+    for s_out, g in ((-1.0, g_in), (+1.0, g_out)):
+        face_x = stop_r + s_out * (stop_rad / 2)
+        tri = sg.Polygon([(0.0, 0.0), (s_out * g, 0.0), (0.0, -g)])
+        gus = extrude_polygon(tri, stop_tan)
+        gus.apply_transform(R(TAU / 4, (1, 0, 0)))       # (x,y_poly,z_ex)->(x,-z_ex,y_poly)
+        gus.apply_translation((face_x, stop_tan / 2, plate_bot))
+        lug = uni([lug, gus])
     lug.apply_transform(R(225 * DEG, (0, 0, 1)))
     plate = uni([plate, lug])
 

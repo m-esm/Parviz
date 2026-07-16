@@ -325,6 +325,12 @@ def main():
         a = math.radians(az)
         return (r * math.cos(a), r * math.sin(a))
 
+    def stop_corner(az, dr, dt, r=28.0):
+        """World XY of a radially-aligned stop-box local corner (dr radial, dt tang)."""
+        a = math.radians(az)
+        ca, sa = math.cos(a), math.sin(a)
+        return ((r + dr) * ca - dt * sa, (r + dr) * sa + dt * ca)
+
     # user 2026-07-08 (stall homing): platform underside lug at azimuth 225.
     lx, ly = raz(225.0)
     check("pan homing lug (az 225, platform underside)",
@@ -333,6 +339,19 @@ def main():
     check("pan deck stop posts (az 118/332)",
           all(inside(M("chassis_deck_center"), [raz(az) + (z,) for z in (47.0, 50.0)])
               for az in (118.0, 332.0)))
+    # user 2026-07-16 (P4 stop reinforcement): radial extent 6 -> 9 (tangential held
+    # at 6 so +-93.3 contact is unchanged). Probe inset 0.6 from the grown corners so
+    # contains() is robust near the face (not on the tessellated surface).
+    _sr, _st = 4.5 - 0.6, 3.0 - 0.6          # half-extents minus inset
+    _lug_pts = [stop_corner(225.0, dr, dt) + (z,)
+                for dr in (-_sr, _sr) for dt in (-_st, _st) for z in (54.0, 56.5)]
+    check("pan stop lug grown radial 9 mm corners",
+          inside(M("pan_platform"), _lug_pts))
+    _post_pts = [stop_corner(az, dr, dt) + (z,)
+                 for az in (118.0, 332.0)
+                 for dr in (-_sr, _sr) for dt in (-_st, _st) for z in (47.5, 50.5)]
+    check("pan stop posts grown radial 9 mm corners",
+          inside(M("chassis_deck_center"), _post_pts))
 
     # ---------------- HC-SR04 recesses: bores pierce along the REAL axes -------
     fw = P["chassis_l"] / 2.0

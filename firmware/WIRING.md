@@ -74,6 +74,23 @@ board's input protection).
 
 Pan is software-limited to +-90 (hard stops at +-93.3), so the loop never over-winds.
 
+### Pan homing discipline
+
+The deck posts and platform lug are PLA. Stall impact is cumulative and crushes the
+faces, which drifts home zero. Treat the stops as soft plastic, not steel.
+
+- **Home gently.** Run the pan stall at HALF the normal step rate and, if the ULN
+  driver / firmware path allows it, at reduced coil current. The 28BYJ through the
+  2:1 gear-up multiplies stall force at the stop (~17 mNm at the lug even before a
+  hard current push).
+- **Cap overtravel.** Command at most ~8 deg past the expected stop position before
+  declaring the stall. Never an open-ended sweep into the post.
+- **Back off immediately.** After contact, reverse 3.3 deg and call that +-90 (the
+  hard stops sit at +-93.3; the software limit is the backed-off pose).
+- **Home once per boot.** Do not re-home on every move. Re-home only after a detected
+  step-loss event (lost steps, skipped homing lug, encoder/open-loop mismatch if you
+  add one later).
+
 ## Signals: bundle now, I2C drop NOW (Sense HAT, 2026-07-14)
 
 The Pi lives in the head; the drivers live below. Today: GPIO lines run down the
