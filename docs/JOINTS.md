@@ -96,6 +96,9 @@ electronics posts can need different constraints; they do not get an unmeasured 
 Tilt drivetrain note: the tilt worm is torque-keyed by the 28BYJ double-D shaft, retained
 rearward by the plate-seated M5 penny washer, and retained forward by an M3x3 cup-point grub
 through the worm hub onto a shaft flat. The grub is bench-set and extracts with the cartridge.
+The worm wheel has a round Ø5.2 bore and slides over either fully round 695 journal. Its
+radial M3x4 cup-point grub is preloaded onto the axle's x +1.5..+11 center-only flat. The
+flat carries reversal torque; the grub threads only retain preload. Loosen it before axle removal.
 
 ## Report interpretation
 

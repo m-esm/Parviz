@@ -281,9 +281,13 @@ P = {
     "clevis_half": 22.0,    # neck cheek half-span (cheeks at +-22 in X)
     "cheek_t": 8.0,         # clevis cheek thickness (X)
     # Ø5 tilt axle on 695-2RS bearings (5x13x4, owned x30). SOLID rod (review 2026-07-08:
-    # the old hollow Ø2.5 weight relief left a 0.25 wall under the D-key flat; the cable
-    # never used the bore anyway -- it drapes through the bottom-rear slot).
+    # the old hollow Ø2.5 weight relief left only 0.25 wall under a 1.0 flat; the cable
+    # never used the bore anyway -- it drapes through the bottom-rear slot). The flat is
+    # CENTER-ONLY so both bearing journals and both head-clamp lands remain fully round.
     "axle_d": 5.0,          # tilt axle outer Ø (rides 695 bores)
+    "axle_flat_depth": 1.0, # tip-on-flat drive datum; face is 1.5 off the Ø5 axis
+    "axle_flat_x0": 1.5,    # center-only filed span, clear of both |x| 20..24 journals
+    "axle_flat_x1": 11.0,   # covers the wheel grub with assembly margin
     "brg_od": 13.0,         # 695-2RS outer Ø (press into the head-side hubs)
     "brg_w": 4.0,
     # worm + worm wheel (module 1.25). Wheel keyed to the axle; worm on the motor.
@@ -304,6 +308,11 @@ P = {
     "worm_starts": 3,
     "worm_wheel_w": 7.0,    # face width
     "worm_wheel_x": 0.0,    # wheel centered on the head midplane (spacer tubes reach both bearings)
+    "wheel_hub_x0": 3.5,    # plain Ø11 wheel hub band, beyond the toothed face
+    "wheel_hub_x1": 9.0,
+    "wheel_grub_x": 7.25,   # radial pilot past worm +X thread extent 5.275
+    "wheel_grub_pilot_d": 2.5, # M3 retention-class pilot, tip drives on axle flat
+    "wheel_grub_len": 4.0,   # M3x4 cup-point, top flush with hub OD r5.5
     "worm_od": 10.0,        # placeholder-worm visual OD (real generated worm OD is 10.55)
     "worm_crest_r": 5.275,  # real generated worm crest envelope, must not grow for retention
     "worm_grub_pilot_d": 2.5,   # M3 low-load thread-form pilot from the +X hub side

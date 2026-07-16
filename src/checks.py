@@ -90,6 +90,16 @@ def _void_cube(mesh, pt, s=0.5):
         return False
 
 
+def _solid_cube(mesh, pt, s=0.25):
+    """Solid probe paired with _void_cube, using the same manifold oracle."""
+    c = geo.box(s, s, s)
+    c.apply_translation(np.asarray(pt, float))
+    try:
+        return geo.inter(mesh, c).volume > 0.8 * s ** 3
+    except Exception:
+        return False
+
+
 def nut_reaches_bore(mesh, axis_pt, open_dir, size="M3", pad=0.25):
     """THE 2026-07-15 CAMPAIGN'S LOAD-BEARING INVARIANT: can the captive nut
     actually sit centred on its screw axis?
@@ -130,6 +140,37 @@ def main():
     check("tilt-worm grub Y is on shaft flat and dead worm thread", grub_datum_ok,
           "y %.3f, flat %.3f..%.3f, worm %.3f..%.3f, wheel %.3f..%.3f"
           % ((grub_y,) + shaft_flat_band + worm_band + wheel_face_band))
+
+    # 2026-07-16 tilt axle respec: a round wheel bore plus radial grub replaces the
+    # chordal ledge, so neither bearing journal needs a runway flat.
+    flat_span_ok = (P["axle_flat_x0"] <= P["wheel_hub_x0"]
+                    and P["axle_flat_x1"] >= P["wheel_hub_x1"]
+                    and P["axle_flat_x0"] < P["wheel_grub_x"] < P["axle_flat_x1"]
+                    and P["wheel_grub_x"] > P["worm_crest_r"]
+                    and abs(P["wheel_grub_len"]
+                            - (5.5 - (P["axle_d"] / 2 - P["axle_flat_depth"]))) < 1e-9
+                    and P["axle_flat_x1"] < 20.0
+                    and P["axle_flat_x0"] > -20.0)
+    check("tilt axle flat covers hub/grub and misses both 695 journals", flat_span_ok,
+          "flat %.2f..%.2f, hub %.2f..%.2f, grub %.2f"
+          % (P["axle_flat_x0"], P["axle_flat_x1"], P["wheel_hub_x0"],
+             P["wheel_hub_x1"], P["wheel_grub_x"]))
+
+    ww = M("worm_wheel")
+    wy, wz = P["tilt_axis_y"], P["tilt_axis_z"]
+    old_ledge_void = _void_cube(ww, (6.25, wy, wz + 2.0), 0.2)
+    pilot_void = _void_cube(ww, (P["wheel_grub_x"], wy - 5.25, wz), 0.2)
+    pilot_side_solid = _solid_cube(ww, (P["wheel_grub_x"] - 1.8,
+                                        wy - 5.25, wz), 0.2)
+    hub_vertices = ww.vertices[(ww.vertices[:, 0] >= P["wheel_hub_x0"] + 0.2)
+                               & (ww.vertices[:, 0] <= P["wheel_hub_x1"] - 0.2)]
+    hub_rmax = np.sqrt((hub_vertices[:, 1] - wy) ** 2
+                       + (hub_vertices[:, 2] - wz) ** 2).max()
+    check("worm wheel round bore has no old D-key ledge", old_ledge_void)
+    check("worm wheel -Y radial grub pilot exists with hub wall beside it",
+          pilot_void and pilot_side_solid)
+    check("worm wheel hub radial envelope remains r5.5", abs(hub_rmax - 5.5) < 0.03,
+          "rmax %.3f" % hub_rmax)
 
     # user 2026-07-11 (mid-drive stretch): the raised tank loop closes at EXACTLY
     # track_links x track_pitch -- track_wheelbase is the solved value.
@@ -476,6 +517,7 @@ def main():
     # a print-oriented plastic stand-in in stl/hardware/ (src/standins.py), and
     # key interface dims match the placeholders they substitute.
     from standins import STANDINS
+    from standins.tilt_axle import AXLE_PRINT_D
     hw_ok, hw_detail = True, ""
     for nm in STANDINS:
         pth = stlp(nm + ".stl")
@@ -505,6 +547,13 @@ def main():
               and abs(ext("hw_foot_pin")[2] - 8.0) < 0.05       # 5.0 socket + 3.0 collar
               and abs(ext("hw_m8_washer")[1] - 13.0) < 0.05)    # flats: a round Ø14.4
               # disc overlaps the tower nut cage by 5.2 mm^3
+        hwa = M("hw_tilt_axle")
+        flat_z = AXLE_PRINT_D / 2.0 + (P["axle_d"] / 2.0 - P["axle_flat_depth"])
+        journals_round = all(_solid_cube(hwa, (0, sy, flat_z + 0.2), 0.2)
+                             for sy in (-22.0, 22.0))
+        flat_at_hub = _void_cube(hwa, (0, -P["wheel_grub_x"], flat_z + 0.2), 0.2)
+        check("stand-in axle has round 695 journals and center-only hub flat",
+              journals_round and flat_at_hub)
 
     # ---------------- FASTENING CAMPAIGN (2026-07-15) --------------------------
     # docs/FASTENING_AUDIT.md. The first print failed because captive traps could
