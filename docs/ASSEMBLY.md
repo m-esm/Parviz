@@ -22,10 +22,11 @@ settled below). "Need" is per robot.
 | Raspberry Pi 5 | 2 GB, rides the display's own 58x49 standoffs | 1 | 1 (Tray 1) |, |
 | 7" touchscreen | official kit; 4 factory M3 mounts (126.2x65.65) | 1 | 1 (Tray 1) |, |
 | Camera Module 3 | recessed forehead, 4x M2 at 21x12.5 | 1 | 1 (Tray 1) |, |
-| 30W+ USB-C PD brick | any brick offering 12V (the official 27W works); the robot bucks 12V down internally, see firmware/WIRING.md | 1 | 0 | **1** |
-| USB-C PD trigger board | set to 12V; mounts on the rear-wall M2 pilots beside the USB slot | 1 | 0 | **1** |
-| XL4015-class 5A buck | Pi rail (trim to 5.25V); 40x20 post grid on the belly-plate tray | 1 | 0 | **1** |
+| 45-65W USB-C PD brick | must advertise 15V (mandatory at 45W per PD power rules; fixed 12V is optional on generic bricks); the robot bucks 15V down internally. The official 27W brick is a 12V FALLBACK only, with the strict firmware co-scheduling rules load-bearing again -- power review 2026-07-16, firmware/WIRING.md | 1 | 0 (27W owned = fallback) | **1** |
+| USB-C PD trigger board | set to 15V (12V only for the 27W fallback); mounts on the rear-wall M2 pilots beside the USB slot | 1 | 0 | **1** |
+| XL4015-class 5A buck, CC/CV variant | Pi rail (trim to 5.25V, CC pot set to 5.0A -- the CV-only board has no current limit and does not satisfy the hard-limiting rule); 40x20 post grid on the belly-plate tray | 1 | 0 | **1** |
 | MP1584-class mini buck | motor rail 5V; zip anchors beside the main buck | 1 | 0 | **1** |
+| Polyfuse 2A hold / ~4A trip (MF-R200 class) | in series with the MX1588 VCC feed on the tray: a dual TT stall trips it and self-recovers instead of folding the shared brick (firmware/WIRING.md "Hard current limiting") | 1 | 0 | **1** |
 | JST-XH kit + crimper | every joint-crossing / board run is a keyed XH plug | 1 | 0 | **1** |
 | 18 AWG silicone pair + 5A blade fuse + inline holder | Pi-rail run + inline fuse at the tray | 1 m | fuse: OWNED (ATC/ATO blade assortment, settled 2026-07-13); wire + holder: 0 | **1 m wire + 1 holder** |
 | 28BYJ-48 stepper | 5V, pan + tilt + 2x antenna drives | 4 | 6 (Bag 14) |, |
@@ -386,6 +387,86 @@ tray killed the 88.5 mm blind channels, 2026-07-08.)
 last-track-pin loop flex, and the 4× 88.5 mm blind screen-standoff screws -- the worst
 step in the build is now four short bench screws plus four visible wall screws.)
 
+### Squaring up: datum + shim procedure (first build)
+
+The tilt axis and the screen optical plane sit at the end of a long printed stack
+(chassis lower tub → z46 deck seam → pan race → pan platform → neck clevis → cheek
+695 bearings → axle → head). CAD gates (`make check` / `fits` / `joints`) check part
+PAIRS at nominal, not accumulated tolerance. A first physical build needs this
+procedure to square itself up without reprinting anything.
+
+Params cited below: `clevis_half`=22 (cheeks at x ±22), `tilt_axis_y`/`tilt_axis_z`
+= -18 / 153, `scr_mount_pts` factory pattern 126.2 × 65.65, `base_h`=66 (deck pan-mount
+plane), neck→platform 3× M3 on r16.5 clocked 270/30/150 about (0, `neck_y`=-17),
+head-clamp grubs at x ±30, pan race 18 BBs on Ø80 (`pan_race_n` / `pan_race_circle_d`).
+
+#### Master datum
+
+**Master datum plane = the pan platform's top face as seated on the BB race.** The
+deck's pan seat defines it (`base_h`=66). Nothing below the race is adjustable: the
+stack under it is edge-bearing (side panels prop the deck), so its errors tilt the
+whole turret together and the pan sweep averages them out. Errors that matter to the
+eye are platform-to-screen. All squaring happens between the platform and the head.
+
+#### What to measure
+
+Bench method: calipers + a machinist square. No dial indicator assumed. Do (a) after
+step 12 (head hung), (b)/(c) after step 13 (screen tray in), (d) anytime the race is
+seated.
+
+**a. Tilt-axis parallelism to the platform.** Hold the platform still. Measure from
+the platform top face up to each exposed axle end (or the head clamp bosses at
+x ±30). Difference over the ~60 mm span (clamp-to-clamp, or cheek-to-cheek at
+`clevis_half` ±22) is the axis tilt. Target ≤ 0.3 mm (~0.3°).
+
+**b. Screen upright / lean.** Stall-home tilt, command zero. Stand a square on the
+deck (or platform) and measure the gap to the glass at the top and bottom bezel
+edges. Difference over the ~66 mm vertical mount span (`scr_mount_pts` 65.65) is lean.
+
+**c. Screen twist (rotation about Y).** Same square, gap to glass at the left and
+right bezel edges at one height. Difference over the 126.2 mm horizontal mount span
+is twist.
+
+**d. Pan wobble sanity.** Pan slowly ±90 and watch the head top edge against a fixed
+reference. Cyclic rise/fall means race/platform debris or an unseated BB, not a shim
+case. Re-seat the 18 balls on the Ø80 groove (step 8) and recheck.
+
+#### Where shims go
+
+| Symptom | Correction | Notes |
+| --- | --- | --- |
+| Tilt-axis tilt (a) | Shim washers under one or two of the three neck-clevis feet (3× M3, r16.5, clocked 270/30/150 about (0, `neck_y`)) between clevis base and platform | **Only place to correct axis parallelism.** 695 rib seats self-center -- do not shim bearings. |
+| Tilt zero offset (screen looks up/down at commanded zero) | NOT a shim case. Loosen the two x ±30 head-clamp grubs and rotate the head on the axle (continuous trim, step 12), or fix in firmware after stall homing | Grubs are the intended trim; see Nasty-but-possible above. |
+| Screen lean / twist relative to the head shell (b, c) | Shim between the `screen_tray` pillar ends and the `head_back` wall at the 4 tray screws (step 13) | 0.1 mm there ≈ 0.09° over the 65.65 mm vertical spread, ≈ 0.05° over the 126.2 mm horizontal. |
+| Any single point needs > 0.5 mm of shim | STOP. Warped or mis-seated print. Find it (usually the z46 deck seam or a panel foot) | Do not bury a bad stack in shims. |
+
+**Clevis-foot clocking (which foot raises which side of the axis):**
+
+- **270° foot** (rear, -Y from pan axis through `neck_y`): raises the rear of the
+  clevis → lifts the rear side of the axle plane (axis pitch relative to platform).
+- **30° foot** (+X, slightly +Y of the column): raises the right cheek → lifts the
+  +X axle end.
+- **150° foot** (-X, slightly +Y): raises the left cheek → lifts the -X axle end.
+
+Shim the low side. Equal shims under 30°+150° raise the front of the clevis without
+rolling the axis; rear alone does the opposite pitch.
+
+#### Shim stock + order
+
+- **Stock:** printed 0.1 / 0.2 / 0.4 mm shim washers (Ø7 × Ø3.2, print a strip of
+  each), or aluminum foil layers (~0.02 mm each) for fine trim. M3 steel washers are
+  0.5 mm and too coarse for anything but gross correction.
+- **Order is load-bearing:**
+  1. Square the tilt axis at the clevis feet **before** hanging the head (or re-hang
+     after: step 12 grubs must come off to drop the head).
+  2. Hang the head; set tilt zero at the x ±30 grubs (step 12).
+  3. Screen-tray shims last (step 13).
+  4. Re-run the stall-homing sweep after any shim change -- stop angles move with the
+     stack (step 18).
+
+The CAD gates verify pair fits at nominal; this procedure is where the accumulated
+real-print tolerance gets taken out, and it is expected to be needed on a first build.
+
 ### Track coupon protocol (plate 20, ~48 min -- print BEFORE any strip plate)
 
 Plate 20 is a 5-link print-in-place coupon (open-A first link, 3 integral-pin mids,
@@ -403,6 +484,26 @@ open-far last, keels on) + 1 loose master link + both keeper bars. Measure on it
 Any fail: adjust `track_bore_pip_d` / `track_pin_print_d` and reprint the COUPON,
 not a strip.
 
+### Bearing-seat coupon protocol (print BEFORE neck_clevis and any wheel plate)
+
+Print `hw_coupon_695` and `hw_coupon_f688` in the supplied orientations. Their five
+steps are marked by 1..5 tick notches and ascend through 0.075 / 0.100 / 0.125 /
+0.150 / 0.175 mm rib crowns. Press the REAL bearing into the steps in ascending
+order. The correct step is the LOOSEST one where all of these are true:
+
+1. Seating needs a firm thumb or arbor push, not a tap-in drop.
+2. The seated outer race cannot be turned by finger torque.
+3. The bearing cannot be pushed back out by thumb from behind.
+4. There is no whitening or cracking at the rib roots.
+5. For the 695 only, the bearing still spins freely after seating, proving its
+   shields were not crushed.
+
+One step looser will creep. If two adjacent steps pass, choose the looser one. Re-key
+`brg695_rib_proud` or `idler_rib_proud` to the winning crown, run `make build` and
+`make check`, and only then print `neck_clevis` or the wheel plates. Repeat this
+protocol for every filament brand or material change. Results do not transfer between
+spools.
+
 ### Recommendations (bigger than this pass)
 
 - Print a D-bore coupon and dial the axle-flat clearance (modeled at +0.05; +0.15 measured
@@ -419,8 +520,10 @@ not a strip.
 
 ## Wiring
 
-**See firmware/WIRING.md** (2026-07-08) for the full architecture: 12 V PD-trigger input,
-dual-buck belly tray (5.1 V Pi rail + 5 V motor rail), what crosses each joint, Pi 5
+**See firmware/WIRING.md** (2026-07-08; power review 2026-07-16) for the full
+architecture: 15 V PD-trigger input from a 45-65 W brick (12 V = 27 W fallback),
+dual-buck belly tray (5.1 V Pi rail + 5 V motor rail), hard current limiting (CC pot +
+TT-branch polyfuse), the brownout test protocol, what crosses each joint, Pi 5
 config flags, connector/labeling rules, and the buy-list delta. Short version: only the
 Pi-rail pair crosses tilt; the pan loop carries that pair plus the thin motor-rail/signal
 bundle; DSI and CSI ribbons never leave the head.
@@ -435,9 +538,12 @@ bundle; DSI and CSI ribbons never leave the head.
 2. **4x HC-SR04** (forward + rear obstacle + 2 cliff; zero owned; plain 5V is fine on the
    Arduino I/O plane). TT gearmotors are COVERED (own 3); buy 1 more only for the optional
    twin-drive 4th station.
-3. **Power electronics** (firmware/WIRING.md): a 30W+ USB-C PD brick (the official 27W
-   works), 12V PD trigger, XL4015-class 5A buck, MP1584 mini buck, JST-XH kit + crimper,
-   1 m 18 AWG silicone pair, inline blade-fuse holder (the 5A blade fuse itself is owned).
+3. **Power electronics** (firmware/WIRING.md, re-specced 2026-07-16): a 45-65W USB-C PD
+   brick that advertises 15V (the official 27W is a 12V fallback with firmware
+   co-scheduling load-bearing), 15V PD trigger, XL4015-class 5A buck (CC/CV variant),
+   MP1584 mini buck, 2A-hold polyfuse (MF-R200 class) for the TT branch, JST-XH kit +
+   crimper, 1 m 18 AWG silicone pair plus 24-26 AWG high-flex silicone for the pan-loop
+   runs, inline blade-fuse holder (the 5A blade fuse itself is owned).
 4. **1 m narrow addressable LED strip** (4–5 mm wide, SK6805-2427 / WS2812-2020, ≥160 LED/m),
    one purchase covers the forehead 8-LED segment and the front 7-dot strip. (Alternative:
    widen `led_slot` to ~54x11 and buy two common 8x5050 sticks.)

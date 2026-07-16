@@ -36,6 +36,8 @@ M4 is COARSENED 0.7 -> 1.0 because 0.7 does not survive a 0.4 nozzle -- printed 
 only ever mate with each other, so it costs nothing.
 
 The parts:
+  hw_coupon_695 x1 five-step 695-2RS crush-rib seat calibration coupon.
+  hw_coupon_f688 x1 five-step F688ZZ two-face crush-rib seat calibration coupon.
   hw_m4_bolt   x10  M4x40 road-wheel bolt-axle, as a real SHOULDER bolt: plain Ø3.9
                     journal (34.7) + M4x1.0 threaded tail (5.3). The shoulder is the
                     axial stop -- the journal cannot enter the nut's Ø3.20 minor, so
@@ -156,6 +158,8 @@ from . import (
     tilt_axle,
     seam_dowel,
     foot_pin,
+    coupon_695,
+    coupon_f688,
 )
 
 _MODS = (
@@ -169,6 +173,8 @@ _MODS = (
     tilt_axle,
     seam_dowel,
     foot_pin,
+    coupon_695,
+    coupon_f688,
 )
 
 

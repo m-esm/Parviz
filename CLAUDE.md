@@ -328,17 +328,20 @@ cable channel is decoupled at `neck_chan_y=−26`). Head width 205 vs track oute
 per user); pods now flank the head like the reference; sprocket band stays 8 wide in the
 links' central channel, idler grows outboard-only to clear the tension plate).
 
-## Power (decided 2026-07-08, see firmware/WIRING.md)
+## Power (decided 2026-07-08; re-specced 2026-07-16 after the power review, see firmware/WIRING.md)
 
-One wall USB-C cable → rear-jack **PD trigger set to 12 V** → two bucks on the **belly-plate
-power tray** (drop the belly plate = drop the power stage for service): an XL4015-class 5 A
-buck makes the **Pi rail** (trimmed 5.25 V at the tray, ~5.1 V at the head after the neck
-run, into the Pi's GPIO 5V pins + inline 5 A fuse), an MP1584 mini buck makes the **motor
-rail** (ULNs, MX1588, chassis LEDs). Why not 5 V straight through: PD negotiation can't
-cross a 2-wire joint run, 5 A droops 0.3-0.4 V over the harness, and TT stall transients
-would land on the Pi rail. GPIO powering needs `usb_max_current_enable=1` + EEPROM
-`PSU_MAX_CURRENT=5000`. Any 30 W+ PD brick works now (the official 27 W included). Firmware
-rule: cap TT PWM at 80% and never full-drive both TTs while a stepper steps (27 W budget).
+One wall USB-C cable → rear-jack **PD trigger set to 15 V** (12 V only as the 27 W-brick
+fallback) → two bucks on the **belly-plate power tray** (drop the belly plate = drop the
+power stage for service): an XL4015-class 5 A buck (CC/CV variant, CC pot 5.0 A) makes the
+**Pi rail** (trimmed 5.25 V at the tray, ~5.1 V at the head after the neck run, into the
+Pi's GPIO 5V pins + inline 5 A fuse), an MP1584 mini buck makes the **motor rail** (ULNs,
+MX1588 behind a 2 A-hold polyfuse, chassis LEDs). Why not 5 V straight through: PD
+negotiation can't cross a 2-wire joint run, 5 A droops 0.3-0.4 V over the harness, and TT
+stall transients would land on the Pi rail. GPIO powering needs `usb_max_current_enable=1`
++ EEPROM `PSU_MAX_CURRENT=5000`. Brick spec: **45-65 W advertising 15 V** (27 W could not
+carry Pi worst-case + a dual TT stall; on the 27 W fallback the co-scheduling rules are
+load-bearing again). Firmware rule, now defense-in-depth behind the CC pot + polyfuse:
+cap TT PWM at 80% and never full-drive both TTs while a stepper steps.
 
 ## Motors, 28BYJ-48 pan/tilt (dimensionally correct now) + TT track drive
 

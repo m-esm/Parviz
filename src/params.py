@@ -286,6 +286,8 @@ P = {
     "axle_d": 5.0,          # tilt axle outer Ø (rides 695 bores)
     "brg_od": 13.0,         # 695-2RS outer Ø (press into the head-side hubs)
     "brg_w": 4.0,
+    "brg695_rib_proud": 0.125,   # crush-rib crown into the Ø13.05 seat. Printer/material
+                            # dependent, so hw_coupon_695 calibrates it before the clevis.
     # worm + worm wheel (module 1.25). Wheel keyed to the axle; worm on the motor.
     "worm_module": 1.25,
     "worm_wheel_teeth": 12, # 12T wheel (24T tilted 60 deg in 16 s -- too slow)
