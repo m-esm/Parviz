@@ -35,8 +35,8 @@ def scan(wheel, worm, cd, n=61):
 
 
 def main():
-    worm = trimesh.load("stl/neck/tilt_worm_real.stl")
-    wheel = trimesh.load("stl/neck/worm_wheel_real.stl")
+    worm = trimesh.load(g.OUT_WORM)
+    wheel = trimesh.load(g.OUT_WHEEL)
 
     # 1. hand check
     g.HAND = -1

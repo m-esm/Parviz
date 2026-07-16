@@ -65,6 +65,7 @@ WHEEL_ADD = 0.6 * MODULE          # 0.75  -> wheel tip r 8.25 (stub, clears the 
 CLEAR = 0.15                      # radial bottom clearance, both members
 
 STARTS = int(os.environ.get("STARTS", _P["worm_starts"]))   # 3 = fast-tilt 4:1
+OUT_SUFFIX = os.environ.get("OUT_SUFFIX", "")
 HAND = +1                         # +1 right-hand worm & wheel (flip both to reverse)
 
 # derived
@@ -79,9 +80,9 @@ R_TIP_W = WORM_PITCH_R + WORM_ADD     # 5.275
 CD = R_P + WORM_PITCH_R           # 11.9 center distance
 LEAD_ANGLE = np.arctan(LEAD / (2 * np.pi * WORM_PITCH_R))   # 8.085 deg
 
-OUT_WHEEL = "stl/neck/worm_wheel_real.stl"
-OUT_WORM = "stl/neck/tilt_worm_real.stl"
-OUT_META = "stl/neck/worm_real_meta.json"
+OUT_WHEEL = f"stl/neck/worm_wheel_real{OUT_SUFFIX}.stl"
+OUT_WORM = f"stl/neck/tilt_worm_real{OUT_SUFFIX}.stl"
+OUT_META = f"stl/neck/worm_real_meta{OUT_SUFFIX}.json"
 
 
 def inv(phi):

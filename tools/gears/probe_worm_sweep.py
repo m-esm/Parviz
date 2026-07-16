@@ -35,8 +35,8 @@ def posed_worm(worm, psi_deg=0.0):
 
 
 def main():
-    wheel = trimesh.load("stl/neck/worm_wheel_real.stl")
-    worm = trimesh.load("stl/neck/tilt_worm_real.stl")
+    wheel = trimesh.load(g.OUT_WHEEL)
+    worm = trimesh.load(g.OUT_WORM)
     wp = posed_worm(worm)
 
     # 1. assembly-pose phase scan (0.25 deg steps over one tooth pitch)

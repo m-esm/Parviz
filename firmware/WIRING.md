@@ -164,9 +164,12 @@ Rules for the tilt axis (pan is analogous against its deck posts at +-93.3):
    hard stops so they are homing-only. Never run a full-speed trajectory into
    the posts.
 4. **Hold / park.** The 3-start worm (PARAMS `worm_starts`=3) back-drives --
-   there is no unpowered self-lock. Energize-hold whenever the head sits off
-   its balance point; park at the balance point before long idle or power-down
-   (see CLAUDE.md "Tilt holding").
+   its lead is about 23 deg, so there is no unpowered self-lock. ALWAYS
+   energize-hold whenever the head sits off its balance point. Park at the
+   balance point before long idle and before power-off. Detent plus gear friction
+   gives only about 27-54 mNm at the axle, so an unpowered off-balance head may
+   nod. If the docs/ASSEMBLY.md bench coupon fails its decision rule, the committed
+   single-start pair in docs/WORM.md restores mechanical self-locking.
 5. **Wear.** If home zero drifts over months, inspect the fin faces and the post
    tops on the bench. Escalation path: a replaceable stop-cap on the posts
    (print-3 option, deliberately not modeled now) -- see docs/ASSEMBLY.md.

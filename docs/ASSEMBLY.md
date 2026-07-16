@@ -432,6 +432,24 @@ stand-in because adding a new export, plate entry and invariant is more than the
 Grub-on-flat backlash versus the retired chordal D-key is **bench-only**. If the coupon
 rocks or slips, adjust `wheel_grub_pilot_d` or `axle_flat_depth`, then reprint the coupon.
 
+### Tilt torque + holding bench coupon
+
+Run this protocol on the complete physical head before choosing the production worm pair:
+
+1. Measure residual imbalance about the axle with a spring scale at a measured lever
+   arm at tilt 0, +15, -15, +30 and -30 deg. Record the worst value in mNm.
+2. De-energize at +30, -30 and 0 deg. Watch each position for 10 minutes and record
+   any nod or drift.
+3. Slew under the real head load at full speed in both directions through the full
+   -30 to +30 deg working range. Record stalls, missed steps or hesitation.
+4. Energize-hold off balance for 10 minutes. Record coil current and motor temperature.
+
+Decision rule: if worst imbalance exceeds about 50 mNm, any de-energized nod is not
+acceptable to firmware parking, or the loaded slew stalls, swap to the committed
+single-start fallback pair. It is a drop-in, see docs/WORM.md. A spring-ball neutral
+detent on the wheel hub remains the print-3 option and is deliberately not modeled,
+per the 2026-07-13 decision. Prove the need on the physical head first.
+
 ### Recommendations (bigger than this pass)
 
 - Print the axle-flat + wheel-grub coupon above and bench-check tip seating, hub rock and

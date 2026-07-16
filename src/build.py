@@ -28,7 +28,7 @@ from stlpaths import webpath, stlp
 from params import DEG, EXPORT, P, TAU, tilt_worm_grub_datums
 from geo import _T, _color, box, cyl, dbore_neg, export_stl, inter, sub, uni
 from gears import (gear_disc, load_gear_stl, pan_gear_mesh_deg, pan_real_ok, worm,
-                   worm_cd, worm_real_ok)
+                   worm_cd, worm_mesh_clock_deg, worm_real_names, worm_real_ok)
 from screen import load_screen, screen_pose
 from tracks import _spr_cz, build_tracks
 from motors import antenna_motor, motor_28byj, motor_tt
@@ -158,8 +158,8 @@ def build():
     # the SELF-LOCKING LOSS tradeoff), verified meshing at CD 11.9: 0.000 mm3 static AND
     # over a coupled full-worm-rev sweep (tools/gears/probe_worm_sweep.py).
     # PLACEHOLDER_GEARS=1 restores the readable gear_disc/worm placeholders;
-    # worm_real_ok() compares the generator's meta sidecar (stl/neck/worm_real_meta.json)
-    # to PARAMS, so ANY params change without a regen also falls back -- same honesty
+    # worm_real_ok() compares the starts-keyed generator meta sidecar to PARAMS,
+    # so ANY params change without a regen also falls back -- same honesty
     # convention as the antenna gears (which replaced the old hard-coded starts != 1).
     placeholder_gears = (os.environ.get("PLACEHOLDER_GEARS") == "1"
                          or not worm_real_ok())
@@ -169,16 +169,17 @@ def build():
     else:
         # toothed blank only: axis X, bore Ø5.2, width 7, centered at origin -- exactly where
         # gear_disc built; the hub/tube union, bore re-cut and grub pilot below apply unchanged.
-        wheel = load_gear_stl("worm_wheel_real.stl")
+        wheel_name, worm_name, _meta_name = worm_real_names()
+        wheel = load_gear_stl(wheel_name)
         # cosmetic mesh clocking: at the assembly's relative pose (wheel midplane crosses the
-        # worm at worm-local y +6) the 3-start blank's zero-interference window centers at
-        # 17.88 deg (tools/gears/probe_worm_sweep.py; 17.75 before the worm_len-13 regen,
-        # 24.5 for the old single-start pair).
-        # M_head then adds tilt_deg about the SAME axis, so pre-rotate by (17.88 - tilt)
+        # worm at worm-local y +6), tools/gears/probe_worm_sweep.py measured starts-keyed
+        # zero-interference window centers of 17.88 deg (3-start) and 25.50 deg (1-start).
+        # M_head then adds tilt_deg about the SAME axis, so pre-rotate by (clock - tilt)
         # mod one tooth pitch (30) and the teeth visually mesh at ANY preview/sweep pose.
         # Physically meaningless (the wheel is 30-deg tooth-periodic). The wheel pilot
         # is cut after this transform, so its -Y clock stays deterministic.
-        wheel.apply_transform(R(((17.88 - tilt_deg) % 30.0) * DEG, (1, 0, 0)))
+        wheel.apply_transform(R(((worm_mesh_clock_deg() - tilt_deg) % 30.0) * DEG,
+                                (1, 0, 0)))
     hub_len = P["wheel_hub_x1"] - P["wheel_hub_x0"]
     hub = cyl(5.5, hub_len, axis="x")
     hub.apply_translation(((P["wheel_hub_x0"] + P["wheel_hub_x1"]) / 2, 0, 0))
@@ -214,12 +215,12 @@ def build():
     if placeholder_gears:
         wm = worm(P["worm_od"] / 2, P["worm_len"], starts=P["worm_starts"], axis="y")
     else:
-        # real 3-start RH worm (docs/WORM.md): axis Y, OD 10.55, solid core Ø7, thread
+        # real starts-keyed RH worm (docs/WORM.md): axis Y, OD 10.55, solid core Ø7, thread
         # span exactly +-6.5 about origin, 0.6 crest chamfer at both ends (cooler pass).
         # The Ø7 core takes the full-depth double-D bore in SOLID stock (probed: bore
         # surface 100% inside the solid over the thread span; round wall 0.915 mm, flat
         # wall 1.88 -- thin but the D-flats carry the torque).
-        wm = load_gear_stl("tilt_worm_real.stl")
+        wm = load_gear_stl(worm_name)
     db = dbore_neg(P["worm_len"] + 1.2, axis="y")
     # NO extra clocking: after the motor's two rotations below (shaft +Z -> +Y, then rolled so
     # the offset points up) the shaft flats face +-X, and dbore_neg(axis="y") already cuts its

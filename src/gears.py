@@ -152,10 +152,36 @@ def _meta_ok(meta_name, expect):
 
 def worm_real_ok():
     """True when the committed worm pair (stl/neck/*_real.stl) matches PARAMS."""
-    return _meta_ok("worm_real_meta.json", {
+    _wheel, _worm, meta = worm_real_names()
+    return _meta_ok(meta, {
         "starts": P["worm_starts"], "module": P["worm_module"],
         "wheel_teeth": P["worm_wheel_teeth"], "worm_pitch_r": P["worm_pitch_r"],
         "face_w": P["worm_wheel_w"], "worm_len": P["worm_len"]})
+
+
+def worm_real_names():
+    """Generated blank filenames for the active start count.
+
+    The shipping 3-start pair retains the historical unsuffixed names. Fallback
+    variants are explicit, so one PARAMS edit selects meshes and matching sidecar.
+    """
+    starts = int(P["worm_starts"])
+    suffix = "" if starts == 3 else "_%ds" % starts
+    return ("worm_wheel_real%s.stl" % suffix,
+            "tilt_worm_real%s.stl" % suffix,
+            "worm_real_meta%s.json" % suffix)
+
+
+def worm_mesh_clock_deg():
+    """Assembly-pose zero-interference window center for the active real pair.
+
+    Values come from tools/gears/probe_worm_sweep.py at worm_len 13.
+    """
+    clocks = {3: 17.88, 1: 25.50}
+    starts = int(P["worm_starts"])
+    if starts not in clocks:
+        raise SystemExit("No probed worm mesh clock for %d starts" % starts)
+    return clocks[starts]
 
 
 def pan_real_ok():
@@ -188,4 +214,3 @@ def load_gear_stl(name):
     if not m.is_volume:
         raise SystemExit(f"build.py: {path} is not watertight -- regenerate it (docs/WORM.md)")
     return m
-

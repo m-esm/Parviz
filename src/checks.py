@@ -19,6 +19,7 @@ pairwise booleans. Whole suite runs in well under 90 s.
 Python 3.9; trimesh + numpy. Run: python3 src/checks.py
 """
 import math
+import json
 import os
 import sys
 import warnings
@@ -130,6 +131,26 @@ def main():
     # (pitch r 4.4 + m1.25 x 12T / 2), NOT the old worm_od*0.4 guess of 11.5.
     cd = P["worm_pitch_r"] + P["worm_module"] * P["worm_wheel_teeth"] / 2
     check("worm CD 11.9 (pitch r 4.4 + m1.25 12T wheel)", abs(cd - 11.9) < 1e-9, "%.3f" % cd)
+
+    # 2026-07-16 fallback drop-in: the committed 1-start sidecar must track every
+    # cartridge-critical PARAMS dimension even while the 3-start pair is active.
+    fallback_meta_path = stlp("worm_real_meta_1s.json")
+    try:
+        with open(fallback_meta_path) as f:
+            fallback_meta = json.load(f)
+    except (OSError, ValueError):
+        fallback_meta = {}
+    fallback_expect = {
+        "starts": 1, "module": P["worm_module"],
+        "wheel_teeth": P["worm_wheel_teeth"],
+        "worm_pitch_r": P["worm_pitch_r"], "face_w": P["worm_wheel_w"],
+        "worm_len": P["worm_len"],
+    }
+    fallback_ok = all(k in fallback_meta
+                      and abs(float(fallback_meta[k]) - float(v)) < 1e-9
+                      for k, v in fallback_expect.items())
+    check("single-start fallback sidecar matches active cartridge PARAMS", fallback_ok,
+          fallback_meta_path)
 
     # user 2026-07-16: the tilt-worm M3 retention grub must land in dead thread,
     # inside both the shaft-flat band and worm span, never in the wheel face band.
@@ -297,7 +318,6 @@ def main():
     # every GLB scene node must match a category regex in the viewer's TREE. The
     # regexes are parsed straight out of web/viewer_glb.html so viewer and gate
     # cannot drift; a new part therefore needs its TREE entry the same turn.
-    import json
     import re
     import struct
     with open(webpath("viewer_glb.html")) as f:
