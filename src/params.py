@@ -122,11 +122,10 @@ P = {
     # runs |x| 27..99 and the nut sits at r 4.9 from its axis: probed 5.0 mm^3 of jam).
     # Running it UP instead brings the 5.7 channel alongside the Ø5.1 axle bore with only
     # 0.55 of wall; running it DOWN walks away from the bore and keeps 2.37.
-    # KNOWN LIMIT (audit P3, same as the M4 slide-up slots): with the head upright and the
-    # bolt not yet started, the nut can drop back out of the mouth. Insert it with the
-    # frame in its print pose (front-down = the slot horizontal) and start the bolt before
-    # standing the head up. A crush-rib nib in the mouth is the audit's fix; not modelled
-    # here because a 0.4 mm nib trips the wallcheck ray gate.
+    # RETENTION (audit P3, same as the M4 slide-up slots): two modeled 0.25 mm crush-rib
+    # nibs click the nut past the gravity-down mouth and leave the seated hex unpinched.
+    # The front-down bench pose remains convenient, but is no longer required to keep the
+    # nut in place before the clamp bolt starts.
     "clamp_x": (34.0, 44.0),  # block x band, per side. 2.0 off the neck tilt-stop post
                               # (x 20..32): this gap is PURELY axial, so it cannot close
                               # over the sweep -- probed 2.18 mm min at the -33.8 stall.
@@ -1448,4 +1447,3 @@ P = {
 }
 
 EXPORT = os.environ.get("EXPORT") == "1"
-

@@ -236,7 +236,8 @@ tray killed the 88.5 mm blind channels, 2026-07-08.)
    hold alignment before tightening.
 3. **TT motors.** Set each TT gearmotor: shaft +X into the sprocket hub's double-D socket,
    front tab into the rear-wall pocket, nub into the wall pocket, 2× M3 through the
-   gearbox + wall with the nut floating in the pod gap.
+   gearbox + wall. Push each upper nut past the slot-mouth crush nibs until it clicks
+   into the captive seat; it stays retained while the motor is positioned.
 4. **Track running gear.** Press an F688ZZ into EACH face of all four end idlers (Ø15.95
    seat + Ø18.5 flange recess both sides). Each end wheel: M8 bolt from outboard
    through the bearings, add the OUTBOARD jam nut against the tower, then the flatted
@@ -247,8 +248,7 @@ tray killed the 88.5 mm blind channels, 2026-07-08.)
    inboard tool ever needed. Rear pair: snug. Front pair: leave loose, set tension
    AFTER threading the tracks, then tighten from the head -- the channel holds the
    nut, the nut clamps the slot. Fit the sprockets on the
-   TT shafts (they mesh the ground run under the hull; the robot's weight seats them). Drop an M4 nut up each wheel-beam slot (do this BEFORE mounting the
-   rails if access is tight), then bolt each road wheel with its M4x40 from outboard --
+   TT shafts (they mesh the ground run under the hull; the robot's weight seats them). Push an M4 nut up each wheel-beam slot until it clicks past the two crush nibs. The nuts remain retained while the panel is handled; inserting them on the bench is convenient but not required. Then bolt each road wheel with its M4x40 from outboard --
    snug, then back off 1/8 turn so the wheel spins free.
 5. **Join the strips + close with the master (print-in-place chain, 2026-07-12).**
    Each pod is 4 PRINT-IN-PLACE strips (16+16+16+15 links, hinges already free off
@@ -311,9 +311,11 @@ tray killed the 88.5 mm blind channels, 2026-07-08.)
     retired, 2026-07-13.) Route
     the tilt ULN wiring on the column back standoffs, board centered at z 93, below the
     carrier (motor + driver both ride the pan group, so no leads cross a joint).
-12. **Hang the head on the axle.** Lower `head_back` so its side hubs take the axle ends, then
-    set the two head-clamp grubs at x=±30 with a 1.5 mm hex key driven UP through the bottom
-    motor bay (4.0 mm clear). The axle now turns with the head; the worm holds tilt with the
+12. **Hang the head on the axle.** Before lowering `head_back`, push each M3 clamp nut
+    through its downward-facing slot mouth until it clicks past the crush nibs and seats
+    on the cross-bolt axis. The front-down bench pose is still convenient, but retention
+    no longer depends on it. Lower the head so its side hubs take the axle ends, then drive
+    the two M3 pinch-clamp bolts from the rear bay. The axle now turns with the head; the worm holds tilt with the
     driver off ONLY marginally (fast-tilt 2026-07-12: the 3-start worm back-drives;
     hold is 28BYJ detent+gear friction through 4:1 -- firmware energize-hold or park
     at the balance point; see CLAUDE.md fast pan/tilt pass).

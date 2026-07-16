@@ -740,7 +740,7 @@
       "ok": true
     },
     {
-      "detail": "6730 faces, 31506.5 mm3",
+      "detail": "6694 faces, 31505.8 mm3",
       "gate": "load-body-1",
       "joint": "side_panel_splice",
       "measurements": {},
@@ -842,7 +842,7 @@
       "ok": true
     },
     {
-      "detail": "9406 faces, 41217.9 mm3",
+      "detail": "9166 faces, 41210.9 mm3",
       "gate": "load-body-1",
       "joint": "side_panel_feet",
       "measurements": {},
@@ -1271,7 +1271,7 @@
       "ok": true
     },
     {
-      "detail": "13018 faces, 108732.1 mm3",
+      "detail": "13086 faces, 108734.9 mm3",
       "gate": "load-body-2",
       "joint": "head_back_panel_to_frames",
       "measurements": {},
@@ -1373,7 +1373,7 @@
       "ok": true
     },
     {
-      "detail": "13638 faces, 109579.9 mm3",
+      "detail": "13746 faces, 109583.1 mm3",
       "gate": "load-body-1",
       "joint": "head_back_frame_seam",
       "measurements": {},

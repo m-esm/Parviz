@@ -28,6 +28,9 @@ names:
 - Locator type and dimensions: rail/groove, tongue/rebate, keyed boss, or separated pins.
 - Fit class, printer clearance, minimum engagement, and end stop.
 - Every screw, washer, nut or insert, clamped thickness, engagement, and allowed protrusion.
+- Gravity-down captive-nut mouths use 0.25 mm crush-rib nibs. The head tilt-axle
+  clamp pair and chassis slide-up axle slots retain their nuts before screw insertion;
+  a bench pose is a convenience, not part of the joint contract.
 - Nut/insert insertion direction and retention, plus driver/wrench/iron tool envelopes.
 - The assembly step and the parts already present at that step.
 - Minimum surrounding wall, boss, and load-path ligament dimensions.

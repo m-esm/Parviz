@@ -200,3 +200,36 @@ Tracks:
 Good examples already in-tree (reuse, don't reinvent): pedestal pins+traps (C2),
 M4 slide-up slots, M8 cages, TT nub+tab 3-point location, deck half-laps,
 y=26 dowels, door hook+snap, trim rail nut pockets (head.py:254-264).
+
+## Nib retention (2026-07-16)
+
+World Z is up. Parts are already modeled in assembled world coordinates. Repeated loop
+sites are listed once with their full direction set.
+
+| Slot | File:line | Mouth direction | Disposition |
+|---|---:|---|---|
+| Tilt-axle pinch clamps, pair | `src/head.py:276` | -Z | NIB: gravity-open headline fix |
+| Bezel to back perimeter traps | `src/head.py:473` | inward +/-X and +/-Z | NIB on the two top traps with -Z mouths; side and bottom mouths are horizontal or gravity-seated |
+| Back-panel rim tabs | `src/head.py:738` | +Z | NO-NIB: gravity seats the nuts |
+| Head-back frame top flange | `src/head.py:765` | -Z | NIB: gravity-open before the screw starts |
+| Bezel seam traps | `src/head.py:859` | -Y | NO-NIB: horizontal mouth |
+| Screen-tray pillar traps | `src/head.py:934` | +/-X | NO-NIB: horizontal mouth |
+| Antenna spine mounts | `src/head.py:1220` | +Z | NO-NIB: gravity seats the nuts |
+| Antenna motor ears, upper/lower | `src/head.py:1234` | -Z/+Z | NIB on upper ear only: its mouth is gravity-open; lower ear is gravity-seated |
+| Tilt-carrier upper nut blocks | `src/neck.py:239` | +/-X | NO-NIB: horizontal mouth |
+| Tilt-carrier lower nut blocks | `src/neck.py:253` | +/-X | NO-NIB: horizontal mouth |
+| Neck to pan-platform traps | `src/neck.py:333` | -Y, +X, -X | NO-NIB: horizontal mouths |
+| Neck ULN board traps | `src/neck.py:386` | +/-X | NO-NIB: horizontal mouth |
+| Pan clip trap | `src/chassis.py:323` | -Y | NO-NIB: horizontal mouth |
+| Belly-plate rim traps | `src/chassis.py:655` | inward +/-X or +/-Y | NO-NIB: horizontal mouths |
+| Deck hold-down traps | `src/chassis.py:800` | inward -X or +Y | NO-NIB: horizontal mouths |
+| Lower-front seam traps | `src/chassis.py:838` | +Z | NO-NIB: gravity seats the nuts |
+| Lower-tail seam traps | `src/chassis.py:885` | +Z | NO-NIB: gravity seats the nuts |
+| Side-panel splice traps | `src/chassis.py:1272` | +Y | NO-NIB: horizontal mouth, then blocked by the mating panel |
+| M4 road-wheel bolt-axle traps | `src/chassis.py:1281` | -Z | NIB: audit P3 flip-prone slots |
+| Upper TT motor traps | `src/chassis.py:1333` | -Z | NIB: gravity-open slide-up slots |
+| Front panel-foot traps | `src/chassis.py:1349` | inward +/-X | NO-NIB: horizontal mouth |
+| Deck split-shelf traps | `src/chassis.py:1457` | +/-Y | NO-NIB: horizontal mouth, closed by the mating strip |
+| Front deck motor-mount traps | `src/chassis.py:1585` | -Z | NIB: gravity-open M2 slots |
+| Pan pedestal ear traps | `src/chassis.py:1831` | inward +/-X | NO-NIB: horizontal mouth |
+| Pan pedestal base traps | `src/chassis.py:1880` | +/-Y | NO-NIB: horizontal mouth |

@@ -20,7 +20,7 @@ from gears import gear_disc, involute_spur
 # ---------------------------------------------------------------------------
 # Fastening helpers (2026-07-15 FASTENING AUDIT, docs/FASTENING_AUDIT.md)
 # ---------------------------------------------------------------------------
-def _nut_trap(nut_c, screw_axis, open_dir, size="M3", length=14.0):
+def _nut_trap(nut_c, screw_axis, open_dir, size="M3", length=14.0, nib=False):
     """Slide-in captive hex-nut trap NEGATIVE, positioned by the NUT CENTRE, with
     `length` measured from that centre out to the slot MOUTH.
 
@@ -32,7 +32,7 @@ def _nut_trap(nut_c, screw_axis, open_dir, size="M3", length=14.0):
     """
     return nut_slot(np.asarray(nut_c, float), screw_axis=screw_axis,
                     open_dir=open_dir, size=size,
-                    length=length + geo.nut_ac(size) / 2.0)
+                    length=length + geo.nut_ac(size) / 2.0, nib=nib)
 
 
 def _teardrop(r, length, axis="x", up=(0, -1, 0)):
@@ -274,7 +274,7 @@ def build_head_shell():
                               P["clamp_bolt_z"]))    # opens at the rear face, 1.0 overshoot
         shell = sub(shell, cb)
         shell = sub(shell, _nut_trap((bx_, P["clamp_nut_y"], P["clamp_bolt_z"]), "y",
-                                     (0, 0, -1), length=8.0))   # mouth z 138, under the block
+                                     (0, 0, -1), length=8.0, nib=True))
 
     # camera: CM3 recessed inside the raised forehead behind the plain 4 mm wall (no lens
     # bump: the countersunk aperture clears the full 75 deg diagonal FoV with the pupil
@@ -471,7 +471,7 @@ def build_head_parts():
         clr = _orient(cyl(P["m3_clear_r"], 70), n); clr.apply_translation(w)
         bezel = sub(bezel, clr.copy()); back = sub(back, clr.copy())
         back = sub(back, _nut_trap((w[0], P["bez_nut_y"], w[2]), "y", o,
-                                   length=P["bez_nut_slot_len"]))
+                                   length=P["bez_nut_slot_len"], nib=(o[2] < 0)))
 
     # split-plane REGISTRATION (audit "assembly-holding gaps" #4: bezel on back had NONE).
     # Pin on the bezel (prints face-down -> the pin grows straight up, self-supporting),
@@ -763,7 +763,7 @@ def build_head_parts():
         thr = _teardrop(P["m3_clear_r"], 11.0, axis="x", up=(0, -1, 0))
         thr.apply_translation((-5.5, fy_, zfl)); back = sub(back, thr)   # x -11..0
         back = sub(back, _nut_trap((P["flange_nut_x"], fy_, zfl), "x", (0, 0, -1),
-                                   length=6.0))
+                                   length=6.0, nib=True))
     dwl = cyl(P["bez_dowel_socket_r"], 14.0, axis="x")   # Ø4 dowel across the frame seam
     dwl.apply_translation((0, P["flange_dowel_y"], zfl)); back = sub(back, dwl)
 
@@ -1233,7 +1233,7 @@ def build_ant_drive():
             bracket = sub(bracket, eh)
             bracket = sub(bracket, _nut_trap(
                 (sxa * P["ant_ear_nut_x"], ey_, mz_ + sz_ * 17.5), "x",
-                (0, 0, -sz_), length=6.0))
+                (0, 0, -sz_), length=6.0, nib=(sz_ > 0)))
     _color(bracket, "back"); bracket.metadata["name"] = "ant_bracket"
     out.append(bracket)
     return out

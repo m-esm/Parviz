@@ -132,6 +132,10 @@ def teardrop(r, length, axis="y", up="z"):
 
 NUT = {"M2": (4.0, 1.6), "M2.5": (5.0, 2.0), "M3": (5.5, 2.6), "M4": (7.0, 3.2)}
 # hex nut (across-flats, thickness); M3 matches the proven chassis_pedestal traps.
+NUT_NIB_PROUD = 0.25
+NUT_NIB_RUN = 1.2
+NUT_NIB_SEAT_CLEAR = 0.1
+NUT_NIB_MIN_EXTRA = 1.5
 
 
 def nut_ac(size="M3"):
@@ -142,7 +146,7 @@ def nut_ac(size="M3"):
 
 
 def nut_slot(center, screw_axis="z", open_dir=(0, 1, 0), size="M3",
-             length=14.0, c_af=0.2, c_t=0.2, seat=True):
+             length=14.0, c_af=0.2, c_t=0.2, seat=True, nib=False):
     """Slide-in captive hex-nut trap NEGATIVE (standardized for the 2026-07-15
     fastening campaign): a rectangular slot, width = nut AF + c_af (the flats
     ride the walls = the rotation lock), thickness = nut_t + c_t along the screw
@@ -167,7 +171,14 @@ def nut_slot(center, screw_axis="z", open_dir=(0, 1, 0), size="M3",
 
     `screw_axis` is 'x'/'y'/'z' or a vector; `open_dir` must be perpendicular to
     it. `seat=False` omits the backstop (slot runs both ways from `center`) for
-    the rare pass-through case where another feature does the locating."""
+    the rare pass-through case where another feature does the locating.
+
+    `nib=True` subtracts two wedge volumes from this NEGATIVE, leaving printed
+    crush ribs on the AF walls when the caller subtracts the slot from a part.
+    Each rib is 0.25 mm proud, runs 1.2 mm, spans the nut thickness, and has a
+    45 degree mouth lead-in plus a 60 degree service-extraction back face. The
+    back face starts at least nut AC + 0.1 mm from the seat, so the seated nut
+    is clear. Nibbed slots require length >= AC + 1.5 mm."""
     axv = {"x": (1, 0, 0), "y": (0, 1, 0), "z": (0, 0, 1)}.get(screw_axis, screw_axis)
     a = np.asarray(axv, float); a /= np.linalg.norm(a)
     o = np.asarray(open_dir, float); o /= np.linalg.norm(o)
@@ -178,11 +189,32 @@ def nut_slot(center, screw_axis="z", open_dir=(0, 1, 0), size="M3",
     if length <= back:
         raise ValueError("nut_slot(): length %.2f must exceed the nut seat %.2f"
                          % (length, back))
+    if nib and (not seat or length < nut_ac(size) + NUT_NIB_MIN_EXTRA):
+        raise ValueError("nut_slot(): nib needs a seated length >= %.2f, got %.2f"
+                         % (nut_ac(size) + NUT_NIB_MIN_EXTRA, length))
     b = box(af + c_af, length, nut_t + c_t)      # x=flats, y=slot run, z=screw axis
     T = np.eye(4)
     T[:3, 0] = np.cross(o, a); T[:3, 1] = o; T[:3, 2] = a
     T[:3, 3] = np.asarray(center, float) + o * (length / 2.0 - back)
     b.apply_transform(T)
+    if nib:
+        y0 = -length / 2.0 + nut_ac(size) + NUT_NIB_SEAT_CLEAR
+        y1 = y0 + NUT_NIB_RUN
+        back_ramp = NUT_NIB_PROUD / np.tan(np.deg2rad(60.0))
+        lead_ramp = NUT_NIB_PROUD
+        half_w = (af + c_af) / 2.0
+        ribs = []
+        for side in (-1.0, 1.0):
+            wall = side * half_w
+            inner = side * (half_w - NUT_NIB_PROUD)
+            poly = sg.Polygon([(wall, y0), (wall, y1),
+                               (inner, y1 - lead_ramp),
+                               (inner, y0 + back_ramp)])
+            rib = extrude_polygon(poly, nut_t + c_t)
+            rib.apply_translation((0, 0, -(nut_t + c_t) / 2.0))
+            rib.apply_transform(T)
+            ribs.append(rib)
+        b = sub(b, uni(ribs))
     return b
 
 
@@ -320,5 +352,4 @@ def frustum(r_bottom, r_top, h, sections=96):
 
 def R_x(ang):
     return R(ang, (1, 0, 0))
-
 
