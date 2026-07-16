@@ -387,6 +387,86 @@ tray killed the 88.5 mm blind channels, 2026-07-08.)
 last-track-pin loop flex, and the 4× 88.5 mm blind screen-standoff screws -- the worst
 step in the build is now four short bench screws plus four visible wall screws.)
 
+### Squaring up: datum + shim procedure (first build)
+
+The tilt axis and the screen optical plane sit at the end of a long printed stack
+(chassis lower tub → z46 deck seam → pan race → pan platform → neck clevis → cheek
+695 bearings → axle → head). CAD gates (`make check` / `fits` / `joints`) check part
+PAIRS at nominal, not accumulated tolerance. A first physical build needs this
+procedure to square itself up without reprinting anything.
+
+Params cited below: `clevis_half`=22 (cheeks at x ±22), `tilt_axis_y`/`tilt_axis_z`
+= -18 / 153, `scr_mount_pts` factory pattern 126.2 × 65.65, `base_h`=66 (deck pan-mount
+plane), neck→platform 3× M3 on r16.5 clocked 270/30/150 about (0, `neck_y`=-17),
+head-clamp grubs at x ±30, pan race 18 BBs on Ø80 (`pan_race_n` / `pan_race_circle_d`).
+
+#### Master datum
+
+**Master datum plane = the pan platform's top face as seated on the BB race.** The
+deck's pan seat defines it (`base_h`=66). Nothing below the race is adjustable: the
+stack under it is edge-bearing (side panels prop the deck), so its errors tilt the
+whole turret together and the pan sweep averages them out. Errors that matter to the
+eye are platform-to-screen. All squaring happens between the platform and the head.
+
+#### What to measure
+
+Bench method: calipers + a machinist square. No dial indicator assumed. Do (a) after
+step 12 (head hung), (b)/(c) after step 13 (screen tray in), (d) anytime the race is
+seated.
+
+**a. Tilt-axis parallelism to the platform.** Hold the platform still. Measure from
+the platform top face up to each exposed axle end (or the head clamp bosses at
+x ±30). Difference over the ~60 mm span (clamp-to-clamp, or cheek-to-cheek at
+`clevis_half` ±22) is the axis tilt. Target ≤ 0.3 mm (~0.3°).
+
+**b. Screen upright / lean.** Stall-home tilt, command zero. Stand a square on the
+deck (or platform) and measure the gap to the glass at the top and bottom bezel
+edges. Difference over the ~66 mm vertical mount span (`scr_mount_pts` 65.65) is lean.
+
+**c. Screen twist (rotation about Y).** Same square, gap to glass at the left and
+right bezel edges at one height. Difference over the 126.2 mm horizontal mount span
+is twist.
+
+**d. Pan wobble sanity.** Pan slowly ±90 and watch the head top edge against a fixed
+reference. Cyclic rise/fall means race/platform debris or an unseated BB, not a shim
+case. Re-seat the 18 balls on the Ø80 groove (step 8) and recheck.
+
+#### Where shims go
+
+| Symptom | Correction | Notes |
+| --- | --- | --- |
+| Tilt-axis tilt (a) | Shim washers under one or two of the three neck-clevis feet (3× M3, r16.5, clocked 270/30/150 about (0, `neck_y`)) between clevis base and platform | **Only place to correct axis parallelism.** 695 rib seats self-center -- do not shim bearings. |
+| Tilt zero offset (screen looks up/down at commanded zero) | NOT a shim case. Loosen the two x ±30 head-clamp grubs and rotate the head on the axle (continuous trim, step 12), or fix in firmware after stall homing | Grubs are the intended trim; see Nasty-but-possible above. |
+| Screen lean / twist relative to the head shell (b, c) | Shim between the `screen_tray` pillar ends and the `head_back` wall at the 4 tray screws (step 13) | 0.1 mm there ≈ 0.09° over the 65.65 mm vertical spread, ≈ 0.05° over the 126.2 mm horizontal. |
+| Any single point needs > 0.5 mm of shim | STOP. Warped or mis-seated print. Find it (usually the z46 deck seam or a panel foot) | Do not bury a bad stack in shims. |
+
+**Clevis-foot clocking (which foot raises which side of the axis):**
+
+- **270° foot** (rear, -Y from pan axis through `neck_y`): raises the rear of the
+  clevis → lifts the rear side of the axle plane (axis pitch relative to platform).
+- **30° foot** (+X, slightly +Y of the column): raises the right cheek → lifts the
+  +X axle end.
+- **150° foot** (-X, slightly +Y): raises the left cheek → lifts the -X axle end.
+
+Shim the low side. Equal shims under 30°+150° raise the front of the clevis without
+rolling the axis; rear alone does the opposite pitch.
+
+#### Shim stock + order
+
+- **Stock:** printed 0.1 / 0.2 / 0.4 mm shim washers (Ø7 × Ø3.2, print a strip of
+  each), or aluminum foil layers (~0.02 mm each) for fine trim. M3 steel washers are
+  0.5 mm and too coarse for anything but gross correction.
+- **Order is load-bearing:**
+  1. Square the tilt axis at the clevis feet **before** hanging the head (or re-hang
+     after: step 12 grubs must come off to drop the head).
+  2. Hang the head; set tilt zero at the x ±30 grubs (step 12).
+  3. Screen-tray shims last (step 13).
+  4. Re-run the stall-homing sweep after any shim change -- stop angles move with the
+     stack (step 18).
+
+The CAD gates verify pair fits at nominal; this procedure is where the accumulated
+real-print tolerance gets taken out, and it is expected to be needed on a first build.
+
 ### Track coupon protocol (plate 20, ~48 min -- print BEFORE any strip plate)
 
 Plate 20 is a 5-link print-in-place coupon (open-A first link, 3 integral-pin mids,
