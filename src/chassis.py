@@ -193,6 +193,22 @@ def _belly_csk_neg(bx, by):
     return neg
 
 
+def _pedestal_slot_neg(x, y, radius, height, zc, extra_travel=0.0):
+    """Pedestal interface obround, elongated only along the pan CD tuning axis."""
+    travel = P["pan_cd_adjust"] + extra_travel
+    slot = extrude_polygon(sg.LineString([(x - travel, y), (x + travel, y)]).buffer(radius),
+                           height)
+    slot.apply_translation((0, 0, zc - height / 2))
+    return slot
+
+
+def _pedestal_swept_csk_neg(x, y):
+    """Flush countersink envelope across the complete pedestal adjustment travel."""
+    travel = P["pan_cd_adjust"]
+    return uni([_belly_csk_neg(x + dx, y)
+                for dx in np.linspace(-travel, travel, 5)])
+
+
 def build_chassis_core():
     """Tank chassis BODY: hollow rounded box between the tracks. Top = pan-mount plane; houses
     the pan motor + driver + wiring. (Track pods are build_tracks.)"""
@@ -237,18 +253,46 @@ def build_chassis_core():
     seat_depth = z1 - seat_floor
     seat = cyl(P["pan_plate_d"] / 2 + 1.0, seat_depth, sections=96)
     seat.apply_translation((0, 0, z1 - seat_depth / 2)); body = sub(body, seat)
-    # PAN HARD STOPS (homing pass 2026-07-08): two posts rise from the seat floor at r28,
-    # azimuth 118 and 332 deg, meeting the platform's underside lug (azimuth 225, see
-    # build_pan_platform). Posts and lug are RADIALLY ALIGNED (rotated about the pan axis,
-    # review fix: the first cut left them axis-aligned, whose corners met at +-91.6 while
-    # the docs promised +-93.3 -- the shapely sim had rotated boxes, the code didn't).
-    # Contact at pan +-93.3: firmware stall-homes at boot, backs off, calls it +-90; the
-    # +-90 sweep poses keep a 3.3 deg gap. Posts stay inside the race-ring ID (corner
-    # r 32.2 < 34), clear of both Ø30 membrane cbores and the deck cable pass. Top at
-    # 58.2 leaves 0.2 running air under the plate bottom (58.4).
-    for az in (118.0, 332.0):
-        post = box(6.0, 6.0, 7.2)
-        post.apply_translation((28.0, 0, seat_floor + 3.6))
+    # PAN HARD STOPS (homing pass 2026-07-08; reinforced 2026-07-16 P4): two posts rise
+    # from the seat floor at r28, azimuth 118 and 332 deg, meeting the platform's
+    # underside lug (azimuth 225, see build_pan_platform). Posts and lug are RADIALLY
+    # ALIGNED (rotated about the pan axis; the first cut left them axis-aligned and
+    # corners met at +-91.6 while the docs promised +-93.3). Contact at pan +-93.3:
+    # firmware stall-homes at boot, backs off, calls it +-90; the +-90 sweep poses keep
+    # a 3.3 deg gap. Radial extent 6 -> 9 (tangential held at 6 so the stall angle is
+    # unchanged); corners r 23.69..32.64 stay inside race ID 34 (1.36 clear), clear of
+    # both under-seat membrane cbores and the deck cable pass. Top at 58.2 leaves 0.2
+    # running air under the plate bottom (58.4). 45 deg root gussets on the radial faces
+    # and the non-contact tangential back (contact face stays clean for the stall hit).
+    stop_r, stop_rad, stop_tan = 28.0, 9.0, 6.0
+    post_h = 7.2
+    g_out, g_in, g_back = 1.2, 3.0, 3.0   # outer limited by race ID (face 32.5, ID 34)
+    # back_sign: local +Y = +azimuth. Post 118 hit from +az (contact +Y, back -Y);
+    # post 332 hit from -az (contact -Y, back +Y).
+    for az, back_sign in ((118.0, -1.0), (332.0, +1.0)):
+        post = box(stop_rad, stop_tan, post_h)
+        post.apply_translation((stop_r, 0, seat_floor + post_h / 2))
+        # radial-face gussets: right triangle in XZ, extruded along local Y (tangential)
+        for s_out, g in ((-1.0, g_in), (+1.0, g_out)):
+            face_x = stop_r + s_out * (stop_rad / 2)
+            tri = sg.Polygon([(0.0, 0.0), (s_out * g, 0.0), (0.0, g)])
+            gus = extrude_polygon(tri, stop_tan)
+            gus.apply_transform(R(TAU / 4, (1, 0, 0)))
+            gus.apply_translation((face_x, stop_tan / 2, seat_floor))
+            post = uni([post, gus])
+        # back-face gusset: right triangle in YZ, extruded along local X (radial)
+        face_y = back_sign * (stop_tan / 2)
+        tri_b = sg.Polygon([(0.0, 0.0), (back_sign * g_back, 0.0), (0.0, g_back)])
+        # poly XY = (y_out, z_up), extrude Z = radial run; map to (x,y,z)
+        gus_b = extrude_polygon(tri_b, stop_rad)
+        # (x=y_out, y=z_up, z=x_run) -> (x_run, y_out, z_up) via (x,y,z)->(z,x,y)
+        T = np.array([[0, 0, 1, 0],
+                      [1, 0, 0, 0],
+                      [0, 1, 0, 0],
+                      [0, 0, 0, 1]], dtype=float)
+        gus_b.apply_transform(T)
+        gus_b.apply_translation((stop_r - stop_rad / 2, face_y, seat_floor))
+        post = uni([post, gus_b])
         post.apply_transform(R(az * DEG, (0, 0, 1)))
         body = uni([body, post])
     # FAST-PAN gear-up (2026-07-12; PARAMS pan_gear_*): shaft/can positions are now derived
@@ -265,7 +309,12 @@ def build_chassis_core():
     # floor annulus (35.5..44.5) stays fully supported; the swinging stop lug bottoms at
     # 51.6, 1.6 over the gear band.
     for cx_, cy_, r_ in ((0.0, 0.0, 15.0), (sxp, syp, 14.5)):
-        cbore = cyl(r_, 30.0); cbore.apply_translation((cx_, cy_, seat_floor - 2))
+        if cx_ == sxp:
+            # Motor gear follows the adjustable pedestal. The pocket sweeps 0.1
+            # beyond full travel so the original 0.7 running clearance stays >=0.6.
+            cbore = _pedestal_slot_neg(cx_, cy_, r_, 30.0, seat_floor - 2, 0.1)
+        else:
+            cbore = cyl(r_, 30.0); cbore.apply_translation((cx_, cy_, seat_floor - 2))
         body = sub(body, cbore)
     # cable pass through the deck: 16x8 obround (5-pos JST-XH head is 14.9 x 5.9) at
     # cable_exit, INSIDE the race ID -- the old Ø12 pass at (0, neck_y) punched through the
@@ -294,46 +343,45 @@ def build_chassis_core():
     # driver + pan-motor stage as one service tray.)
     body = sub(body, cbl)
 
-    # pan-clip pockets: 3 at 120deg around the seat rim, floors 7 below the deck top so the
-    # clips finish FLUSH (see build_pan_clips for why nothing may stand proud of the deck).
+    # Pan-retainer pockets: six around the seat rim, floors 7 below the deck top so
+    # every lobe finishes flush. The 300 degree station is reduced to clear the
+    # y=-52 rear deck seam by 1.0 mm; dimensions share PARAMS with pan.py.
     #
-    # M3 THROUGH-BOLT + CAPTIVE HEX NUT (2026-07-15, FASTENING_AUDIT P1). These three
-    # screws were Ø2.5 thread-form pilots, and they are the ONLY thing resisting the
-    # top-heavy head lifting the pan platform off its balls -- the single worst
-    # self-tap in the chassis. The nut sits at pan_clip_nut_z, its slot running
+    # M3 through-bolts use captive hex nuts. Each nut sits at pan_retainer_nut_z,
+    # with its slot running
     # RADIALLY INWARD to a mouth in the seat wall (r 49): that is the only open face
     # anywhere near this station, and it is a good one -- the annulus r 44.5..49 /
     # z 51..56 outside the race ring is free air, so the nuts slide in with tweezers
     # through the Ø98 seat opening. ORDER: nuts in BEFORE the race ring + balls.
-    # Uplift pulls each nut UP onto its slot roof, so the 3.6 mm of deck between the
-    # nut top and the pocket floor works in pure COMPRESSION against the clip's seat.
-    # Screw stays M3x10: build_pan_clips' head cbore puts the head bottom at z 62.6,
-    # so the tip lands at 52.6 = the nut's bottom face. pan.py needs no change.
-    for a in (90, 210, 330):
+    # Uplift pulls each nut up onto its slot roof, so the 3.6 mm of deck between the
+    # nut top and pocket floor works in compression against the lobe seat.
+    for a, width, r0, r1, screw_r, nut_run in P["pan_retainer_lobes"]:
         # pocket inner edge at r48 -- INSIDE the round seat wall (circle is at y 48.5 when
         # x = +-7), else slivers of deck survive between the straight edge and the circle
         # exactly where the clip tab corners land
-        pk = box(14.4, 10.2, 8.0); pk.apply_translation((0, 53.1, z1 - 3.0))    # z 59..67
+        pk = box(width + 0.4, r1 - r0 + 1.2, 8.0)
+        pk.apply_translation((0, (r0 + r1) / 2.0 - 0.1, z1 - 3.0))
         pk.apply_transform(R((a - 90) * DEG, (0, 0, 1)))
         body = sub(body, pk)
         thr = cyl(P["m3_clear_r"], 8.0)                                         # z 51.5..59.5
-        thr.apply_translation((0, 53.5, z1 - 10.5))
+        thr.apply_translation((0, screw_r, z1 - 10.5))
         thr.apply_transform(R((a - 90) * DEG, (0, 0, 1)))
         body = sub(body, thr)
-        nsl = geo.nut_slot((0, 53.5, P["pan_clip_nut_z"]), screw_axis="z",
+        nsl = geo.nut_slot((0, screw_r, P["pan_retainer_nut_z"]), screw_axis="z",
                            open_dir=(0, -1, 0), size="M3",
-                           length=P["pan_clip_nut_run"])
+                           length=nut_run)
         # SEAT RELIEF (2026-07-15): geo.nut_slot() backstops at EXACTLY ac/2 behind the
         # axis, so only a max-material nut (ac 6.35) reaches the bore dead-centre -- a
         # real DIN 934 M3 runs 6.14..6.35 across corners, i.e. up to 0.21 short. Back
-        # the seat off pan_clip_nut_seat_clear: the nut self-centres on the screw as it
+        # the seat off pan_retainer_nut_seat_clear: the nut self-centres on the screw as it
         # draws in, so the seat only has to stop it near enough to be hands-free. This
         # also clears the checks.nut_reaches_bore probe, whose axis-aligned 0.5 cube
         # over-reaches a ROTATED seat plane by up to 0.104 (az 210/330 here).
         # NOTE for a central fix: this belongs in geo.nut_slot() as a `seat_clear` arg.
-        sc = P["pan_clip_nut_seat_clear"]
+        sc = P["pan_retainer_nut_seat_clear"]
         rel = box(geo.NUT["M3"][0] + 0.2, sc, geo.NUT["M3"][1] + 0.2)
-        rel.apply_translation((0, 53.5 + M3_AC / 2 + sc / 2, P["pan_clip_nut_z"]))
+        rel.apply_translation((0, screw_r + M3_AC / 2 + sc / 2,
+                               P["pan_retainer_nut_z"]))
         nsl = uni([nsl, rel])
         nsl.apply_transform(R((a - 90) * DEG, (0, 0, 1)))
         body = sub(body, nsl)
@@ -1716,23 +1764,20 @@ def build_belly_plate():
     # --- PAN PEDESTAL interface (round 5, user: pedestal separate, "bolt and
     # nuts" to the plate): 4x M3x12 csk from below (flush at z 7, the belly-screw
     # convention) into captive hex nuts in the pedestal feet, + 2 Ø4.2 holes for
-    # the pedestal's printed registration pins (pan-gear CD is position-critical;
-    # screws clamp, pins locate).
+    # the pedestal's printed registration pins. All six plate passages sweep along
+    # X: pins locate Y + rotation, then the pedestal tunes gear CD before screws clamp.
     mxp, myp = _ped_c()
     # pan-can relief pocket (v2, chassis_clear 10): the can bottom z 12.95 is
     # PINNED by the pan gear band while the plug top rose to z0+3 = 13 -- give
     # the can a O30 x 1.25 pocket (plug keeps 1.75 under it)
-    cpk = cyl(15.0, 1.25)
-    cpk.apply_translation((mxp, myp, z0 + 3.0 - 1.25 / 2))
+    cpk = _pedestal_slot_neg(mxp, myp, 15.0, 1.25, z0 + 3.0 - 1.25 / 2)
     plate = sub(plate, cpk)
     for dx_, dy_ in ((-18.0, -18.0), (18.0, -18.0), (-18.0, 18.0), (18.0, 18.0)):
-        plate = sub(plate, _belly_csk_neg(mxp + dx_, myp + dy_))
-        thr = cyl(1.75, 2.6)                          # csk_neg's clearance stops at
-        thr.apply_translation((mxp + dx_, myp + dy_,  # z 9.2 (hull-pilot handoff);
-                               10.3))                 # bore on through the 3-plug
+        plate = sub(plate, _pedestal_swept_csk_neg(mxp + dx_, myp + dy_))
+        thr = _pedestal_slot_neg(mxp + dx_, myp + dy_, 1.75, 2.6, 10.3)
         plate = sub(plate, thr)
     for dx_ in (-18.0, 18.0):
-        dh = cyl(2.1, 8.0); dh.apply_translation((mxp + dx_, myp, 8.5))
+        dh = _pedestal_slot_neg(mxp + dx_, myp, 2.1, 10.0, 10.0)
         plate = sub(plate, dh)
     # --- ULN2003 standoffs x2 (round 5: BOTH driver boards ride the plate now --
     # they were hull-floor posts rooted on the deleted keep strap / at (0,80)).
@@ -1792,7 +1837,8 @@ def build_pan_pedestal():
     deck-cable-pass corner cut. NEW: 4 corner feet with side-slide M3 hex-nut
     traps (bolts = M3x12 csk from below, flush at the z 7 belly face like every
     belly screw) + 2 printed Ø4 registration pins into plate holes -- the pan
-    gear CD is position-critical, so pins locate and screws only clamp. Service:
+    pins locate Y + rotation while X stays tunable by +-pan_cd_adjust for backlash;
+    the four screws clamp only after setting the mesh. Service:
     drop the belly plate and the pan motor + pedestal + both ULN drivers + the
     power tray leave as ONE tray."""
     z0 = P["chassis_clear"]

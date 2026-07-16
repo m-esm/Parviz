@@ -23,16 +23,17 @@ def solid(part, point):
 
 
 def m3(qty, length, axis, stack, capture="hex_nut", capture_t=2.4,
-       bores=(), blockers=(), access=8.0):
+       bores=(), captures=(), blockers=(), access=8.0):
     return Fastener("M3", qty, length, axis, stack, capture, capture_t,
                     head_access=access, bore_probes=bores,
-                    tool_blockers=blockers)
+                    capture_probes=captures, tool_blockers=blockers)
 
 
 REQUIRED_STRUCTURAL_JOINTS = (
-    "neck_to_pan", "pan_clips_to_chassis", "lower_tub_front_seam",
+    "neck_to_pan", "pan_retainer_to_chassis", "lower_tub_front_seam",
     "lower_tub_tail_seam", "deck_strip_front_seam", "deck_strip_rear_seam",
     "side_panel_splice", "side_panel_feet", "belly_plate_to_chassis",
+    "pedestal_to_belly",
     "chassis_base_to_chassis", "head_bezel_to_back", "head_back_panel_to_frames",
     "head_back_frame_seam", "head_bezel_seam", "screen_tray_to_head_back",
     "ant_bracket_to_head_back", "tilt_carrier_to_neck", "track_master_to_loop",
@@ -47,6 +48,37 @@ for az in (270.0, 30.0, 150.0):
     _neck_bores.append(ring("neck_clevis",
                             (16.5 * math.cos(a), P["neck_y"] + 16.5 * math.sin(a), 72.0)))
 
+_retainer_bores = []
+_retainer_captures = []
+_retainer_lip = []
+for az, _width, _r0, _r1, screw_r, _run in P["pan_retainer_lobes"]:
+    a = math.radians(az)
+    _retainer_bores.append(ring("pan_retainer",
+                                (screw_r * math.cos(a), screw_r * math.sin(a),
+                                 P["base_h"] - 5.0)))
+    _retainer_captures.append(Probe("chassis_deck_center", "void",
+                                    (screw_r * math.cos(a), screw_r * math.sin(a),
+                                     P["pan_retainer_nut_z"])))
+for az in range(0, 360, 30):
+    a = math.radians(az)
+    _retainer_lip.append(solid("pan_retainer",
+                               (46.7 * math.cos(a), 46.7 * math.sin(a),
+                                P["base_h"] - 2.0)))
+
+_pan_cd = P["pan_gear_m"] * (P["pan_gear_motor_t"] + P["pan_gear_pinion_t"]) / 2
+_pan_a = math.radians(P["pan_shaft_azim"])
+_ped_x = _pan_cd * math.cos(_pan_a)
+_ped_y = _pan_cd * math.sin(_pan_a) + P["motor_shaft_off"]
+_ped_pins = tuple((_ped_x + dx, _ped_y, P["chassis_clear"] + 2.0)
+                  for dx in (-18.0, 18.0))
+_ped_pin_slots = tuple((_ped_x + dx, _ped_y, P["chassis_clear"] + 1.0)
+                       for dx in (-18.0, 18.0))
+_ped_bores = tuple(ring("belly_plate", (_ped_x + dx, _ped_y + dy, 11.5), radius=2.7)
+                   for dx in (-18.0, 18.0) for dy in (-18.0, 18.0))
+_ped_captures = tuple(Probe("chassis_pedestal", "void",
+                            (_ped_x + dx, _ped_y + dy, 15.9))
+                      for dx in (-18.0, 18.0) for dy in (-18.0, 18.0))
+
 
 JOINTS = (
     Joint("neck_to_pan", ("neck_clevis", "pan_platform"), True, (0, 0, -1),
@@ -56,11 +88,16 @@ JOINTS = (
           supporting_probes=(solid("pan_platform", (0, P["neck_y"], P["base_h"] + 0.5)),),
           assembly_step=1),
 
-    Joint("pan_clips_to_chassis", ("pan_clips", "chassis_deck_center"), True,
-          (0, 0, -1), Locator("rebate", 3, 2.6, LOCATING, True),
-          (m3(3, 10.0, (0, 0, -1), 6.0),),
-          supporting_probes=(solid("pan_clips", (0, 53.5, P["base_h"] + 12.0)),),
-          allowed_dof=("yaw",), assembly_step=8),
+    Joint("pan_retainer_to_chassis", ("pan_retainer", "chassis_deck_center"), True,
+          (0, 0, -1), Locator("continuous_rebate", 1, 2.6, LOCATING, True),
+          (Fastener("M3", 6, 10.0, (0, 0, -1), 6.0, "hex_nut", 2.4,
+                    head_access=8.0, bore_probes=tuple(_retainer_bores),
+                    capture_probes=tuple(_retainer_captures)),),
+          insertion=Insertion("pan_retainer", ("pan_platform",), (0, 0, 1), 12.0, 13),
+          seating_probes=tuple(_retainer_lip),
+          supporting_probes=(solid("pan_retainer", (0, 46.7, P["base_h"] - 2.0)),),
+          allowed_dof=("yaw",), assembly_step=8,
+          notes="Drops vertically over the seated platform: lip ID 90.8, top-band OD 90.0. Race, cage, balls, and platform are installed first."),
 
     Joint("lower_tub_front_seam", ("chassis_lower_front", "chassis_lower_rear"), True,
           (0, -1, 0), Locator("pin_pair", 2, 8.0, LOCATING, True),
@@ -103,6 +140,20 @@ JOINTS = (
           (0, 0, 1), Locator("perimeter_rebate", 1, 1.5, LOCATING, True),
           (m3(6, 10.0, (0, 0, 1), 5.5),),
           supporting_probes=(solid("belly_plate", (0, 0, 7.0)),), assembly_step=7),
+
+    Joint("pedestal_to_belly", ("chassis_pedestal", "belly_plate"), True,
+          (0, 0, -1),
+          Locator("slotted_pin_pair", 2, 2.45, SLIDING, True,
+                  tuple(solid("chassis_pedestal", p) for p in _ped_pins),
+                  tuple(Probe("belly_plate", "void", p) for p in _ped_pin_slots)),
+          (m3(4, 12.0, (0, 0, 1), 7.0, bores=_ped_bores,
+              captures=_ped_captures, access=8.0),),
+          seating_probes=(solid("chassis_pedestal", (_ped_x + 20.0, _ped_y,
+                                                       P["chassis_clear"] + 4.0)),),
+          supporting_probes=(solid("chassis_pedestal", (_ped_x, _ped_y, 20.0)),
+                             solid("belly_plate", (_ped_x, _ped_y - 20.0, 8.0))),
+          allowed_dof=("x_translation",), assembly_step=7,
+          notes="Pins locate Y and rotation; X is tunable +-pan_cd_adjust for gear backlash. Four M3x12 csk screws and captive nuts clamp after setting. Follow the belly/pedestal step in docs/ASSEMBLY.md."),
 
     Joint("chassis_base_to_chassis", ("chassis_base", "chassis_lower_rear"), True,
           (0, 0, -1), Locator("pin_pair", 2, 5.0, LOCATING, True),

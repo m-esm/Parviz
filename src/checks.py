@@ -380,6 +380,12 @@ def main():
         a = math.radians(az)
         return (r * math.cos(a), r * math.sin(a))
 
+    def stop_corner(az, dr, dt, r=28.0):
+        """World XY of a radially-aligned stop-box local corner (dr radial, dt tang)."""
+        a = math.radians(az)
+        ca, sa = math.cos(a), math.sin(a)
+        return ((r + dr) * ca - dt * sa, (r + dr) * sa + dt * ca)
+
     # user 2026-07-08 (stall homing): platform underside lug at azimuth 225.
     lx, ly = raz(225.0)
     check("pan homing lug (az 225, platform underside)",
@@ -388,6 +394,19 @@ def main():
     check("pan deck stop posts (az 118/332)",
           all(inside(M("chassis_deck_center"), [raz(az) + (z,) for z in (47.0, 50.0)])
               for az in (118.0, 332.0)))
+    # user 2026-07-16 (P4 stop reinforcement): radial extent 6 -> 9 (tangential held
+    # at 6 so +-93.3 contact is unchanged). Probe inset 0.6 from the grown corners so
+    # contains() is robust near the face (not on the tessellated surface).
+    _sr, _st = 4.5 - 0.6, 3.0 - 0.6          # half-extents minus inset
+    _lug_pts = [stop_corner(225.0, dr, dt) + (z,)
+                for dr in (-_sr, _sr) for dt in (-_st, _st) for z in (54.0, 56.5)]
+    check("pan stop lug grown radial 9 mm corners",
+          inside(M("pan_platform"), _lug_pts))
+    _post_pts = [stop_corner(az, dr, dt) + (z,)
+                 for az in (118.0, 332.0)
+                 for dr in (-_sr, _sr) for dt in (-_st, _st) for z in (47.5, 50.5)]
+    check("pan stop posts grown radial 9 mm corners",
+          inside(M("chassis_deck_center"), _post_pts))
 
     # ---------------- HC-SR04 recesses: bores pierce along the REAL axes -------
     fw = P["chassis_l"] / 2.0
@@ -565,6 +584,21 @@ def main():
               for dx in (-18.0, 18.0) for dy in (-18.0, 18.0)),
           "nut centres on the screw axis at all 4 feet")
 
+    # Task P2: the pedestal pins must remain X slots, not regress to round holes.
+    # Probe the two slot end centers in the pin band, then material 0.9 beyond
+    # each complete slot envelope (travel + hole radius).
+    bp = M("belly_plate")
+    adj = P["pan_cd_adjust"]
+    pin_z = P["chassis_clear"] + 1.0
+    pin_centres = [(mx + dx, my) for dx in (-18.0, 18.0)]
+    slot_void = [(x + sx * adj, y, pin_z)
+                 for x, y in pin_centres for sx in (-1, 1)]
+    slot_solid = [(x + sx * adj, y + sy * (2.1 + 0.9), pin_z)
+                  for x, y in pin_centres for sx in (-1, 1) for sy in (-1, 1)]
+    check("pedestal pin passages retain +-pan_cd_adjust X slots",
+          clear(bp, slot_void) and inside(bp, slot_solid),
+          "slot ends void; plate solid 0.9 mm beyond each O4.2 side wall")
+
     nk = M("neck_clevis")
     root = []
     for az in (270.0, 30.0, 150.0):
@@ -580,6 +614,31 @@ def main():
           inside(M("pan_platform"), [(s * 18.0, -32.0, P["base_h"] + 1.2)
                                      for s in (-1, 1)]),
           "platform pins locate the column hands-free while screwing")
+
+    # Full-circle pan uplift retainer. The shoulder geometry is unchanged: the
+    # r45.4 lip ID clears the r45.0 top band by 0.4 radially, and its z1-4.0
+    # underside clears the z1-4.4 shoulder by 0.4 axially.
+    ret = M("pan_retainer")
+    lip_pts = []
+    for az in np.linspace(0.0, 2.0 * np.pi, 72, endpoint=False):
+        lip_pts.append((46.7 * math.cos(az), 46.7 * math.sin(az),
+                        P["base_h"] - 2.0))
+    check("pan retainer lip is a continuous full annulus", inside(ret, lip_pts),
+          "72/72 samples at r46.7, z=base_h-2 must hit material")
+    check("pan retainer keeps 0.4 radial and axial shoulder clearances",
+          abs(45.4 - 45.0 - 0.4) < 1e-9
+          and abs((P["base_h"] - 4.0) - (P["base_h"] - 4.4) - 0.4) < 1e-9,
+          "lip ID 90.8 vs band OD 90.0; lip underside vs shoulder")
+    deck = M("chassis_deck_center")
+    trap_ok = []
+    for az, _width, _r0, _r1, screw_r, _run in P["pan_retainer_lobes"]:
+        a = math.radians(az)
+        trap_ok.append(nut_reaches_bore(
+            deck, (screw_r * math.cos(a), screw_r * math.sin(a),
+                   P["pan_retainer_nut_z"]),
+            (-math.cos(a), -math.sin(a), 0.0)))
+    check("pan retainer: all 6 captive nuts reach their bores", all(trap_ok),
+          "radially inward slots meet every screw axis")
 
     # the tail seam that snapped off the first print: it had NO joint at all
     tail = M("chassis_lower_tail")

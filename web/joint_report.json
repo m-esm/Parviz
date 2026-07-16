@@ -128,7 +128,7 @@
       "ok": true
     },
     {
-      "detail": "10094 faces, 49620.1 mm3",
+      "detail": "10102 faces, 49765.5 mm3",
       "gate": "load-body-1",
       "joint": "neck_to_pan",
       "measurements": {},
@@ -144,28 +144,28 @@
     {
       "detail": "joint must name both sides",
       "gate": "part-count",
-      "joint": "pan_clips_to_chassis",
+      "joint": "pan_retainer_to_chassis",
       "measurements": {},
       "ok": true
     },
     {
       "detail": "",
       "gate": "assembly-axis",
-      "joint": "pan_clips_to_chassis",
+      "joint": "pan_retainer_to_chassis",
       "measurements": {},
       "ok": true
     },
     {
       "detail": "structural joints require a screw-independent locator",
       "gate": "self-location",
-      "joint": "pan_clips_to_chassis",
+      "joint": "pan_retainer_to_chassis",
       "measurements": {},
       "ok": true
     },
     {
       "detail": "2.60 mm",
       "gate": "locator-engagement",
-      "joint": "pan_clips_to_chassis",
+      "joint": "pan_retainer_to_chassis",
       "measurements": {
         "engagement_mm": 2.6
       },
@@ -174,28 +174,28 @@
     {
       "detail": "single round pins need a second anti-rotation feature",
       "gate": "locator-constraints",
-      "joint": "pan_clips_to_chassis",
+      "joint": "pan_retainer_to_chassis",
       "measurements": {},
       "ok": true
     },
     {
       "detail": "locating 0.100..0.350 mm",
       "gate": "fit-class",
-      "joint": "pan_clips_to_chassis",
+      "joint": "pan_retainer_to_chassis",
       "measurements": {},
       "ok": true
     },
     {
       "detail": "structural joint requires declared retention",
       "gate": "fastener-present",
-      "joint": "pan_clips_to_chassis",
+      "joint": "pan_retainer_to_chassis",
       "measurements": {},
       "ok": true
     },
     {
-      "detail": "M3 x3: 1.60 mm protrusion",
+      "detail": "M3 x6: 1.60 mm protrusion",
       "gate": "fastener-1-stack",
-      "joint": "pan_clips_to_chassis",
+      "joint": "pan_retainer_to_chassis",
       "measurements": {
         "protrusion_mm": 1.6
       },
@@ -204,43 +204,268 @@
     {
       "detail": "hex_nut",
       "gate": "fastener-1-capture",
-      "joint": "pan_clips_to_chassis",
+      "joint": "pan_retainer_to_chassis",
       "measurements": {},
       "ok": true
     },
     {
       "detail": "access 8.0, driver diameter 7.0",
       "gate": "fastener-1-tool-envelope",
-      "joint": "pan_clips_to_chassis",
+      "joint": "pan_retainer_to_chassis",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "pan_retainer over 12.0 mm / 13 steps",
+      "gate": "insertion-declared",
+      "joint": "pan_retainer_to_chassis",
       "measurements": {},
       "ok": true
     },
     {
       "detail": "locator must constrain the seated part before screws",
       "gate": "pre-fastener-stability",
-      "joint": "pan_clips_to_chassis",
+      "joint": "pan_retainer_to_chassis",
       "measurements": {},
       "ok": true
     },
     {
       "detail": "structural joints require material probes around the load path",
       "gate": "load-path",
-      "joint": "pan_clips_to_chassis",
+      "joint": "pan_retainer_to_chassis",
       "measurements": {},
       "ok": true
     },
     {
-      "detail": "1674 faces, 2829.8 mm3",
+      "detail": "solid 0.7290 mm3",
+      "gate": "seating-1",
+      "joint": "pan_retainer_to_chassis",
+      "measurements": {
+        "intersection_mm3": 0.7289993627040113
+      },
+      "ok": true
+    },
+    {
+      "detail": "solid 0.7290 mm3",
+      "gate": "seating-2",
+      "joint": "pan_retainer_to_chassis",
+      "measurements": {
+        "intersection_mm3": 0.7289990730256856
+      },
+      "ok": true
+    },
+    {
+      "detail": "solid 0.7290 mm3",
+      "gate": "seating-3",
+      "joint": "pan_retainer_to_chassis",
+      "measurements": {
+        "intersection_mm3": 0.7289990730256832
+      },
+      "ok": true
+    },
+    {
+      "detail": "solid 0.7290 mm3",
+      "gate": "seating-4",
+      "joint": "pan_retainer_to_chassis",
+      "measurements": {
+        "intersection_mm3": 0.7289993627040112
+      },
+      "ok": true
+    },
+    {
+      "detail": "solid 0.7290 mm3",
+      "gate": "seating-5",
+      "joint": "pan_retainer_to_chassis",
+      "measurements": {
+        "intersection_mm3": 0.7289990730256832
+      },
+      "ok": true
+    },
+    {
+      "detail": "solid 0.7290 mm3",
+      "gate": "seating-6",
+      "joint": "pan_retainer_to_chassis",
+      "measurements": {
+        "intersection_mm3": 0.7289990730256856
+      },
+      "ok": true
+    },
+    {
+      "detail": "solid 0.7290 mm3",
+      "gate": "seating-7",
+      "joint": "pan_retainer_to_chassis",
+      "measurements": {
+        "intersection_mm3": 0.7289993627040113
+      },
+      "ok": true
+    },
+    {
+      "detail": "solid 0.7290 mm3",
+      "gate": "seating-8",
+      "joint": "pan_retainer_to_chassis",
+      "measurements": {
+        "intersection_mm3": 0.7289990730256856
+      },
+      "ok": true
+    },
+    {
+      "detail": "solid 0.7290 mm3",
+      "gate": "seating-9",
+      "joint": "pan_retainer_to_chassis",
+      "measurements": {
+        "intersection_mm3": 0.7289990730256832
+      },
+      "ok": true
+    },
+    {
+      "detail": "solid 0.7290 mm3",
+      "gate": "seating-10",
+      "joint": "pan_retainer_to_chassis",
+      "measurements": {
+        "intersection_mm3": 0.7289993627040112
+      },
+      "ok": true
+    },
+    {
+      "detail": "solid 0.7290 mm3",
+      "gate": "seating-11",
+      "joint": "pan_retainer_to_chassis",
+      "measurements": {
+        "intersection_mm3": 0.7289990730256832
+      },
+      "ok": true
+    },
+    {
+      "detail": "solid 0.7290 mm3",
+      "gate": "seating-12",
+      "joint": "pan_retainer_to_chassis",
+      "measurements": {
+        "intersection_mm3": 0.7289990730256856
+      },
+      "ok": true
+    },
+    {
+      "detail": "4748 faces, 7108.4 mm3",
       "gate": "load-body-1",
-      "joint": "pan_clips_to_chassis",
+      "joint": "pan_retainer_to_chassis",
       "measurements": {},
       "ok": true
     },
     {
-      "detail": "not required",
+      "detail": "12/12 ring probes hit material",
+      "gate": "fastener-1-bore-1",
+      "joint": "pan_retainer_to_chassis",
+      "measurements": {
+        "hits": 12.0
+      },
+      "ok": true
+    },
+    {
+      "detail": "12/12 ring probes hit material",
+      "gate": "fastener-1-bore-2",
+      "joint": "pan_retainer_to_chassis",
+      "measurements": {
+        "hits": 12.0
+      },
+      "ok": true
+    },
+    {
+      "detail": "12/12 ring probes hit material",
+      "gate": "fastener-1-bore-3",
+      "joint": "pan_retainer_to_chassis",
+      "measurements": {
+        "hits": 12.0
+      },
+      "ok": true
+    },
+    {
+      "detail": "12/12 ring probes hit material",
+      "gate": "fastener-1-bore-4",
+      "joint": "pan_retainer_to_chassis",
+      "measurements": {
+        "hits": 12.0
+      },
+      "ok": true
+    },
+    {
+      "detail": "12/12 ring probes hit material",
+      "gate": "fastener-1-bore-5",
+      "joint": "pan_retainer_to_chassis",
+      "measurements": {
+        "hits": 12.0
+      },
+      "ok": true
+    },
+    {
+      "detail": "12/12 ring probes hit material",
+      "gate": "fastener-1-bore-6",
+      "joint": "pan_retainer_to_chassis",
+      "measurements": {
+        "hits": 12.0
+      },
+      "ok": true
+    },
+    {
+      "detail": "void 0.0000 mm3",
+      "gate": "fastener-1-capture-1",
+      "joint": "pan_retainer_to_chassis",
+      "measurements": {
+        "intersection_mm3": 0.0
+      },
+      "ok": true
+    },
+    {
+      "detail": "void 0.0000 mm3",
+      "gate": "fastener-1-capture-2",
+      "joint": "pan_retainer_to_chassis",
+      "measurements": {
+        "intersection_mm3": 0.0
+      },
+      "ok": true
+    },
+    {
+      "detail": "void 0.0000 mm3",
+      "gate": "fastener-1-capture-3",
+      "joint": "pan_retainer_to_chassis",
+      "measurements": {
+        "intersection_mm3": 0.0
+      },
+      "ok": true
+    },
+    {
+      "detail": "void 0.0000 mm3",
+      "gate": "fastener-1-capture-4",
+      "joint": "pan_retainer_to_chassis",
+      "measurements": {
+        "intersection_mm3": 0.0
+      },
+      "ok": true
+    },
+    {
+      "detail": "void 0.0000 mm3",
+      "gate": "fastener-1-capture-5",
+      "joint": "pan_retainer_to_chassis",
+      "measurements": {
+        "intersection_mm3": 0.0
+      },
+      "ok": true
+    },
+    {
+      "detail": "void 0.0000 mm3",
+      "gate": "fastener-1-capture-6",
+      "joint": "pan_retainer_to_chassis",
+      "measurements": {
+        "intersection_mm3": 0.0
+      },
+      "ok": true
+    },
+    {
+      "detail": "worst swept overlap 0.0000 mm3",
       "gate": "insertion-path",
-      "joint": "pan_clips_to_chassis",
-      "measurements": {},
+      "joint": "pan_retainer_to_chassis",
+      "measurements": {
+        "overlap_mm3": 0.0
+      },
       "ok": true
     },
     {
@@ -536,7 +761,7 @@
       "ok": true
     },
     {
-      "detail": "9752 faces, 231226.1 mm3",
+      "detail": "11438 faces, 228441.0 mm3",
       "gate": "load-body-1",
       "joint": "deck_strip_front_seam",
       "measurements": {},
@@ -638,7 +863,7 @@
       "ok": true
     },
     {
-      "detail": "9752 faces, 231226.1 mm3",
+      "detail": "11438 faces, 228441.0 mm3",
       "gate": "load-body-1",
       "joint": "deck_strip_rear_seam",
       "measurements": {},
@@ -944,7 +1169,7 @@
       "ok": true
     },
     {
-      "detail": "16104 faces, 39642.1 mm3",
+      "detail": "25076 faces, 39549.6 mm3",
       "gate": "load-body-1",
       "joint": "belly_plate_to_chassis",
       "measurements": {},
@@ -954,6 +1179,232 @@
       "detail": "not required",
       "gate": "insertion-path",
       "joint": "belly_plate_to_chassis",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "joint must name both sides",
+      "gate": "part-count",
+      "joint": "pedestal_to_belly",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "",
+      "gate": "assembly-axis",
+      "joint": "pedestal_to_belly",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "structural joints require a screw-independent locator",
+      "gate": "self-location",
+      "joint": "pedestal_to_belly",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "2.45 mm",
+      "gate": "locator-engagement",
+      "joint": "pedestal_to_belly",
+      "measurements": {
+        "engagement_mm": 2.45
+      },
+      "ok": true
+    },
+    {
+      "detail": "single round pins need a second anti-rotation feature",
+      "gate": "locator-constraints",
+      "joint": "pedestal_to_belly",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "sliding 0.150..0.500 mm",
+      "gate": "fit-class",
+      "joint": "pedestal_to_belly",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "structural joint requires declared retention",
+      "gate": "fastener-present",
+      "joint": "pedestal_to_belly",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "M3 x4: 2.60 mm protrusion",
+      "gate": "fastener-1-stack",
+      "joint": "pedestal_to_belly",
+      "measurements": {
+        "protrusion_mm": 2.6
+      },
+      "ok": true
+    },
+    {
+      "detail": "hex_nut",
+      "gate": "fastener-1-capture",
+      "joint": "pedestal_to_belly",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "access 8.0, driver diameter 7.0",
+      "gate": "fastener-1-tool-envelope",
+      "joint": "pedestal_to_belly",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "locator must constrain the seated part before screws",
+      "gate": "pre-fastener-stability",
+      "joint": "pedestal_to_belly",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "structural joints require material probes around the load path",
+      "gate": "load-path",
+      "joint": "pedestal_to_belly",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "solid 0.7290 mm3",
+      "gate": "locator-male-1",
+      "joint": "pedestal_to_belly",
+      "measurements": {
+        "intersection_mm3": 0.7290006179800391
+      },
+      "ok": true
+    },
+    {
+      "detail": "solid 0.7290 mm3",
+      "gate": "locator-male-2",
+      "joint": "pedestal_to_belly",
+      "measurements": {
+        "intersection_mm3": 0.7289993627072855
+      },
+      "ok": true
+    },
+    {
+      "detail": "void 0.0000 mm3",
+      "gate": "locator-female-1",
+      "joint": "pedestal_to_belly",
+      "measurements": {
+        "intersection_mm3": 0.0
+      },
+      "ok": true
+    },
+    {
+      "detail": "void 0.0000 mm3",
+      "gate": "locator-female-2",
+      "joint": "pedestal_to_belly",
+      "measurements": {
+        "intersection_mm3": 0.0
+      },
+      "ok": true
+    },
+    {
+      "detail": "solid 0.7290 mm3",
+      "gate": "seating-1",
+      "joint": "pedestal_to_belly",
+      "measurements": {
+        "intersection_mm3": 0.7289993868471462
+      },
+      "ok": true
+    },
+    {
+      "detail": "4906 faces, 36313.3 mm3",
+      "gate": "load-body-1",
+      "joint": "pedestal_to_belly",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "25076 faces, 39549.6 mm3",
+      "gate": "load-body-2",
+      "joint": "pedestal_to_belly",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "12/12 ring probes hit material",
+      "gate": "fastener-1-bore-1",
+      "joint": "pedestal_to_belly",
+      "measurements": {
+        "hits": 12.0
+      },
+      "ok": true
+    },
+    {
+      "detail": "12/12 ring probes hit material",
+      "gate": "fastener-1-bore-2",
+      "joint": "pedestal_to_belly",
+      "measurements": {
+        "hits": 12.0
+      },
+      "ok": true
+    },
+    {
+      "detail": "12/12 ring probes hit material",
+      "gate": "fastener-1-bore-3",
+      "joint": "pedestal_to_belly",
+      "measurements": {
+        "hits": 12.0
+      },
+      "ok": true
+    },
+    {
+      "detail": "12/12 ring probes hit material",
+      "gate": "fastener-1-bore-4",
+      "joint": "pedestal_to_belly",
+      "measurements": {
+        "hits": 12.0
+      },
+      "ok": true
+    },
+    {
+      "detail": "void 0.0000 mm3",
+      "gate": "fastener-1-capture-1",
+      "joint": "pedestal_to_belly",
+      "measurements": {
+        "intersection_mm3": 0.0
+      },
+      "ok": true
+    },
+    {
+      "detail": "void 0.0000 mm3",
+      "gate": "fastener-1-capture-2",
+      "joint": "pedestal_to_belly",
+      "measurements": {
+        "intersection_mm3": 0.0
+      },
+      "ok": true
+    },
+    {
+      "detail": "void 0.0000 mm3",
+      "gate": "fastener-1-capture-3",
+      "joint": "pedestal_to_belly",
+      "measurements": {
+        "intersection_mm3": 0.0
+      },
+      "ok": true
+    },
+    {
+      "detail": "void 0.0000 mm3",
+      "gate": "fastener-1-capture-4",
+      "joint": "pedestal_to_belly",
+      "measurements": {
+        "intersection_mm3": 0.0
+      },
+      "ok": true
+    },
+    {
+      "detail": "not required",
+      "gate": "insertion-path",
+      "joint": "pedestal_to_belly",
       "measurements": {},
       "ok": true
     },
@@ -1907,7 +2358,7 @@
   "schema": 1,
   "summary": {
     "failed": 0,
-    "passed": 261,
-    "total": 261
+    "passed": 314,
+    "total": 314
   }
 }

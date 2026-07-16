@@ -60,7 +60,7 @@ PRINTED = [
     "track_keeper_L.stl", "track_keeper_R.stl",
     # neck / pan
     "neck_clevis.stl", "tilt_carrier.stl",
-    "pan_platform.stl", "pan_race.stl", "pan_clips.stl", "pan_cage.stl", "pan_gears.stl",
+    "pan_platform.stl", "pan_race.stl", "pan_retainer.stl", "pan_cage.stl", "pan_gears.stl",
     "trim_neckfoot.stl", "worm_wheel.stl", "tilt_worm.stl",
     # head
     "head_bezel_L.stl", "head_bezel_R.stl",

@@ -139,6 +139,20 @@ exported geometry. Run:</p>
 nonzero on any failed contract and writes the full result to <code>web/joint_report.json</code> for
 machine or viewer use. <code>make gate-tests</code> runs deliberately broken fixtures and proves the
 reusable gates reject them. <code>make assembly-release</code> is the canonical final pipeline.</p>
+<p>The pan uplift interface is <code>pan_retainer_to_chassis</code>, joining <code>pan_retainer</code> to
+<code>chassis_deck_center</code>. Its continuous r45.4..48.0 lip locates over the platform
+shoulder and six M3x10 through-bolts clamp six deck lobes into captive M3 nuts. The
+ring installs after the platform: it drops vertically over the r45.0 top band because
+the lip ID is 90.8 mm and the band OD is 90.0 mm. The contract probes the full lip,
+all six screw stations and captures, and this collision-free insertion path.</p>
+<p>The pan-motor mounting interface is <code>pedestal_to_belly</code>, joining
+<code>chassis_pedestal</code> to <code>belly_plate</code>. Two printed Ø4 pins run in Ø4.2 obround plate
+slots. They locate Y and rotation while leaving X tunable by
+<code>+-pan_cd_adjust</code> to set spur-gear backlash. Four M3x12 countersunk screws pass
+through matching X slots into captive pedestal nuts and clamp the selected
+position. Their countersinks are swept across the full travel, so every screw
+remains flush with the z=7 belly face at any adjustment. Assembly step 7 owns
+the backlash-setting procedure and final clamp.</p>
 <h2 id="what-every-declaration-owns">What every declaration owns</h2>
 <p>Each joint has a stable ID used here, in <code>docs/ASSEMBLY.md</code>, and in the report. Its declaration
 names:</p>
@@ -148,6 +162,9 @@ names:</p>
 <li>Locator type and dimensions: rail/groove, tongue/rebate, keyed boss, or separated pins.</li>
 <li>Fit class, printer clearance, minimum engagement, and end stop.</li>
 <li>Every screw, washer, nut or insert, clamped thickness, engagement, and allowed protrusion.</li>
+<li>Gravity-down captive-nut mouths use 0.25 mm crush-rib nibs. The head tilt-axle
+  clamp pair and chassis slide-up axle slots retain their nuts before screw insertion;
+  a bench pose is a convenience, not part of the joint contract.</li>
 <li>Nut/insert insertion direction and retention, plus driver/wrench/iron tool envelopes.</li>
 <li>The assembly step and the parts already present at that step.</li>
 <li>Minimum surrounding wall, boss, and load-path ligament dimensions.</li>

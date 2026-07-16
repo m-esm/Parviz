@@ -320,10 +320,24 @@ settled below). "Need" is per robot.</p>
 </tr>
 <tr>
 <td>6 mm airsoft BBs</td>
-<td>pan race, Ø80 circle, <code>pan_race_n</code>=18</td>
+<td>pan race, Ø80 circle, <code>pan_race_n</code>=18. Printed-race acceptance test: assembly step 9 (reject -&gt; commercial ring below)</td>
 <td>18</td>
 <td>0</td>
 <td><strong>smallest bag (100+)</strong></td>
+</tr>
+<tr>
+<td>Metric O-ring 6.0 x 1.0</td>
+<td>antenna gland and positive park grooves; NBR or silicone, silicone preferred for low breakaway; VERIFY_ON_BENCH</td>
+<td>2</td>
+<td>0</td>
+<td><strong>2</strong></td>
+</tr>
+<tr>
+<td>Commercial thin-section lazy-Susan / 4-point turntable bearing</td>
+<td><strong>OPTIONAL print-3 upgrade</strong> for the printed PLA race (buy only if step 9 acceptance fails). Pitch circle as close to Ø80 as available (typical cheap: 70 mm or 3" Al/steel lazy-Susan rings, or a thin-section slewing ring with <strong>ID &gt;= 68</strong> so the cable pass and 16T pinion hub stay clear). Height budget = current printed stack seat floor -&gt; platform underside (<code>_pan_stack</code> in <code>src/pan.py</code>): <code>pan_race_ring_t</code> 5.0 + air gap (<code>ball_d</code> - 2 * <code>pan_groove_engage</code>) 2.4 = <strong>7.4 mm</strong> (absolute: seat_floor = base_h - pan_plate_t - 7.4, plate_bot = base_h - pan_plate_t; with base_h 66 / pan_plate_t 7.6 that is z 51.0..58.4). Dims VERIFY_ON_ARRIVAL; fitting needs re-cut deck seat + platform underside (not modeled now; see step 9 upgrade path)</td>
+<td>1</td>
+<td>0</td>
+<td><strong>only if printed race fails acceptance</strong></td>
 </tr>
 <tr>
 <td>Ø5 SOLID rod</td>
@@ -369,7 +383,7 @@ settled below). "Need" is per robot.</p>
 <tbody>
 <tr>
 <td>M3 screws + hex nuts</td>
-<td>captive-nut joints everywhere; incl. M3x35 x8 bezel↔back. <strong>2026-07-15 fastening campaign: ~+55 M3 hex nuts</strong> as the thread-form pilots that failed the first print became real captive traps (head +32, chassis +24 incl. tail seam/deck/TT-upper/y26, neck +7 root &amp; carrier &amp; ULN). Screw length changes: y=26 seam M3x12 → <strong>M3x20</strong>, neck→platform M3x12 → <strong>M3x14</strong></td>
+<td>captive-nut joints everywhere; incl. M3x35 x8 bezel↔back and <strong>6x M3x10 + 6 M3 nuts for the pan retainer</strong>. <strong>2026-07-15 fastening campaign: ~+58 M3 hex nuts</strong> as failed thread-form pilots became captive traps. Screw length changes: y=26 seam M3x12 → <strong>M3x20</strong>, neck→platform M3x12 → <strong>M3x14</strong></td>
 <td>lots</td>
 <td>540pc M3 stainless kit + 175pc M3 30–50 mm kit + 600pc M2-M5 kit + 1263pc M2-M4 kit (all Tray 1)</td>
 <td>, (kits cover it)</td>
@@ -471,8 +485,8 @@ tracks, bezel, neck, pan parts, cosmetics -- can stay PLA. The black CR-PETG spo
   OPTIONAL, all fittings modeled), 5 dished road wheels/side
   (30 wide) on M4x40 bolt-axles off the pod-rail wheel beams</li>
 <li><code>pan_platform</code>: disc that yaws on the base (central shaft bore + off-axis cable pass)</li>
-<li><code>pan_race</code> / <code>pan_balls</code> / <code>pan_clips</code> / <code>pan_cage</code>: captured-BB lazy-Susan race, retaining
-  clips, and the BB spacer cage (18x 6 mm BBs; <code>pan_balls</code> is a placeholder for the bought
+<li><code>pan_race</code> / <code>pan_balls</code> / <code>pan_retainer</code> / <code>pan_cage</code>: captured-BB lazy-Susan race, full-circle
+  uplift retainer, and the BB spacer cage (18x 6 mm BBs; <code>pan_balls</code> is a placeholder for the bought
   BBs; the cage keeps them spaced so a turret lift doesn't scatter them)</li>
 <li><code>neck_clevis</code>: rounded column + two cheeks that rise into the head and drive the tilt axle;
   vertical cable channel</li>
@@ -734,7 +748,8 @@ tray killed the 88.5 mm blind channels, 2026-07-08.)</p>
    hold alignment before tightening.</li>
 <li><strong>TT motors.</strong> Set each TT gearmotor: shaft +X into the sprocket hub's double-D socket,
    front tab into the rear-wall pocket, nub into the wall pocket, 2× M3 through the
-   gearbox + wall with the nut floating in the pod gap.</li>
+   gearbox + wall. Push each upper nut past the slot-mouth crush nibs until it clicks
+   into the captive seat; it stays retained while the motor is positioned.</li>
 <li><strong>Track running gear.</strong> Press an F688ZZ into EACH face of all four end idlers (Ø15.95
    seat + Ø18.5 flange recess both sides). Each end wheel: M8 bolt from outboard
    through the bearings, add the OUTBOARD jam nut against the tower, then the flatted
@@ -745,8 +760,7 @@ tray killed the 88.5 mm blind channels, 2026-07-08.)</p>
    inboard tool ever needed. Rear pair: snug. Front pair: leave loose, set tension
    AFTER threading the tracks, then tighten from the head -- the channel holds the
    nut, the nut clamps the slot. Fit the sprockets on the
-   TT shafts (they mesh the ground run under the hull; the robot's weight seats them). Drop an M4 nut up each wheel-beam slot (do this BEFORE mounting the
-   rails if access is tight), then bolt each road wheel with its M4x40 from outboard --
+   TT shafts (they mesh the ground run under the hull; the robot's weight seats them). Push an M4 nut up each wheel-beam slot until it clicks past the two crush nibs. The nuts remain retained while the panel is handled; inserting them on the bench is convenient but not required. Then bolt each road wheel with its M4x40 from outboard --
    snug, then back off 1/8 turn so the wheel spins free.</li>
 <li><strong>Join the strips + close with the master (print-in-place chain, 2026-07-12).</strong>
    Each pod is 4 PRINT-IN-PLACE strips (16+16+16+15 links, hinges already free off
@@ -775,20 +789,58 @@ tray killed the 88.5 mm blind channels, 2026-07-08.)</p>
    pilots (jack aligned with the USB slot), the 5A buck to the belly plate's 40×20 post
    grid, zip the mini buck beside it, and wire per firmware/WIRING.md (leave 60 mm slack
    on every tray run; zip the incoming wall cable to the floor anchors as strain relief).
+   Fit <code>chassis_pedestal</code> to the loose belly plate with its two printed pins near
+   mid-slot and start the four M3x12 csk screws into the captive pedestal nuts.
+   Leave them loose enough for X adjustment. The swept countersinks keep every
+   screw flush anywhere in the slot instead of pulling the pedestal back to nominal.
+   <strong>Backlash setting:</strong> mesh the 32T motor gear against the platform's 16T pinion
+   with a 0.10 to 0.15 mm paper feeler between the flanks. Snug all four pedestal
+   screws, remove the feeler, then rotate the platform one full turn by hand and
+   check for tight spots. Re-set if it binds. The target is perceptible but small
+   lash at the teeth.
    Load the low ballast into the rear bay + the belly-plate pockets from BELOW, then bolt
    on <code>belly_plate</code> (6× M3 csk, flush at z=7). Ballast must go in before the plate closes
    the floor.</li>
 <li><strong>Pan race.</strong> Grease the <code>pan_race</code> lower groove, seat it on the deck floor, lay the
    <code>pan_cage</code> ring over it, and drop the <strong>18× 6 mm BBs</strong> through the cage pockets into
    the groove with tweezers. The cage keeps them spaced; any later turret lift leaves all
-   18 sitting evenly in the groove instead of bunching and rolling out.</li>
+   18 sitting evenly in the groove instead of bunching and rolling out. Load all six
+   retainer nuts through the inward-opening seat-wall slots before seating the race,
+   since the platform and retainer close that access.</li>
 <li><strong>Lower sub-assembly A</strong> (neck+platform) onto the BBs so the platform's upper groove
    captures them and its integral 16T pinion drops into mesh with the motor's 32T gear
    (fast-pan 2026-07-12: fit the 32T on the motor D-flats BEFORE this step). Screw
-   the 3 <code>pan_clips</code> into the deck pockets (driver clear 6.17 mm from above); their tabs
-   reach over the platform rim rebate to hold the top-heavy head down. Check the platform
-   spins free.</li>
+   drop <code>pan_retainer</code> straight down over the seated platform. Its 90.8 mm lip ID clears
+   the platform's 90.0 mm top-band OD throughout the insertion path. Seat all six lobes
+   in their deck pockets and drive 6x M3x10 into the captive nuts. The continuous lip
+   reaches over the platform rim rebate to hold the top-heavy head down. Check the
+   platform spins free.</li>
 </ol>
+<p><strong>Printed race acceptance</strong> (do this after the head is fitted, step 12+, so the race
+   sees the real top-heavy load). Bench physics, not CAD: ~8 N/ball Hertz on PLA
+   cold-flows and abrades; the 0.2 mm groove clearance sits inside FDM scatter, so a
+   given print may rattle or pinch and will worsen with wear. The post-gear-up torque
+   budget is ~15 mNm at the platform vs ~7 mNm assumed race friction (little headroom).</p>
+<ul>
+<li><strong>Measure breakaway torque:</strong> push sideways at a known lever (e.g. a kitchen gram
+     scale against the head side at a measured radius from the pan axis). Torque =
+     force × radius. Example: 10 gf at a 100 mm lever ≈ 10 mNm.</li>
+<li><strong>ACCEPT</strong> at &lt;= 10 mNm breakaway.</li>
+<li><strong>REJECT</strong> above 10 mNm, or if the platform rattles axially more than perceptibly,
+     or if breakaway grows noticeably after a few hundred sweeps. Then fit the
+     commercial ring (BOM "Bearings, race, axles"; print-3 option below).</li>
+<li><strong>Derate (between accept and upgrade):</strong> at 7-10 mNm of friction the pan still
+     slews but acceleration roughly halves (net accel torque 15 - 10 = 5 mNm vs the
+     budgeted ~8); a 180 deg sweep stretches from about 2 s toward 3 s. Below ~5 mNm
+     friction, nothing changes vs budget. Above ~12 mNm, stall-homing detection gets
+     unreliable and the commercial-ring upgrade is mandatory (do not ship on the
+     printed race).</li>
+<li><strong>Upgrade path (print-3, NOT modeled now):</strong> fitting the commercial ring means
+     re-cutting the deck seat and the platform underside for the ring's races (a
+     variant of <code>chassis_deck_center</code> and <code>pan_platform</code>). Frozen shells stay clean
+     (separate-by-stability rule); model against the bearing actually bought, dims
+     VERIFY_ON_ARRIVAL. Until then the printed race + BBs is the default path.</li>
+</ul>
 <h3 id="tilt-joint-head-all-on-the-pan-group">Tilt joint + head (all on the pan group)</h3>
 <ol start="10">
 <li><strong>Bearings + axle cartridge.</strong> Press a 695-2RS into each neck cheek from the clevis gap
@@ -809,9 +861,11 @@ tray killed the 88.5 mm blind channels, 2026-07-08.)</p>
     retired, 2026-07-13.) Route
     the tilt ULN wiring on the column back standoffs, board centered at z 93, below the
     carrier (motor + driver both ride the pan group, so no leads cross a joint).</li>
-<li><strong>Hang the head on the axle.</strong> Lower <code>head_back</code> so its side hubs take the axle ends, then
-    set the two head-clamp grubs at x=±30 with a 1.5 mm hex key driven UP through the bottom
-    motor bay (4.0 mm clear). The axle now turns with the head; the worm holds tilt with the
+<li><strong>Hang the head on the axle.</strong> Before lowering <code>head_back</code>, push each M3 clamp nut
+    through its downward-facing slot mouth until it clicks past the crush nibs and seats
+    on the cross-bolt axis. The front-down bench pose is still convenient, but retention
+    no longer depends on it. Lower the head so its side hubs take the axle ends, then drive
+    the two M3 pinch-clamp bolts from the rear bay. The axle now turns with the head; the worm holds tilt with the
     driver off ONLY marginally (fast-tilt 2026-07-12: the 3-start worm back-drives;
     hold is 28BYJ detent+gear friction through 4:1 -- firmware energize-hold or park
     at the balance point; see CLAUDE.md fast pan/tilt pass).</li>
@@ -827,24 +881,50 @@ tray killed the 88.5 mm blind channels, 2026-07-08.)</p>
     with <code>cam_cover</code> (2× M2 + ribbon pinch), drop the CSI ribbon into the pocket. Seat the
     WS2812 forehead segment in its recess and route the 3 wires through the wire pass to the
     Pi. Route the Pi power pair per the cable step below.</li>
-<li><strong>Close the head.</strong> Bezel to back: 8× M3×35 through the perimeter posts into the captive
+<li>
+<p><strong>Close the head.</strong> Bezel to back: 8× M3×35 through the perimeter posts into the captive
     nuts in the back bosses (screws from the front). Fit the rear service <code>head_door</code>
     (the stepped rear pod): engage the two top hook tabs first, swing the door in until
     both leg snap tongues CLICK behind the wall band beside the void (tool-free; replaced
     the 2× M3 csk 2026-07-10). To open: firm pull on the pod's bottom edge (35 mm proud,
-    that IS the grip); the barbs' back ramps cam the tongues inboard and release. Open at
-    roughly neutral tilt: at the ±33.8° stalls the tilt drivetrain reaches into the pod's
-    internal cavity.</li>
+    that IS the grip); the barbs' back ramps cam the tongues inboard and release.</p>
+<p><strong>SERVICE (door / dead head):</strong> the tilt drivetrain occupies the pod cavity at the
+±33.8° stalls by design (hollow clearance, not a closed-door clash). <code>tools/probe_door_stall.py</code>
+(2026-07-16) swept the tool-free open path (hook pivot 0..24°, then 15 mm lift along
+swung -Y) at tilt -33.8 / 0 / +33.8 against <code>tilt_carrier</code>, <code>motor_tilt</code>, <code>tilt_worm</code>,
+<code>worm_wheel</code>, and <code>neck_clevis</code>: <strong>all three poses path-clear</strong> on the baseline cavity
+(no enlargement). Stall-open is therefore geometrically possible, but the margin is
+millimeter-scale (closed-pose drivetrain-to-door clearance is ~2-3 mm at the stalls,
+and the swept path was checked at 2 deg / 1 mm resolution); <strong>neutral tilt remains
+the comfortable service pose</strong> (more free volume, easier hands, print tolerance and
+an un-held nodding head both eat into that margin). For a dead-motor or
+dead-Pi head: the 3-start worm <strong>back-drives</strong>, so hand-nod the head to roughly neutral
+first, then either hold it there with a second hand or wedge a soft prop (folded cloth /
+foam block) between the head chin and the chassis deck before pulling the door. Why prop:
+without energize-hold the head can slowly nod under its own imbalance while you work, and
+a hard-down park is awkward even though the open path does not collide.</p>
+</li>
 </ol>
-<p>15b. <strong>Antenna drives.</strong> Slip a friction O-ring into each top-wall guide bore, drop each
+<p>15b. <strong>Antenna drives.</strong> Push one metric O-ring 6.0 x 1.0 into each modeled top-wall
+    gland, then drop each
     mast in from above (rack facing the pinion slot), then hang <code>ant_bracket</code> on the back
     wall (spine + locating shoulders and 4x M3). Insert each printed <code>ant_output_*</code>
     half-shaft/pinion through its Ø4.2 bushings, fit <code>ant_idler_axle_*</code> and the compound
     <code>ant_idler_gear_*</code>, press <code>ant_motor_gear_*</code> onto the motor double-D, and bolt each 28BYJ nose-through
     its face plate (2x M3 into the vertical-ear pilots, shaft inboard). Each mast has its
     OWN motor + ULN2003 (independent control); wire both to the Pi in the head. Homing:
-    drive down until stall (tip cap on the boss). BUY: 2x O-ring sized for the Ø7 guide.
+    leave park at the lowest step rate for maximum torque, then ramp. BUY: 2x metric
+    O-ring 6.0 x 1.0, NBR or silicone; silicone is preferred for low breakaway.
     All 30T/12T/27T m0.8 gears, axles, shafts, and rack teeth are exported printable parts.</p>
+<pre><code>**BENCH BREAKAWAY PROTOCOL:** assemble one mast and ring with NO gears fitted. Measure
+axial breakaway with a 0-1 N spring gauge, or hang calibrated 10/20/30 g weights from
+the mast tip. Sliding breakaway target: &lt;=0.15 N (~15 g). Park-groove breakaway target:
+0.2-0.3 N (20-30 g). If outside the window, silicone grease lowers sliding friction;
+a 6.0 x 0.8 ring gives a lighter section/squeeze variant; or reprint the cheap vertical
+mast with `ant_park_groove_depth` adjusted by +/-0.1 mm. Groove depth is the park-force
+tuning knob. Final friction and breakaway are bench validation. CAD fixes only the
+geometry and the acceptable window.
+</code></pre>
 <h3 id="cables-per-docscable-checkmd-firmwarewiringmd">Cables (per docs/CABLE-CHECK.md + firmware/WIRING.md)</h3>
 <ol start="16">
 <li>Wall PD brick → rear PD trigger (12 V) → belly tray bucks. The Pi-rail pair (18 AWG,
@@ -871,8 +951,9 @@ tray killed the 88.5 mm blind channels, 2026-07-08.)</p>
 <ul>
 <li>Body↔pod join + TT screws (step 3) <strong>before</strong> ULN #1 (step 6): the board blocks cavity access.</li>
 <li>Neck↔platform bolt-up (sub-assembly A) <strong>before</strong> seating on the balls, counterbores face down.</li>
-<li>BBs + cage (step 8) <strong>before</strong> the platform (step 9); power tray + ballast (step 7)
-  <strong>before</strong> the belly plate closes the floor.</li>
+<li>Six retainer nuts <strong>before</strong> the race, cage, and BBs (step 8); race, cage, and BBs
+  <strong>before</strong> the platform; platform <strong>before</strong> the drop-on retainer ring (step 9).
+  Power tray + ballast (step 7) stay <strong>before</strong> the belly plate closes the floor.</li>
 </ul>
 <h3 id="nasty-but-possible-steps-measured">Nasty-but-possible steps (measured)</h3>
 <ul>

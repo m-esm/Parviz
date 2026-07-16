@@ -115,7 +115,7 @@ PARTS = {  # name: (subsystem, [rotations], obj_settings)
     "pan_platform":    ("neck", [],          TREE),     # disc, D-hub down (H 14)
     "pan_race":        ("neck", [],          TREE),     # ring (H 5)
     "pan_cage":        ("neck", [],          TREE),     # thin ball cage (H 1.8)
-    "pan_clips":       ("neck", [],          TREE),     # 3 flat clips (H 7)
+    "pan_retainer":    ("neck", [],          TREE),     # full ring, six flat lobes (H 7)
     "worm_wheel_real": ("neck", [(Y, 90)],   TREE),     # gear face -> bed (H 7)
     "tilt_worm_real":  ("neck", [(X, 90)],   TREE),     # stand on shaft end (H 14)
     "track_keeper_L":  ("base", [(X, 90)],   NOSUP),    # rolled onto the wide face
@@ -137,7 +137,7 @@ CATEGORIES = [
                        "ant_idler_gear_L", "ant_idler_gear_R",
                        "ant_idler_axle_L", "ant_idler_axle_R",
                        "ant_output_L", "ant_output_R"]),
-    ("Neck and pan", ["neck_clevis", "tilt_carrier", "pan_platform", "pan_race", "pan_cage", "pan_clips"]),
+    ("Neck and pan", ["neck_clevis", "tilt_carrier", "pan_platform", "pan_race", "pan_cage", "pan_retainer"]),
     ("Worm drive",   ["worm_wheel_real", "tilt_worm_real"]),
     ("Track gear",   ["@drivegear"]),
     ("Track links",  ["@links"]),

@@ -72,7 +72,7 @@ def _fit_report(geo):
         frozenset(("pan_gears", "pan_platform")),    # 32T <-> integral 16T pinion mesh
         # resting / bolted seats
         frozenset(("pan_race", "chassis_deck")),     # ring sits on the seat floor
-        frozenset(("pan_clips", "chassis_deck")),    # clips screwed into deck pockets
+        frozenset(("pan_retainer", "chassis_deck")), # ring lobes screwed into deck pockets
         frozenset(("motor_pan", "chassis_deck")),    # ear bar clamped on the pedestal pads
         frozenset(("motor_pan", "chassis_lower")),
         frozenset(("motor_pan", "chassis_pedestal")),  # can in the bolt-on pedestal

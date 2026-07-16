@@ -18,6 +18,22 @@ nonzero on any failed contract and writes the full result to `web/joint_report.j
 machine or viewer use. `make gate-tests` runs deliberately broken fixtures and proves the
 reusable gates reject them. `make assembly-release` is the canonical final pipeline.
 
+The pan uplift interface is `pan_retainer_to_chassis`, joining `pan_retainer` to
+`chassis_deck_center`. Its continuous r45.4..48.0 lip locates over the platform
+shoulder and six M3x10 through-bolts clamp six deck lobes into captive M3 nuts. The
+ring installs after the platform: it drops vertically over the r45.0 top band because
+the lip ID is 90.8 mm and the band OD is 90.0 mm. The contract probes the full lip,
+all six screw stations and captures, and this collision-free insertion path.
+
+The pan-motor mounting interface is `pedestal_to_belly`, joining
+`chassis_pedestal` to `belly_plate`. Two printed Ø4 pins run in Ø4.2 obround plate
+slots. They locate Y and rotation while leaving X tunable by
+`+-pan_cd_adjust` to set spur-gear backlash. Four M3x12 countersunk screws pass
+through matching X slots into captive pedestal nuts and clamp the selected
+position. Their countersinks are swept across the full travel, so every screw
+remains flush with the z=7 belly face at any adjustment. Assembly step 7 owns
+the backlash-setting procedure and final clamp.
+
 ## What every declaration owns
 
 Each joint has a stable ID used here, in `docs/ASSEMBLY.md`, and in the report. Its declaration

@@ -3,6 +3,7 @@ import sys
 import unittest
 from unittest import mock
 
+import numpy as np
 import trimesh
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -10,6 +11,7 @@ sys.path.insert(0, os.path.join(ROOT, "src"))
 
 from joint_checks import MeshStore, analytic_results, fastener_results, inventory_results, mesh_results, probe_result
 from jointspec import Fastener, Fit, Insertion, Joint, Locator, Probe
+from joints import JOINTS
 
 FIT = Fit("locating", 0.1, 0.3)
 
@@ -98,6 +100,33 @@ class MeshMutationTests(unittest.TestCase):
                            "fixed": trimesh.creation.box((20, 20, 1))})
         j = good_joint(insertion=Insertion("moving", ("wall",), (0, 0, 1), 10.0, 11))
         self.assertIn("insertion-path", failed_codes(mesh_results(j, store)))
+
+    def test_broken_retainer_lip_fails_seating_gate(self):
+        good = trimesh.creation.annulus(r_min=4.0, r_max=5.0, height=1.0)
+        broken = trimesh.creation.box((2.0, 2.0, 1.0))
+        fixed = trimesh.creation.box((20.0, 20.0, 1.0))
+        probes = tuple(Probe("moving", "solid",
+                             (4.5 * np.cos(a), 4.5 * np.sin(a), 0.0))
+                       for a in np.linspace(0.0, 2.0 * np.pi, 12, endpoint=False))
+        j = good_joint(seating_probes=probes)
+        self.assertNotIn("seating-1", failed_codes(mesh_results(
+            j, DictStore({"moving": good, "fixed": fixed}))))
+        codes = failed_codes(mesh_results(j, DictStore({"moving": broken, "fixed": fixed})))
+        self.assertTrue(any(code.startswith("seating-") for code in codes))
+
+    def test_pedestal_joint_rejects_removed_pins_and_sealed_nut_traps(self):
+        joint = next(j for j in JOINTS if j.name == "pedestal_to_belly")
+        empty = trimesh.creation.box((1, 1, 1))
+        empty.apply_translation((500, 500, 500))
+        pin = joint.locator.male_probes[0]
+        self.assertFalse(probe_result(joint.name, pin,
+                                      DictStore({pin.part: empty}), "removed-pin").ok)
+        trap = joint.fasteners[0].capture_probes[0] if joint.fasteners[0].capture_probes else Probe(
+            "chassis_pedestal", "void", joint.locator.male_probes[0].point)
+        sealed = trimesh.creation.box((20, 20, 20))
+        sealed.apply_translation(trap.point)
+        self.assertFalse(probe_result(joint.name, trap,
+                                      DictStore({trap.part: sealed}), "sealed-nut-trap").ok)
 
 
 if __name__ == "__main__":
