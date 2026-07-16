@@ -7,11 +7,12 @@ Was `_bolt(1.95, 40.0, 3.5, 3.5)`: a plain Ø3.9 rod with a Ø7 button, no threa
 owned steel M4 nut -- and the printed hw_m4_nut in its slide-up slot -- threaded onto
 nothing, so the "bolt" was a push-in pin that gravity and friction held.
 
-WHY PARTIALLY THREADED (docs/ASSEMBLY.md "M4x40, partially threaded preferred"): the
-road wheel ROTATES on this axle. Thread under the wheel means the wheel rides on 60-deg
-crests -- a 5-point line contact that machines its own Ø4.2 PLA bore into a spiral.
-So the shank is a PLAIN Ø3.9 JOURNAL where the wheel runs, and the thread is confined
-to the tail that reaches the captive nut.
+WHY PARTIALLY THREADED (docs/ASSEMBLY.md hard M4x40 shank spec): the road wheel
+ROTATES on this axle. Thread under the wheel means the wheel rides on 60-deg crests
+-- a 5-point line contact that machines its own Ø4.2 PLA bore into a spiral. Full-
+thread kits and stock DIN 931 M4x40 (plain shank ~20 mm) are REJECTED. So the shank
+is a PLAIN Ø3.9 JOURNAL where the wheel runs, and the thread is confined to the tail
+that reaches the captive nut.
 
 THE SHOULDER IS THE AXIAL STOP -- this is the part that makes the joint work, and it
 falls out of the two diameters for free:
@@ -26,13 +27,37 @@ stop turning. With the shoulder, torque is reacted shoulder -> nut -> slot inner
 entirely inboard of the wheel, and the wheel stays free NO MATTER HOW HARD IT IS DONE
 UP. Run it in until it stops; that is the design.
 
-THE STACK (probed off the built meshes, R side; local z = 114.9 - x_world, head-down):
+VERIFIED STACK (2026-07-16 K1 re-probe; R side world x from tracks.py axle_hw +
+chassis.py beam; under-head = distance from head underside toward tip):
+    head underside at x 111.4; tip at x 71.4; total under-head length 40.0
+    0.00..30.00  ROAD WHEEL hub, 30.0 wide, Ø4.2 bore   <- MUST stay plain journal
+   30.00..31.00  1.0 running gap beam outer face (x 80.4) -> wheel inner face
+   29.70..41.70  beam bore Ø4.4 (cut center x 75.7, len 12; teardrop in chassis.py)
+   33.95..37.15  M4 nut t=3.2 seated in slide-up slot (outboard face = shoulder seat)
+   40.00         tip (2.85 past nut inboard face)
+
+Local z from head OUTER face (local z = 114.9 - x_world, head-down print frame):
     0.00.. 3.50  head
     3.50..33.50  ROAD WHEEL, Ø4.2 bore          <- journal, must stay plain
-   33.20..45.20  beam bore Ø4.4, BLIND at 45.20 <- journal, then thread
+   33.20..45.20  beam bore Ø4.4                 <- journal, then thread
    37.40..41.00  nut slide-up slot, 3.6 wide (a 3.2 nut has 0.4 of axial play)
 The nut is pushed inboard onto the slot's inner wall (local 41.00), so its outboard
 face -- the shoulder seat -- sits at 41.00 - t_nut.
+
+METAL PURCHASE plain-shank range under head (M4x40, 40 mm under-head total):
+    MIN 34.0 mm  covers full wheel + gap + beam path to the nut outboard face;
+                 thread never enters the Ø4.2 wheel bore
+    MAX 35.5 mm  leaves >= 4.5 mm threaded tail; with tip at 40 and nut inboard at
+                 37.15, engagement >= 1.65 mm = more than 2 full turns of M4x0.7
+                 (1.4 mm). At the printed 1.0 pitch this part uses, 2 turns = 2.0 mm
+                 and engagement at JOURNAL_L=34.7 is 2.45 mm.
+Stand-in values (unchanged after K1 verify; no drift):
+    JOURNAL_L = 34.7   plain Ø3.9 (inside 34.0..35.5)
+    THREAD_L  =  5.3   M4x1.0 printed form
+
+REJECT: full-thread M4x40 kits; stock DIN 931 / ISO 4014 M4x40 (nominal plain shank
+~18..20 mm starts thread inside the wheel). REJECT Ø5 shoulder screws: wheel bore is
+Ø4.2 and beam bore is Ø4.4, neither accepts a Ø5 shoulder.
 
 JOURNAL LENGTH is picked so the head can NEVER reach the wheel, across the whole range
 of nut thickness the 3.6 slot admits (hw_m4_nut is a sibling module; we coordinate only

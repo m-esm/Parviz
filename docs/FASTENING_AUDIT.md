@@ -165,8 +165,15 @@ Tracks:
     (469-475) — delete or shrink the cosmetic holes.
 22. Strip-boundary filament pins have zero axial retention (open Ø2.2 both ends,
     tracks.py:175-179) — melt-mushroom ends or step one bore to Ø1.6 press.
-23. Front M8 tension is friction-only on PLA slot faces (creeps) — add serrations
-    or a jack screw (chassis.py:858-866).
+23. **SUPERSEDED 2026-07-16:** the 2026-07-15 PLA sawtooth bearing face was
+    rejected because sustained M8 clamp load and desk heat can crush the teeth.
+    A vertical M3 backstop ladder was probed first, but Ø3.4 bores at the required
+    roughly 1.6 mm pitch overlap and remove their chain-load bearing walls; the
+    8.0 mm tower width also cannot stagger 6.35 mm across-corners captive M3 seats.
+    The implemented fallback deletes the teeth and recesses a flush 12x28x1.0
+    steel strip under the inboard M8 nut face. Its captured ends spread creep load
+    into the full PLA shoulders. This is creep mitigation, not a positive lock;
+    inspect tension during early service and re-tension if the chain relaxes.
 
 ## P3 — misc / retention & registration
 

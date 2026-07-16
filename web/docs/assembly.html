@@ -361,6 +361,13 @@ settled below). "Need" is per robot.</p>
 <td><strong>4x M8 jam nut + 4 washers</strong></td>
 </tr>
 <tr>
+<td>12x28x1.0 steel strip</td>
+<td>Front tension-slot nut bearing insert, cut square from mild-steel stock. Presses flush into the x62 face recess; captured ends spread sustained clamp load into the tower shoulders. This mitigates PLA creep but is not a positive axle lock</td>
+<td>2</td>
+<td>0</td>
+<td><strong>2x</strong></td>
+</tr>
+<tr>
 <td>608zz</td>
 <td><strong>not used</strong> in the current design. SETTLED 2026-07-13: the bag label reads <strong>"10pcs-608ZZ"</strong> -- real 608ZZ bearings under translucent shrink wrap, not plastic rings. Still don't design around them</td>
 <td>0</td>
@@ -382,11 +389,46 @@ settled below). "Need" is per robot.</p>
 </thead>
 <tbody>
 <tr>
+<td>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
 <td>M3 screws + hex nuts</td>
 <td>captive-nut joints everywhere; incl. M3x35 x8 bezel↔back and <strong>6x M3x10 + 6 M3 nuts for the pan retainer</strong>. <strong>2026-07-15 fastening campaign: ~+58 M3 hex nuts</strong> as failed thread-form pilots became captive traps. Screw length changes: y=26 seam M3x12 → <strong>M3x20</strong>, neck→platform M3x12 → <strong>M3x14</strong></td>
 <td>lots</td>
 <td>540pc M3 stainless kit + 175pc M3 30–50 mm kit + 600pc M2-M5 kit + 1263pc M2-M4 kit (all Tray 1)</td>
 <td>, (kits cover it)</td>
+</tr>
+<tr>
+<td>=======</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>M3 screws + hex nuts</td>
+<td>captive-nut joints everywhere; incl. M3x35 x8 bezel↔back. <strong>2026-07-15 fastening campaign: ~+55 M3 hex nuts</strong> as the thread-form pilots that failed the first print became real captive traps (head +32, chassis +24 incl. tail seam/deck/TT-upper/y26, neck +7 root &amp; carrier &amp; ULN). Screw length changes: y=26 seam M3x12 → <strong>M3x20</strong>, neck→platform M3x12 → <strong>M3x14</strong></td>
+<td>lots</td>
+<td>540pc M3 stainless kit + 175pc M3 30–50 mm kit + 600pc M2-M5 kit + 1263pc M2-M4 kit (all Tray 1)</td>
+<td>, (kits cover it)</td>
+</tr>
+<tr>
+<td>M3×12 countersunk screws + M3 hex nuts</td>
+<td>track hold-down shoes, 2 per shoe × 4. Heads recess flush in the z 10.4 running face; nuts slide up into the wheel beam. The front <code>spr_y2</code> pair is fittings-ready and only required when twin drive is populated</td>
+<td>8+8 (4+4 for rear-only drive)</td>
+<td>covered by M3 kits</td>
+<td>,</td>
+</tr>
+<tr>
+<td>&gt;&gt;&gt;&gt;&gt;&gt;&gt; worktree-agent-a072f0f2a36db0dd6</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
 </tr>
 <tr>
 <td>M2/M3 brass heat-set inserts</td>
@@ -400,11 +442,11 @@ settled below). "Need" is per robot.</p>
 <td><strong>track master-link keepers</strong> (2/master x2 = 4). The captive M2 nut does NOT fit: the pocket is boxed between the jaw slot's tension wall and the neighbour A-knuckle = 5.50 mm usable vs 5.82 needed across-corners (measured, tracks agent). Inserts need 5.40. This is the one repeatedly-serviced M2-in-PLA joint, so self-tapping was never going to survive the service cycles</td>
 <td>4</td>
 <td>none</td>
-<td><strong>4x M2 brass heat-set + a soldering-iron insert tip</strong> — VERIFY_ON_ARRIVAL: vendor OD/length varies, re-key <code>keeper_insert_{d,l}</code> before printing masters</td>
+<td><strong>4x M2 brass heat-set + a soldering-iron insert tip</strong>. VERIFY_ON_ARRIVAL: vendor OD/length varies, re-key <code>keeper_insert_{d,l}</code> before printing masters</td>
 </tr>
 <tr>
 <td>M5 penny washers</td>
-<td>tilt worm thrust seat (OD 15, ID 5.3, t 1.0): closes 2.0 mm of worm float (≈3° tilt slop) to 0.1. A direct shoulder is impossible — any ID under the Ø10.55 crest blocks cartridge extraction</td>
+<td>tilt worm thrust seat (OD 15, ID 5.3, t 1.0): closes 2.0 mm of worm float (≈3° tilt slop) to 0.1. A direct shoulder is impossible because any ID under the Ø10.55 crest blocks cartridge extraction</td>
 <td>2</td>
 <td>check the owned washer assortment</td>
 <td>2x M5 penny washer (OD ~15)</td>
@@ -453,10 +495,10 @@ settled below). "Need" is per robot.</p>
 </tr>
 <tr>
 <td>M4x40 + nuts</td>
-<td>road-wheel bolt-axles (2026-07-10 fix: wheels were mounted to nothing): head = outer hubcap, shank in the Ø4.2 wheel bore, nut captive in the rail wheel-beam slot. Prefer partially threaded (shank bearing surface); 40 mm exceeds the owned kits</td>
+<td>road-wheel bolt-axles (head = outer hubcap, shank in Ø4.2 wheel bore, nut captive in the beam slide-up slot). <strong>HARD SHANK SPEC (2026-07-16 K1):</strong> under-head length 40 mm; <strong>plain journal 34.0..35.5 mm</strong> (covers full 30.0 wheel hub + 1.0 beam-to-wheel gap + beam path to the nut outboard face at 33.95 under-head; thread must NOT enter the wheel bore; threaded tail must still engage the M4 nut with ≥2 turns of M4×0.7 = 1.4 mm). <strong>REJECT</strong> full-thread M4x40 kits (thread chews the Ø4.2 bore or clamps the wheel). <strong>REJECT</strong> stock DIN 931 / ISO 4014 M4x40 (nominal plain ~18..20 mm starts thread inside the wheel). <strong>REJECT</strong> Ø5 shoulder screws (wheel bore Ø4.2 and beam bore Ø4.4 cannot accept Ø5). <strong>ACCEPT:</strong> partially-threaded M4x40 with measured plain shank in 34.0..35.5 mm; or the printed <code>hw_m4_bolt</code> stand-in (JOURNAL_L=34.7 / THREAD_L=5.3) until metal arrives. M4 nuts OWNED</td>
 <td>10+10</td>
 <td>nuts: OWNED (the 600pc M2-M5 kit lists <strong>M4 nuts x40</strong>, settled 2026-07-13); bolts: 0</td>
-<td><strong>10x M4x40</strong></td>
+<td><strong>10x M4x40 per hard shank spec</strong></td>
 </tr>
 </tbody>
 </table></div>
@@ -542,7 +584,7 @@ geometry -- never copy the metal part's numbers or the CAD placeholder's.</p>
 <td><code>hw_m4_bolt</code></td>
 <td>10</td>
 <td>M4x40 bolt-axles</td>
-<td>real SHOULDER bolt: plain Ø3.9 journal + M4x1.0 threaded tail. The shoulder is the axial stop, so the wheel stays free however hard it is done up. Ø10.4 thumb head. <strong>A stock DIN 931 M4x40 would start thread INSIDE the wheel (~18 shoulder vs the ~35 the stack wants) -- the printed part is better than the metal it replaces</strong></td>
+<td>real SHOULDER bolt: plain Ø3.9 journal <strong>34.7 mm</strong> + M4x1.0 threaded tail <strong>5.3 mm</strong> (verified 2026-07-16 K1 against the live stack: wheel 30.0 + gap 1.0 + beam-to-nut-outboard 33.95 under-head; purchase window plain 34.0..35.5). The shoulder is the axial stop, so the wheel stays free however hard it is done up. Ø10.4 thumb head. <strong>Stock DIN 931 M4x40 is REJECTED</strong> (~20 plain starts thread inside the wheel); full-thread kits and Ø5 shoulder screws also rejected (see BOM row)</td>
 </tr>
 <tr>
 <td><code>hw_m4_nut</code></td>
@@ -738,6 +780,11 @@ tray killed the 88.5 mm blind channels, 2026-07-08.)</p>
   rotation). It comes OUT the same way for a motor swap, no head teardown.</li>
 </ul>
 <h3 id="chassis-drive-fixed-frame">Chassis + drive (fixed frame)</h3>
+<blockquote>
+<p><strong>ACTION BEFORE ORDERING:</strong> Measure all 3 Bag-5 TT 1:120 shaft tips now. Record
+whether each has the Ø2 axial hole. Order M2x25 screws and Ø9 washers only for
+motors that actually have it. Many TT variants omit this hole.</p>
+</blockquote>
 <ol>
 <li><strong>Print + prep the chassis.</strong> Confirm the deck pan-seat, the pedestal, and both TT
    motor pockets are clean.</li>
@@ -745,24 +792,76 @@ tray killed the 88.5 mm blind channels, 2026-07-08.)</p>
    dowel joint are retired. Each panel carries its wheel beam and end tower as one print.
    Seat the front/rear splice tongue and locating pads, install its two M3 screws into
    captive nuts, then bolt the panel feet to the lower tub. The tongue and separated feet
-   hold alignment before tightening.</li>
-<li><strong>TT motors.</strong> Set each TT gearmotor: shaft +X into the sprocket hub's double-D socket,
+   hold alignment before tightening.
+   Before fitting the track, slide two M3 nuts into each shoe trap and press the matching
+   <code>track_shoe_{L,R}_{rear,front}</code> upward onto its two locator pins at y=-68 or +90.
+   Drive two M3×12 countersunk screws from below. The shoe is 10.6 mm wide in X,
+   14.76 mm along Y and 4.6 mm thick, with its running face at z=10.4. Fit all four
+   shoes for a twin drive; the +90 front pair may be omitted with the optional motors.</li>
+<li>
+<p><strong>TT motors.</strong> Set each TT gearmotor: shaft +X into the sprocket hub's double-D socket,
    front tab into the rear-wall pocket, nub into the wall pocket, 2× M3 through the
+&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD
    gearbox + wall. Push each upper nut past the slot-mouth crush nibs until it clicks
-   into the captive seat; it stays retained while the motor is positioned.</li>
-<li><strong>Track running gear.</strong> Press an F688ZZ into EACH face of all four end idlers (Ø15.95
+   into the captive seat; it stays retained while the motor is positioned.
+=======
+   gearbox + wall with the nut floating in the pod gap.
+   The M2x25 plus Ø9 washer is the preferred axial retainer only when the measured
+   shaft has the Ø2 tip hole. Otherwise use the positive cross-pin fallback:</p>
+</li>
+<li>
+<p>Slide the sprocket fully onto the shaft and mark the shaft through the vertical
+      Ø2.1 hub bore.</p>
+</li>
+<li>Pull the sprocket off and file an approximately 1 mm deep notch across the round
+      shaft arc at the mark. Do not cut through the plastic shaft.</li>
+<li>Reassemble and drop a straight Ø2 filament pin through the upper hub wall, the
+      filed shaft notch, and the lower hub wall.</li>
+<li>Trim both ends flush with the Ø12 hub. The pin must never stand proud of the hub
+      OD because the hub slides through the side-panel journal.</li>
+<li>Secure the upper pin end against vibration walk-out with a small drop of CA in
+      the bore mouth, or briefly heat-mushroom it with the iron tip, still sub-flush.
+      The bore is open-top in service, so an unsecured pin can migrate up and out.</li>
+</ol>
+<p>The pin positively locks axial motion and torque. The socket crush ribs are only a
+   handling aid. Service the pin from above with the track open.</p>
+<blockquote>
+<blockquote>
+<blockquote>
+<blockquote>
+<blockquote>
+<blockquote>
+<blockquote>
+<p>worktree-agent-a072f0f2a36db0dd6
+4. <strong>Track running gear.</strong> Press an F688ZZ into EACH face of all four end idlers (Ø15.95
    seat + Ø18.5 flange recess both sides). Each end wheel: M8 bolt from outboard
    through the bearings, add the OUTBOARD jam nut against the tower, then the flatted
    washer + NYLOC nut inboard, started ON THE
    BENCH with the deck upside down. Orient each nut HEX FLATS FORE-AFT: as the deck
    drops onto the tub the nut descends into its prow-cheek NUT CHANNEL (y-walls 13.8
    apart), which grips the flats -- all torquing happens from the outboard head, no
-   inboard tool ever needed. Rear pair: snug. Front pair: leave loose, set tension
+   inboard tool ever needed. Before fitting each front NYLOC, deburr and press one
+   12x28x1.0 steel strip fully flush into the tower's x62 bearing-face recess. Its
+   square ends must seat against both printed end shoulders. Rear pair: snug. Front
+   pair: leave loose, set tension
    AFTER threading the tracks, then tighten from the head -- the channel holds the
    nut, the nut clamps the slot. Fit the sprockets on the
    TT shafts (they mesh the ground run under the hull; the robot's weight seats them). Push an M4 nut up each wheel-beam slot until it clicks past the two crush nibs. The nuts remain retained while the panel is handled; inserting them on the bench is convenient but not required. Then bolt each road wheel with its M4x40 from outboard --
-   snug, then back off 1/8 turn so the wheel spins free.</li>
-<li><strong>Join the strips + close with the master (print-in-place chain, 2026-07-12).</strong>
+   snug, then back off 1/8 turn so the wheel spins free.</p>
+</blockquote>
+</blockquote>
+</blockquote>
+</blockquote>
+</blockquote>
+</blockquote>
+</blockquote>
+<p>Each side-panel beam now closes around the Ø12 sprocket hub over the absolute
+   |X|=70.2..74.5 band with a Ø12.5 full-circle printed journal. Apply a thin film of
+   plastic-safe grease to the hub before insertion and renew it when the track is open.
+   The remaining |X|=74.5..81.2 crossing is open on top for cross-pin access. The owned
+   MR105 bearing cannot replace this land: its 5x10x4 bore is too small for the Ø12 hub,
+   while the hub itself contains a Ø6 free bore, so there is no compatible race seat.
+5. <strong>Join the strips + close with the master (print-in-place chain, 2026-07-12).</strong>
    Each pod is 4 PRINT-IN-PLACE strips (16+16+16+15 links, hinges already free off
    the printer -- flex every joint once to crack any sag bonds) + 1 separate master.
    On the bench: pin the strips end-to-end with 3 Ø1.75 filament pins (each boundary
@@ -776,8 +875,7 @@ tray killed the 88.5 mm blind channels, 2026-07-08.)</p>
    the old filament chain) that otherwise lands as top-run sag; if the front
    tension slot runs out of travel on the physical chain, that is the expected
    first fix (more slot travel), not a link redesign. Track removal forever after:
-   2 M2s out, slide the keepers, lift the master off its pin.</li>
-</ol>
+   2 M2s out, slide the keepers, lift the master off its pin.</p>
 <h3 id="pan-joint">Pan joint</h3>
 <ol start="6">
 <li><strong>Pan motor + drivers.</strong> Fit the printed 32T <code>pan_gears</code> onto the motor's D-flats, then
@@ -963,6 +1061,7 @@ geometry and the acceptable window.
 <p>(2026-07-08 passes retired the old tilt-motor-ear reach, the worm-wheel bench grub, the
 last-track-pin loop flex, and the 4× 88.5 mm blind screen-standoff screws -- the worst
 step in the build is now four short bench screws plus four visible wall screws.)</p>
+<p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</p>
 <h3 id="squaring-up-datum-shim-procedure-first-build">Squaring up: datum + shim procedure (first build)</h3>
 <p>The tilt axis and the screen optical plane sit at the end of a long printed stack
 (chassis lower tub → z46 deck seam → pan race → pan platform → neck clevis → cheek
@@ -1054,20 +1153,153 @@ rolling the axis; rear alone does the opposite pitch.</p>
 <p>The CAD gates verify pair fits at nominal; this procedure is where the accumulated
 real-print tolerance gets taken out, and it is expected to be needed on a first build.</p>
 <h3 id="track-coupon-protocol-plate-20-48-min-print-before-any-strip-plate">Track coupon protocol (plate 20, ~48 min -- print BEFORE any strip plate)</h3>
-<p>Plate 20 is a 5-link print-in-place coupon (open-A first link, 3 integral-pin mids,
-open-far last, keels on) + 1 loose master link + both keeper bars. Measure on it:</p>
+<p>=======</p>
+<h3 id="track-coupon-protocol-track-coupon-plate-print-before-any-strip-plate">Track coupon protocol (Track coupon plate -- print BEFORE any strip plate)</h3>
+<blockquote>
+<blockquote>
+<blockquote>
+<blockquote>
+<blockquote>
+<blockquote>
+<blockquote>
+<p>worktree-agent-a072f0f2a36db0dd6</p>
+</blockquote>
+</blockquote>
+</blockquote>
+</blockquote>
+</blockquote>
+</blockquote>
+</blockquote>
+<p>The Track coupon plate carries <strong>two</strong> 5-link print-in-place strips + 1 loose master
+link + both keeper bars (~1 h sliced in PETG):</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Unit (exporter name)</th>
+<th>PIP far-bore</th>
+<th>Radial gap on Ø2.0 pin</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>track_coupon_strip_d2.7</code></td>
+<td>Ø2.7 (<code>track_bore_pip_d</code>)</td>
+<td>0.35 mm</td>
+<td>Production geometry (matches the 64-link loop)</td>
+</tr>
+<tr>
+<td><code>track_coupon_strip_d2.56</code></td>
+<td>Ø2.56 (coupon-only)</td>
+<td>0.28 mm</td>
+<td>Tighter-gap A/B wear candidate</td>
+</tr>
+</tbody>
+</table></div>
+<p>Each strip is open-A first link, 3 integral-pin mids, open-far last, keels on.
+Production loop geometry, <code>tools/probe_track_pip.py</code>, and the long strip plates stay
+on Ø2.7 only; the Ø2.56 strip exists solely on this coupon plate
+(<code>stl/base/track_coupon_tight.stl</code>, written under <code>EXPORT=1</code>).</p>
+<h4 id="static-checks-both-strips">Static checks (both strips)</h4>
 <ol>
 <li>Every PIP hinge frees after break-in flexing -- no fused knuckles.</li>
 <li>Hinge radial slop: pull the 5-link strip taut and measure total stretch vs 40.0
-   nominal; that gives real per-joint slack. Scale x59 and check it still fits the
-   6.5 mm front slot travel via delta_L / 1.84.</li>
-<li>Ø2.0 integral pins unbroken after 20 full +-35 deg articulations.</li>
+   nominal; that gives real per-joint slack. Scale ×59 and check it still fits the
+   <strong>6.5 mm</strong> front idler outboard tension travel via <code>delta_L / 1.84</code>
+   (dL/d(idler_y) on the raised loop). Accept if scaled stretch ≤ 6.5 × 1.84 ≈ 12.0 mm
+   of full-loop elongation budget; reject if a single 5-link strip already exceeds
+   ~1.0 mm total stretch after static break-in (that scales past the tension budget).</li>
+<li>Ø2.0 integral pins unbroken after 20 full ±35 deg articulations.</li>
 <li>Keel faces clean (no sag scars), grousers flat.</li>
 <li>Ø2.2 boundary bores accept Ø1.75 filament.</li>
-<li>Master jaw drops onto the end pin; keepers slide and seat; M2 pilots hold.</li>
+<li>Master jaw drops onto the end pin; keepers slide and seat; M2 insert pilots hold.</li>
 </ol>
-<p>Any fail: adjust <code>track_bore_pip_d</code> / <code>track_pin_print_d</code> and reprint the COUPON,
-not a strip.</p>
+<p>Any static fail: adjust <code>track_bore_pip_d</code> / <code>track_pin_print_d</code> and reprint the
+COUPON, not a strip. Prefer the Ø2.56 strip only if it frees cleanly and beats the
+Ø2.7 strip on the powered stage below; otherwise keep production at 2.7.</p>
+<h4 id="powered-coupon-deciding-bench-test-for-mid-drive-reliability">Powered coupon (deciding bench test for mid-drive reliability)</h4>
+<p>After both strips pass the static checks, run a <strong>powered coupon</strong> on the production
+(Ø2.7) strip first; optionally repeat on the Ø2.56 strip for A/B wear data.</p>
+<p><strong>Setup (concrete):</strong></p>
+<ol>
+<li>Mount a real mid-drive sprocket (printed <code>drivewheels_*</code> sprocket) on a TT
+   gearmotor shaft, fixed to a bench block so the sprocket axis is horizontal.</li>
+<li>Pin the 5-link coupon into a short loop segment against the sprocket ground-run
+   mesh (use Ø1.75 filament at the open ends, or clamp the strip as a weighted flat
+   run over the sprocket with ≥200 g hanging on the free end so pins stay seated in
+   the conjugate pockets). A hold-down shoe or a wooden block with a 0.9 mm gap over
+   the link crowns is enough to keep the mesh from lifting.</li>
+<li>Drive the TT through the chassis MX1588 (or a bench H-bridge) at the firmware
+   <strong>80% PWM cap</strong> (never 100%: 27 W budget rule). Forward 60 s, reverse 60 s, then
+   continuous forward for the break-in block.</li>
+</ol>
+<p><strong>Break-in:</strong> 30 minutes continuous at 80% PWM, or <strong>5000 sprocket revolutions</strong>,
+whichever comes first. (At ~120:1 TT gearing and ~200 RPM motor free speed under
+light load, 30 min is on the order of several thousand pin engagements; count revs
+with a mark on the sprocket if you can.)</p>
+<p><strong>Re-measure after break-in (same gauges as static):</strong></p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Accept</th>
+<th>Reject</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Per-joint bore ovalization (major − minor of each PIP B bore)</td>
+<td>≤ 0.10 mm</td>
+<td>&gt; 0.15 mm on any joint (pins are hammering the bore oval)</td>
+</tr>
+<tr>
+<td>5-link strip free length stretch vs 40.0 nominal</td>
+<td>≤ 0.8 mm total</td>
+<td>&gt; 1.0 mm total (scales ×59 → &gt; ~12 mm loop elongation, past the <strong>6.5 mm</strong> outboard tension travel via /1.84)</td>
+</tr>
+<tr>
+<td>Skip / lift under reverse at mesh</td>
+<td>no tooth skip</td>
+<td>any skip (erodes the <strong>2.14 mm</strong> rigid-chain skip barrier measured by <code>tools/probe_track_pip.py</code>; shoes only leave 0.9 mm of lift room)</td>
+</tr>
+<tr>
+<td>Integral pin integrity</td>
+<td>no cracks</td>
+<td>any pin crack or break (a broken pin scraps a whole 16-link production strip)</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>This powered coupon is the deciding bench test for mid-drive reliability</strong> under
+representative load and reverse mesh. Do not commit the 6.8 h strip plates until the
+Ø2.7 strip passes. If Ø2.7 fails ovalization/elongation but Ø2.56 passes, consider
+adopting 2.56 into production (update <code>track_bore_pip_d</code>, re-run probe + coupon) only
+after a second powered coupon confirms it.</p>
+<p>Mid-drive engagement is quantified, not assumed: the conjugate 14T mesh has contact
+ratio CR 1.48 and the rigid-chain pitch-ratchet barrier from <code>tools/probe_track_pip.py</code>
+is <strong>2.14 mm</strong>. Fixed road-wheel bolt-axles cap lift to about 0.1 mm at their stations;
+each hold-down shoe caps the sprocket mesh window to 0.9 mm.</p>
+<h4 id="links-strips-masters-are-consumables">Links / strips / masters are CONSUMABLES</h4>
+<p>PIP hinges are fatigue/wear items: integral Ø2.0 pins hammer Ø2.7 bores oval, designed
+slack grows past the ~8 mm tension budget, the 2.14 mm skip barrier erodes, and a
+broken integral pin scraps a whole 16-link strip. <strong>Expected wear life is unknown
+until the powered coupon above has real numbers</strong> (log hours and km of desk travel
+when you have them).</p>
+<p><strong>Replacement procedure:</strong></p>
+<ol>
+<li>Open the master link: remove the 2 keeper M2 screws, slide the keeper bars out,
+   swing the C-jaw off the closure pin.</li>
+<li>Count links from the master along the loop to the damaged strip segment
+   (production layout per side: strips of 16+16+16+15 + 1 master).</li>
+<li>Drop out the worn strip at its two filament boundary pins (or cut a fused pin if a
+   mid-strip pin failed), seat the spare strip, re-pin the boundaries with Ø1.75
+   filament (press tip into the Ø1.6 step).</li>
+<li>Re-close the master, refit keepers + M2s, re-tension the front M8 until the mesh
+   bites without top-run flogging.</li>
+</ol>
+<p><strong>Print one spare production strip per side with the first batch</strong> (same PETG spool as
+the loop; the 16-link size covers the three long segments; also keep one 15-link if
+you can spare the plate). Masters and keepers are also consumables on the same
+service path (2 M2s + jaw wear).</p>
 <h3 id="bearing-seat-coupon-protocol-print-before-neck_clevis-and-any-wheel-plate">Bearing-seat coupon protocol (print BEFORE neck_clevis and any wheel plate)</h3>
 <p>Print <code>hw_coupon_695</code> and <code>hw_coupon_f688</code> in the supplied orientations. Their five
 steps are marked by 1..5 tick notches and ascend through 0.075 / 0.100 / 0.125 /
@@ -1112,7 +1344,11 @@ bundle; DSI and CSI ribbons never leave the head.</p>
 <ol>
 <li><strong>8x F688ZZ flanged bearings</strong> (8x16x5, flange Ø18): most specific part, slowest to source;
    the end-idler seats are modeled around them (2 per wheel x 4 since the mid-drive).
-1b. <strong>10x M4x40</strong> (road-wheel bolt-axles; partially threaded preferred; M4 nuts are owned)<ul>
+1b. <strong>10x M4x40</strong> road-wheel bolt-axles to the <strong>hard shank spec</strong>: under-head 40 mm,
+    <strong>plain journal 34.0..35.5 mm</strong> measured with calipers before accepting the bag.
+    REJECT full-thread kits and stock DIN 931 / ISO 4014 M4x40 (~20 mm plain). REJECT
+    Ø5 shoulder screws (bores are Ø4.2 / Ø4.4). M4 nuts are owned. Until metal arrives,
+    print <code>hw_m4_bolt</code> (JOURNAL_L=34.7).<ul>
 <li><strong>4x M8x70 + 4 jam nuts + 4 NYLOC nuts + 4 washers</strong> (end bolt-axles; Bag 13
 has no M8).</li>
 </ul>

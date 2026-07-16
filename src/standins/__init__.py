@@ -39,15 +39,16 @@ The parts:
   hw_coupon_695 x1 five-step 695-2RS crush-rib seat calibration coupon.
   hw_coupon_f688 x1 five-step F688ZZ two-face crush-rib seat calibration coupon.
   hw_m4_bolt   x10  M4x40 road-wheel bolt-axle, as a real SHOULDER bolt: plain Ø3.9
-                    journal (34.7) + M4x1.0 threaded tail (5.3). The shoulder is the
-                    axial stop -- the journal cannot enter the nut's Ø3.20 minor, so
-                    torque reacts shoulder->nut->slot INBOARD of the wheel and the
-                    wheel stays free however hard it is done up. Ø10.4 thumb head
-                    (AF7 rounds off in PLA, and the disc doubles the bed footprint
-                    under a 43.5-tall head-down print). NOTE: a stock DIN 931 M4x40's
-                    ~18 mm shoulder would start thread INSIDE the wheel -- the stack
-                    wants ~35. The printed part is better than the metal it stands in
-                    for; on arrival either accept crest-riding or fit a journal sleeve.
+                    journal (34.7) + M4x1.0 threaded tail (5.3). Verified stack
+                    (2026-07-16 K1): wheel hub 30.0 + 1.0 gap + beam path to nut
+                    outboard face at 33.95 under-head; metal purchase plain shank
+                    MUST be 34.0..35.5 mm on an M4x40. REJECT full-thread kits and
+                    stock DIN 931 M4x40 (~20 plain starts thread in the wheel);
+                    REJECT Ø5 shoulder screws (wheel Ø4.2 / beam Ø4.4 cannot take
+                    them). The shoulder is the axial stop -- the journal cannot enter
+                    the nut's Ø3.20 minor, so torque reacts shoulder->nut->slot
+                    INBOARD of the wheel and the wheel stays free however hard it is
+                    done up. Ø10.4 thumb head (AF7 rounds off in PLA).
   hw_m4_nut    x10  AF7 hex, real M4x1.0 internal thread + 45deg lead-in per face.
                     AF and the 3.2 thickness are the SLOT's, both probed: the slide-up
                     slot is cut for an AF-7 hex ACROSS CORNERS, which is what centres

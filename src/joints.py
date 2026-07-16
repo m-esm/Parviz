@@ -37,6 +37,7 @@ REQUIRED_STRUCTURAL_JOINTS = (
     "chassis_base_to_chassis", "head_bezel_to_back", "head_back_panel_to_frames",
     "head_back_frame_seam", "head_bezel_seam", "screen_tray_to_head_back",
     "ant_bracket_to_head_back", "tilt_carrier_to_neck", "track_master_to_loop",
+    "track_shoes_to_side_panels",
 )
 
 
@@ -80,6 +81,17 @@ _ped_captures = tuple(Probe("chassis_pedestal", "void",
                       for dx in (-18.0, 18.0) for dy in (-18.0, 18.0))
 
 
+# 2026-07-16: the front M8 tension bearing strip is bought hardware seated in one
+# printed tower, not an interface between assembled printed parts. Its contract is
+# therefore the checks.py recess-and-shoulder invariant plus ASSEMBLY.md installation
+# procedure, not a JOINTS entry. The strip carries clamp creep into its end shoulders;
+# it does not locate the axle or create a positive positional lock.
+#
+# The bought TT shaft through the printed sprocket and printed side-panel journal is
+# intentionally not forced into this inventory. Joint contracts here cover interfaces
+# between assembled printed parts; this rotating bought-through-printed stack has no
+# fixed seated pose between the two printed parts. Its clearance and retention are
+# instead gated by checks.py plus the assembly/fit contact audits.
 JOINTS = (
     Joint("neck_to_pan", ("neck_clevis", "pan_platform"), True, (0, 0, -1),
           Locator("pin_pair", 2, 4.5, LOCATING, True,
@@ -135,6 +147,16 @@ JOINTS = (
           (m3(4, 12.0, (0, 0, 1), 7.0),),
           supporting_probes=(solid("chassis_side_R_front", (62.9, 4.0, 19.0)),),
           assembly_step=4, notes="Mirrored/repeated contract: front nut, rear insert."),
+
+    Joint("track_shoes_to_side_panels",
+          ("track_shoe_L_rear", "track_shoe_L_front", "track_shoe_R_rear",
+           "track_shoe_R_front", "chassis_side_R_rear", "chassis_side_R_front"), True,
+          (0, 0, 1), Locator("pin_pair", 8, P["shoe_pin_h"], LOCATING, True),
+          (m3(8, 12.0, (0, 0, 1), P["shoe_nut_z"] - P["shoe_z0"]),),
+          supporting_probes=(solid("track_shoe_R_rear",
+                                   (P["shoe_x1"] - 1.0, P["spr_y"], P["shoe_z1"] - 0.3)),),
+          assembly_step=4,
+          notes="One two-pin, two-screw shoe at each L/R rear/front sprocket station."),
 
     Joint("belly_plate_to_chassis", ("belly_plate", "chassis_lower_rear"), True,
           (0, 0, 1), Locator("perimeter_rebate", 1, 1.5, LOCATING, True),

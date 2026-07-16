@@ -210,6 +210,23 @@ def main():
           bore_pierces(M("chassis_side_R_rear"), (64.0, P["spr_y"], 28.4698), (1, 0, 0), 7.0))
     check("TT shaft bore open through chassis_side_R_front",
           bore_pierces(M("chassis_side_R_front"), (64.0, P["spr_y2"], 28.4698), (1, 0, 0), 7.0))
+    # user 2026-07-16 (K2/K3 drive-joint hardening): each TT station has a CLOSED
+    # Ø12.5 journal land over the Ø12 hub, and each sprocket has a vertical Ø2.1
+    # positive-fallback cross-pin bore in the remaining open-top relief.
+    land_x = (P["spr_journal_x0"] + P["spr_journal_x1"]) / 2
+    land_z = 28.4698 + P["spr_hub_d"] / 2 + 1.0
+    check("TT journal lands close over the sprocket hub top",
+          all(inside(M(part), [(land_x, sy, land_z)])
+              for part, sy in (("chassis_side_R_rear", P["spr_y"]),
+                               ("chassis_side_R_front", P["spr_y2"]))),
+          "material ring probe at x %.2f, z %.2f" % (land_x, land_z))
+    pod_cx = P["chassis_w"] / 2 + P["track_gap"] + P["track_width"] / 2
+    pin_x = pod_cx + P["spr_pin_x"]
+    check("sprocket cross-pin bores pierce vertically in the open relief",
+          all(bore_pierces(M("track_wheels_R"),
+                           (pin_x, sy + P["spr_pin_y"], 20.5), (0, 0, 1), 16.0)
+              for sy in (P["spr_y"], P["spr_y2"])),
+          "right pod x %.2f, local y +%.2f" % (pin_x, P["spr_pin_y"]))
     check("hull wall OPEN in the panel band (lower_rear)",
           clear(M("chassis_lower_rear"), [(67.5, P["spr_y"], 30.0), (-67.5, P["spr_y"], 30.0)]))
     # fittings audit 2026-07-14: the integral web buried the LOWER TT gearbox M3
@@ -247,6 +264,22 @@ def main():
     check("M4 roadwheel slot crush nibs present and mouth open", m4_nib[0],
           "ribs %.4f/%.4f, mouth %.6f mm3" %
           (m4_nib[1][0], m4_nib[1][1], m4_nib[2]))
+    skip_barrier, crown_z = 2.14, 9.5
+    shoe_names = {f"track_shoe_{side}_{pos}" for side in "LR"
+                  for pos in ("rear", "front")}
+    check("four sprocket hold-down shoes exist", shoe_names <= nodes)
+    check("shoe lift cap keeps at least 1.0 mm below the skip barrier",
+          P["shoe_z0"] - crown_z <= skip_barrier - 1.0,
+          "cap %.2f, barrier %.2f" % (P["shoe_z0"] - crown_z, skip_barrier))
+    check("shoes span the 14.76 mm sprocket mesh windows",
+          2 * P["shoe_half_y"] >= 14.76 - 0.02
+          and all(M(n).bounds[1][1] - M(n).bounds[0][1] >= 14.7 for n in shoe_names))
+    check("shoe captive M3 nuts reach both screw axes",
+          all(nut_reaches_bore(M(part), (P["shoe_screw_x"], sy + dy,
+                                         P["shoe_nut_z"]), (-1, 0, 0))
+              for part, sy in (("chassis_side_R_rear", P["spr_y"]),
+                               ("chassis_side_R_front", P["spr_y2"]))
+              for dy in (-P["shoe_screw_dy"], P["shoe_screw_dy"])))
     check("pod_rail nodes deleted", not {"pod_rail_L", "pod_rail_R"} & nodes)
     # user 2026-07-14 round 4 (standalone track module): the panels run to the end
     # axles -- END TOWERS replace the deck pylons (front tension slot open across
@@ -685,6 +718,30 @@ def main():
 
     roof = _z_run(M("chassis_side_R_front"), 60.0, 130.0, 43.0, 49.5)
     check("M8 tension cage roof >= 2.0 mm", roof >= 2.0, "%.2f mm (was 0.98)" % roof)
+
+    # user 2026-07-16 (FASTENING_AUDIT 23): the crush-prone PLA serrations are
+    # gone. A 12x28x1 steel strip seats flush in the x62 nut-bearing face, with
+    # real printed shoulders beyond both y ends. Probes around each end distinguish
+    # a captured pocket in material from a subtraction through air.
+    strip_mesh = M("chassis_side_R_front")
+    strip_za = _track_zc() + P["track_raise"]
+    strip_sy = P["idler_strip_y"]
+    strip_hy = P["idler_strip_len"] / 2
+    recess_void = all(_void_cube(strip_mesh, (62.45, y, z), 0.35)
+                      for y in (strip_sy - strip_hy + 0.5, strip_sy,
+                                strip_sy + strip_hy - 0.5)
+                      for z in (strip_za - 5.5, strip_za + 5.5))
+    shoulder_hits = []
+    for y in (strip_sy - strip_hy - 0.8, strip_sy + strip_hy + 0.8):
+        hits = 0
+        for z in np.linspace(strip_za - 5.0, strip_za + 5.0, 6):
+            c = _cube(62.55, y, z, 0.5, 0.5, 0.5)
+            if geo.inter(strip_mesh, c).volume > 1e-9:
+                hits += 1
+        shoulder_hits.append(hits)
+    check("front M8 steel-strip recess has real end shoulders",
+          recess_void and all(h >= 4 for h in shoulder_hits),
+          "recess 12x28x1, shoulder probes %s" % shoulder_hits)
 
     # Campaign rule on the joints finished this round: real captive nuts that the
     # screw can actually reach (deck strip seams, panel splice, front L-foot).

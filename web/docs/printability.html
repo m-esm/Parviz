@@ -133,7 +133,7 @@ STLs directly.</p>
 <ul>
 <li>74 canonical STL artifacts generated. All are watertight volumes.</li>
 <li>Intentional multi-body exports are limited to PIP track strips, wheel kits, the three
-  pan clips, two keeper bars, and the track coupon.</li>
+  pan clips, two keeper bars, and the track coupon pair (production Ø2.7 + tight Ø2.56).</li>
 <li>The Bambu project contains 148 printable bodies on 22 category-named plates.</li>
 <li>Every brim-grown footprint fits the 256 mm bed.</li>
 <li>Every plate was sliced independently by Bambu Studio CLI with <code>Success.</code>.</li>
@@ -190,7 +190,7 @@ Select the following plates and change their filament preset before printing:</p
 <tr>
 <td>Track coupon</td>
 <td>Same PETG spool intended for the final tracks</td>
-<td>The coupon is the calibration gate for PIP gaps, master keeper and filament pins.</td>
+<td>Two 5-link PIP strips (Ø2.7 production + Ø2.56 tight-gap) + master + keepers: static PIP gate, then the powered coupon (docs/ASSEMBLY.md) before any strip plate.</td>
 </tr>
 <tr>
 <td>Hardware stand-ins</td>
@@ -296,8 +296,11 @@ manifest so it cannot be missed.</p>
 </table></div>
 <h2 id="before-committing-to-long-prints">Before committing to long prints</h2>
 <ol>
-<li>Print the <code>Track coupon</code> plate in the final track material.</li>
-<li>Flex all five PIP joints. They must break free without tearing the integral pins.</li>
+<li>Print the <code>Track coupon</code> plate in the final track material (two 5-link strips:
+   production Ø2.7 + tight Ø2.56, plus master + keepers).</li>
+<li>Flex all five PIP joints on each strip. They must break free without tearing the
+   integral pins. Run the powered coupon protocol in <code>docs/ASSEMBLY.md</code> before any
+   strip plate.</li>
 <li>Test the master link, both keeper bars, M2 inserts and Ø1.75 filament boundary pin.</li>
 <li>Print one antenna motor gear and confirm the double-D socket on the actual 28BYJ shaft.</li>
 <li>Print one compound idler/output pair and verify free rotation on the Ø3.9 axle in the

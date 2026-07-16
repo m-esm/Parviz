@@ -567,6 +567,14 @@ P = {
                             # ARCS only; the ±z flats already clock the shaft. 0.10 = the
                             # same bite as idler_rib_proud, and it doubles as a backlash
                             # killer when the M2 path IS available. See _sprocket().
+    "spr_hub_d": 12.0,      # printed sprocket hub OD at the side-panel crossing.
+    "spr_journal_bore_d": 12.5, # closed printed journal land: 0.25 radial running
+                            # clearance on the hub, never a nominal printed-to-printed fit.
+    "spr_journal_x0": 70.2, # absolute world-X journal band, immediately outboard of
+    "spr_journal_x1": 74.5, # the Ø17 TT web recess; remaining 74.5..81.2 stays open.
+    "spr_pin_d": 2.1,       # vertical cross-pin fallback bore for Ø2 filament.
+    "spr_pin_y": 2.3,       # tangent beside the TT shaft +Y round arc, shaft-local.
+    "spr_pin_x": -20.5,     # sprocket-local shaft-tip region, in the open relief band.
     "idler_rib_n": 3,       # axial crush ribs in the F688 seat. 3 = the minimum that
                             # kinematically centres a circle (4+ over-constrains: one rib
                             # takes the whole tolerance and the bearing sits off-axis).
@@ -611,6 +619,23 @@ P = {
                             # the pod-join rail block band y -44.5..-35.5 (the nuts
                             # float in the pod gap there) -> ys <= -68; the tab/rib
                             # at ys-14.15 pushed the -80 vent out of the row
+    # Bolt-on track hold-down shoes.  The z=10.4 running face leaves 0.9 mm over
+    # the ground-run knuckle crowns at z=9.5, below the measured 2.14 mm skip
+    # barrier by 1.24 mm.  M3x12 csk screws rise from below into captive nuts in
+    # the beam; two pins locate every shoe before either screw is fitted.
+    "shoe_z0": 10.4,
+    "shoe_z1": 15.0,
+    "shoe_x0": 69.8,
+    "shoe_x1": 80.4,
+    "shoe_half_y": 7.38,
+    "shoe_screw_x": 71.7,
+    "shoe_screw_dy": 4.8,
+    "shoe_nut_z": 18.5,
+    "shoe_pin_x": 78.5,
+    "shoe_pin_dy": 3.2,
+    "shoe_pin_d": 3.0,
+    "shoe_pin_bore_d": 3.4,
+    "shoe_pin_h": 3.0,
     # FRONT tension travel (2026-07-13 PIP-slack budget; replaced idler_slot 4.0,
     # whose single Ø8.4 circle + 4-wide box never actually cleared the Ø8 shank off
     # center -- the "+-2 slide" was ~+-0.2 in practice). Loop sensitivity, derived
@@ -626,6 +651,15 @@ P = {
     # the sprocket bite; the wheel beam caps run lift at 4.5).
     "idler_slot_in": 2.0,   # inboard retract off nominal: master-link drop-on slack
     "idler_slot_out": 6.5,  # outboard travel off nominal: PIP slack take-up (above)
+    # Front M8 tension-slot bearing insert. A vertical M3 backstop ladder was
+    # rejected 2026-07-16: Ø3.4 bores at the required ~1.6 pitch overlap and
+    # erase the -Y bearing walls, while this tower is too narrow to stagger
+    # 6.35-AC captive M3 nut seats. The steel strip spreads clamp creep into
+    # full-area PLA end shoulders. It mitigates creep but is not a positive lock.
+    "idler_strip_y": 129.0,
+    "idler_strip_len": 28.0,
+    "idler_strip_w": 12.0,
+    "idler_strip_t": 1.0,
     # TT gearmotor drive (own 1x; BUY 1 more -> 2 for skid steer; MX1588 drives both).
     # Measured dims from reference/tt-motor-1079893/NOTES.md (STEP B-rep). Shaft is
     # PERPENDICULAR to the 64.5 body, 11.5 behind the gearbox front face, mid-height.
