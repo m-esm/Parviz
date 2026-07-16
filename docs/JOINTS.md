@@ -93,6 +93,12 @@ Exceptions must be narrow and carry the physical reason, approving date, measure
 replacement check. Bought bearings, intentionally rotating joints, snap fits, and low-load
 electronics posts can need different constraints; they do not get an unmeasured blanket waiver.
 
+The TT drive stack is one such narrow exception. The sprocket and side panel are printed,
+but they mate only through the bought TT shaft and remain intentionally rotational in a
+Ø12.5 journal around the Ø12 hub. Forcing this into the fixed printed-part `Joint` pattern
+would invent a seated pose that does not exist. `checks.py` instead asserts the closed land
+and cross-pin bore, while the interference and fit gates own the 0.25 mm radial running fit.
+
 ## Report interpretation
 
 `web/joint_report.json` contains a schema version, summary, and one result per joint/check with

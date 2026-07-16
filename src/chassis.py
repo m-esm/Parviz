@@ -1296,8 +1296,20 @@ def build_chassis_parts():
             for sy_, o_ in ((P["spr_y"], 1.0), (P["spr_y2"], -1.0)):   # TT stations
                 if not (ky0 < sy_ < ky1):
                     continue
-                hn = cyl(6.75, 12.0, axis="x")             # Ø13.5 notch (open-top:
-                hn.apply_translation((s * 75.2, sy_, zc_tt))   # r reaches past z26)
+                # Closed journal land supports the Ø12 sprocket hub against track and
+                # steering bending loads. The Ø12.5 bore gives 0.25 radial running
+                # clearance. Only x 74.5..81.2 stays as the open-top Ø13.5 relief, which
+                # exposes the shaft-tip cross-pin at world |x| 75.9 for top-down service.
+                jx0, jx1 = P["spr_journal_x0"], P["spr_journal_x1"]
+                land_outer = cyl(8.5, jx1 - jx0, axis="x")
+                land_outer.apply_translation((s * (jx0 + jx1) / 2, sy_, zc_tt))
+                pnl = uni([pnl, land_outer])
+                land_bore = cyl(P["spr_journal_bore_d"] / 2, jx1 - jx0 + 0.4, axis="x")
+                land_bore.apply_translation((s * (jx0 + jx1) / 2, sy_, zc_tt))
+                pnl = sub(pnl, land_bore)
+                relief_x1 = 81.2
+                hn = cyl(6.75, relief_x1 - jx1, axis="x")   # remaining open-top relief
+                hn.apply_translation((s * (jx1 + relief_x1) / 2, sy_, zc_tt))
                 rec2 = teardrop(8.5, 2.2, axis="x")        # re-cut the Ø17 hub recess
                 rec2.apply_translation((s * (70.0 - 0.9), sy_, zc_tt))   # the web
                 # (teardrop like the core cut -- the two must stay congruent)

@@ -450,7 +450,7 @@ deliberate="*" hard-fails the export if arrange TILTS anything (yaw is free). Fu
 gotcha list in the skill's "BambuStudio-CLI auto-arrange" section.
 
 **Buy-list additions (software side, 2026-07-12; 2026-07-14 order batch folded in):**
-- **Pi 5 cooler — BOUGHT 2026-07-14: 2x Joy-IT RPI5-HEATSINK5 (Tray 1, not delivered),
+- **Pi 5 cooler, BOUGHT 2026-07-14: 2x Joy-IT RPI5-HEATSINK5 (Tray 1, not delivered),
   BUT its 65x45x15 envelope (+30x30x10 fan) EXCEEDS the verified official-cooler
   keep-out (63.5x42.5x13.7) on every axis and the tilt-sweep margin was only 0.60 mm:
   re-run tools/probe_cooler.py with the Joy-IT dims BEFORE installing in the head**
@@ -460,7 +460,7 @@ gotcha list in the skill's "BambuStudio-CLI auto-arrange" section.
   envelope CAD-cleared 2026-07-13 (worm-tail retreat, >=0.60 mm static + sweep).
 - ~~USB-A→USB-B cable~~ COVERED: user has one cable per Uno (3× Uno R3 compatible in
   Bag 6; no board purchase needed either). The Arduino I/O plane is fully stocked.
-- **Sensor suite (AWARENESS.md) — largely RESOLVED 2026-07-14 by 2x Sense HAT Rev2
+- **Sensor suite (AWARENESS.md), largely RESOLVED 2026-07-14 by 2x Sense HAT Rev2
   (ordered, Tray 1):** the HAT covers IMU (LSM9DS1 9-DoF, off the buy list) + env
   temp/humidity/pressure (BME688 now OPTIONAL, only for VOC/gas) and adds TCS3400
   light/color + 8x8 LED matrix + joystick. It is a Pi I2C peripheral, NOT an Arduino
@@ -856,9 +856,9 @@ Sprocket-to-road-wheel edge gap is now 2.0 (intra-part, gate-blind): keep center
 >= 30.5 when re-stationing.
 
 **Parviz awareness architecture (2026-07-12, user):** the robot is named **Parviz**.
-Design intent in `docs/AWARENESS.md`: always-on ambient awareness — 2 ear mics, camera
+Design intent in `docs/AWARENESS.md`: always-on ambient awareness, 2 ear mics, camera
 (AI-camera upgrade open), BME688-class env sensor, capacitive touch, IMU, vibration,
-mmWave presence, 4x HC-SR04 — fused into a world-state digest that is fed to an LLM
+mmWave presence, 4x HC-SR04, fused into a world-state digest that is fed to an LLM
 deciding what Parviz does. Tiered: reflexes hard-coded; perception + ASR always LOCAL
 (raw audio never leaves the robot); ambient decisions by the local ~0.6B model
 (llama.cpp on the Pi, benchmarked in software/README.md: Qwen3-0.6B Q4_0 = 21 tok/s,
@@ -935,7 +935,7 @@ the tilt bullet above).
 mmWave, touch, vibration, LEDs, possibly motors) wire to an ARDUINO dev board, which
 connects to the Pi 5 over ONE USB cable (serial telemetry/commands + flashing). Camera/
 mics/display stay on the Pi. With arduino-cli on the Pi, the AI tier can WRITE, COMPILE
-and FLASH the Arduino firmware on the fly over that same cable — firmware is an
+and FLASH the Arduino firmware on the fly over that same cable. Firmware is an
 LLM-modifiable artifact (repo: firmware/arduino/ when it lands). Reflexes (cliff-stop)
 can live in-firmware below the Pi. Full rationale: docs/AWARENESS.md "Arduino I/O
 plane". Board = Uno R3 (owned x3, Bag 6); motor placement still open.
@@ -960,7 +960,7 @@ Hull group (chassis_ regex). All green: interference PASS, 35/35 invariants, wal
 PASS, 20/20 plates slice clean, fits 55 pairs all expected. To iterate the electronics
 layout, edit build_chassis_base + the *_c PARAMS and reprint ONLY chassis_base.
 
-**DESIGN RULE — SEPARATE BY STABILITY (baseline, applies to every future part):**
+**DESIGN RULE: SEPARATE BY STABILITY (baseline, applies to every future part):**
 partition every enclosure/chassis/head volume by CHANGE FREQUENCY before modeling.
 Frozen shells (structural + cosmetic, slow prints) stay CLEAN: no screw pockets or
 bosses for any component marked VERIFY_ON_ARRIVAL or otherwise in flux. All such
@@ -969,7 +969,7 @@ points, so iterating a mount reprints only a small flat support-free plate. What
 stay fused in a shell: kinematic/structural-critical seats (pan pedestal, bearing
 bores) and skin-coupled features (sensor barrels, vents, light pipes). Build bases by
 RE-LAYING-OUT the components onto them and RELIEVING against the shell union
-(sub + _despeck), never by notching a tray around an existing packed layout — the
+(sub + _despeck), never by notching a tray around an existing packed layout. The
 2026-07-14 retrofit attempt collided with the belly rebate until the layout moved
 onto the base. Same rule applies when the head electronics ever need seats.
 
@@ -1077,6 +1077,18 @@ a bare track module can TENSION with zero hull pieces. Tower slabs reach back to
 |y| 114 to fuse through the corner-arc wedge (the cheek skin used to bridge them).
 Print profile: 0% infill + 5 walls global, STRUCT 6 walls + token 8%. All gates
 green: check + sweep + 50/50 invariants + wallcheck + fits + probe + 20/20 slices.
+
+**TT SPROCKET JOINT HARDENING (2026-07-16, K2/K3 review):** each side-panel TT
+crossing now has a closed printed journal land at absolute |x| 70.2..74.5: Ø12.5
+bore on the sprocket's Ø12 hub gives 0.25 radial running clearance, with a full
+saddle grown above the old beam top and backed by the panel wall. The rest of the
+crossing, |x| 74.5..81.2, remains the open-top Ø13.5 relief. Grease the printed
+journal. The owned MR105 5x10x4 cannot fit a Ø12 hub and cannot be seated inside
+the hub's Ø6 free bore. Axial retention remains M2x25 plus Ø9 washer when the TT
+shaft has its VERIFY_ON_ARRIVAL Ø2 tip hole. Positive fallback is now a vertical
+Ø2.1 cross-pin bore at sprocket-local x -20.5, y +2.3, world |x| 75.9 in the open
+relief: mark, remove, file an approximately 1 mm shaft-arc notch, reassemble, insert
+Ø2 filament, and trim flush below the hub OD. Crush ribs are handling aids only.
 
 **Electronics seats (2026-07-13 -> moved to the base 2026-07-14):** the Uno R3 seat (4
 posts to z 21 + a rear-wall shelf for the glacis-side hole;

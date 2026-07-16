@@ -174,6 +174,23 @@ def main():
           bore_pierces(M("chassis_side_R_rear"), (64.0, P["spr_y"], 28.4698), (1, 0, 0), 7.0))
     check("TT shaft bore open through chassis_side_R_front",
           bore_pierces(M("chassis_side_R_front"), (64.0, P["spr_y2"], 28.4698), (1, 0, 0), 7.0))
+    # user 2026-07-16 (K2/K3 drive-joint hardening): each TT station has a CLOSED
+    # Ø12.5 journal land over the Ø12 hub, and each sprocket has a vertical Ø2.1
+    # positive-fallback cross-pin bore in the remaining open-top relief.
+    land_x = (P["spr_journal_x0"] + P["spr_journal_x1"]) / 2
+    land_z = 28.4698 + P["spr_hub_d"] / 2 + 1.0
+    check("TT journal lands close over the sprocket hub top",
+          all(inside(M(part), [(land_x, sy, land_z)])
+              for part, sy in (("chassis_side_R_rear", P["spr_y"]),
+                               ("chassis_side_R_front", P["spr_y2"]))),
+          "material ring probe at x %.2f, z %.2f" % (land_x, land_z))
+    pod_cx = P["chassis_w"] / 2 + P["track_gap"] + P["track_width"] / 2
+    pin_x = pod_cx + P["spr_pin_x"]
+    check("sprocket cross-pin bores pierce vertically in the open relief",
+          all(bore_pierces(M("track_wheels_R"),
+                           (pin_x, sy + P["spr_pin_y"], 20.5), (0, 0, 1), 16.0)
+              for sy in (P["spr_y"], P["spr_y2"])),
+          "right pod x %.2f, local y +%.2f" % (pin_x, P["spr_pin_y"]))
     check("hull wall OPEN in the panel band (lower_rear)",
           clear(M("chassis_lower_rear"), [(67.5, P["spr_y"], 30.0), (-67.5, P["spr_y"], 30.0)]))
     # fittings audit 2026-07-14: the integral web buried the LOWER TT gearbox M3

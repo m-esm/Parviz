@@ -565,6 +565,14 @@ P = {
                             # ARCS only; the ±z flats already clock the shaft. 0.10 = the
                             # same bite as idler_rib_proud, and it doubles as a backlash
                             # killer when the M2 path IS available. See _sprocket().
+    "spr_hub_d": 12.0,      # printed sprocket hub OD at the side-panel crossing.
+    "spr_journal_bore_d": 12.5, # closed printed journal land: 0.25 radial running
+                            # clearance on the hub, never a nominal printed-to-printed fit.
+    "spr_journal_x0": 70.2, # absolute world-X journal band, immediately outboard of
+    "spr_journal_x1": 74.5, # the Ø17 TT web recess; remaining 74.5..81.2 stays open.
+    "spr_pin_d": 2.1,       # vertical cross-pin fallback bore for Ø2 filament.
+    "spr_pin_y": 2.3,       # tangent beside the TT shaft +Y round arc, shaft-local.
+    "spr_pin_x": -20.5,     # sprocket-local shaft-tip region, in the open relief band.
     "idler_rib_n": 3,       # axial crush ribs in the F688 seat. 3 = the minimum that
                             # kinematically centres a circle (4+ over-constrains: one rib
                             # takes the whole tolerance and the bearing sits off-axis).
@@ -1448,4 +1456,3 @@ P = {
 }
 
 EXPORT = os.environ.get("EXPORT") == "1"
-

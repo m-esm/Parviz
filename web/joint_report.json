@@ -740,7 +740,7 @@
       "ok": true
     },
     {
-      "detail": "6730 faces, 31506.5 mm3",
+      "detail": "7234 faces, 31796.4 mm3",
       "gate": "load-body-1",
       "joint": "side_panel_splice",
       "measurements": {},
@@ -842,7 +842,7 @@
       "ok": true
     },
     {
-      "detail": "9406 faces, 41217.9 mm3",
+      "detail": "9896 faces, 41507.8 mm3",
       "gate": "load-body-1",
       "joint": "side_panel_feet",
       "measurements": {},

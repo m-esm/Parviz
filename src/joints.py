@@ -48,6 +48,11 @@ for az in (270.0, 30.0, 150.0):
                             (16.5 * math.cos(a), P["neck_y"] + 16.5 * math.sin(a), 72.0)))
 
 
+# The bought TT shaft through the printed sprocket and printed side-panel journal is
+# intentionally not forced into this inventory. Joint contracts here cover interfaces
+# between assembled printed parts; this rotating bought-through-printed stack has no
+# fixed seated pose between the two printed parts. Its clearance and retention are
+# instead gated by checks.py plus the assembly/fit contact audits.
 JOINTS = (
     Joint("neck_to_pan", ("neck_clevis", "pan_platform"), True, (0, 0, -1),
           Locator("pin_pair", 2, 4.5, LOCATING, True,

@@ -408,14 +408,14 @@ def _sprocket(sx, phase=0.0):
     spr = _sprocket_disc(8.0)
     if phase:
         spr.apply_transform(R_x(phase if sx > 0 else -phase))
-    hub = cyl(6.0, -hub_in - 3.5, axis="x")                        # inboard of the toothed rim
+    hub = cyl(P["spr_hub_d"] / 2, -hub_in - 3.5, axis="x")       # inboard of toothed rim
     hub.apply_translation(((hub_in - 3.5) / 2, 0, 0))
     spr = uni([spr, hub])
     dd = inter(cyl((P["tt_shaft_d"] + 0.25) / 2, 8.6, axis="x"),   # TT double-D socket
                box(8.8, 8, 3.70 + 0.15))
     dd.apply_translation((hub_in + 4.1, 0, 0))                     # face-0.2 .. face+8.4
     spr = sub(spr, dd)
-    # AXIAL RETENTION (2026-07-15 fastening audit P0-7). Two independent paths:
+    # AXIAL RETENTION. Three paths, ranked by positive retention:
     #
     # PRIMARY -- M2 + Ø9 washer at the outer face, screwed the length of the Ø6 bore
     # into the TT shaft tip's Ø2 axial hole; the washer spans the bore and bears on the
@@ -431,18 +431,17 @@ def _sprocket(sx, phase=0.0):
     # TT gearmotors actually have the Ø2 axial hole. MANY TT VARIANTS DO NOT. Check the
     # 3x TT 1:120 (Bag 5) shaft tips before ordering the M2x25 + Ø9 washers.
     #
-    # FALLBACK (needs no shaft feature, no long screw, always present) -- CRUSH RIBS in
-    # the socket's round arcs, so the sprocket is a light PRESS onto the shaft and holds
-    # itself axially by friction. This is the fallback because the obvious one is
-    # geometrically impossible here: a radial grub boss has nowhere to live. Probed on
-    # the assembly -- over the ENTIRE shaft overlap (local x <= -19.7) the free radius
-    # around the axle is 6.50 against a hub radius of 6.0, because that whole length
-    # runs inside the side panel's Ø13.5 L-return notch. So there is no room for a boss
-    # (needs ~r9) AND no tool access to a flush grub either: the panel buries it, and
-    # the socket can only go onto the shaft after the panel + TT are built up. Ribs sit
-    # on the ±y arcs (the ±z flats already clock the shaft), so shaft location is
-    # flats + 2 ribs = well constrained, not over-constrained. Vertical extrusions in
-    # the print pose (axle axis prints up), so they are free.
+    # POSITIVE FALLBACK -- a Ø2 filament cross-pin drops vertically through a Ø2.1
+    # hub bore tangent to the shaft's +Y arc. File a shallow notch in the plastic TT
+    # shaft through the bore, then the pin locks axial motion and torque without relying
+    # on the variant-dependent tip hole. Its local x=-20.5 station is in the panel's
+    # open-top relief, so it remains serviceable with the module assembled.
+    pin = cyl(P["spr_pin_d"] / 2, 16.0, axis="z")
+    pin.apply_translation((P["spr_pin_x"], P["spr_pin_y"], 0.0))
+    spr = sub(spr, pin)
+    # HANDLING AID ONLY -- CRUSH RIBS in the socket's round arcs make installation
+    # self-holding and remove backlash. They are friction-only, never axial retention.
+    # Ribs sit on ±Y arcs because the ±Z flats already clock the shaft.
     rib_cr = P["tt_shaft_d"] / 2 - P["spr_socket_rib_bite"]        # crest radius
     for sgn in (-1, 1):                                # tangent circle: crest bites the
         rb = cyl(0.6, 8.6, axis="x")                   # shaft, root buried in the socket

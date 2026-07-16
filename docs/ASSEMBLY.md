@@ -57,8 +57,8 @@ settled below). "Need" is per robot.
 |---|---|---|---|---|
 | M3 screws + hex nuts | captive-nut joints everywhere; incl. M3x35 x8 bezel↔back. **2026-07-15 fastening campaign: ~+55 M3 hex nuts** as the thread-form pilots that failed the first print became real captive traps (head +32, chassis +24 incl. tail seam/deck/TT-upper/y26, neck +7 root & carrier & ULN). Screw length changes: y=26 seam M3x12 → **M3x20**, neck→platform M3x12 → **M3x14** | lots | 540pc M3 stainless kit + 175pc M3 30–50 mm kit + 600pc M2-M5 kit + 1263pc M2-M4 kit (all Tray 1) | , (kits cover it) |
 | M2/M3 brass heat-set inserts | **16 total, and a soldering-iron insert tip.** Used ONLY where a captive nut was probed and measurably does not fit: **4x M2** track master-link keepers (below), **8x M2** cliff HC-SR04 (a 3.8 mm skin at 33.7 deg has no room behind), **2x M2** PD-trigger (edge-on into wall layers = the weakest thread orientation), **2x M3** rear panel L-feet (boxed on all four axes by the BME board, the tail pad, the TT gearbox and the glacis: 5.70 window vs 6.80 needed). Everywhere else the campaign uses a real captive nut -- probing DISPROVED the audit's insert calls twice (tilt_carrier, pedestal ears). All VERIFY_ON_ARRIVAL: vendor OD/length varies, re-key `keeper_insert_*` / `foot_insert_*` before printing | 12x M2 + 2x M3 (+2 spare) | 0 | **16 inserts + 1 insert tip** |
-| M2 brass heat-set inserts (detail) | **track master-link keepers** (2/master x2 = 4). The captive M2 nut does NOT fit: the pocket is boxed between the jaw slot's tension wall and the neighbour A-knuckle = 5.50 mm usable vs 5.82 needed across-corners (measured, tracks agent). Inserts need 5.40. This is the one repeatedly-serviced M2-in-PLA joint, so self-tapping was never going to survive the service cycles | 4 | none | **4x M2 brass heat-set + a soldering-iron insert tip** — VERIFY_ON_ARRIVAL: vendor OD/length varies, re-key `keeper_insert_{d,l}` before printing masters |
-| M5 penny washers | tilt worm thrust seat (OD 15, ID 5.3, t 1.0): closes 2.0 mm of worm float (≈3° tilt slop) to 0.1. A direct shoulder is impossible — any ID under the Ø10.55 crest blocks cartridge extraction | 2 | check the owned washer assortment | 2x M5 penny washer (OD ~15) |
+| M2 brass heat-set inserts (detail) | **track master-link keepers** (2/master x2 = 4). The captive M2 nut does NOT fit: the pocket is boxed between the jaw slot's tension wall and the neighbour A-knuckle = 5.50 mm usable vs 5.82 needed across-corners (measured, tracks agent). Inserts need 5.40. This is the one repeatedly-serviced M2-in-PLA joint, so self-tapping was never going to survive the service cycles | 4 | none | **4x M2 brass heat-set + a soldering-iron insert tip**. VERIFY_ON_ARRIVAL: vendor OD/length varies, re-key `keeper_insert_{d,l}` before printing masters |
+| M5 penny washers | tilt worm thrust seat (OD 15, ID 5.3, t 1.0): closes 2.0 mm of worm float (≈3° tilt slop) to 0.1. A direct shoulder is impossible because any ID under the Ø10.55 crest blocks cartridge extraction | 2 | check the owned washer assortment | 2x M5 penny washer (OD ~15) |
 | Ø4 dowels | seam/joint registration so parts self-hold while screwing (the audit's "nothing holds it" class). +3 head (2 bezel↔back split plane, 1 Ø4x14 flange), +2 neck→platform printed pins, + existing y=26 pair. Tail seam uses a 6x12x4 **tongue** instead (no room beside the bore in a 10.2 pad; more shear area anyway) | ~8 | printed stand-ins in stl/hardware (Ø3.9) | Ø4x12 metal dowels x4 (or keep printed) |
 | M2 screws | camera board (2 screwed + 2 locating pads) + cam_cover (2) + track master-link keepers (2/pod, **M2×8 pan head**, sunk in the tab counterbores) + PD-trigger mount (2) | 8+ | in the 600pc M2-M5 and 1263pc M2-M4 kits |, (CLAUDE.md's "buy M2" is stale) |
 | M3 nylon standoffs | ULN2003 / driver mounts | few | 380pc kit (Tray 1) |, |
@@ -227,6 +227,10 @@ tray killed the 88.5 mm blind channels, 2026-07-08.)
 
 ### Chassis + drive (fixed frame)
 
+> **ACTION BEFORE ORDERING:** Measure all 3 Bag-5 TT 1:120 shaft tips now. Record
+> whether each has the Ø2 axial hole. Order M2x25 screws and Ø9 washers only for
+> motors that actually have it. Many TT variants omit this hole.
+
 1. **Print + prep the chassis.** Confirm the deck pan-seat, the pedestal, and both TT
    motor pockets are clean.
 2. **Fit the four structural side panels.** The old separate `pod_rail_L/R` parts and their
@@ -237,6 +241,23 @@ tray killed the 88.5 mm blind channels, 2026-07-08.)
 3. **TT motors.** Set each TT gearmotor: shaft +X into the sprocket hub's double-D socket,
    front tab into the rear-wall pocket, nub into the wall pocket, 2× M3 through the
    gearbox + wall with the nut floating in the pod gap.
+   The M2x25 plus Ø9 washer is the preferred axial retainer only when the measured
+   shaft has the Ø2 tip hole. Otherwise use the positive cross-pin fallback:
+
+   1. Slide the sprocket fully onto the shaft and mark the shaft through the vertical
+      Ø2.1 hub bore.
+   2. Pull the sprocket off and file an approximately 1 mm deep notch across the round
+      shaft arc at the mark. Do not cut through the plastic shaft.
+   3. Reassemble and drop a straight Ø2 filament pin through the upper hub wall, the
+      filed shaft notch, and the lower hub wall.
+   4. Trim both ends flush with the Ø12 hub. The pin must never stand proud of the hub
+      OD because the hub slides through the side-panel journal.
+   5. Secure the upper pin end against vibration walk-out with a small drop of CA in
+      the bore mouth, or briefly heat-mushroom it with the iron tip, still sub-flush.
+      The bore is open-top in service, so an unsecured pin can migrate up and out.
+
+   The pin positively locks axial motion and torque. The socket crush ribs are only a
+   handling aid. Service the pin from above with the track open.
 4. **Track running gear.** Press an F688ZZ into EACH face of all four end idlers (Ø15.95
    seat + Ø18.5 flange recess both sides). Each end wheel: M8 bolt from outboard
    through the bearings, add the OUTBOARD jam nut against the tower, then the flatted
@@ -250,6 +271,13 @@ tray killed the 88.5 mm blind channels, 2026-07-08.)
    TT shafts (they mesh the ground run under the hull; the robot's weight seats them). Drop an M4 nut up each wheel-beam slot (do this BEFORE mounting the
    rails if access is tight), then bolt each road wheel with its M4x40 from outboard --
    snug, then back off 1/8 turn so the wheel spins free.
+
+   Each side-panel beam now closes around the Ø12 sprocket hub over the absolute
+   |X|=70.2..74.5 band with a Ø12.5 full-circle printed journal. Apply a thin film of
+   plastic-safe grease to the hub before insertion and renew it when the track is open.
+   The remaining |X|=74.5..81.2 crossing is open on top for cross-pin access. The owned
+   MR105 bearing cannot replace this land: its 5x10x4 bore is too small for the Ø12 hub,
+   while the hub itself contains a Ø6 free bore, so there is no compatible race seat.
 5. **Join the strips + close with the master (print-in-place chain, 2026-07-12).**
    Each pod is 4 PRINT-IN-PLACE strips (16+16+16+15 links, hinges already free off
    the printer -- flex every joint once to crack any sag bonds) + 1 separate master.
