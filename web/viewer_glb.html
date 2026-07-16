@@ -362,6 +362,7 @@ const sectionPlane = new THREE.Plane(new THREE.Vector3(-1,0,0), 0);
 // ---- Design-reference palette (reference/design/*.jpg): matte black body +
 // safety-orange accents, silver exposed mechanicals, near-black rubber tracks. ----
 const PAL = [
+  [/^track_shoe_/i, {c:0xE87422, m:0.08, r:0.55}],
   [/trim|rail|accent|hatch_frame|grille_ring|fin/i, {c:0xE87422, m:0.08, r:0.55}], // safety orange
   [/lamp/i,         {c:0xE8A83C, m:0.1, r:0.3, e:0xB37514, ei:0.6}],  // amber indicator
   [/led/i,          {c:0xF2F4F6, m:0.1, r:0.3, e:0x9AA4B0, ei:0.5}],  // white light strip
@@ -473,7 +474,7 @@ new GLTFLoader().load(MODEL, (gltf)=>{
       ['Motors',        /^drive2?_[LR]$/],
       ['Track L',       /^(track_L(\.|$)|track_keeper_L)/],
       ['Track R',       /^(track_R(\.|$)|track_keeper_R)/],
-      ['Running gear',  /^drivewheels_/],
+      ['Running gear',  /^(drivewheels_|track_shoe_)/],
       ['Axle hardware', /^(pod_rail_|axle_hw_)/],   // pod_rail_ kept for older GLBs
     ]],
     ['Pan & neck', [

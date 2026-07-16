@@ -65,6 +65,12 @@ class ContractMutationTests(unittest.TestCase):
     def test_missing_load_path_probe_fails(self):
         self.assertIn("load-path", failed_codes(analytic_results(good_joint(supporting_probes=()))))
 
+    def test_track_shoe_contract_rejects_missing_locator(self):
+        from joints import JOINTS
+        j = next(j for j in JOINTS if j.name == "track_shoes_to_side_panels")
+        broken = Joint(**{**j.__dict__, "locator": None})
+        self.assertIn("self-location", failed_codes(analytic_results(broken)))
+
     def test_inventory_deletion_and_duplicates_fail(self):
         with mock.patch("joint_checks.REQUIRED_STRUCTURAL_JOINTS", ("a", "b")):
             self.assertIn("structural-inventory-complete",

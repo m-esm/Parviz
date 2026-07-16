@@ -104,6 +104,10 @@ WHITELIST = {
     frozenset(("chassis_base", "chassis_lower")),   # base rests on the hull floor + bolts
     frozenset(("chassis_pedestal", "belly_plate")),  # pedestal seats + pins + bolts on the
                                                      # plate plug (round 5)
+    frozenset(("track_shoe_L_rear", "chassis_lower")),
+    frozenset(("track_shoe_L_front", "chassis_lower")),
+    frozenset(("track_shoe_R_rear", "chassis_lower")),
+    frozenset(("track_shoe_R_front", "chassis_lower")),
     frozenset(("chassis_pedestal", "motor_pan")),    # can/ears in the pedestal
                                                      # (placeholder-mode runs)
     frozenset(("chassis_base", "sensor_vib")),      # SW-420 in its seat fence

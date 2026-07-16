@@ -56,6 +56,7 @@ settled below). "Need" is per robot.
 | Part | Spec | Need | Owned | Buy |
 |---|---|---|---|---|
 | M3 screws + hex nuts | captive-nut joints everywhere; incl. M3x35 x8 bezel↔back. **2026-07-15 fastening campaign: ~+55 M3 hex nuts** as the thread-form pilots that failed the first print became real captive traps (head +32, chassis +24 incl. tail seam/deck/TT-upper/y26, neck +7 root & carrier & ULN). Screw length changes: y=26 seam M3x12 → **M3x20**, neck→platform M3x12 → **M3x14** | lots | 540pc M3 stainless kit + 175pc M3 30–50 mm kit + 600pc M2-M5 kit + 1263pc M2-M4 kit (all Tray 1) | , (kits cover it) |
+| M3×12 countersunk screws + M3 hex nuts | track hold-down shoes, 2 per shoe × 4. Heads recess flush in the z 10.4 running face; nuts slide up into the wheel beam. The front `spr_y2` pair is fittings-ready and only required when twin drive is populated | 8+8 (4+4 for rear-only drive) | covered by M3 kits | , |
 | M2/M3 brass heat-set inserts | **16 total, and a soldering-iron insert tip.** Used ONLY where a captive nut was probed and measurably does not fit: **4x M2** track master-link keepers (below), **8x M2** cliff HC-SR04 (a 3.8 mm skin at 33.7 deg has no room behind), **2x M2** PD-trigger (edge-on into wall layers = the weakest thread orientation), **2x M3** rear panel L-feet (boxed on all four axes by the BME board, the tail pad, the TT gearbox and the glacis: 5.70 window vs 6.80 needed). Everywhere else the campaign uses a real captive nut -- probing DISPROVED the audit's insert calls twice (tilt_carrier, pedestal ears). All VERIFY_ON_ARRIVAL: vendor OD/length varies, re-key `keeper_insert_*` / `foot_insert_*` before printing | 12x M2 + 2x M3 (+2 spare) | 0 | **16 inserts + 1 insert tip** |
 | M2 brass heat-set inserts (detail) | **track master-link keepers** (2/master x2 = 4). The captive M2 nut does NOT fit: the pocket is boxed between the jaw slot's tension wall and the neighbour A-knuckle = 5.50 mm usable vs 5.82 needed across-corners (measured, tracks agent). Inserts need 5.40. This is the one repeatedly-serviced M2-in-PLA joint, so self-tapping was never going to survive the service cycles | 4 | none | **4x M2 brass heat-set + a soldering-iron insert tip**. VERIFY_ON_ARRIVAL: vendor OD/length varies, re-key `keeper_insert_{d,l}` before printing masters |
 | M5 penny washers | tilt worm thrust seat (OD 15, ID 5.3, t 1.0): closes 2.0 mm of worm float (≈3° tilt slop) to 0.1. A direct shoulder is impossible because any ID under the Ø10.55 crest blocks cartridge extraction | 2 | check the owned washer assortment | 2x M5 penny washer (OD ~15) |
@@ -238,6 +239,11 @@ tray killed the 88.5 mm blind channels, 2026-07-08.)
    Seat the front/rear splice tongue and locating pads, install its two M3 screws into
    captive nuts, then bolt the panel feet to the lower tub. The tongue and separated feet
    hold alignment before tightening.
+   Before fitting the track, slide two M3 nuts into each shoe trap and press the matching
+   `track_shoe_{L,R}_{rear,front}` upward onto its two locator pins at y=-68 or +90.
+   Drive two M3×12 countersunk screws from below. The shoe is 10.6 mm wide in X,
+   14.76 mm along Y and 4.6 mm thick, with its running face at z=10.4. Fit all four
+   shoes for a twin drive; the +90 front pair may be omitted with the optional motors.
 3. **TT motors.** Set each TT gearmotor: shaft +X into the sprocket hub's double-D socket,
    front tab into the rear-wall pocket, nub into the wall pocket, 2× M3 through the
    gearbox + wall with the nut floating in the pod gap.
@@ -430,6 +436,13 @@ open-far last, keels on) + 1 loose master link + both keeper bars. Measure on it
 
 Any fail: adjust `track_bore_pip_d` / `track_pin_print_d` and reprint the COUPON,
 not a strip.
+
+Mid-drive engagement is quantified, not assumed: the conjugate 14T mesh has contact
+ratio CR 1.48 and the rigid-chain pitch-ratchet barrier measured by
+`tools/probe_track_pip.py` is 2.14 mm. Fixed road-wheel bolt-axles cap lift to about
+0.1 mm at their stations, while each hold-down shoe caps the sprocket mesh window to
+0.9 mm. The powered coupon remains the deciding bench test for mid-drive reliability
+under reverse load and skid turns.
 
 ### Recommendations (bigger than this pass)
 

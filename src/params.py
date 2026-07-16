@@ -617,6 +617,23 @@ P = {
                             # the pod-join rail block band y -44.5..-35.5 (the nuts
                             # float in the pod gap there) -> ys <= -68; the tab/rib
                             # at ys-14.15 pushed the -80 vent out of the row
+    # Bolt-on track hold-down shoes.  The z=10.4 running face leaves 0.9 mm over
+    # the ground-run knuckle crowns at z=9.5, below the measured 2.14 mm skip
+    # barrier by 1.24 mm.  M3x12 csk screws rise from below into captive nuts in
+    # the beam; two pins locate every shoe before either screw is fitted.
+    "shoe_z0": 10.4,
+    "shoe_z1": 15.0,
+    "shoe_x0": 69.8,
+    "shoe_x1": 80.4,
+    "shoe_half_y": 7.38,
+    "shoe_screw_x": 71.7,
+    "shoe_screw_dy": 4.8,
+    "shoe_nut_z": 18.5,
+    "shoe_pin_x": 78.5,
+    "shoe_pin_dy": 3.2,
+    "shoe_pin_d": 3.0,
+    "shoe_pin_bore_d": 3.4,
+    "shoe_pin_h": 3.0,
     # FRONT tension travel (2026-07-13 PIP-slack budget; replaced idler_slot 4.0,
     # whose single Ø8.4 circle + 4-wide box never actually cleared the Ø8 shank off
     # center -- the "+-2 slide" was ~+-0.2 in practice). Loop sensitivity, derived

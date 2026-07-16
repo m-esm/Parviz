@@ -58,6 +58,8 @@ PRINTED = [
     "track_strip_R1.stl", "track_strip_R2.stl", "track_strip_R3.stl", "track_strip_R4.stl",
     "track_wheels_L.stl", "track_wheels_R.stl",
     "track_keeper_L.stl", "track_keeper_R.stl",
+    "track_shoe_L_rear.stl", "track_shoe_L_front.stl",
+    "track_shoe_R_rear.stl", "track_shoe_R_front.stl",
     # neck / pan
     "neck_clevis.stl", "tilt_carrier.stl",
     "pan_platform.stl", "pan_race.stl", "pan_clips.stl", "pan_cage.stl", "pan_gears.stl",
@@ -85,6 +87,20 @@ PRINTED = [
 # regression under the known-thin feature must not hide behind the whitelist).
 # ---------------------------------------------------------------------------
 WHITELIST = {
+    # Track hold-down shoes: each y end intentionally runs to a zero-thickness
+    # 45 degree lead-in edge so an articulating link cannot catch a square lip.
+    # The loaded central pad is 4.6 mm thick; the census minima are confined to
+    # the two ramp lands and the countersink run-outs.
+    "track_shoe_L_rear.stl": (0.10, "45 degree link lead-in knife edges; central pad 4.6 mm"),
+    "track_shoe_L_front.stl": (0.10, "45 degree link lead-in knife edges; central pad 4.6 mm"),
+    "track_shoe_R_rear.stl": (0.10, "45 degree link lead-in knife edges; central pad 4.6 mm"),
+    "track_shoe_R_front.stl": (0.10, "45 degree link lead-in knife edges; central pad 4.6 mm"),
+    # The slide-up M3 shoe-nut mouths break through the panel bottom by design and
+    # end in local facet wedges where they meet the journal saddle.  The nut load
+    # seats at z18.5 in the intact beam and bypasses these insertion-mouth edges.
+    "chassis_side_L_front.stl": (0.50, "shoe nut-mouth/journal intersection edge; nut seat backed at z18.5"),
+    "chassis_side_L_rear.stl": (0.50, "shoe nut-mouth/journal intersection edge; nut seat backed at z18.5"),
+    "chassis_side_R_front.stl": (0.50, "shoe nut-mouth/journal intersection edge; nut seat backed at z18.5"),
     # REAL ISO THREADS (2026-07-16 stand-in rework, src/threads.py). No true thread can
     # pass an 0.8 mm wall gate: the ISO 68-1 crest flat is p/8 BY DEFINITION -- 0.125 at
     # M4x1.0, 0.156 at M8x1.25 -- and the lead-in chamfers/countersinks slice those

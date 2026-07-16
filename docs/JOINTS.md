@@ -99,6 +99,12 @@ but they mate only through the bought TT shaft and remain intentionally rotation
 would invent a seated pose that does not exist. `checks.py` instead asserts the closed land
 and cross-pin bore, while the interference and fit gates own the 0.25 mm radial running fit.
 
+`track_shoes_to_side_panels` covers the four repeated hold-down joints. Each shoe seats
+flat against the wheel-beam underside, but location comes from two separated Ø3 pins in
+Ø3.4 bores. Two M3×12 countersunk screws rise from the running face into captive M3 nuts
+at z 18.5. The mounted shoe closes the slide-up nut mouths, and upward track load bears
+directly into the beam rather than loading the screws in tension.
+
 ## Report interpretation
 
 `web/joint_report.json` contains a schema version, summary, and one result per joint/check with

@@ -1314,6 +1314,28 @@ def build_chassis_parts():
                 rec2.apply_translation((s * (70.0 - 0.9), sy_, zc_tt))   # the web
                 # (teardrop like the core cut -- the two must stay congruent)
                 pnl = sub(sub(pnl, hn), rec2)              # extrusion refilled
+                # HOLD-DOWN SHOE JOINT: two vertical M3 bores and slide-up captive
+                # nut traps in the intact bottom band.  The horizontal nut_slot is
+                # the standardized ac=6.35 seated trap; a vertical mouth joins it to
+                # the beam bottom and is closed by the mounted shoe.  Two Ø3.4
+                # locator bores take the shoe's separated Ø3 pins.
+                for dy_ in (-P["shoe_screw_dy"], P["shoe_screw_dy"]):
+                    scx, scy = s * P["shoe_screw_x"], sy_ + dy_
+                    sb_ = cyl(1.65, 12.5)
+                    sb_.apply_translation((scx, scy, 15.0 + 12.5 / 2))
+                    pnl = sub(pnl, sb_)
+                    pnl = sub(pnl, geo.nut_slot((scx, scy, P["shoe_nut_z"]),
+                                                screw_axis="z", open_dir=(-s, 0, 0),
+                                                size="M3", length=7.0))
+                    mouth_ = box(5.7, 2.8, P["shoe_nut_z"] - 15.0)
+                    mouth_.apply_translation((scx, scy,
+                                              (15.0 + P["shoe_nut_z"]) / 2))
+                    pnl = sub(pnl, mouth_)
+                for dy_ in (-P["shoe_pin_dy"], P["shoe_pin_dy"]):
+                    pb_ = cyl(P["shoe_pin_bore_d"] / 2, P["shoe_pin_h"] + 0.4)
+                    pb_.apply_translation((s * P["shoe_pin_x"], sy_ + dy_,
+                                           15.0 + (P["shoe_pin_h"] + 0.4) / 2))
+                    pnl = sub(pnl, pb_)
                 # LOWER TT M3 "nut in the gap" (fittings audit 2026-07-14): the
                 # web filled the pod gap where the z 16.57 gearbox screw's nut
                 # lived (the z 34.07 one clears the web top 26; the shaft
@@ -1616,6 +1638,40 @@ def build_chassis_parts():
         _color(m_, "base"); m_.metadata["name"] = nm
         out.append(m_)
     out.extend(panels)                # chassis_side_{L,R}_{front,rear} (named above)
+    # Four separately printed shoes, one per side and drive station.  The pad's
+    # y-end wedges are 45 degree lead-ins, so an articulating crown meets a ramp,
+    # never a square edge.  Pins print upward with the broad running face on bed.
+    for s, side in ((-1, "L"), (1, "R")):
+        for sy_, pos in ((P["spr_y"], "rear"), (P["spr_y2"], "front")):
+            hx = P["shoe_x1"] - P["shoe_x0"]
+            hy = 2 * P["shoe_half_y"]
+            hz = P["shoe_z1"] - P["shoe_z0"]
+            shoe = box(hx, hy, hz)
+            shoe.apply_translation((s * (P["shoe_x0"] + P["shoe_x1"]) / 2,
+                                    sy_, (P["shoe_z0"] + P["shoe_z1"]) / 2))
+            # Remove 4.6 x 4.6 triangles at both y ends, leaving 45 degree ramps.
+            for ey_ in (-1, 1):
+                cut_ = box(hx + 0.4, 4.6, 4.6)
+                cut_.apply_transform(R(ey_ * TAU / 8, (1, 0, 0)))
+                cut_.apply_translation((s * (P["shoe_x0"] + P["shoe_x1"]) / 2,
+                                        sy_ + ey_ * P["shoe_half_y"], P["shoe_z0"] + 0.7))
+                shoe = sub(shoe, cut_)
+            for dy_ in (-P["shoe_screw_dy"], P["shoe_screw_dy"]):
+                bore_ = cyl(1.65, hz + 0.4)
+                bore_.apply_translation((s * P["shoe_screw_x"], sy_ + dy_,
+                                         (P["shoe_z0"] + P["shoe_z1"]) / 2))
+                cb_ = cyl(3.1, 1.8)
+                cb_.apply_translation((s * P["shoe_screw_x"], sy_ + dy_,
+                                       P["shoe_z0"] + 0.9))
+                shoe = sub(sub(shoe, bore_), cb_)
+            for dy_ in (-P["shoe_pin_dy"], P["shoe_pin_dy"]):
+                pin_ = cyl(P["shoe_pin_d"] / 2, P["shoe_pin_h"] + 0.8)
+                pin_.apply_translation((s * P["shoe_pin_x"], sy_ + dy_,
+                                        P["shoe_z1"] + P["shoe_pin_h"] / 2 - 0.4))
+                shoe = uni([shoe, pin_])
+            _color(shoe, "accent")
+            shoe.metadata["name"] = f"track_shoe_{side}_{pos}"
+            out.append(shoe)
     # EQUIPMENT BASE: built here so it can be RELIEVED against the hull -- subtract the
     # lower shells so the base bottom gets clearance pockets for every dense floor
     # feature it spans (ULN standoffs, belly-edge lip, etc.), a robust drop-in fit that

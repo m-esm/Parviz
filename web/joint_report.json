@@ -740,7 +740,7 @@
       "ok": true
     },
     {
-      "detail": "7234 faces, 31796.4 mm3",
+      "detail": "9000 faces, 31360.2 mm3",
       "gate": "load-body-1",
       "joint": "side_panel_splice",
       "measurements": {},
@@ -842,7 +842,7 @@
       "ok": true
     },
     {
-      "detail": "9896 faces, 41507.8 mm3",
+      "detail": "11662 faces, 41071.6 mm3",
       "gate": "load-body-1",
       "joint": "side_panel_feet",
       "measurements": {},
@@ -852,6 +852,108 @@
       "detail": "not required",
       "gate": "insertion-path",
       "joint": "side_panel_feet",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "joint must name both sides",
+      "gate": "part-count",
+      "joint": "track_shoes_to_side_panels",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "",
+      "gate": "assembly-axis",
+      "joint": "track_shoes_to_side_panels",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "structural joints require a screw-independent locator",
+      "gate": "self-location",
+      "joint": "track_shoes_to_side_panels",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "3.00 mm",
+      "gate": "locator-engagement",
+      "joint": "track_shoes_to_side_panels",
+      "measurements": {
+        "engagement_mm": 3.0
+      },
+      "ok": true
+    },
+    {
+      "detail": "single round pins need a second anti-rotation feature",
+      "gate": "locator-constraints",
+      "joint": "track_shoes_to_side_panels",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "locating 0.100..0.350 mm",
+      "gate": "fit-class",
+      "joint": "track_shoes_to_side_panels",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "structural joint requires declared retention",
+      "gate": "fastener-present",
+      "joint": "track_shoes_to_side_panels",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "M3 x8: 1.50 mm protrusion",
+      "gate": "fastener-1-stack",
+      "joint": "track_shoes_to_side_panels",
+      "measurements": {
+        "protrusion_mm": 1.5000000000000004
+      },
+      "ok": true
+    },
+    {
+      "detail": "hex_nut",
+      "gate": "fastener-1-capture",
+      "joint": "track_shoes_to_side_panels",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "access 8.0, driver diameter 7.0",
+      "gate": "fastener-1-tool-envelope",
+      "joint": "track_shoes_to_side_panels",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "locator must constrain the seated part before screws",
+      "gate": "pre-fastener-stability",
+      "joint": "track_shoes_to_side_panels",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "structural joints require material probes around the load path",
+      "gate": "load-path",
+      "joint": "track_shoes_to_side_panels",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "1344 faces, 518.6 mm3",
+      "gate": "load-body-1",
+      "joint": "track_shoes_to_side_panels",
+      "measurements": {},
+      "ok": true
+    },
+    {
+      "detail": "not required",
+      "gate": "insertion-path",
+      "joint": "track_shoes_to_side_panels",
       "measurements": {},
       "ok": true
     },
@@ -1907,7 +2009,7 @@
   "schema": 1,
   "summary": {
     "failed": 0,
-    "passed": 261,
-    "total": 261
+    "passed": 275,
+    "total": 275
   }
 }

@@ -54,6 +54,10 @@ def _fit_report(geo):
         frozenset(("head_bezel",)),
         frozenset(("chassis_lower",)),
         frozenset(("chassis_deck",)),
+        frozenset(("track_shoe_L_rear", "chassis_lower")),
+        frozenset(("track_shoe_L_front", "chassis_lower")),
+        frozenset(("track_shoe_R_rear", "chassis_lower")),
+        frozenset(("track_shoe_R_front", "chassis_lower")),
         # drivetrain seats / meshes (mirrors assembly_check WHITELIST)
         frozenset(("ant_bracket", "head_back")),     # bracket spine on the back wall
         frozenset(("ant_output_L", "antenna_L")),    # involute rack/pinion mesh

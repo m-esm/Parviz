@@ -85,6 +85,10 @@ PARTS = {  # name: (subsystem, [rotations], obj_settings)
     "chassis_side_R_rear":  ("base", [], STRUCT),  #  foot pads coplanar on the bed;
                                                    #  beam chamfer self-supports,
                                                    #  tree catches the boss bottoms)
+    "track_shoe_L_rear": ("base", [], NOSUP),
+    "track_shoe_L_front": ("base", [], NOSUP),
+    "track_shoe_R_rear": ("base", [], NOSUP),
+    "track_shoe_R_front": ("base", [], NOSUP),
     "chassis_deck_front":  ("base", [(X, 180)], STRUCT),   # deck pieces, top face down
     "chassis_deck_center": ("base", [(X, 180)], STRUCT),
     "chassis_deck_rear":   ("base", [(X, 180)], STRUCT),
@@ -127,6 +131,8 @@ CATEGORIES = [
     ("Chassis",      ["chassis_lower_front", "chassis_lower_rear", "chassis_lower_tail",
                       "chassis_side_L_front", "chassis_side_L_rear",
                       "chassis_side_R_front", "chassis_side_R_rear",
+                      "track_shoe_L_rear", "track_shoe_L_front",
+                      "track_shoe_R_rear", "track_shoe_R_front",
                       "chassis_deck_front", "chassis_deck_center", "chassis_deck_rear",
                       "belly_plate", "chassis_base", "chassis_pedestal"]),
     ("Head",         ["head_back_frame_L", "head_back_frame_R", "head_back_panel_L",

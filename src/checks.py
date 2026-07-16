@@ -219,6 +219,22 @@ def main():
                        (73.0, P["roadwheel_ys"][0],
                         (25.32 - P["track_wheel_r"]) + 3.5 + P["roadwheel_d"] / 2 + 0.1),
                        (1, 0, 0), 8.0))
+    skip_barrier, crown_z = 2.14, 9.5
+    shoe_names = {f"track_shoe_{side}_{pos}" for side in "LR"
+                  for pos in ("rear", "front")}
+    check("four sprocket hold-down shoes exist", shoe_names <= nodes)
+    check("shoe lift cap keeps at least 1.0 mm below the skip barrier",
+          P["shoe_z0"] - crown_z <= skip_barrier - 1.0,
+          "cap %.2f, barrier %.2f" % (P["shoe_z0"] - crown_z, skip_barrier))
+    check("shoes span the 14.76 mm sprocket mesh windows",
+          2 * P["shoe_half_y"] >= 14.76 - 0.02
+          and all(M(n).bounds[1][1] - M(n).bounds[0][1] >= 14.7 for n in shoe_names))
+    check("shoe captive M3 nuts reach both screw axes",
+          all(nut_reaches_bore(M(part), (P["shoe_screw_x"], sy + dy,
+                                         P["shoe_nut_z"]), (-1, 0, 0))
+              for part, sy in (("chassis_side_R_rear", P["spr_y"]),
+                               ("chassis_side_R_front", P["spr_y2"]))
+              for dy in (-P["shoe_screw_dy"], P["shoe_screw_dy"])))
     check("pod_rail nodes deleted", not {"pod_rail_L", "pod_rail_R"} & nodes)
     # user 2026-07-14 round 4 (standalone track module): the panels run to the end
     # axles -- END TOWERS replace the deck pylons (front tension slot open across
