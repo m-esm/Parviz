@@ -590,6 +590,30 @@ def main():
     roof = _z_run(M("chassis_side_R_front"), 60.0, 130.0, 43.0, 49.5)
     check("M8 tension cage roof >= 2.0 mm", roof >= 2.0, "%.2f mm (was 0.98)" % roof)
 
+    # user 2026-07-16 (FASTENING_AUDIT 23): the crush-prone PLA serrations are
+    # gone. A 12x28x1 steel strip seats flush in the x62 nut-bearing face, with
+    # real printed shoulders beyond both y ends. Probes around each end distinguish
+    # a captured pocket in material from a subtraction through air.
+    strip_mesh = M("chassis_side_R_front")
+    strip_za = _track_zc() + P["track_raise"]
+    strip_sy = P["idler_strip_y"]
+    strip_hy = P["idler_strip_len"] / 2
+    recess_void = all(_void_cube(strip_mesh, (62.45, y, z), 0.35)
+                      for y in (strip_sy - strip_hy + 0.5, strip_sy,
+                                strip_sy + strip_hy - 0.5)
+                      for z in (strip_za - 5.5, strip_za + 5.5))
+    shoulder_hits = []
+    for y in (strip_sy - strip_hy - 0.8, strip_sy + strip_hy + 0.8):
+        hits = 0
+        for z in np.linspace(strip_za - 5.0, strip_za + 5.0, 6):
+            c = _cube(62.55, y, z, 0.5, 0.5, 0.5)
+            if geo.inter(strip_mesh, c).volume > 1e-9:
+                hits += 1
+        shoulder_hits.append(hits)
+    check("front M8 steel-strip recess has real end shoulders",
+          recess_void and all(h >= 4 for h in shoulder_hits),
+          "recess 12x28x1, shoulder probes %s" % shoulder_hits)
+
     # Campaign rule on the joints finished this round: real captive nuts that the
     # screw can actually reach (deck strip seams, panel splice, front L-foot).
     check("finished-campaign joints: captive nuts reach their bores",

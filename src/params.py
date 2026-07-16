@@ -649,6 +649,15 @@ P = {
     # the sprocket bite; the wheel beam caps run lift at 4.5).
     "idler_slot_in": 2.0,   # inboard retract off nominal: master-link drop-on slack
     "idler_slot_out": 6.5,  # outboard travel off nominal: PIP slack take-up (above)
+    # Front M8 tension-slot bearing insert. A vertical M3 backstop ladder was
+    # rejected 2026-07-16: Ø3.4 bores at the required ~1.6 pitch overlap and
+    # erase the -Y bearing walls, while this tower is too narrow to stagger
+    # 6.35-AC captive M3 nut seats. The steel strip spreads clamp creep into
+    # full-area PLA end shoulders. It mitigates creep but is not a positive lock.
+    "idler_strip_y": 129.0,
+    "idler_strip_len": 28.0,
+    "idler_strip_w": 12.0,
+    "idler_strip_t": 1.0,
     # TT gearmotor drive (own 1x; BUY 1 more -> 2 for skid steer; MX1588 drives both).
     # Measured dims from reference/tt-motor-1079893/NOTES.md (STEP B-rep). Shaft is
     # PERPENDICULAR to the 64.5 body, 11.5 behind the gearbox front face, mid-height.

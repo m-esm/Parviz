@@ -49,6 +49,7 @@ settled below). "Need" is per robot.
 | Ø5 SOLID rod | tilt axle, ~100 mm silver steel (**NOT tube**: a 1.0 flat on a Ø5/Ø2.5 tube leaves a 0.25 wall). **File a 1.0-deep flat** from the insertion end to ~15 past center (D-key for the worm wheel's hub ledge); only the ~6 mm under the hub needs a clean 1.0 ±0.1 depth. The flat crosses the +X 695 seat, so that inner race rides a D-profile (fine, the spacer tubes clamp it). Print a D-bore coupon first, starting at **+0.05** clearance (+0.15 measured as ±4.4° of head backlash) | 1 | 0 | **1** |
 | M8x**70** bolts + NYLOC nuts | END BOLT-AXLES: head = outboard hubcap, smooth journal through both F688s, thread begins at x=78 and crosses the tower clamp stack. M8x60 is too short to reach the NYLOC insert. | 4+4 | 0 | **4x M8x70 + 4 NYLOC** |
 | M8 JAM NUTS + washers | **Required and modeled:** one AF13 jam nut bears on each tower's outboard face; the washer and NYLOC bear inboard. This closes the previous 17.4 mm air gap, clamps the tension slot/tower, and leaves the idler free on the smooth journal. The printed export likewise contains 8 total M8 nuts. | 4+4 washers | 0 | **4x M8 jam nut + 4 washers** |
+| 12x28x1.0 steel strip | Front tension-slot nut bearing insert, cut square from mild-steel stock. Presses flush into the x62 face recess; captured ends spread sustained clamp load into the tower shoulders. This mitigates PLA creep but is not a positive axle lock | 2 | 0 | **2x** |
 | 608zz | **not used** in the current design. SETTLED 2026-07-13: the bag label reads **"10pcs-608ZZ"** -- real 608ZZ bearings under translucent shrink wrap, not plastic rings. Still don't design around them | 0 | ~10-30 (608ZZ, confirmed by label) |, |
 
 ### Fasteners and pins
@@ -271,7 +272,10 @@ tray killed the 88.5 mm blind channels, 2026-07-08.)
    BENCH with the deck upside down. Orient each nut HEX FLATS FORE-AFT: as the deck
    drops onto the tub the nut descends into its prow-cheek NUT CHANNEL (y-walls 13.8
    apart), which grips the flats -- all torquing happens from the outboard head, no
-   inboard tool ever needed. Rear pair: snug. Front pair: leave loose, set tension
+   inboard tool ever needed. Before fitting each front NYLOC, deburr and press one
+   12x28x1.0 steel strip fully flush into the tower's x62 bearing-face recess. Its
+   square ends must seat against both printed end shoulders. Rear pair: snug. Front
+   pair: leave loose, set tension
    AFTER threading the tracks, then tighten from the head -- the channel holds the
    nut, the nut clamps the slot. Fit the sprockets on the
    TT shafts (they mesh the ground run under the hull; the robot's weight seats them). Drop an M4 nut up each wheel-beam slot (do this BEFORE mounting the

@@ -1148,34 +1148,34 @@ def build_chassis_parts():
                 sl_.apply_translation((s * 66.0, ey_s, za_ax))
                 pnl = sub(pnl, sl_)
                 cage_y0, cage_y1 = ey_s - 9.8, ey_s + 14.3   # nut travel window
-                # TENSION-SLOT SERRATIONS (2026-07-15, FASTENING_AUDIT P2-23:
-                # "front M8 tension is friction-only on PLA slot faces -- creeps").
-                # The clamp is nut-face-on-x62 vs bolt-head-washer-on-x70; PLA
-                # creeps under that preload and the axle walks back down the slot,
-                # so the chain goes slack after a few hours of running. Cut the
-                # nut's bearing face into a SAWTOOTH ladder (pitch 1.5, 0.5 proud
-                # of x 62, teeth running along z = vertical fins in the upright
-                # print, zero overhang): the steel NYLOC embeds into the teeth on
-                # first torque and the joint becomes a positive FORM lock along y
-                # instead of a friction lock. Re-cut the slot afterwards so the
-                # shank passage is untouched. Front station only -- the rear axle
-                # has no travel to creep along.
-                ty_a = max(cage_y0 + 0.5, tk0 + 0.5)   # teeth only where `thk` backs
-                ty_b = min(cage_y1 - 0.5, tk1 - 0.5)   # them (x 62..64.85)
-                zt0, zt1 = za_ax - 6.4, za_ax + 6.4    # inside the 13.4 nut gap
-                pitch = 1.5
-                n_t = max(int((ty_b - ty_a) / pitch), 1)
-                zig = []
-                for i_ in range(n_t):
-                    y_a = ty_a + i_ * pitch
-                    zig += [(s * 62.2, y_a), (s * 61.5, y_a + pitch / 2)]
-                zig.append((s * 62.2, ty_a + n_t * pitch))
-                serr = extrude_polygon(sg.Polygon(
-                    [(s * 63.0, ty_a)] + zig + [(s * 63.0, ty_a + n_t * pitch)]
-                ).buffer(0), zt1 - zt0)
-                serr.apply_translation((0, 0, zt0))
-                pnl = uni([pnl, serr])
-                pnl = sub(pnl, sl_)                    # re-open the shank stadium
+                # STEEL TENSION-STRIP RECESS (2026-07-16, supersedes the PLA
+                # serrations). The preferred vertical M3 backstop ladder does not
+                # fit this tower: Ø3.4 bores at ~1.6 pitch overlap, deleting the
+                # -Y bore walls that must react chain load. Staggering cannot save
+                # it because the x62..70 tower is only 8.0 wide while every captive
+                # M3 seat needs 6.35 across corners. A 12x28x1 steel strip instead
+                # presses into this face-open recess, flush with the x62 nut face.
+                # Its y ends bear on full PLA shoulders, spreading creep over the
+                # strip area. This is creep mitigation, NOT a positive lock. The
+                # serrations are deleted because they would prevent a flush seat.
+                strip_y = P["idler_strip_y"]
+                strip_len = P["idler_strip_len"]
+                strip_w = P["idler_strip_w"]
+                strip_t = P["idler_strip_t"]
+                # The original x62 thickening only spans y120.5..142.5. A 28 mm
+                # insert would therefore have hung in air at its inboard end.
+                # Grow a local 30 mm backing land first, leaving 1.0 mm of real
+                # printed shoulder beyond each strip end. The stadium is re-cut
+                # below, so this added material cannot obstruct axle travel.
+                strip_back = box(64.85 - 62.0, 30.0, strip_w + 2.0)
+                strip_back.apply_translation((s * (62.0 + 64.85) / 2, strip_y,
+                                              za_ax))
+                pnl = uni([pnl, strip_back])
+                strip_recess = box(strip_t + 0.05, strip_len + 0.15, strip_w + 0.15)
+                strip_recess.apply_translation((s * (62.0 + strip_t / 2), strip_y,
+                                                za_ax))
+                pnl = sub(pnl, strip_recess)
+                pnl = sub(pnl, sl_)                    # keep the M8 stadium open
             else:                                  # rear: Ø8.4 through clearance
                 sk_ = teardrop(4.2, 12.0, axis="x")        # 45deg roof: apex 44.3
                 sk_.apply_translation((s * 66.0, ey_s, za_ax))   # stays under the
@@ -1220,6 +1220,11 @@ def build_chassis_parts():
                 wall.apply_translation((s * (54.5 + 64.95) / 2,
                                         (wy0c + wy1c) / 2, (26.3 + cage_roof_z) / 2))
                 pnl = uni([pnl, wall])
+            if fi == 0:
+                # The lower cage end wall overlaps the insert's inboard end.
+                # Re-cut after all cage unions so the steel seat stays continuous.
+                pnl = sub(pnl, strip_recess)
+                pnl = sub(pnl, sl_)
             # deck relief over the raised roof + its end walls (0.2 air). The band
             # only meets deck material where the end slope has not lifted it yet
             # (|y| < ~122); past that the cut is in free air and removes nothing.

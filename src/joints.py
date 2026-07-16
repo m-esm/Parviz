@@ -49,6 +49,12 @@ for az in (270.0, 30.0, 150.0):
                             (16.5 * math.cos(a), P["neck_y"] + 16.5 * math.sin(a), 72.0)))
 
 
+# 2026-07-16: the front M8 tension bearing strip is bought hardware seated in one
+# printed tower, not an interface between assembled printed parts. Its contract is
+# therefore the checks.py recess-and-shoulder invariant plus ASSEMBLY.md installation
+# procedure, not a JOINTS entry. The strip carries clamp creep into its end shoulders;
+# it does not locate the axle or create a positive positional lock.
+#
 # The bought TT shaft through the printed sprocket and printed side-panel journal is
 # intentionally not forced into this inventory. Joint contracts here cover interfaces
 # between assembled printed parts; this rotating bought-through-printed stack has no

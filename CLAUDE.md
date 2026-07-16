@@ -774,6 +774,15 @@ what prevents bunching in the first place. Stall-torque tooth force ~4.1 N lands
 pins), giving ~19 MPa pin bending = 2.6x margin on PETG. The sprocket takes ~1/7 of
 the robot's weight through the mesh, which preloads engagement closed.
 
+**Front tension retention review (2026-07-16):** the PLA sawtooth ladder under
+the front M8 NYLOC is deleted because desk heat and sustained clamp load can crush
+the teeth and restore friction-only creep. The preferred vertical M3 backstop ladder
+does not fit: Ø3.4 bores at roughly 1.6 pitch overlap and erase the -Y bearing walls,
+and the x62..70 tower cannot stagger 6.35-across-corners M3 nut seats. The fallback
+is a face-loaded 12x28x1.0 steel strip, flush in the x62 bearing face with both ends
+captured by full PLA shoulders. It spreads creep load but is not a positive positional
+lock. Inspect front track tension during early service and re-tension if needed.
+
 **End-axle + dual-drive pass (2026-07-11, user rounds 9-10):** (1) M8 END BOLT-AXLES
 (user: "two wheels per side not connected to anything" -- the plain Ø8 stubs had no
 axial retention and the idlers showed bare bearing bores outside): each end wheel now
