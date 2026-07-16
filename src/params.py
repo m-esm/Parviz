@@ -621,16 +621,24 @@ P = {
                             # at ys-14.15 pushed the -80 vent out of the row
     # Bolt-on track hold-down shoes.  The z=10.4 running face leaves 0.9 mm over
     # the ground-run knuckle crowns at z=9.5, below the measured 2.14 mm skip
-    # barrier by 1.24 mm.  M3x12 csk screws rise from below into captive nuts in
+    # barrier by 1.24 mm.  M3x10 csk screws rise from below into captive nuts in
     # the beam; two pins locate every shoe before either screw is fitted.
+    # (2026-07-16 merge fix: M3x12 -> M3x10, nut 18.5 -> 18.0, screw column
+    # 71.7 -> 73.8, clearance bore top 27.5 -> 21.0.  The old tall bore at
+    # 71.7 left a 0.75 mm ligament to the Ø12.5 journal / Ø17 recess voids,
+    # under the 0.80 wall gate once the merged nut_slot rework landed.  Now
+    # the bore tops 2.07 below the journal's lowest wall (z 23.07 at the
+    # bore's near-y edge, dy 3.15), sits 1.95 in x off the recess end, and
+    # the shoe's Ø6.2 head counterbore stays 0.9 inside the shoe's x 69.8
+    # inboard face instead of grazing it into a 0.10 feather.)
     "shoe_z0": 10.4,
     "shoe_z1": 15.0,
     "shoe_x0": 69.8,
     "shoe_x1": 80.4,
     "shoe_half_y": 7.38,
-    "shoe_screw_x": 71.7,
+    "shoe_screw_x": 73.8,
     "shoe_screw_dy": 4.8,
-    "shoe_nut_z": 18.5,
+    "shoe_nut_z": 18.0,
     "shoe_pin_x": 78.5,
     "shoe_pin_dy": 3.2,
     "shoe_pin_d": 3.0,

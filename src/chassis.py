@@ -1364,12 +1364,19 @@ def build_chassis_parts():
                 # locator bores take the shoe's separated Ø3 pins.
                 for dy_ in (-P["shoe_screw_dy"], P["shoe_screw_dy"]):
                     scx, scy = s * P["shoe_screw_x"], sy_ + dy_
-                    sb_ = cyl(1.65, 12.5)
-                    sb_.apply_translation((scx, scy, 15.0 + 12.5 / 2))
+                    # Clearance bore tops at z 21.0: the M3x10 csk tip
+                    # reaches z 20.4 off the shoe's 10.4 face, and the journal
+                    # void's lower wall dips to z 23.07 at the bore's near-y
+                    # edge.  The original 12.5-tall bore left a 0.75 mm wall
+                    # to the journal/recess voids, under the 0.80 gate.
+                    sb_ = cyl(1.65, 6.0)
+                    sb_.apply_translation((scx, scy, 15.0 + 6.0 / 2))
                     pnl = sub(pnl, sb_)
+                    # length 9.5: the nut channel outlet must still clear the
+                    # panel's x 64.85 inboard face after the 73.8 column shift
                     pnl = sub(pnl, geo.nut_slot((scx, scy, P["shoe_nut_z"]),
                                                 screw_axis="z", open_dir=(-s, 0, 0),
-                                                size="M3", length=7.0))
+                                                size="M3", length=9.5))
                     mouth_ = box(5.7, 2.8, P["shoe_nut_z"] - 15.0)
                     mouth_.apply_translation((scx, scy,
                                               (15.0 + P["shoe_nut_z"]) / 2))

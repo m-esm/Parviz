@@ -1121,8 +1121,11 @@ relief: mark, remove, file an approximately 1 mm shaft-arc notch, reassemble, in
 parts sit under the wheel beam at spr_y -68 and spr_y2 +90. Their z 10.4 running
 faces leave 0.9 over the ground-run link crowns at z 9.5, versus the measured 2.14
 mm rigid-chain skip barrier. Each 10.6 x 14.76 x 4.6 shoe has 45 degree y lead-ins,
-two Ø3 pins into Ø3.4 beam bores, and 2x M3x12 csk screws from below into captive
-M3 nuts at z 18.5. The flat seat carries skip load into the beam in compression.
+two Ø3 pins into Ø3.4 beam bores, and 2x M3x10 csk screws from below into captive
+M3 nuts at z 18.0 (screw column x 73.8, clearance bores capped at z 21.0 to keep
+0.8+ of wall under the sprocket journal voids and the head counterbores 0.9
+inside the shoe face, 2026-07-16 merge fix). The flat seat carries skip load
+into the beam in compression.
 
 **Electronics seats (2026-07-13 -> moved to the base 2026-07-14):** the Uno R3 seat (4
 posts to z 21 + a rear-wall shelf for the glacis-side hole;

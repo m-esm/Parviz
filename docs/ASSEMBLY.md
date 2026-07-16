@@ -59,12 +59,8 @@ settled below). "Need" is per robot.
 
 | Part | Spec | Need | Owned | Buy |
 |---|---|---|---|---|
-<<<<<<< HEAD
 | M3 screws + hex nuts | captive-nut joints everywhere; incl. M3x35 x8 bezel↔back and **6x M3x10 + 6 M3 nuts for the pan retainer**. **2026-07-15 fastening campaign: ~+58 M3 hex nuts** as failed thread-form pilots became captive traps. Screw length changes: y=26 seam M3x12 → **M3x20**, neck→platform M3x12 → **M3x14** | lots | 540pc M3 stainless kit + 175pc M3 30–50 mm kit + 600pc M2-M5 kit + 1263pc M2-M4 kit (all Tray 1) | , (kits cover it) |
-=======
-| M3 screws + hex nuts | captive-nut joints everywhere; incl. M3x35 x8 bezel↔back. **2026-07-15 fastening campaign: ~+55 M3 hex nuts** as the thread-form pilots that failed the first print became real captive traps (head +32, chassis +24 incl. tail seam/deck/TT-upper/y26, neck +7 root & carrier & ULN). Screw length changes: y=26 seam M3x12 → **M3x20**, neck→platform M3x12 → **M3x14** | lots | 540pc M3 stainless kit + 175pc M3 30–50 mm kit + 600pc M2-M5 kit + 1263pc M2-M4 kit (all Tray 1) | , (kits cover it) |
-| M3×12 countersunk screws + M3 hex nuts | track hold-down shoes, 2 per shoe × 4. Heads recess flush in the z 10.4 running face; nuts slide up into the wheel beam. The front `spr_y2` pair is fittings-ready and only required when twin drive is populated | 8+8 (4+4 for rear-only drive) | covered by M3 kits | , |
->>>>>>> worktree-agent-a072f0f2a36db0dd6
+| M3×10 countersunk screws + M3 hex nuts | track hold-down shoes, 2 per shoe × 4. Heads recess flush in the z 10.4 running face; nuts slide up into the wheel beam at z 18.0. M3x10 (not x12): the beam clearance bore is capped at z 21.0 to keep 0.8 of wall under the sprocket journal. The front `spr_y2` pair is fittings-ready and only required when twin drive is populated | 8+8 (4+4 for rear-only drive) | covered by M3 kits | , |
 | M2/M3 brass heat-set inserts | **16 total, and a soldering-iron insert tip.** Used ONLY where a captive nut was probed and measurably does not fit: **4x M2** track master-link keepers (below), **8x M2** cliff HC-SR04 (a 3.8 mm skin at 33.7 deg has no room behind), **2x M2** PD-trigger (edge-on into wall layers = the weakest thread orientation), **2x M3** rear panel L-feet (boxed on all four axes by the BME board, the tail pad, the TT gearbox and the glacis: 5.70 window vs 6.80 needed). Everywhere else the campaign uses a real captive nut -- probing DISPROVED the audit's insert calls twice (tilt_carrier, pedestal ears). All VERIFY_ON_ARRIVAL: vendor OD/length varies, re-key `keeper_insert_*` / `foot_insert_*` before printing | 12x M2 + 2x M3 (+2 spare) | 0 | **16 inserts + 1 insert tip** |
 | M2 brass heat-set inserts (detail) | **track master-link keepers** (2/master x2 = 4). The captive M2 nut does NOT fit: the pocket is boxed between the jaw slot's tension wall and the neighbour A-knuckle = 5.50 mm usable vs 5.82 needed across-corners (measured, tracks agent). Inserts need 5.40. This is the one repeatedly-serviced M2-in-PLA joint, so self-tapping was never going to survive the service cycles | 4 | none | **4x M2 brass heat-set + a soldering-iron insert tip**. VERIFY_ON_ARRIVAL: vendor OD/length varies, re-key `keeper_insert_{d,l}` before printing masters |
 | M5 penny washers | tilt worm thrust seat (OD 15, ID 5.3, t 1.0): closes 2.0 mm of worm float (≈3° tilt slop) to 0.1. A direct shoulder is impossible because any ID under the Ø10.55 crest blocks cartridge extraction | 2 | check the owned washer assortment | 2x M5 penny washer (OD ~15) |
@@ -249,16 +245,13 @@ tray killed the 88.5 mm blind channels, 2026-07-08.)
    hold alignment before tightening.
    Before fitting the track, slide two M3 nuts into each shoe trap and press the matching
    `track_shoe_{L,R}_{rear,front}` upward onto its two locator pins at y=-68 or +90.
-   Drive two M3×12 countersunk screws from below. The shoe is 10.6 mm wide in X,
+   Drive two M3×10 countersunk screws from below. The shoe is 10.6 mm wide in X,
    14.76 mm along Y and 4.6 mm thick, with its running face at z=10.4. Fit all four
    shoes for a twin drive; the +90 front pair may be omitted with the optional motors.
 3. **TT motors.** Set each TT gearmotor: shaft +X into the sprocket hub's double-D socket,
    front tab into the rear-wall pocket, nub into the wall pocket, 2× M3 through the
-<<<<<<< HEAD
    gearbox + wall. Push each upper nut past the slot-mouth crush nibs until it clicks
    into the captive seat; it stays retained while the motor is positioned.
-=======
-   gearbox + wall with the nut floating in the pod gap.
    The M2x25 plus Ø9 washer is the preferred axial retainer only when the measured
    shaft has the Ø2 tip hole. Otherwise use the positive cross-pin fallback:
 
@@ -276,7 +269,6 @@ tray killed the 88.5 mm blind channels, 2026-07-08.)
 
    The pin positively locks axial motion and torque. The socket crush ribs are only a
    handling aid. Service the pin from above with the track open.
->>>>>>> worktree-agent-a072f0f2a36db0dd6
 4. **Track running gear.** Press an F688ZZ into EACH face of all four end idlers (Ø15.95
    seat + Ø18.5 flange recess both sides). Each end wheel: M8 bolt from outboard
    through the bearings, add the OUTBOARD jam nut against the tower, then the flatted
@@ -501,7 +493,6 @@ tray killed the 88.5 mm blind channels, 2026-07-08.)
 last-track-pin loop flex, and the 4× 88.5 mm blind screen-standoff screws -- the worst
 step in the build is now four short bench screws plus four visible wall screws.)
 
-<<<<<<< HEAD
 ### Squaring up: datum + shim procedure (first build)
 
 The tilt axis and the screen optical plane sit at the end of a long printed stack
@@ -582,10 +573,7 @@ rolling the axis; rear alone does the opposite pitch.
 The CAD gates verify pair fits at nominal; this procedure is where the accumulated
 real-print tolerance gets taken out, and it is expected to be needed on a first build.
 
-### Track coupon protocol (plate 20, ~48 min -- print BEFORE any strip plate)
-=======
 ### Track coupon protocol (Track coupon plate -- print BEFORE any strip plate)
->>>>>>> worktree-agent-a072f0f2a36db0dd6
 
 The Track coupon plate carries **two** 5-link print-in-place strips + 1 loose master
 link + both keeper bars (~1 h sliced in PETG):

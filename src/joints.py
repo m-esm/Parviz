@@ -152,7 +152,10 @@ JOINTS = (
           ("track_shoe_L_rear", "track_shoe_L_front", "track_shoe_R_rear",
            "track_shoe_R_front", "chassis_side_R_rear", "chassis_side_R_front"), True,
           (0, 0, 1), Locator("pin_pair", 8, P["shoe_pin_h"], LOCATING, True),
-          (m3(8, 12.0, (0, 0, 1), P["shoe_nut_z"] - P["shoe_z0"]),),
+          # stack runs head seat (shoe z0 face) to the NUT BOTTOM plane, nut_z - t/2;
+          # declaring nut_z itself read as a zero-protrusion M3x10 (tip 20.4 really
+          # clears the 19.2 nut top by 1.2, two turns)
+          (m3(8, 10.0, (0, 0, 1), P["shoe_nut_z"] - 1.2 - P["shoe_z0"]),),
           supporting_probes=(solid("track_shoe_R_rear",
                                    (P["shoe_x1"] - 1.0, P["spr_y"], P["shoe_z1"] - 0.3)),),
           assembly_step=4,
