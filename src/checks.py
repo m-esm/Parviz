@@ -505,6 +505,17 @@ def main():
                  [(26.0, yt - 14.5, zt), (-26.0, yt - 14.5, zt),
                   (22.0, yt - 14.5, zt), (30.0, yt - 14.5, zt),
                   (-22.0, yt - 14.5, zt), (-30.0, yt - 14.5, zt)]))
+    # 2026-09-25: neck_clevis prints on its back (export R(X,90); print-down
+    # is world -Y). The leg only covers |x| 19..26, the post runs to |x| 32,
+    # so the outboard half started in mid-air. The bridge is solid behind the
+    # post rear face (y <= yt-17) and must not grow the homing z-faces.
+    check("tilt-stop print bridges under outboard posts",
+          inside(M("neck_clevis"),
+                 [(29.0, yt - 19.5, zt), (-29.0, yt - 19.5, zt),
+                  (31.0, yt - 18.0, zt), (-31.0, yt - 18.0, zt)])
+          and clear(M("neck_clevis"),
+                    [(29.0, yt - 19.5, zt - 3.2),
+                     (-29.0, yt - 19.5, zt + 3.2)]))
 
     # ---------------- pan homing: lug az 225 + deck posts az 118/332 -----------
     def raz(az, r=28.0):
