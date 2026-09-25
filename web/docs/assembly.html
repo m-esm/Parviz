@@ -1313,11 +1313,14 @@ per the 2026-07-13 decision. Prove the need on the physical head first.</p>
 <ul>
 <li>Print the axle-flat + wheel-grub coupon above and bench-check tip seating, hub rock and
   reversal backlash before committing the filed axle.</li>
-<li>Print supports: paint a support enforcer under the neck's two tilt-stop posts (x 20..32,
-  z 150..156 -- their outboard halves start mid-air with the neck on its back) and extend
-  the clamp-tube supports over the head_back stop fins (55° overhangs feeding a ~0.9 mm
-  homing margin; treat the first stall-home angle as calibration). Print the track keepers
-  lying on their 13.3×1.9 bar face so the slot-critical 1.9 width is XY-accurate.</li>
+<li>Print supports: the neck's tilt-stop posts no longer start mid-air. Each
+  outboard half (|x| 25.5..32, behind the post rear face) has a printed bridge
+  that fuses into the leg, so the on-its-back orientation (export R(X,90))
+  lands that half on material instead of a slicer support scar on the homing
+  face. Still paint a support enforcer over the head_back stop fins (55°
+  overhangs feeding a ~0.9 mm homing margin; treat the first stall-home angle
+  as calibration). Print the track keepers lying on their 13.3×1.9 bar face
+  so the slot-critical 1.9 width is XY-accurate.</li>
 <li><strong>Tilt stop faces are sacrificial homing surfaces</strong> (fin/post PLA-on-PLA at +-33.8°;
   fins crush-hardened 2026-07-16 to x-span |26.5..32|, 1.375x contact width; inboard
   0.5 running-clear of the cheek face). Home at reduced drive once per boot only (firmware/WIRING.md

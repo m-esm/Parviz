@@ -77,7 +77,18 @@ def build_neck_clevis():
         # touching it, and x 23..26 at y -38..-35 is free air). Section 30 -> 56 mm^2.
         leg = box(7.0, 8.0, 22.0)
         leg.apply_translation((sx * 22.5, yt - 16.0, zt - 9.0))
-        parts += [post, leg]
+        # PRINT BRIDGE (2026-09-25): this part prints on its back
+        # (export_bambu R(X,90), so print-down is world -Y). The leg only
+        # covers |x| 19..26; the post runs to |x| 32. That outboard half
+        # started in mid-air (probe: x=29, y=-36.5, z=zt is air). A column
+        # flush with the post rear face and 5 mm further back fuses into the
+        # leg and prints first. It stays outside the fin tip radius (r 16.75;
+        # this volume is r >= 17 from the axle) and 23 mm clear of the Pi 5
+        # cooler envelope at the -33.8 stall. Contact z-faces HOLD: the
+        # bridge matches the post z span, it does not grow them.
+        bridge = box(6.5, 5.0, 5.0)
+        bridge.apply_translation((sx * 28.75, yt - 19.5, zt))
+        parts += [post, leg, bridge]
 
     # tilt WORM-motor bracket: the motor shaft runs along +Y (perpendicular to the tilt axle) and
     # carries the worm; the worm meshes the wheel on the axle. center distance = wheel_r + worm_r.
