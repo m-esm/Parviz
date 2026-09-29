@@ -1,0 +1,11 @@
+origin/main 347b0b560c151f56a4e89364b46db45ca5467971
+python3 scripts/measure_ci_unit_tests.py
+0
+exit=0
+
+The proposal file is still absent. The instrument reads .github/workflows on
+this checkout of origin/main. Only pages.yml exists; it deploys web/ to Pages
+and never invokes unittest. tests/ (CAD geometry) and
+software/motion/test_steppers.py are present but unwired in CI, so the measure
+prints 0. Invert: a temporary tests.yml that runs both suites on pull_request
+printed 1; removing it printed 0. There is no GOAL.md frozen walk.
