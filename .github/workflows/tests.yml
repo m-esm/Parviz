@@ -1,0 +1,24 @@
+# First CI for this repo. Two existing, previously-unwired test suites:
+#   tests/            - trimesh/manifold3d CAD geometry unit tests (32 tests)
+#   software/motion/   - pure-Python stepper driver tests, no GPIO/hardware (19 tests)
+# Kept to one job/one Python version until real timing data justifies a matrix.
+name: tests
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install CAD test dependencies
+        run: pip install trimesh manifold3d numpy scipy shapely networkx rtree
+      - name: CAD geometry tests (tests/)
+        run: python3 -m unittest discover -s tests -v
+      - name: Motion driver tests (software/motion, no hardware)
+        run: cd software/motion && python3 -m unittest test_steppers -v
