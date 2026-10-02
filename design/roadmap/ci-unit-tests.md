@@ -1,17 +1,18 @@
 ---
 slug: ci-unit-tests
 title: CAD and motion unit tests must run on GitHub Actions
-state: proposed
+state: shipped
 lens: spec-gap
 created: 2026-09-29
+updated: 2026-09-30
 metric: CAD and motion unit tests run on GitHub Actions
 before: 0 (python3 scripts/measure_ci_unit_tests.py, 2026-09-29, origin/main 347b0b5)
 target: 1
 measure: python3 scripts/measure_ci_unit_tests.py
 evidence:
   - design/roadmap/evidence/2026-09-29-ci-unit-tests-before.txt
-slices: 0/1
-after:
+slices: 1/1
+after: 1
 ---
 
 # CAD and motion unit tests must run on GitHub Actions
@@ -42,7 +43,7 @@ not what flips the number.
 
 ## Slices
 
-- [ ] Land a workflow under `.github/workflows/` that runs both suites on
+- [x] Land a workflow under `.github/workflows/` that runs both suites on
   pull_request or push. The measure prints 1. Invert: delete that workflow
   (leave `pages.yml`), and the measure prints 0.
 
