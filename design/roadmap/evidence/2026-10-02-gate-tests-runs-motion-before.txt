@@ -1,0 +1,13 @@
+origin/main 32b5fd4795323a585de76ff42765ebac850a5383
+python3 scripts/measure_gate_tests_runs_motion.py
+0
+exit=0
+
+The proposal file is still absent. The instrument reads Makefile on this
+checkout of origin/main. The gate-tests recipe is only
+`python3 -m unittest discover -s tests -p 'test_*.py'`; it never enters
+software/motion, so the measure prints 0. Invert: an uncommented
+`cd software/motion && python3 -m unittest test_steppers` line in that
+recipe printed 1; removing it printed 0; a comment-only copy of that line
+stayed 0. python3 scripts/measure_ci_unit_tests.py on the same checkout
+prints 1: Actions already runs both suites. There is no GOAL.md frozen walk.
