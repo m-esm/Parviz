@@ -56,6 +56,7 @@ jointcheck: stls     ## Assembly-joint contract gate -> web/joint_report.json (f
 
 gate-tests:          ## Mutation/unit tests proving assembly gates reject known-bad joints
 	python3 -m unittest discover -s tests -p 'test_*.py'
+	cd software/motion && python3 -m unittest test_steppers
 
 tipover:             ## Mass/CoM/stability report: tip angles, accel limits, fast-pan swing (INFILL=0.5 = conservative)
 	python3 tools/tipover.py
