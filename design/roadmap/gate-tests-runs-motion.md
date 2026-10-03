@@ -1,17 +1,18 @@
 ---
 slug: gate-tests-runs-motion
 title: make gate-tests must run the motion driver unit tests
-state: proposed
+state: shipped
 lens: spec-gap
 created: 2026-10-02
+updated: 2026-10-03
 metric: make gate-tests runs motion driver unit tests
 before: 0 (python3 scripts/measure_gate_tests_runs_motion.py, 2026-10-02, origin/main 32b5fd4)
 target: 1
 measure: python3 scripts/measure_gate_tests_runs_motion.py
 evidence:
   - design/roadmap/evidence/2026-10-02-gate-tests-runs-motion-before.txt
-slices: 0/1
-after:
+slices: 1/1
+after: 1
 ---
 
 # make gate-tests must run the motion driver unit tests
@@ -41,7 +42,7 @@ file is not what flips the number. Comments in the recipe do not count.
 
 ## Slices
 
-- [ ] The `gate-tests` recipe body runs software/motion tests. The measure
+- [x] The `gate-tests` recipe body runs software/motion tests. The measure
   prints 1. Invert: delete that uncommented line (leave the CAD discover
   line), and the measure prints 0.
 
