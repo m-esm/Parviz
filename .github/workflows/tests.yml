@@ -1,16 +1,19 @@
+# Turned off on 2026-11-23 (MOSA-1727). Rule of 2026-11-22: nothing runs on GitHub-hosted
+# runners. This repository has no ha3 runner, so the automatic triggers are removed and the
+# jobs name the ha3 labels: a manual run waits for a runner instead of using hosted minutes.
+# To turn it on again: Infra Ops registers an ha3 runner for this repository, then restore
+# the triggers from the commit before this one.
 # First CI for this repo. Two existing, previously-unwired test suites:
 #   tests/            - trimesh/manifold3d CAD geometry unit tests (32 tests)
 #   software/motion/   - pure-Python stepper driver tests, no GPIO/hardware (19 tests)
 # Kept to one job/one Python version until real timing data justifies a matrix.
 name: tests
 on:
-  push:
-    branches: [main]
-  pull_request:
+  workflow_dispatch:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, ha3]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
